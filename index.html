@@ -765,11 +765,21 @@
       padding: 0;
       border-radius: 12px;
       border: 2px solid rgba(255, 255, 255, 0.12);
-      background: transparent;
-      color: inherit;
+      background: #fff;
+      color: #1a1a1a;
       cursor: pointer;
       overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .route-choice-card:focus {
+      outline: 2px solid var(--teal);
+      outline-offset: 2px;
+    }
+
+    .route-choice-card:focus:not(:focus-visible) {
+      outline: none;
     }
 
     .route-choice-card::before {
@@ -816,6 +826,62 @@
       border-radius: 0;
       box-shadow: none;
       width: 100%;
+      background: #fff;
+      color: #1a1a1a;
+    }
+
+    .route-choice-card .ride-td-left {
+      background: #f9fafb;
+    }
+
+    .route-choice-card .ride-td-right {
+      background: #fff;
+    }
+
+    .route-choice-card .ride-aside-label {
+      color: #9ca3af;
+    }
+
+    .route-choice-card .ride-day {
+      color: #e05252;
+    }
+
+    .route-choice-card .ride-month {
+      color: #111827;
+      background: transparent;
+    }
+
+    .route-choice-card .ride-time {
+      color: #374151;
+    }
+
+    .route-choice-card .ride-td-bike {
+      min-height: 5.25rem;
+      vertical-align: middle;
+    }
+
+    .route-choice-card .ride-aside-bike {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 4.5rem;
+      padding: 0.35rem 0;
+    }
+
+    .route-choice-card .ride-aside-bike svg {
+      display: block;
+      width: 2.75rem;
+      height: 2.75rem;
+      fill: #1f2937;
+      color: #1f2937;
+    }
+
+    .route-choice-card .ride-desc,
+    .route-choice-card .ride-meet-spot,
+    .route-choice-card .ride-pace-level,
+    .route-choice-card .ride-group,
+    .route-choice-card .ride-course {
+      color: inherit;
     }
 
     .route-pick-prompt {
@@ -1861,9 +1927,9 @@
       }
 
       const BIKE_SVG =
-        '<svg viewBox="0 0 64 40" fill="currentColor" aria-hidden="true">' +
-        '<path d="M18 28a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm28 0a6 6 0 1 1 0-12 6 6 0 0 1 0 12z' +
-        'M20 22h6l4-8h8l3 6h5l-2-4h-6l-3 6h-7l-3-6H16l4 8zM30 14l2 4h10l-2-4H30z"/></svg>';
+        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<path fill="#1f2937" d="M5 20.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm14 0a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z' +
+        'M6.8 15h10.4l1.2-3.5H8.3L6.8 15zm2.5-5.2L10 8h3.2l.5 1.8h-4.4z"/></svg>';
 
       function buildRouteChoiceTable(route) {
         const d = route.depart;
@@ -1881,7 +1947,7 @@
           '<tr><td class="ride-td-left"><span class="ride-aside-label">Heure</span>' +
           '<span class="ride-time">' + SHARED.time + "</span></td>" +
           '<td class="ride-td-right"><p class="ride-group">' + route.name + "</p></td></tr>" +
-          '<tr><td class="ride-td-left" rowspan="2"><div class="ride-aside-bike">' +
+          '<tr><td class="ride-td-left ride-td-bike" rowspan="2"><div class="ride-aside-bike">' +
           BIKE_SVG + "</div></td>" +
           '<td class="ride-td-right"><p class="ride-pace-level">' +
           route.pace + " · " + route.levelLabel + "</p></td></tr>" +
@@ -2125,16 +2191,22 @@
 
         function bindRouteUi(route) {
           if (routePicker) {
-            const card = document.createElement("button");
-            card.type = "button";
+            const card = document.createElement("div");
             card.className = "route-choice-card";
             card.dataset.routeId = route.id;
             card.setAttribute("role", "tab");
+            card.tabIndex = 0;
             card.setAttribute("aria-label", route.track + " · " + route.name);
             card.style.setProperty("--route-color", route.color);
             card.innerHTML = buildRouteChoiceTable(route);
             card.addEventListener("click", function () {
               showRoute(route);
+            });
+            card.addEventListener("keydown", function (e) {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                showRoute(route);
+              }
             });
             routePicker.appendChild(card);
           }
