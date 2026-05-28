@@ -43,57 +43,52 @@
 
     /* —— Accueil —— */
     .home-hero {
-      position: relative;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      min-height: min(92vh, 900px);
-      min-height: min(92dvh, 900px);
-      padding: 2.5rem 1.5rem 2.5rem;
-      overflow: hidden;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .home-hero-media {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
+    .home-hero-photo {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      height: clamp(200px, 36vw, 380px);
+      overflow: hidden;
+      background: #0a1218;
     }
 
-    .home-hero-media img {
+    .home-hero-photo img {
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 22%;
-      filter: saturate(1.12) contrast(1.04);
+      object-position: center 58%;
+      filter: saturate(1.1) contrast(1.03);
     }
 
-    .home-hero-overlay {
+    .home-hero-photo::after {
+      content: "";
       position: absolute;
       inset: 0;
       pointer-events: none;
       background: linear-gradient(
         180deg,
-        rgba(13, 24, 32, 0) 0%,
-        rgba(13, 24, 32, 0) 48%,
-        rgba(13, 24, 32, 0.2) 62%,
-        rgba(13, 24, 32, 0.72) 82%,
-        rgba(13, 24, 32, 0.88) 100%
+        rgba(13, 24, 32, 0) 55%,
+        rgba(13, 24, 32, 0.85) 100%
       );
     }
 
+    .home-hero-body {
+      padding: 2rem 1.5rem 2.75rem;
+      text-align: center;
+    }
+
     .home-hero-inner {
-      position: relative;
-      z-index: 1;
-      width: 100%;
       max-width: 640px;
       margin: 0 auto;
-      text-align: center;
     }
 
     .home-hero .logo-box {
       margin-bottom: 1.25rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     }
 
     .home-badge {
@@ -101,12 +96,11 @@
       font-size: 0.75rem;
       letter-spacing: 0.06em;
       color: var(--gold);
-      border: 1px solid rgba(244, 164, 58, 0.45);
+      border: 1px solid rgba(244, 164, 58, 0.35);
       padding: 0.35rem 0.75rem;
       border-radius: 2px;
       margin-bottom: 1.25rem;
-      background: rgba(13, 24, 32, 0.55);
-      backdrop-filter: blur(6px);
+      background: rgba(244, 164, 58, 0.08);
     }
 
     .home-hero h1 {
@@ -117,28 +111,14 @@
       line-height: 1.15;
       margin-bottom: 1rem;
       color: var(--white);
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 0, 0, 0.5);
     }
 
     .home-lead {
       font-size: clamp(1rem, 2.5vw, 1.08rem);
-      color: rgba(255, 255, 255, 0.92);
+      color: var(--muted);
       max-width: 520px;
       margin: 0 auto 1.75rem;
       line-height: 1.65;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9), 0 0 24px rgba(0, 0, 0, 0.45);
-    }
-
-    .home-hero-text-panel {
-      width: 100%;
-      padding: 1.5rem 1.25rem 0.25rem;
-      border-radius: 12px 12px 0 0;
-      background: linear-gradient(
-        180deg,
-        rgba(13, 24, 32, 0) 0%,
-        rgba(13, 24, 32, 0.55) 28%,
-        rgba(13, 24, 32, 0.82) 100%
-      );
     }
 
     .home-actions {
@@ -146,11 +126,6 @@
       flex-wrap: wrap;
       gap: 0.75rem;
       justify-content: center;
-    }
-
-    .home-hero .btn-secondary {
-      background: rgba(13, 24, 32, 0.35);
-      backdrop-filter: blur(4px);
     }
 
     /* —— Hero (legacy, unused) —— */
@@ -1108,24 +1083,16 @@
     }
 
     @media (max-width: 768px) {
-      .home-hero {
-        min-height: min(85dvh, 720px);
-        padding: 2rem 1rem 2rem;
+      .home-hero-photo {
+        height: clamp(180px, 52vw, 300px);
       }
 
-      .home-hero-media img {
-        object-position: center 18%;
+      .home-hero-photo img {
+        object-position: center 55%;
       }
 
-      .home-hero-overlay {
-        background: linear-gradient(
-          180deg,
-          rgba(13, 24, 32, 0) 0%,
-          rgba(13, 24, 32, 0) 42%,
-          rgba(13, 24, 32, 0.25) 58%,
-          rgba(13, 24, 32, 0.78) 85%,
-          rgba(13, 24, 32, 0.9) 100%
-        );
+      .home-hero-body {
+        padding: 1.75rem 1rem 2.25rem;
       }
 
       .home-actions {
@@ -1300,18 +1267,17 @@
 <body>
 
   <header class="home-hero" id="accueil">
-    <div class="home-hero-media" aria-hidden="true">
+    <div class="home-hero-photo">
       <img
         src="Saint-Quay.jpeg"
-        alt=""
+        alt="Baie de Saint-Quay-Portrieux"
         width="4032"
         height="3024"
         decoding="async"
         fetchpriority="high">
     </div>
-    <div class="home-hero-overlay" aria-hidden="true"></div>
-    <div class="home-hero-inner">
-      <div class="home-hero-text-panel">
+    <div class="home-hero-body">
+      <div class="home-hero-inner">
         <div class="logo-box">
           <div class="logo-title">GOËLO RIDES</div>
           <div class="logo-sub">Saint-Quay-Portrieux</div>
