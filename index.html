@@ -735,13 +735,42 @@
       margin-top: 0.15rem;
     }
 
+    .route-pick-prompt {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+      padding: 1.25rem 1rem 0.5rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
     .route-detail-panel {
+      display: none;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       background: rgba(0, 0, 0, 0.2);
       padding: 1.25rem;
       box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
       transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .route-detail-panel.is-visible {
+      display: block;
+    }
+
+    #inscription.signup-section {
+      display: none;
+    }
+
+    #inscription.signup-section.is-visible {
+      display: block;
+    }
+
+    .route-choice-date {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.02em;
     }
 
     .route-detail-panel.is-falaises {
@@ -1111,14 +1140,6 @@
         padding: 1.5rem 1rem 1.75rem;
       }
 
-      .home-lead br {
-        display: none;
-      }
-
-      .home-lead br + br {
-        display: none;
-      }
-
       .home-actions {
         flex-direction: column;
         width: 100%;
@@ -1313,7 +1334,7 @@
         </p>
         <div class="home-actions">
           <a href="#map-section" class="btn-primary">Voir les parcours</a>
-          <a href="#inscription" class="btn-secondary">Je suis partant</a>
+          <a href="#map-section" class="btn-secondary">Je suis partant</a>
         </div>
       </div>
     </div>
@@ -1332,8 +1353,11 @@
     <div class="strava-view">
       <p class="route-choices-hint">Compare les deux parcours, puis touche celui que tu veux voir sur la carte.</p>
       <div class="route-choices" id="route-picker" role="tablist" aria-label="Choisir un parcours"></div>
+      <p class="route-pick-prompt" id="route-pick-prompt">
+        Choisis ton parcours pour afficher la date de départ, la carte et l’inscription.
+      </p>
 
-      <div class="route-detail-panel" id="route-detail-panel" aria-live="polite">
+      <div class="route-detail-panel" id="route-detail-panel" aria-live="polite" hidden>
         <div class="route-detail-header">
           <h3 id="route-detail-title">La Route des Falaises</h3>
           <span class="route-detail-km" id="route-detail-km">— km</span>
@@ -1355,7 +1379,7 @@
             <p class="ride-meet-label">Rendez-vous</p>
             <p class="ride-meet-spot" id="ride-meet">Parking du port, 22410 Saint-Quay-Portrieux, Bretagne</p>
             <p class="ride-meta" id="ride-meta">Sortie · Convivial · — km · Route</p>
-            <p class="ride-date-note" id="ride-date-note">Date exacte annoncée sur @goelo.rides</p>
+            <p class="ride-date-note" id="ride-date-note"></p>
           </div>
         </article>
 
@@ -1379,7 +1403,7 @@
 
   <section class="signup-section" id="inscription">
     <h2>Je suis partant</h2>
-    <p>Envoie-nous un message sur Instagram avec ton prénom et le groupe que tu vises (Blanc, Vert, Bleu ou Rouge). On te confirme la date dès qu'elle est fixée.</p>
+    <p id="signup-intro">Envoie-nous un message sur Instagram avec ton prénom et le parcours choisi.</p>
     <a href="https://www.instagram.com/goelo.rides/" class="btn-primary" target="_blank" rel="noopener noreferrer">Je suis partant → DM @goelo.rides</a>
     <p class="signup-hint">Gratuit · sans engagement · préviens-nous juste pour qu'on sache combien on est.</p>
   </section>
@@ -1450,15 +1474,10 @@
       const START = { lat: 48.6536, lon: -2.8353, label: "Saint-Quay-Portrieux" };
       const GPX_MAX_POINTS = 6000;
 
-      const EVENT = {
-        day: "5",
-        month: "JUIL",
-        year: "2026",
-        weekday: "Sam",
-        time: "8h30",
+      const SHARED = {
         meetup: "Parking du port, 22410 Saint-Quay-Portrieux, Bretagne",
         region: "Côte du Goëlo",
-        dateNote: "Date exacte annoncée sur @goelo.rides"
+        time: "8h30"
       };
 
       const ROUTES = [
@@ -1474,6 +1493,13 @@
           levelLabel: "Découverte",
           vibe: "Convivial",
           shortDesc: "Falaises et villages côtiers · rythme tranquille",
+          depart: {
+            day: "7",
+            month: "JUIL",
+            year: "2026",
+            weekday: "Mar",
+            dateLabel: "7 juillet 2026 · 8h30"
+          },
           cities: [
             { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
             { name: "Plouha", lat: 48.6728, lon: -2.903 },
@@ -1492,6 +1518,13 @@
           levelLabel: "Confirmé",
           vibe: "Rouleur",
           shortDesc: "Grande boucle du Goëlo · parcours long et soutenu",
+          depart: {
+            day: "14",
+            month: "JUIL",
+            year: "2026",
+            weekday: "Mar",
+            dateLabel: "14 juillet 2026 · 8h30"
+          },
           cities: [
             { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true },
             { name: "Lantic", lat: 48.5976, lon: -2.899 },
@@ -1578,8 +1611,22 @@
         }
       }
 
+      function setRouteSectionsVisible(visible) {
+        const detailPanel = document.getElementById("route-detail-panel");
+        const signup = document.getElementById("inscription");
+        const prompt = document.getElementById("route-pick-prompt");
+
+        if (detailPanel) {
+          detailPanel.classList.toggle("is-visible", visible);
+          detailPanel.hidden = !visible;
+        }
+        if (signup) signup.classList.toggle("is-visible", visible);
+        if (prompt) prompt.hidden = visible;
+      }
+
       function updateRideCard(route) {
         const p = route.profile;
+        const d = route.depart;
         const dayEl = document.getElementById("ride-day");
         const monthEl = document.getElementById("ride-month");
         const yearEl = document.getElementById("ride-year");
@@ -1588,25 +1635,25 @@
         const meetEl = document.getElementById("ride-meet");
         const metaEl = document.getElementById("ride-meta");
         const noteEl = document.getElementById("ride-date-note");
+        const signupIntro = document.getElementById("signup-intro");
 
-        if (dayEl) dayEl.textContent = EVENT.day;
-        if (monthEl) monthEl.textContent = EVENT.month;
-        if (yearEl) yearEl.textContent = EVENT.year;
+        if (dayEl) dayEl.textContent = d.day;
+        if (monthEl) monthEl.textContent = d.month;
+        if (yearEl) yearEl.textContent = d.year;
         if (titleEl) {
           titleEl.textContent =
-            EVENT.weekday + " " + EVENT.time + " · " + route.track + " · " + EVENT.region;
+            d.weekday + " " + SHARED.time + " · " + route.track + " · " + SHARED.region;
         }
         if (badgeEl) {
           badgeEl.textContent = route.name + " · " + route.levelLabel;
           badgeEl.className = "level-badge " + route.levelClass;
         }
-        if (meetEl) meetEl.textContent = EVENT.meetup;
+        if (meetEl) meetEl.textContent = SHARED.meetup;
         if (metaEl) {
           metaEl.textContent =
-            "Sortie · " + route.vibe + " · " + formatKm(p.totalKm) + " · " +
-            route.pace + " · " + route.track;
+            "Départ " + d.dateLabel + " · " + formatKm(p.totalKm) + " · " + route.pace;
         }
-        if (noteEl) noteEl.textContent = EVENT.dateNote;
+        if (noteEl) noteEl.textContent = "Rendez-vous " + SHARED.time + " · " + SHARED.meetup;
 
         const detailPanel = document.getElementById("route-detail-panel");
         const detailTitle = document.getElementById("route-detail-title");
@@ -1626,7 +1673,12 @@
         if (detailKm) detailKm.textContent = formatKm(p.totalKm);
         if (detailMeta) {
           detailMeta.textContent =
-            route.name + " · " + route.pace + " · " + route.levelLabel;
+            d.dateLabel + " · " + route.name + " · " + route.pace;
+        }
+        if (signupIntro) {
+          signupIntro.textContent =
+            "Tu viens pour « " + route.track + " » le " + d.dateLabel +
+            " ? Envoie-nous un DM sur Instagram avec ton prénom.";
         }
       }
 
@@ -1747,13 +1799,14 @@
 
         function showRoute(route) {
           activeRoute = route;
+          setRouteSectionsVisible(true);
           clearTrack();
           const latlngs = route.profile.points.map(function (p) { return [p.lat, p.lon]; });
           trackLayer = addStravaTrack(map, latlngs, route.color, route.casingColor);
           trackLayer.addTo(map);
           trackLayer.mainLine.bindPopup(
-            "<strong>" + route.track + "</strong><br>" + formatKm(route.profile.totalKm) +
-            "<br>" + route.name + " · " + route.pace
+            "<strong>" + route.track + "</strong><br>" + route.depart.dateLabel +
+            "<br>" + formatKm(route.profile.totalKm) + " · " + route.name
           );
           map.fitBounds(boundsForLatLngs(latlngs), { padding: [40, 40], maxZoom: 14 });
 
@@ -1768,6 +1821,8 @@
           document.querySelectorAll(".group-card[data-route-id]").forEach(function (card) {
             card.classList.toggle("is-route-active", card.dataset.routeId === route.id);
           });
+
+          setTimeout(refreshMapSize, 50);
 
           const detailPanel = document.getElementById("route-detail-panel");
           if (detailPanel && window.matchMedia("(max-width: 768px)").matches) {
@@ -1786,6 +1841,7 @@
             card.innerHTML =
               '<span class="route-choice-km" data-choice-km="' + route.id + '">' +
               formatKm(route.profile.totalKm) + "</span>" +
+              '<span class="route-choice-date">' + route.depart.dateLabel + "</span>" +
               '<span class="route-choice-title">' + route.track + "</span>" +
               '<span class="route-choice-group"><span class="route-choice-dot" aria-hidden="true"></span>' +
               route.name + "</span>" +
@@ -1828,7 +1884,7 @@
           return;
         }
 
-        showRoute(loadedRoutesCache[0]);
+        setRouteSectionsVisible(false);
 
         setTimeout(refreshMapSize, 150);
         if ("IntersectionObserver" in window) {
