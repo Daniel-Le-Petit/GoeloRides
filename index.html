@@ -1249,7 +1249,6 @@
         <div class="ad-photo-overlay">
           <div class="ad-photo-brand">GOËLO RIDES</div>
           <div class="ad-photo-place">Saint-Quay-Portrieux · Été 2026</div>
-          <p class="ad-photo-tagline">La route est plus belle à plusieurs.</p>
         </div>
         <svg class="ad-silhouettes" viewBox="0 0 360 110" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
           <path fill="#0d1820" d="M0,110 L0,75 Q40,55 80,70 T160,62 T240,78 T360,68 L360,110 Z"/>
@@ -1275,7 +1274,7 @@
           <li><span class="check">✓</span> Départ : port de Saint-Quay-Portrieux</li>
           <li><span class="check">✓</span> 1ère sortie : début juillet (date sur le site)</li>
         </ul>
-        <a href="#inscription" class="ad-cta">Voir les groupes et s'inscrire →</a>
+        <a href="#map-section" class="ad-cta">Voir les parcours →</a>
       </div>
       <div class="ad-footer-bar">
         <div class="ad-avatar">GR</div>
@@ -1300,74 +1299,61 @@ Pas un club. Pas une course. Juste la route.
 
   <div class="page-divider"></div>
 
-  <!-- Hero -->
-  <header class="hero" id="hero">
-    <div class="hero-bg" aria-hidden="true"></div>
-    <div class="hero-sun" aria-hidden="true"></div>
-    <svg class="hero-coast" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#152838" stop-opacity="0"/>
-          <stop offset="100%" stop-color="#0d1820"/>
-        </linearGradient>
-      </defs>
-      <path fill="url(#seaGrad)" d="M0,500 L0,280 Q150,220 300,250 T600,230 T900,260 T1200,240 L1200,500 Z"/>
-      <path fill="#0a1218" d="M0,500 L0,320 Q120,260 250,290 Q400,340 550,300 Q700,260 850,310 Q1000,360 1200,300 L1200,500 Z"/>
-      <path fill="#060d12" d="M0,500 L0,380 Q200,350 400,370 Q600,390 800,360 Q1000,330 1200,380 L1200,500 Z"/>
-      <g fill="#050a0e" opacity="0.95">
-        <g transform="translate(180, 295)">
-          <ellipse cx="0" cy="0" rx="14" ry="14"/><circle cx="0" cy="-14" r="8"/>
-          <path d="M-2,8 L-12,32 L-4,32 L0,22 L4,32 L12,32 L2,8 Z"/>
-          <circle cx="-12" cy="32" r="7"/><circle cx="12" cy="32" r="7"/>
-        </g>
-        <g transform="translate(420, 310)">
-          <ellipse cx="0" cy="0" rx="12" ry="12"/><circle cx="0" cy="-12" r="7"/>
-          <path d="M-2,6 L-10,28 L-3,28 L0,20 L3,28 L10,28 L2,6 Z"/>
-          <circle cx="-10" cy="28" r="6"/><circle cx="10" cy="28" r="6"/>
-        </g>
-        <g transform="translate(720, 300)">
-          <ellipse cx="0" cy="0" rx="13" ry="13"/><circle cx="0" cy="-13" r="7.5"/>
-          <path d="M-2,7 L-11,30 L-4,30 L0,21 L4,30 L11,30 L2,7 Z"/>
-          <circle cx="-11" cy="30" r="6.5"/><circle cx="11" cy="30" r="6.5"/>
-        </g>
-        <g transform="translate(950, 315)">
-          <ellipse cx="0" cy="0" rx="11" ry="11"/><circle cx="0" cy="-11" r="6.5"/>
-          <path d="M-2,5 L-9,26 L-3,26 L0,19 L3,26 L9,26 L2,5 Z"/>
-          <circle cx="-9" cy="26" r="5.5"/><circle cx="9" cy="26" r="5.5"/>
-        </g>
-      </g>
-    </svg>
-    <div class="hero-content">
-      <div class="logo-box">
-        <div class="logo-title">GOËLO RIDES</div>
-        <div class="logo-sub">Saint-Quay-Portrieux</div>
+  <!-- Map -->
+  <section id="map-section" style="padding-top: 2.5rem;">
+    <div class="section-header">
+      <h2>Les parcours</h2>
+      <p>Autour de Saint-Quay-Portrieux · Côte du Goëlo</p>
+    </div>
+    <p class="map-alert" id="map-alert" role="status">
+      Les tracés GPX ne se chargent pas en ouvrant le fichier directement. Lance un serveur local
+      (<code style="color: var(--white);">python3 -m http.server 8765</code>) puis ouvre
+      <code style="color: var(--white);">http://127.0.0.1:8765</code>.
+    </p>
+    <div class="strava-view">
+      <p class="active-route-banner" id="active-route-banner" aria-live="polite"></p>
+      <div class="route-picker" id="route-picker" aria-label="Choisir un parcours"></div>
+      <div class="map-options" id="map-options">
+        <label>
+          <input type="checkbox" id="opt-cities" checked>
+          Villes traversées
+        </label>
       </div>
-      <p class="hero-badge">✦ 1ère sortie début juillet 2026</p>
-      <h1>La route est plus belle à plusieurs</h1>
-      <p class="hero-lead">Sorties vélo conviviales à Saint-Quay-Portrieux — été 2026. Tu es de passage ou du coin ? Rejoins un groupe à ton rythme.</p>
-      <p class="hero-body">Pas d'adhésion. Pas de chronomètre. Juste rouler ensemble sur la Côte du Goëlo.</p>
-      <div class="hero-actions">
-        <a href="#sortie" class="btn-primary">Prochaine sortie</a>
-        <a href="#groups" class="btn-secondary">Voir les groupes &amp; parcours</a>
+      <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
+      <article class="ride-event-card" id="ride-event-card" aria-live="polite">
+        <div class="ride-event-date">
+          <span class="ride-day" id="ride-day">5</span>
+          <span class="ride-month" id="ride-month">JUIL</span>
+          <span class="ride-year" id="ride-year">2026</span>
+        </div>
+        <div class="ride-event-icon" aria-hidden="true">🚴</div>
+        <div class="ride-event-body">
+          <div class="ride-event-head">
+            <h3 class="ride-event-title" id="ride-title">Sam 8h30 · Goëlo Rides · Côte du Goëlo</h3>
+            <span class="level-badge level-blanc" id="level-badge">Groupe Blanc</span>
+          </div>
+          <p class="ride-meet-label">Rendez-vous</p>
+          <p class="ride-meet-spot" id="ride-meet">Parking du port, 22410 Saint-Quay-Portrieux, Bretagne</p>
+          <p class="ride-meta" id="ride-meta">Sortie · Convivial · — km · Route</p>
+          <p class="ride-date-note" id="ride-date-note">Date exacte annoncée sur @goelo.rides</p>
+        </div>
+      </article>
+      <div class="strava-map-block">
+        <div class="map-wrap" style="padding:0;margin:0;max-width:none;">
+          <div class="map-loading" id="map-loading">Chargement des parcours…</div>
+          <div id="route-map" role="application" aria-label="Carte du parcours"></div>
+        </div>
       </div>
     </div>
-  </header>
-
-  <section class="info-section" id="sortie" aria-labelledby="sortie-title">
-    <div class="sortie-card">
-      <h2 id="sortie-title">Prochaine sortie</h2>
-      <ul class="sortie-details">
-        <li><span class="icon">🚴</span> <span><strong>Première sortie</strong> — début juillet 2026</span></li>
-        <li><span class="icon">📍</span> <span><strong>Rendez-vous</strong> — parking du port, Saint-Quay-Portrieux</span></li>
-        <li><span class="icon">⏰</span> <span><strong>Départ</strong> — 8h30</span></li>
-        <li><span class="icon">📅</span> <span><strong>Date précise</strong> — annoncée sur Instagram <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a></span></li>
-      </ul>
-      <p class="sortie-note">Choisis ton groupe ci-dessous, puis confirme ta participation — gratuit, sans engagement.</p>
-    </div>
-    <p class="trust-text"><strong>Goëlo Rides</strong>, c'est une initiative locale entre cyclistes — pas une association, pas de licence à payer. On se retrouve, on choisit un groupe, on part.</p>
   </section>
 
-  <!-- Groups -->
+  <section class="signup-section" id="inscription">
+    <h2>Je suis partant</h2>
+    <p>Envoie-nous un message sur Instagram avec ton prénom et le groupe que tu vises (Blanc, Vert, Bleu ou Rouge). On te confirme la date dès qu'elle est fixée.</p>
+    <a href="https://www.instagram.com/goelo.rides/" class="btn-primary" target="_blank" rel="noopener noreferrer">Je suis partant → DM @goelo.rides</a>
+    <p class="signup-hint">Gratuit · sans engagement · préviens-nous juste pour qu'on sache combien on est.</p>
+  </section>
+
   <section id="groups">
     <div class="section-header">
       <h2>Les groupes</h2>
@@ -1422,83 +1408,6 @@ Pas un club. Pas une course. Juste la route.
       </article>
     </div>
     <p class="groups-note">Pas sûr de ton groupe ? Viens en Blanc ou Vert pour la première fois — on t'aide à te placer, sans pression.</p>
-  </section>
-
-  <!-- Map -->
-  <section id="map-section">
-    <div class="section-header">
-      <h2>Les parcours</h2>
-      <p>Autour de Saint-Quay-Portrieux · Côte du Goëlo</p>
-    </div>
-    <p class="map-alert" id="map-alert" role="status">
-      Les tracés GPX ne se chargent pas en ouvrant le fichier directement. Lance un serveur local
-      (<code style="color: var(--white);">python3 -m http.server 8765</code>) puis ouvre
-      <code style="color: var(--white);">http://127.0.0.1:8765</code>.
-    </p>
-    <div class="strava-view">
-      <p class="active-route-banner" id="active-route-banner" aria-live="polite"></p>
-      <div class="route-picker" id="route-picker" aria-label="Choisir un parcours"></div>
-      <div class="map-options" id="map-options">
-        <label>
-          <input type="checkbox" id="opt-cities" checked>
-          Villes traversées
-        </label>
-      </div>
-      <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
-      <article class="ride-event-card" id="ride-event-card" aria-live="polite">
-        <div class="ride-event-date">
-          <span class="ride-day" id="ride-day">5</span>
-          <span class="ride-month" id="ride-month">JUIL</span>
-          <span class="ride-year" id="ride-year">2026</span>
-        </div>
-        <div class="ride-event-icon" aria-hidden="true">🚴</div>
-        <div class="ride-event-body">
-          <div class="ride-event-head">
-            <h3 class="ride-event-title" id="ride-title">Sam 8h30 · Goëlo Rides · Côte du Goëlo</h3>
-            <span class="level-badge level-blanc" id="level-badge">Groupe Blanc</span>
-          </div>
-          <p class="ride-meet-label">Rendez-vous</p>
-          <p class="ride-meet-spot" id="ride-meet">Parking du port, 22410 Saint-Quay-Portrieux, Bretagne</p>
-          <p class="ride-meta" id="ride-meta">Sortie · Convivial · — km · Route</p>
-          <p class="ride-date-note" id="ride-date-note">Date exacte annoncée sur @goelo.rides</p>
-        </div>
-      </article>
-      <div class="strava-map-block">
-        <div class="map-wrap" style="padding:0;margin:0;max-width:none;">
-          <div class="map-loading" id="map-loading">Chargement des parcours…</div>
-          <div id="route-map" role="application" aria-label="Carte du parcours"></div>
-        </div>
-      </div>
-    </div>
-    <div class="route-stats" id="route-stats">
-      <div class="route-stat is-loaded" data-group="blanc" data-route-id="falaises">
-        <div class="dot" style="background:#fc4c02;"></div>
-        <div class="name">Groupe Blanc</div>
-        <div class="detail" data-route-id="falaises">La Route des Falaises · — km</div>
-      </div>
-      <div class="route-stat" data-group="vert">
-        <div class="dot" style="background:#4caf6e;"></div>
-        <div class="name">Groupe Vert</div>
-        <div class="detail">Parcours à venir · ~60 km</div>
-      </div>
-      <div class="route-stat is-loaded" data-group="bleu" data-route-id="boucle">
-        <div class="dot" style="background:#4a90d9;"></div>
-        <div class="name">Groupe Bleu</div>
-        <div class="detail" data-route-id="boucle">La Grande Boucle du Goëlo · — km</div>
-      </div>
-      <div class="route-stat" data-group="rouge">
-        <div class="dot" style="background:#e05252;"></div>
-        <div class="name">Groupe Rouge</div>
-        <div class="detail">Parcours à venir · 110+ km</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="signup-section" id="inscription">
-    <h2>Je suis partant</h2>
-    <p>Envoie-nous un message sur Instagram avec ton prénom et le groupe que tu vises (Blanc, Vert, Bleu ou Rouge). On te confirme la date dès qu'elle est fixée.</p>
-    <a href="https://www.instagram.com/goelo.rides/" class="btn-primary" target="_blank" rel="noopener noreferrer">Je suis partant → DM @goelo.rides</a>
-    <p class="signup-hint">Gratuit · sans engagement · préviens-nous juste pour qu'on sache combien on est.</p>
   </section>
 
   <footer>
@@ -1572,9 +1481,6 @@ Pas un club. Pas une course. Juste la route.
           const kmLabel = formatKm(route.profile.totalKm);
           document.querySelectorAll('.route-km[data-route-id="' + route.id + '"]').forEach(function (el) {
             el.textContent = kmLabel;
-          });
-          document.querySelectorAll('.detail[data-route-id="' + route.id + '"]').forEach(function (el) {
-            el.textContent = route.track + " · " + kmLabel;
           });
         });
       }
@@ -1809,10 +1715,6 @@ Pas un club. Pas une course. Juste la route.
           document.querySelectorAll(".route-picker-btn").forEach(function (btn) {
             btn.classList.toggle("is-active", btn.dataset.routeId === route.id);
           });
-          document.querySelectorAll(".route-stat[data-route-id]").forEach(function (stat) {
-            stat.style.outline = stat.dataset.routeId === route.id
-              ? "1px solid var(--gold)" : "none";
-          });
           document.querySelectorAll(".group-card[data-route-id]").forEach(function (card) {
             card.classList.toggle("is-route-active", card.dataset.routeId === route.id);
           });
@@ -1830,11 +1732,6 @@ Pas un club. Pas une course. Juste la route.
             });
             routePicker.appendChild(btn);
           }
-
-          document.querySelectorAll('.route-stat[data-route-id="' + route.id + '"]').forEach(function (stat) {
-            stat.classList.add("is-loaded");
-            stat.addEventListener("click", function () { showRoute(route); });
-          });
 
           document.querySelectorAll('.group-card[data-route-id="' + route.id + '"]').forEach(function (card) {
             card.addEventListener("click", function () {
