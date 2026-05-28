@@ -710,8 +710,8 @@
     }
 
     .route-detail-panel.is-falaises {
-      border-color: rgba(252, 76, 2, 0.45);
-      box-shadow: 0 0 0 1px rgba(252, 76, 2, 0.2), 0 20px 48px rgba(0, 0, 0, 0.3);
+      border-color: rgba(232, 232, 232, 0.55);
+      box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.25), 0 20px 48px rgba(0, 0, 0, 0.3);
     }
 
     .route-detail-panel.is-boucle {
@@ -743,7 +743,7 @@
       letter-spacing: -0.02em;
     }
 
-    .route-detail-panel.is-falaises .route-detail-km { color: #fc4c02; }
+    .route-detail-panel.is-falaises .route-detail-km { color: #e8e8e8; }
     .route-detail-panel.is-boucle .route-detail-km { color: #60a5fa; }
 
     .route-detail-meta {
@@ -797,6 +797,14 @@
       font-weight: 700;
       color: #fc4c02;
       letter-spacing: -0.02em;
+    }
+
+    .ride-event-card.is-route-falaises .ride-day {
+      color: #6b7280;
+    }
+
+    .ride-event-card.is-route-boucle .ride-day {
+      color: #2563eb;
     }
 
     .ride-month {
@@ -1397,7 +1405,8 @@
         {
           id: "falaises",
           file: "La Route des Falaises.gpx",
-          color: "#fc4c02",
+          color: "#e8e8e8",
+          casingColor: "#4b5563",
           name: "Groupe Blanc",
           track: "La Route des Falaises",
           pace: "15–18 km/h",
@@ -1544,9 +1553,14 @@
         const detailKm = document.getElementById("route-detail-km");
         const detailMeta = document.getElementById("route-detail-meta");
 
+        const rideCard = document.getElementById("ride-event-card");
         if (detailPanel) {
           detailPanel.classList.remove("is-falaises", "is-boucle");
           detailPanel.classList.add("is-" + route.id);
+        }
+        if (rideCard) {
+          rideCard.classList.remove("is-route-falaises", "is-route-boucle");
+          rideCard.classList.add("is-route-" + route.id);
         }
         if (detailTitle) detailTitle.textContent = route.track;
         if (detailKm) detailKm.textContent = formatKm(p.totalKm);
@@ -1587,10 +1601,10 @@
         return group;
       }
 
-      function addStravaTrack(map, latlngs, color) {
+      function addStravaTrack(map, latlngs, color, casingColor) {
         const weight = 5;
         const casing = L.polyline(latlngs, {
-          color: "#ffffff",
+          color: casingColor || "#ffffff",
           weight: weight + 4,
           opacity: 1,
           lineCap: "round",
@@ -1675,7 +1689,7 @@
           activeRoute = route;
           clearTrack();
           const latlngs = route.profile.points.map(function (p) { return [p.lat, p.lon]; });
-          trackLayer = addStravaTrack(map, latlngs, route.color);
+          trackLayer = addStravaTrack(map, latlngs, route.color, route.casingColor);
           trackLayer.addTo(map);
           trackLayer.mainLine.bindPopup(
             "<strong>" + route.track + "</strong><br>" + formatKm(route.profile.totalKm) +
