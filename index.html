@@ -1192,6 +1192,24 @@
 
     .leaflet-container.strava-map-tiles { background: #f4f4f5; }
 
+    .route-arrow-marker {
+      background: none !important;
+      border: none !important;
+    }
+
+    .route-arrow {
+      display: block;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: inherit;
+      text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 1px 2px rgba(0, 0, 0, 0.35);
+      transform-origin: 50% 50%;
+    }
+
     .route-stat.is-loaded { cursor: pointer; }
     .route-stat.is-loaded:hover { border-color: rgba(244, 164, 58, 0.35); }
     .route-stat:not(.is-loaded) { opacity: 0.55; }
@@ -1665,6 +1683,8 @@
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
   <script>
     (function () {
       const START = { lat: 48.6536, lon: -2.8353, label: "Saint-Quay-Portrieux" };
@@ -2016,8 +2036,46 @@
         return group;
       }
 
+      function resolveArrowColor(routeColor, casingColor) {
+        if (routeColor === "#e8e8e8") return casingColor || "#4b5563";
+        return routeColor;
+      }
+
+      function bearingDegrees(lat1, lon1, lat2, lon2) {
+        const toRad = Math.PI / 180;
+        const toDeg = 180 / Math.PI;
+        const dLon = (lon2 - lon1) * toRad;
+        const y = Math.sin(dLon) * Math.cos(lat2 * toRad);
+        const x =
+          Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+          Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos(dLon);
+        return (Math.atan2(y, x) * toDeg + 360) % 360;
+      }
+
+      function addManualDirectionArrows(latlngs, arrowColor) {
+        const group = L.layerGroup();
+        if (latlngs.length < 2) return group;
+        const step = Math.max(1, Math.floor(latlngs.length / 14));
+        for (let i = step; i < latlngs.length - 1; i += step) {
+          const from = latlngs[i - 1];
+          const at = latlngs[i];
+          const bearing = bearingDegrees(from[0], from[1], at[0], at[1]);
+          const icon = L.divIcon({
+            className: "route-arrow-marker",
+            html:
+              '<span class="route-arrow" style="color:' + arrowColor + ";transform:rotate(" +
+              (bearing - 90) + 'deg)">▶</span>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+          });
+          group.addLayer(L.marker(at, { icon: icon, interactive: false }));
+        }
+        return group;
+      }
+
       function addStravaTrack(map, latlngs, color, casingColor) {
         const weight = 5;
+        const arrowColor = resolveArrowColor(color, casingColor);
         const casing = L.polyline(latlngs, {
           color: casingColor || "#ffffff",
           weight: weight + 4,
@@ -2032,7 +2090,36 @@
           lineCap: "round",
           lineJoin: "round"
         });
-        const group = L.layerGroup([casing, line]);
+        const layers = [casing, line];
+
+        if (typeof L.polylineDecorator === "function" && typeof L.Symbol !== "undefined") {
+          layers.push(
+            L.polylineDecorator(line, {
+              patterns: [
+                {
+                  offset: "4%",
+                  repeat: "7%",
+                  symbol: L.Symbol.arrowHead({
+                    pixelSize: 12,
+                    headAngle: 42,
+                    polygon: false,
+                    pathOptions: {
+                      color: arrowColor,
+                      weight: 3,
+                      opacity: 1,
+                      lineCap: "round",
+                      lineJoin: "round"
+                    }
+                  })
+                }
+              ]
+            })
+          );
+        } else {
+          layers.push(addManualDirectionArrows(latlngs, arrowColor));
+        }
+
+        const group = L.layerGroup(layers);
         group.mainLine = line;
         return group;
       }
