@@ -396,6 +396,130 @@
       color: rgba(255, 255, 255, 0.45);
     }
 
+    .participants-panel {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 1.15rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .participants-heading {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 0.75rem;
+    }
+
+    .participants-heading span {
+      color: var(--gold);
+      font-size: 1.15rem;
+    }
+
+    .participants-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    .participants-list li {
+      font-size: 0.82rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 20px;
+      background: rgba(61, 139, 139, 0.25);
+      border: 1px solid rgba(61, 139, 139, 0.5);
+      color: var(--white);
+    }
+
+    .participants-empty {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-style: italic;
+      margin: 0;
+    }
+
+    .participants-empty.is-hidden,
+    .participants-list.is-hidden {
+      display: none;
+    }
+
+    .signup-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+      align-items: stretch;
+      margin-bottom: 0.75rem;
+    }
+
+    .signup-form input[type="text"] {
+      flex: 1 1 180px;
+      min-width: 0;
+      max-width: 280px;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      padding: 0.8rem 1rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--white);
+    }
+
+    .signup-form input[type="text"]::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .signup-form .btn-primary {
+      flex: 0 0 auto;
+    }
+
+    .signup-form.is-disabled {
+      display: none;
+    }
+
+    .signup-mailto {
+      display: none;
+      margin-bottom: 0.75rem;
+    }
+
+    .signup-mailto.is-visible {
+      display: inline-block;
+    }
+
+    .signup-alt {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.45);
+      margin-top: 0.5rem;
+    }
+
+    .signup-alt a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .signup-alt a:hover {
+      text-decoration: underline;
+    }
+
+    .signup-success {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      background: rgba(61, 139, 139, 0.2);
+      border: 1px solid rgba(61, 139, 139, 0.45);
+      color: var(--white);
+      font-size: 0.9rem;
+    }
+
+    .signup-success.is-visible {
+      display: block;
+    }
+
     .btn-primary {
       display: inline-block;
       background: var(--teal);
@@ -1139,7 +1263,19 @@
       letter-spacing: 0.02em;
     }
 
-    @media (max-width: 768px) {
+      @media (max-width: 768px) {
+      .signup-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .signup-form input[type="text"],
+      .signup-form .btn-primary,
+      .signup-mailto {
+        width: 100%;
+        max-width: none;
+      }
+
       .home-hero-photo {
         min-height: clamp(480px, 92vw, 560px);
       }
@@ -1499,9 +1635,29 @@
 
   <section class="signup-section" id="inscription">
     <h2>Je suis partant</h2>
-    <p id="signup-intro">Envoie-nous un message sur Instagram avec ton prénom et le parcours choisi.</p>
-    <a href="https://www.instagram.com/goelo.rides/" class="btn-primary" target="_blank" rel="noopener noreferrer">Je suis partant → DM @goelo.rides</a>
-    <p class="signup-hint">Gratuit · sans engagement · préviens-nous juste pour qu'on sache combien on est.</p>
+    <p id="signup-intro">Inscris-toi pour le parcours choisi — ton prénom apparaît dans la liste ci-dessous.</p>
+
+    <div class="participants-panel" aria-live="polite">
+      <p class="participants-heading">
+        <span id="participants-count">0</span> inscrit·e·s sur ce parcours
+      </p>
+      <ul class="participants-list is-hidden" id="participants-list"></ul>
+      <p class="participants-empty" id="participants-empty">Personne pour l’instant — sois le ou la première !</p>
+    </div>
+
+    <form class="signup-form" id="signup-form" method="POST">
+      <input type="text" name="prenom" id="signup-prenom" placeholder="Ton prénom" required autocomplete="given-name" maxlength="40">
+      <input type="hidden" name="parcours" id="signup-parcours" value="">
+      <input type="hidden" name="_subject" value="Inscription Goëlo Rides">
+      <input type="hidden" name="_captcha" value="false">
+      <button type="submit" class="btn-primary">Je m’inscris</button>
+    </form>
+    <a class="btn-primary signup-mailto" id="signup-mailto" href="#">Je m’inscris par e-mail</a>
+    <p class="signup-success" id="signup-success" role="status">
+      Merci ! Ton inscription est envoyée — ton prénom sera ajouté à la liste très vite.
+    </p>
+    <p class="signup-hint">Gratuit · sans engagement · tu peux annuler jusqu’à la veille.</p>
+    <p class="signup-alt">Tu préfères Instagram ? <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a></p>
   </section>
 
   <footer>
@@ -1519,6 +1675,14 @@
         region: "Côte du Goëlo",
         time: "8h30"
       };
+
+      /* E-mail pour recevoir les inscriptions (Formsubmit). Laisse vide pour lien mailto uniquement. */
+      const SIGNUP = {
+        formEmail: "",
+        participantsCsvUrl: ""
+      };
+
+      let participantsByRoute = { falaises: [], boucle: [] };
 
       const ROUTES = [
         {
@@ -1579,6 +1743,122 @@
       function formatKm(km) {
         return km.toFixed(1).replace(".", ",") + " km";
       }
+
+      function parseParticipantsCsv(text) {
+        const out = { falaises: [], boucle: [] };
+        const lines = text.trim().split(/\r?\n/);
+        if (lines.length < 2) return out;
+        const header = lines[0].toLowerCase().split(",");
+        const routeIdx = header.findIndex(function (h) { return h.includes("route"); });
+        const nameIdx = header.findIndex(function (h) { return h.includes("prenom") || h.includes("prénom") || h.includes("nom"); });
+        if (routeIdx < 0 || nameIdx < 0) return out;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(",");
+          const routeId = (cols[routeIdx] || "").trim().toLowerCase();
+          const name = (cols[nameIdx] || "").trim();
+          if (!name || !out[routeId]) continue;
+          if (out[routeId].indexOf(name) === -1) out[routeId].push(name);
+        }
+        return out;
+      }
+
+      function mergeParticipants(base, extra) {
+        const merged = { falaises: base.falaises.slice(), boucle: base.boucle.slice() };
+        ["falaises", "boucle"].forEach(function (id) {
+          (extra[id] || []).forEach(function (name) {
+            if (merged[id].indexOf(name) === -1) merged[id].push(name);
+          });
+        });
+        return merged;
+      }
+
+      async function loadParticipants() {
+        let data = { falaises: [], boucle: [] };
+        try {
+          const res = await fetch("participants.json");
+          if (res.ok) data = await res.json();
+        } catch { /* ignore */ }
+        if (SIGNUP.participantsCsvUrl) {
+          try {
+            const csvRes = await fetch(SIGNUP.participantsCsvUrl);
+            if (csvRes.ok) {
+              data = mergeParticipants(data, parseParticipantsCsv(await csvRes.text()));
+            }
+          } catch { /* ignore */ }
+        }
+        participantsByRoute = data;
+      }
+
+      function renderParticipants(routeId) {
+        const names = participantsByRoute[routeId] || [];
+        const countEl = document.getElementById("participants-count");
+        const listEl = document.getElementById("participants-list");
+        const emptyEl = document.getElementById("participants-empty");
+
+        if (countEl) countEl.textContent = String(names.length);
+        if (listEl) {
+          listEl.innerHTML = "";
+          names.forEach(function (name) {
+            const li = document.createElement("li");
+            li.textContent = name;
+            listEl.appendChild(li);
+          });
+          listEl.classList.toggle("is-hidden", names.length === 0);
+        }
+        if (emptyEl) emptyEl.classList.toggle("is-hidden", names.length > 0);
+      }
+
+      function setupSignupForm() {
+        const form = document.getElementById("signup-form");
+        const mailto = document.getElementById("signup-mailto");
+        const parcoursInput = document.getElementById("signup-parcours");
+        if (!form) return;
+
+        if (SIGNUP.formEmail) {
+          form.action = "https://formsubmit.co/" + encodeURIComponent(SIGNUP.formEmail);
+          form.classList.remove("is-disabled");
+          if (mailto) mailto.classList.remove("is-visible");
+          let nextInput = form.querySelector('input[name="_next"]');
+          if (!nextInput) {
+            nextInput = document.createElement("input");
+            nextInput.type = "hidden";
+            nextInput.name = "_next";
+            form.appendChild(nextInput);
+          }
+          nextInput.value =
+            window.location.origin + window.location.pathname + "?inscrit=1#inscription";
+        } else {
+          form.classList.add("is-disabled");
+          if (mailto) {
+            mailto.classList.add("is-visible");
+            mailto.addEventListener("click", function (e) {
+              if (!activeRouteRef) {
+                e.preventDefault();
+                alert("Choisis d’abord un parcours plus haut.");
+                return;
+              }
+              const subject = encodeURIComponent("Inscription Goëlo Rides — " + activeRouteRef.track);
+              const body = encodeURIComponent(
+                "Prénom :\nParcours : " + activeRouteRef.track + "\nDate : " + activeRouteRef.depart.dateLabel
+              );
+              mailto.href = "mailto:?subject=" + subject + "&body=" + body;
+            });
+          }
+        }
+
+        form.addEventListener("submit", function () {
+          if (parcoursInput && activeRouteRef) {
+            parcoursInput.value = activeRouteRef.track + " (" + activeRouteRef.depart.dateLabel + ")";
+          }
+        });
+
+        if (window.location.search.indexOf("inscrit=1") !== -1) {
+          const ok = document.getElementById("signup-success");
+          if (ok) ok.classList.add("is-visible");
+        }
+      }
+
+      let activeRouteRef = null;
 
       function syncRouteDistances(routes) {
         routes.forEach(function (route) {
@@ -1700,9 +1980,9 @@
         }
         if (signupIntro) {
           signupIntro.textContent =
-            "Tu viens pour « " + route.track + " » le " + d.dateLabel +
-            " ? Envoie-nous un DM sur Instagram avec ton prénom.";
+            "Inscription pour « " + route.track + " » — " + d.dateLabel + ".";
         }
+        renderParticipants(route.id);
       }
 
       function cityMarkerIcon(city) {
@@ -1822,6 +2102,7 @@
 
         function showRoute(route) {
           activeRoute = route;
+          activeRouteRef = route;
           setRouteSectionsVisible(true);
           clearTrack();
           const latlngs = route.profile.points.map(function (p) { return [p.lat, p.lon]; });
@@ -1893,6 +2174,9 @@
         );
 
         loadedRoutesCache = results.filter(function (r) { return r !== null; });
+
+        await loadParticipants();
+        setupSignupForm();
 
         loadedRoutesCache.forEach(function (route) {
           bindRouteUi(route);
