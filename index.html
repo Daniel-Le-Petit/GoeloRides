@@ -41,245 +41,75 @@
 
     img, svg, video { max-width: 100%; height: auto; }
 
-    /* —— Social ad preview —— */
-    .ad-preview-wrap {
-      padding: 2.5rem 1.25rem 2rem;
-      background: #111a22;
+    /* —— Accueil —— */
+    .home-hero {
+      position: relative;
+      padding: 3rem 1.5rem 2.5rem;
+      overflow: hidden;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .ad-preview-label {
+    .home-hero-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        165deg,
+        rgba(244, 164, 58, 0.22) 0%,
+        rgba(61, 139, 139, 0.12) 40%,
+        var(--ocean) 75%
+      );
+      pointer-events: none;
+    }
+
+    .home-hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
       text-align: center;
-      font-size: 0.7rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .home-hero .logo-box {
       margin-bottom: 1.25rem;
     }
 
-    .ad-card {
-      width: 100%;
-      max-width: 360px;
-      margin: 0 auto;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
-      background: var(--ocean);
-    }
-
-    .ad-photo {
-      position: relative;
-      height: 200px;
-      background: linear-gradient(
-        180deg,
-        #f4a43a 0%,
-        #e87a4a 18%,
-        #c45a6a 32%,
-        #5a4a7a 50%,
-        #2a3a5a 68%,
-        #0d1820 100%
-      );
-      overflow: hidden;
-    }
-
-    .ad-photo::before {
-      content: "";
-      position: absolute;
-      width: 72px;
-      height: 72px;
-      top: 28%;
-      right: 22%;
-      background: radial-gradient(circle, #ffe8b0 0%, #f4a43a 45%, transparent 70%);
-      border-radius: 50%;
-      opacity: 0.9;
-    }
-
-    .ad-silhouettes {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 55%;
-    }
-
-    .ad-badge {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: var(--gold);
-      color: var(--ocean);
-      font-size: 0.65rem;
-      font-weight: 600;
-      padding: 0.35rem 0.6rem;
-      border-radius: 4px;
-      z-index: 2;
-    }
-
-    .ad-panel {
-      background: linear-gradient(135deg, #1a3535 0%, #0f2828 100%);
-      padding: 1rem 1.1rem 1.1rem;
-    }
-
-    .ad-logo {
+    .home-badge {
       display: inline-block;
-      background: var(--white);
-      color: var(--ocean);
-      font-size: 0.55rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      padding: 0.35rem 0.5rem;
-      margin-bottom: 0.6rem;
-      line-height: 1.3;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--gold);
+      border: 1px solid rgba(244, 164, 58, 0.35);
+      padding: 0.35rem 0.75rem;
+      border-radius: 2px;
+      margin-bottom: 1.25rem;
+      background: rgba(13, 24, 32, 0.4);
     }
 
-    .ad-logo span {
-      display: block;
-      font-size: 0.45rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      opacity: 0.75;
-    }
-
-    .ad-photo-overlay {
-      position: absolute;
-      bottom: 12px;
-      left: 12px;
-      right: 12px;
-      z-index: 2;
-      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-    }
-
-    .ad-photo-brand {
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-    }
-
-    .ad-photo-place {
-      font-size: 0.5rem;
-      opacity: 0.85;
-      margin-bottom: 0.35rem;
-    }
-
-    .ad-photo-tagline {
+    .home-hero h1 {
       font-family: var(--font-serif);
       font-style: italic;
-      font-size: 0.85rem;
-      line-height: 1.25;
-    }
-
-    .ad-headline {
-      font-size: 0.85rem;
-      font-weight: 600;
-      line-height: 1.4;
-      margin-bottom: 0.5rem;
-      color: var(--white);
-    }
-
-    .ad-lead {
-      font-size: 0.72rem;
-      line-height: 1.5;
-      color: var(--muted);
-      margin-bottom: 0.65rem;
-    }
-
-    .ad-promise {
-      font-size: 0.72rem;
-      font-style: italic;
-      color: rgba(255, 255, 255, 0.55);
-      margin-bottom: 0.65rem;
-    }
-
-    .ad-checks {
-      list-style: none;
-      font-size: 0.72rem;
-      margin-bottom: 0.85rem;
-      color: var(--muted);
-    }
-
-    .ad-checks li {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.4rem;
-      margin-bottom: 0.35rem;
-    }
-
-    .ad-checks .check { color: var(--gold); flex-shrink: 0; }
-
-    .ad-cta {
-      display: block;
-      width: 100%;
-      text-align: center;
-      background: var(--teal);
-      color: var(--white);
-      text-decoration: none;
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.55rem;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .ad-cta:hover { background: var(--teal-dark); }
-
-    .ad-footer-bar {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.55rem 1rem;
-      background: #0a1218;
-      font-size: 0.65rem;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .ad-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--teal);
-      color: var(--white);
-      font-size: 0.6rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .ad-handle { color: var(--white); font-weight: 500; }
-    .ad-sponsored { margin-left: auto; }
-
-    .ad-caption-ref {
-      max-width: 360px;
-      margin: 1.25rem auto 0;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px dashed rgba(255, 255, 255, 0.12);
-      border-radius: 8px;
-      font-size: 0.75rem;
-      color: var(--muted);
-      line-height: 1.55;
-      white-space: pre-line;
-    }
-
-    .ad-caption-ref strong {
-      display: block;
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.4);
-      margin-bottom: 0.5rem;
       font-weight: 500;
+      font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+      line-height: 1.15;
+      margin-bottom: 1rem;
     }
 
-    .page-divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(244, 164, 58, 0.35), transparent);
+    .home-lead {
+      font-size: clamp(1rem, 2.5vw, 1.1rem);
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 1.75rem;
+      line-height: 1.65;
     }
 
-    /* —— Hero —— */
+    .home-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    /* —— Hero (legacy, unused) —— */
     .hero {
       position: relative;
       min-height: 100vh;
@@ -754,46 +584,172 @@
       padding: 0 1.5rem 2rem;
     }
 
-    .route-picker {
+    .route-choices-hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .route-choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .route-choice-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+      font-family: var(--font-sans);
+      padding: 1.15rem 1.2rem 1.2rem;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--white);
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
+    }
+
+    .route-choice-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      border-radius: 12px 12px 0 0;
+      background: var(--route-color, var(--teal));
+    }
+
+    .route-choice-card:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .route-choice-card.is-active {
+      border-color: var(--route-color);
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: 0 0 0 1px var(--route-color), 0 16px 40px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .route-choice-card.is-active::after {
+      content: "Affiché sur la carte";
+      position: absolute;
+      top: 0.65rem;
+      right: 0.75rem;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--route-color);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+    }
+
+    .route-choice-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.35rem;
+    }
+
+    .route-choice-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--route-color);
+      flex-shrink: 0;
+    }
+
+    .route-choice-title {
+      font-family: var(--font-serif);
+      font-size: 1.05rem;
+      line-height: 1.25;
+      padding-right: 0.5rem;
+      margin-top: 0.15rem;
+    }
+
+    .route-choice-km {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--route-color);
+    }
+
+    .route-choice-pace {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .route-choice-desc {
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.55);
+      margin-top: 0.15rem;
+    }
+
+    .route-detail-panel {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 1.25rem;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .route-detail-panel.is-falaises {
+      border-color: rgba(252, 76, 2, 0.45);
+      box-shadow: 0 0 0 1px rgba(252, 76, 2, 0.2), 0 20px 48px rgba(0, 0, 0, 0.3);
+    }
+
+    .route-detail-panel.is-boucle {
+      border-color: rgba(37, 99, 235, 0.45);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2), 0 20px 48px rgba(0, 0, 0, 0.3);
+    }
+
+    .route-detail-header {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      align-items: baseline;
+      gap: 0.5rem 1rem;
       margin-bottom: 1rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .route-picker-btn {
-      font-family: var(--font-sans);
-      font-size: 0.8rem;
+    .route-detail-header h3 {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
       font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
+      flex: 1;
+      min-width: 200px;
     }
 
-    .route-picker-btn.is-active {
-      background: #fc4c02;
-      border-color: #fc4c02;
-      color: #fff;
+    .route-detail-km {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
 
-    .route-picker-btn.route-bleu.is-active {
-      background: #2563eb;
-      border-color: #2563eb;
-    }
+    .route-detail-panel.is-falaises .route-detail-km { color: #fc4c02; }
+    .route-detail-panel.is-boucle .route-detail-km { color: #60a5fa; }
 
-    .active-route-banner {
+    .route-detail-meta {
+      width: 100%;
       font-size: 0.85rem;
-      color: var(--gold);
-      margin-bottom: 0.75rem;
-      min-height: 1.25rem;
-    }
-
-    .active-route-banner strong {
-      color: var(--white);
+      color: var(--muted);
     }
 
     .group-card.has-route {
@@ -1010,9 +966,13 @@
     }
 
     #route-map {
-      height: 420px;
+      height: 480px;
       width: 100%;
       background: #e8eef2;
+    }
+
+    .route-detail-panel .ride-event-card {
+      margin-bottom: 1rem;
     }
 
 
@@ -1096,8 +1056,26 @@
     }
 
     @media (max-width: 768px) {
-      .ad-preview-wrap { padding: 1.5rem 1rem 1.25rem; }
-      .ad-caption-ref { display: none; }
+      .home-hero {
+        padding: 2.25rem 1rem 2rem;
+      }
+
+      .home-actions {
+        flex-direction: column;
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+
+      .home-actions .btn-primary,
+      .home-actions .btn-secondary {
+        width: 100%;
+        text-align: center;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
       .hero {
         padding: 1.5rem 1rem 2.5rem;
@@ -1132,15 +1110,33 @@
 
       .strava-view { padding: 0 1rem 1.5rem; }
 
-      .route-picker {
-        flex-direction: column;
+      .route-choices {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
       }
 
-      .route-picker-btn {
-        width: 100%;
-        text-align: center;
-        min-height: 44px;
-        font-size: 0.85rem;
+      .route-choice-card {
+        min-height: auto;
+        padding: 1rem;
+      }
+
+      .route-choice-card.is-active::after {
+        position: static;
+        display: inline-block;
+        margin-top: 0.35rem;
+        align-self: flex-start;
+      }
+
+      .route-choice-km {
+        font-size: 1.75rem;
+      }
+
+      .route-detail-panel {
+        padding: 1rem;
+      }
+
+      .route-detail-header h3 {
+        font-size: 1.15rem;
       }
 
       .ride-event-card {
@@ -1158,11 +1154,6 @@
 
       .level-badge {
         font-size: 0.65rem;
-      }
-
-      .active-route-banner {
-        font-size: 0.78rem;
-        line-height: 1.45;
       }
 
       .route-stats {
@@ -1240,70 +1231,30 @@
 </head>
 <body>
 
-  <!-- Social ad preview -->
-  <div class="ad-preview-wrap">
-    <p class="ad-preview-label">Aperçu annonce Instagram / Facebook</p>
-    <article class="ad-card">
-      <div class="ad-photo">
-        <span class="ad-badge">🚴 1ère sortie · début juillet</span>
-        <div class="ad-photo-overlay">
-          <div class="ad-photo-brand">GOËLO RIDES</div>
-          <div class="ad-photo-place">Saint-Quay-Portrieux · Été 2026</div>
-        </div>
-        <svg class="ad-silhouettes" viewBox="0 0 360 110" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-          <path fill="#0d1820" d="M0,110 L0,75 Q40,55 80,70 T160,62 T240,78 T360,68 L360,110 Z"/>
-          <g fill="#0a1218" opacity="0.9">
-            <ellipse cx="90" cy="58" rx="8" ry="8"/><circle cx="90" cy="48" r="5"/>
-            <path d="M88,66 L82,78 L86,78 L90,72 L94,78 L98,78 L92,66 Z"/>
-            <circle cx="82" cy="78" r="4"/><circle cx="98" cy="78" r="4"/>
-          </g>
-          <g fill="#0a1218" opacity="0.85">
-            <ellipse cx="200" cy="62" rx="7" ry="7"/><circle cx="200" cy="54" r="4"/>
-            <path d="M198,69 L193,80 L196,80 L200,74 L204,80 L207,80 L202,69 Z"/>
-            <circle cx="193" cy="80" r="3.5"/><circle cx="207" cy="80" r="3.5"/>
-          </g>
-        </svg>
+  <header class="home-hero" id="accueil">
+    <div class="home-hero-bg" aria-hidden="true"></div>
+    <div class="home-hero-inner">
+      <div class="logo-box">
+        <div class="logo-title">GOËLO RIDES</div>
+        <div class="logo-sub">Saint-Quay-Portrieux</div>
       </div>
-      <div class="ad-panel">
-        <div class="ad-logo">GOËLO RIDES<span>Saint-Quay-Portrieux</span></div>
-        <p class="ad-headline">Tu roules seul à Saint-Quay cet été ?</p>
-        <p class="ad-lead">Goëlo Rides — premières sorties groupées début juillet 2026. Locaux et vacanciers. 4 groupes selon ton niveau.</p>
-        <p class="ad-promise">Pas un club. Pas une course. Juste la route.</p>
-        <ul class="ad-checks">
-          <li><span class="check">✓</span> Blanc · Vert · Bleu · Rouge — choisis ton rythme</li>
-          <li><span class="check">✓</span> Départ : port de Saint-Quay-Portrieux</li>
-          <li><span class="check">✓</span> 1ère sortie : début juillet (date sur le site)</li>
-        </ul>
-        <a href="#map-section" class="ad-cta">Voir les parcours →</a>
+      <p class="home-badge">Premières sorties · début juillet 2026</p>
+      <h1>La route du Goëlo, à plusieurs</h1>
+      <p class="home-lead">
+        Sorties groupées pour locaux et vacanciers. Quatre groupes selon ton niveau —
+        départ au port de Saint-Quay-Portrieux.
+      </p>
+      <div class="home-actions">
+        <a href="#map-section" class="btn-primary">Voir les parcours</a>
+        <a href="#inscription" class="btn-secondary">Je suis partant</a>
       </div>
-      <div class="ad-footer-bar">
-        <div class="ad-avatar">GR</div>
-        <span class="ad-handle">goelo.rides</span>
-        <span class="ad-sponsored">Sponsorisé</span>
-      </div>
-    </article>
-    <div class="ad-caption-ref">
-      <strong>Texte principal Meta (copier-coller)</strong>
-Tu roules seul à Saint-Quay cet été ?
+    </div>
+  </header>
 
-Goëlo Rides — premières sorties groupées début juillet 2026.
-Locaux et vacanciers. 4 groupes selon ton niveau.
-Pas un club. Pas une course. Juste la route.
-
-✓ Blanc · Vert · Bleu · Rouge — choisis ton rythme
-✓ Départ : port de Saint-Quay-Portrieux
-✓ 1ère sortie : début juillet (date exacte sur le site)
-
-→ Voir les groupes et s'inscrire</div>
-  </div>
-
-  <div class="page-divider"></div>
-
-  <!-- Map -->
   <section id="map-section" style="padding-top: 2.5rem;">
     <div class="section-header">
       <h2>Les parcours</h2>
-      <p>Autour de Saint-Quay-Portrieux · Côte du Goëlo</p>
+      <p>Deux itinéraires au départ de Saint-Quay-Portrieux · Côte du Goëlo</p>
     </div>
     <p class="map-alert" id="map-alert" role="status">
       Les tracés GPX ne se chargent pas en ouvrant le fichier directement. Lance un serveur local
@@ -1311,37 +1262,48 @@ Pas un club. Pas une course. Juste la route.
       <code style="color: var(--white);">http://127.0.0.1:8765</code>.
     </p>
     <div class="strava-view">
-      <p class="active-route-banner" id="active-route-banner" aria-live="polite"></p>
-      <div class="route-picker" id="route-picker" aria-label="Choisir un parcours"></div>
-      <div class="map-options" id="map-options">
-        <label>
-          <input type="checkbox" id="opt-cities" checked>
-          Villes traversées
-        </label>
-      </div>
-      <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
-      <article class="ride-event-card" id="ride-event-card" aria-live="polite">
-        <div class="ride-event-date">
-          <span class="ride-day" id="ride-day">5</span>
-          <span class="ride-month" id="ride-month">JUIL</span>
-          <span class="ride-year" id="ride-year">2026</span>
+      <p class="route-choices-hint">Compare les deux parcours, puis touche celui que tu veux voir sur la carte.</p>
+      <div class="route-choices" id="route-picker" role="tablist" aria-label="Choisir un parcours"></div>
+
+      <div class="route-detail-panel" id="route-detail-panel" aria-live="polite">
+        <div class="route-detail-header">
+          <h3 id="route-detail-title">La Route des Falaises</h3>
+          <span class="route-detail-km" id="route-detail-km">— km</span>
+          <p class="route-detail-meta" id="route-detail-meta">Groupe Blanc · 15–18 km/h · Découverte</p>
         </div>
-        <div class="ride-event-icon" aria-hidden="true">🚴</div>
-        <div class="ride-event-body">
-          <div class="ride-event-head">
-            <h3 class="ride-event-title" id="ride-title">Sam 8h30 · Goëlo Rides · Côte du Goëlo</h3>
-            <span class="level-badge level-blanc" id="level-badge">Groupe Blanc</span>
+
+        <article class="ride-event-card" id="ride-event-card">
+          <div class="ride-event-date">
+            <span class="ride-day" id="ride-day">5</span>
+            <span class="ride-month" id="ride-month">JUIL</span>
+            <span class="ride-year" id="ride-year">2026</span>
           </div>
-          <p class="ride-meet-label">Rendez-vous</p>
-          <p class="ride-meet-spot" id="ride-meet">Parking du port, 22410 Saint-Quay-Portrieux, Bretagne</p>
-          <p class="ride-meta" id="ride-meta">Sortie · Convivial · — km · Route</p>
-          <p class="ride-date-note" id="ride-date-note">Date exacte annoncée sur @goelo.rides</p>
+          <div class="ride-event-icon" aria-hidden="true">🚴</div>
+          <div class="ride-event-body">
+            <div class="ride-event-head">
+              <h4 class="ride-event-title" id="ride-title">Sam 8h30 · Goëlo Rides · Côte du Goëlo</h4>
+              <span class="level-badge level-blanc" id="level-badge">Groupe Blanc</span>
+            </div>
+            <p class="ride-meet-label">Rendez-vous</p>
+            <p class="ride-meet-spot" id="ride-meet">Parking du port, 22410 Saint-Quay-Portrieux, Bretagne</p>
+            <p class="ride-meta" id="ride-meta">Sortie · Convivial · — km · Route</p>
+            <p class="ride-date-note" id="ride-date-note">Date exacte annoncée sur @goelo.rides</p>
+          </div>
+        </article>
+
+        <div class="map-options" id="map-options">
+          <label>
+            <input type="checkbox" id="opt-cities" checked>
+            Villes traversées sur la carte
+          </label>
         </div>
-      </article>
-      <div class="strava-map-block">
-        <div class="map-wrap" style="padding:0;margin:0;max-width:none;">
-          <div class="map-loading" id="map-loading">Chargement des parcours…</div>
-          <div id="route-map" role="application" aria-label="Carte du parcours"></div>
+        <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
+
+        <div class="strava-map-block">
+          <div class="map-wrap" style="padding:0;margin:0;max-width:none;">
+            <div class="map-loading" id="map-loading">Chargement des parcours…</div>
+            <div id="route-map" role="application" aria-label="Carte du parcours sélectionné"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1436,13 +1398,13 @@ Pas un club. Pas une course. Juste la route.
           id: "falaises",
           file: "La Route des Falaises.gpx",
           color: "#fc4c02",
-          pickerClass: "",
           name: "Groupe Blanc",
           track: "La Route des Falaises",
           pace: "15–18 km/h",
           levelClass: "level-blanc",
           levelLabel: "Découverte",
           vibe: "Convivial",
+          shortDesc: "Falaises et villages côtiers · rythme tranquille",
           cities: [
             { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
             { name: "Plouha", lat: 48.6728, lon: -2.903 },
@@ -1454,13 +1416,13 @@ Pas un club. Pas une course. Juste la route.
           id: "boucle",
           file: "La Grande Boucle du Goëlo.gpx",
           color: "#2563eb",
-          pickerClass: "route-bleu",
           name: "Groupe Bleu",
           track: "La Grande Boucle du Goëlo",
           pace: "22–26 km/h",
           levelClass: "level-bleu",
           levelLabel: "Confirmé",
           vibe: "Rouleur",
+          shortDesc: "Grande boucle du Goëlo · parcours long et soutenu",
           cities: [
             { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true },
             { name: "Lantic", lat: 48.5976, lon: -2.899 },
@@ -1480,6 +1442,9 @@ Pas un club. Pas une course. Juste la route.
         routes.forEach(function (route) {
           const kmLabel = formatKm(route.profile.totalKm);
           document.querySelectorAll('.route-km[data-route-id="' + route.id + '"]').forEach(function (el) {
+            el.textContent = kmLabel;
+          });
+          document.querySelectorAll('[data-choice-km="' + route.id + '"]').forEach(function (el) {
             el.textContent = kmLabel;
           });
         });
@@ -1574,11 +1539,20 @@ Pas un club. Pas une course. Juste la route.
         }
         if (noteEl) noteEl.textContent = EVENT.dateNote;
 
-        const banner = document.getElementById("active-route-banner");
-        if (banner) {
-          banner.innerHTML =
-            "Parcours affiché : <strong>" + route.track + "</strong> · " +
-            formatKm(p.totalKm) + " · " + route.name;
+        const detailPanel = document.getElementById("route-detail-panel");
+        const detailTitle = document.getElementById("route-detail-title");
+        const detailKm = document.getElementById("route-detail-km");
+        const detailMeta = document.getElementById("route-detail-meta");
+
+        if (detailPanel) {
+          detailPanel.classList.remove("is-falaises", "is-boucle");
+          detailPanel.classList.add("is-" + route.id);
+        }
+        if (detailTitle) detailTitle.textContent = route.track;
+        if (detailKm) detailKm.textContent = formatKm(p.totalKm);
+        if (detailMeta) {
+          detailMeta.textContent =
+            route.name + " · " + route.pace + " · " + route.levelLabel;
         }
       }
 
@@ -1712,25 +1686,41 @@ Pas un club. Pas une course. Juste la route.
           updateRideCard(route);
           showCities(route);
 
-          document.querySelectorAll(".route-picker-btn").forEach(function (btn) {
-            btn.classList.toggle("is-active", btn.dataset.routeId === route.id);
+          document.querySelectorAll(".route-choice-card").forEach(function (card) {
+            const isActive = card.dataset.routeId === route.id;
+            card.classList.toggle("is-active", isActive);
+            card.setAttribute("aria-selected", isActive ? "true" : "false");
           });
           document.querySelectorAll(".group-card[data-route-id]").forEach(function (card) {
             card.classList.toggle("is-route-active", card.dataset.routeId === route.id);
           });
+
+          const detailPanel = document.getElementById("route-detail-panel");
+          if (detailPanel && window.matchMedia("(max-width: 768px)").matches) {
+            detailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
         }
 
         function bindRouteUi(route) {
           if (routePicker) {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "route-picker-btn " + (route.pickerClass || "");
-            btn.dataset.routeId = route.id;
-            btn.textContent = route.track + " (" + formatKm(route.profile.totalKm) + ")";
-            btn.addEventListener("click", function () {
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = "route-choice-card";
+            card.dataset.routeId = route.id;
+            card.setAttribute("role", "tab");
+            card.style.setProperty("--route-color", route.color);
+            card.innerHTML =
+              '<span class="route-choice-km" data-choice-km="' + route.id + '">' +
+              formatKm(route.profile.totalKm) + "</span>" +
+              '<span class="route-choice-title">' + route.track + "</span>" +
+              '<span class="route-choice-group"><span class="route-choice-dot" aria-hidden="true"></span>' +
+              route.name + "</span>" +
+              '<span class="route-choice-pace">' + route.pace + " · " + route.levelLabel + "</span>" +
+              '<span class="route-choice-desc">' + (route.shortDesc || "") + "</span>";
+            card.addEventListener("click", function () {
               showRoute(route);
             });
-            routePicker.appendChild(btn);
+            routePicker.appendChild(card);
           }
 
           document.querySelectorAll('.group-card[data-route-id="' + route.id + '"]').forEach(function (card) {
