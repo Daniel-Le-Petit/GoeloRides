@@ -51,17 +51,21 @@
       width: 100%;
       max-width: 1100px;
       margin: 0 auto;
-      height: clamp(200px, 36vw, 380px);
+      min-height: clamp(420px, 58vw, 520px);
       overflow: hidden;
       background: #0a1218;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
     }
 
     .home-hero-photo img {
-      display: block;
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 58%;
+      object-position: center 52%;
       filter: saturate(1.1) contrast(1.03);
     }
 
@@ -69,26 +73,30 @@
       content: "";
       position: absolute;
       inset: 0;
+      z-index: 1;
       pointer-events: none;
       background: linear-gradient(
         180deg,
-        rgba(13, 24, 32, 0) 55%,
-        rgba(13, 24, 32, 0.85) 100%
+        rgba(13, 24, 32, 0) 0%,
+        rgba(13, 24, 32, 0.05) 35%,
+        rgba(13, 24, 32, 0.55) 68%,
+        rgba(13, 24, 32, 0.9) 100%
       );
     }
 
-    .home-hero-body {
-      padding: 2rem 1.5rem 2.75rem;
+    .home-hero-inner {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 1.75rem 1.5rem 2rem;
       text-align: center;
     }
 
-    .home-hero-inner {
-      max-width: 640px;
-      margin: 0 auto;
-    }
-
     .home-hero .logo-box {
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
     }
 
     .home-badge {
@@ -96,29 +104,32 @@
       font-size: 0.75rem;
       letter-spacing: 0.06em;
       color: var(--gold);
-      border: 1px solid rgba(244, 164, 58, 0.35);
+      border: 1px solid rgba(244, 164, 58, 0.45);
       padding: 0.35rem 0.75rem;
       border-radius: 2px;
-      margin-bottom: 1.25rem;
-      background: rgba(244, 164, 58, 0.08);
+      margin-bottom: 1rem;
+      background: rgba(13, 24, 32, 0.5);
+      backdrop-filter: blur(6px);
     }
 
     .home-hero h1 {
       font-family: var(--font-serif);
       font-style: italic;
       font-weight: 500;
-      font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+      font-size: clamp(1.75rem, 5vw, 2.5rem);
       line-height: 1.15;
-      margin-bottom: 1rem;
+      margin-bottom: 0.85rem;
       color: var(--white);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
     }
 
     .home-lead {
-      font-size: clamp(1rem, 2.5vw, 1.08rem);
-      color: var(--muted);
+      font-size: clamp(0.92rem, 2.4vw, 1.05rem);
+      color: rgba(255, 255, 255, 0.9);
       max-width: 520px;
-      margin: 0 auto 1.75rem;
-      line-height: 1.65;
+      margin: 0 auto 1.35rem;
+      line-height: 1.6;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
     }
 
     .home-actions {
@@ -126,6 +137,11 @@
       flex-wrap: wrap;
       gap: 0.75rem;
       justify-content: center;
+    }
+
+    .home-hero .btn-secondary {
+      background: rgba(13, 24, 32, 0.4);
+      backdrop-filter: blur(4px);
     }
 
     /* —— Hero (legacy, unused) —— */
@@ -1084,15 +1100,23 @@
 
     @media (max-width: 768px) {
       .home-hero-photo {
-        height: clamp(180px, 52vw, 300px);
+        min-height: clamp(480px, 92vw, 560px);
       }
 
       .home-hero-photo img {
-        object-position: center 55%;
+        object-position: center 48%;
       }
 
-      .home-hero-body {
-        padding: 1.75rem 1rem 2.25rem;
+      .home-hero-inner {
+        padding: 1.5rem 1rem 1.75rem;
+      }
+
+      .home-lead br {
+        display: none;
+      }
+
+      .home-lead br + br {
+        display: none;
       }
 
       .home-actions {
@@ -1275,8 +1299,6 @@
         height="3024"
         decoding="async"
         fetchpriority="high">
-    </div>
-    <div class="home-hero-body">
       <div class="home-hero-inner">
         <div class="logo-box">
           <div class="logo-title">GOËLO RIDES</div>
