@@ -44,33 +44,54 @@
     /* —— Accueil —— */
     .home-hero {
       position: relative;
-      padding: 3rem 1.5rem 2.5rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: min(88vh, 820px);
+      min-height: min(88dvh, 820px);
+      padding: 2.5rem 1.5rem 3rem;
       overflow: hidden;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .home-hero-bg {
+    .home-hero-media {
       position: absolute;
       inset: 0;
-      background: linear-gradient(
-        165deg,
-        rgba(244, 164, 58, 0.22) 0%,
-        rgba(61, 139, 139, 0.12) 40%,
-        var(--ocean) 75%
-      );
       pointer-events: none;
+    }
+
+    .home-hero-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 35%;
+    }
+
+    .home-hero-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+        rgba(13, 24, 32, 0.15) 0%,
+        rgba(13, 24, 32, 0.35) 40%,
+        rgba(13, 24, 32, 0.82) 72%,
+        rgba(13, 24, 32, 0.94) 100%
+      );
     }
 
     .home-hero-inner {
       position: relative;
       z-index: 1;
-      max-width: 720px;
+      width: 100%;
+      max-width: 640px;
       margin: 0 auto;
       text-align: center;
     }
 
     .home-hero .logo-box {
       margin-bottom: 1.25rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     }
 
     .home-badge {
@@ -78,11 +99,12 @@
       font-size: 0.75rem;
       letter-spacing: 0.06em;
       color: var(--gold);
-      border: 1px solid rgba(244, 164, 58, 0.35);
+      border: 1px solid rgba(244, 164, 58, 0.45);
       padding: 0.35rem 0.75rem;
       border-radius: 2px;
       margin-bottom: 1.25rem;
-      background: rgba(13, 24, 32, 0.4);
+      background: rgba(13, 24, 32, 0.55);
+      backdrop-filter: blur(6px);
     }
 
     .home-hero h1 {
@@ -92,14 +114,17 @@
       font-size: clamp(1.85rem, 5.5vw, 2.75rem);
       line-height: 1.15;
       margin-bottom: 1rem;
+      color: var(--white);
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
     }
 
     .home-lead {
-      font-size: clamp(1rem, 2.5vw, 1.1rem);
-      color: var(--muted);
+      font-size: clamp(1rem, 2.5vw, 1.08rem);
+      color: rgba(255, 255, 255, 0.88);
       max-width: 520px;
       margin: 0 auto 1.75rem;
       line-height: 1.65;
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
     }
 
     .home-actions {
@@ -107,6 +132,11 @@
       flex-wrap: wrap;
       gap: 0.75rem;
       justify-content: center;
+    }
+
+    .home-hero .btn-secondary {
+      background: rgba(13, 24, 32, 0.35);
+      backdrop-filter: blur(4px);
     }
 
     /* —— Hero (legacy, unused) —— */
@@ -1065,7 +1095,12 @@
 
     @media (max-width: 768px) {
       .home-hero {
-        padding: 2.25rem 1rem 2rem;
+        min-height: min(78dvh, 640px);
+        padding: 2rem 1rem 2.25rem;
+      }
+
+      .home-hero-media img {
+        object-position: center 30%;
       }
 
       .home-actions {
@@ -1240,17 +1275,27 @@
 <body>
 
   <header class="home-hero" id="accueil">
-    <div class="home-hero-bg" aria-hidden="true"></div>
+    <div class="home-hero-media" aria-hidden="true">
+      <img
+        src="Saint-Quay.jpeg"
+        alt=""
+        width="4032"
+        height="3024"
+        decoding="async"
+        fetchpriority="high">
+    </div>
+    <div class="home-hero-overlay" aria-hidden="true"></div>
     <div class="home-hero-inner">
       <div class="logo-box">
         <div class="logo-title">GOËLO RIDES</div>
         <div class="logo-sub">Saint-Quay-Portrieux</div>
       </div>
-      <p class="home-badge">Premières sorties · début juillet 2026</p>
-      <h1>La route du Goëlo, à plusieurs</h1>
+      <p class="home-badge">Baie du Goëlo · été 2026</p>
+      <h1>La côte, à vélo</h1>
       <p class="home-lead">
-        Sorties groupées pour locaux et vacanciers. Quatre groupes selon ton niveau —
-        départ au port de Saint-Quay-Portrieux.
+        Sorties vélo conviviales au bord de l’eau — départ au port de Saint-Quay-Portrieux.<br><br>
+        Tu es de passage ou du coin ? Rejoins un groupe à ton rythme.<br><br>
+        Pas d’adhésion. Pas de chronomètre. Juste rouler ensemble.
       </p>
       <div class="home-actions">
         <a href="#map-section" class="btn-primary">Voir les parcours</a>
