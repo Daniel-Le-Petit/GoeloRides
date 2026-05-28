@@ -759,18 +759,17 @@
 
     .route-choice-card {
       position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      text-align: left;
+      display: block;
+      width: 100%;
       font-family: var(--font-sans);
-      padding: 1.15rem 1.2rem 1.2rem;
+      padding: 0;
       border-radius: 12px;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--white);
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      background: transparent;
+      color: inherit;
       cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
     }
 
     .route-choice-card::before {
@@ -780,83 +779,43 @@
       left: 0;
       right: 0;
       height: 4px;
-      border-radius: 12px 12px 0 0;
+      z-index: 1;
       background: var(--route-color, var(--teal));
     }
 
     .route-choice-card:hover {
-      border-color: rgba(255, 255, 255, 0.22);
-      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.28);
+      transform: translateY(-1px);
     }
 
     .route-choice-card.is-active {
       border-color: var(--route-color);
-      background: rgba(255, 255, 255, 0.07);
-      box-shadow: 0 0 0 1px var(--route-color), 0 16px 40px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 0 0 1px var(--route-color), 0 12px 32px rgba(0, 0, 0, 0.35);
       transform: translateY(-2px);
     }
 
     .route-choice-card.is-active::after {
-      content: "Affiché sur la carte";
+      content: "Sur la carte";
       position: absolute;
-      top: 0.65rem;
-      right: 0.75rem;
-      font-size: 0.6rem;
+      top: 0.55rem;
+      right: 0.55rem;
+      z-index: 2;
+      font-size: 0.58rem;
       font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--route-color);
-      background: rgba(0, 0, 0, 0.35);
+      color: #fff;
+      background: rgba(0, 0, 0, 0.55);
       padding: 0.2rem 0.45rem;
       border-radius: 4px;
     }
 
-    .route-choice-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 0.35rem;
-    }
-
-    .route-choice-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--route-color);
-      flex-shrink: 0;
-    }
-
-    .route-choice-title {
-      font-family: var(--font-serif);
-      font-size: 1.05rem;
-      line-height: 1.25;
-      padding-right: 0.5rem;
-      margin-top: 0.15rem;
-    }
-
-    .route-choice-km {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1;
-      color: var(--route-color);
-    }
-
-    .route-choice-pace {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .route-choice-desc {
-      font-size: 0.78rem;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.55);
-      margin-top: 0.15rem;
+    .route-choice-card .ride-event-card {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      width: 100%;
     }
 
     .route-pick-prompt {
@@ -888,13 +847,6 @@
 
     #inscription.signup-section.is-visible {
       display: block;
-    }
-
-    .route-choice-date {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--gold);
-      letter-spacing: 0.02em;
     }
 
     .route-detail-panel.is-falaises {
@@ -1179,9 +1131,6 @@
       background: #e8eef2;
     }
 
-    .route-detail-panel .ride-event-card {
-      margin-bottom: 1rem;
-    }
 
 
     .leaflet-control-layers {
@@ -1361,24 +1310,21 @@
         gap: 0.75rem;
       }
 
-      .route-choice-card {
-        min-height: auto;
-        padding: 1rem;
-      }
-
       .route-choice-card.is-active::after {
-        position: static;
-        display: inline-block;
-        margin-top: 0.35rem;
-        align-self: flex-start;
-      }
-
-      .route-choice-km {
-        font-size: 1.75rem;
+        top: 0.4rem;
+        right: 0.4rem;
       }
 
       .route-detail-panel {
         padding: 1rem;
+      }
+
+      .ride-event-card--choice .ride-km {
+        font-size: 1.35rem;
+      }
+
+      .ride-event-card--choice .ride-course {
+        font-size: 0.88rem;
       }
 
       .route-detail-header h3 {
@@ -1579,60 +1525,10 @@
       <p class="route-choices-hint">Compare les deux parcours, puis touche celui que tu veux voir sur la carte.</p>
       <div class="route-choices" id="route-picker" role="tablist" aria-label="Choisir un parcours"></div>
       <p class="route-pick-prompt" id="route-pick-prompt">
-        Choisis ton parcours pour afficher la date de départ, la carte et l’inscription.
+        Choisis un parcours pour afficher la carte et l’inscription.
       </p>
 
       <div class="route-detail-panel" id="route-detail-panel" aria-live="polite" hidden>
-        <table class="ride-event-card" id="ride-event-card">
-          <tbody>
-            <tr>
-              <td class="ride-td-left">
-                <span class="ride-aside-label">Jour</span>
-                <span class="ride-day" id="ride-day">7</span>
-              </td>
-              <td class="ride-td-right">
-                <p class="ride-km" id="ride-km">— km</p>
-              </td>
-            </tr>
-            <tr>
-              <td class="ride-td-left">
-                <span class="ride-aside-label">Mois</span>
-                <span class="ride-month" id="ride-month">JUILLET</span>
-              </td>
-              <td class="ride-td-right">
-                <h4 class="ride-course" id="ride-course">La Route des Falaises</h4>
-              </td>
-            </tr>
-            <tr>
-              <td class="ride-td-left">
-                <span class="ride-aside-label">Heure</span>
-                <span class="ride-time" id="ride-time">8h30</span>
-              </td>
-              <td class="ride-td-right">
-                <p class="ride-group" id="ride-group">Groupe Blanc</p>
-              </td>
-            </tr>
-            <tr>
-              <td class="ride-td-left" rowspan="2">
-                <div class="ride-aside-bike" aria-hidden="true">
-                  <svg viewBox="0 0 64 40" fill="currentColor">
-                    <path d="M18 28a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm28 0a6 6 0 1 1 0-12 6 6 0 0 1 0 12zM20 22h6l4-8h8l3 6h5l-2-4h-6l-3 6h-7l-3-6H16l4 8zM30 14l2 4h10l-2-4H30z"/>
-                  </svg>
-                </div>
-              </td>
-              <td class="ride-td-right">
-                <p class="ride-pace-level" id="ride-pace-level">15–18 km/h · Découverte</p>
-              </td>
-            </tr>
-            <tr>
-              <td class="ride-td-right">
-                <p class="ride-desc" id="ride-desc">Falaises et villages côtiers · rythme tranquille</p>
-                <p class="ride-meet-spot" id="ride-meet">RDV 8h30 · Parking du port, Saint-Quay-Portrieux</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
         <div class="map-options" id="map-options">
           <label>
             <input type="checkbox" id="opt-cities" checked>
@@ -1964,39 +1860,45 @@
         if (prompt) prompt.hidden = visible;
       }
 
-      function updateRideCard(route) {
-        const p = route.profile;
+      const BIKE_SVG =
+        '<svg viewBox="0 0 64 40" fill="currentColor" aria-hidden="true">' +
+        '<path d="M18 28a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm28 0a6 6 0 1 1 0-12 6 6 0 0 1 0 12z' +
+        'M20 22h6l4-8h8l3 6h5l-2-4h-6l-3 6h-7l-3-6H16l4 8zM30 14l2 4h10l-2-4H30z"/></svg>';
+
+      function buildRouteChoiceTable(route) {
         const d = route.depart;
-        const dayEl = document.getElementById("ride-day");
-        const monthEl = document.getElementById("ride-month");
-        const timeEl = document.getElementById("ride-time");
-        const kmEl = document.getElementById("ride-km");
-        const courseEl = document.getElementById("ride-course");
-        const groupEl = document.getElementById("ride-group");
-        const paceEl = document.getElementById("ride-pace-level");
-        const descEl = document.getElementById("ride-desc");
-        const meetEl = document.getElementById("ride-meet");
+        const meet = "RDV " + SHARED.time + " · " + SHARED.meetup;
+        return (
+          '<table class="ride-event-card ride-event-card--choice is-route-' + route.id + '">' +
+          "<tbody>" +
+          '<tr><td class="ride-td-left"><span class="ride-aside-label">Jour</span>' +
+          '<span class="ride-day">' + d.day + "</span></td>" +
+          '<td class="ride-td-right"><p class="ride-km" data-choice-km="' + route.id + '">' +
+          formatKm(route.profile.totalKm) + "</p></td></tr>" +
+          '<tr><td class="ride-td-left"><span class="ride-aside-label">Mois</span>' +
+          '<span class="ride-month">' + d.month + "</span></td>" +
+          '<td class="ride-td-right"><h4 class="ride-course">' + route.track + "</h4></td></tr>" +
+          '<tr><td class="ride-td-left"><span class="ride-aside-label">Heure</span>' +
+          '<span class="ride-time">' + SHARED.time + "</span></td>" +
+          '<td class="ride-td-right"><p class="ride-group">' + route.name + "</p></td></tr>" +
+          '<tr><td class="ride-td-left" rowspan="2"><div class="ride-aside-bike">' +
+          BIKE_SVG + "</div></td>" +
+          '<td class="ride-td-right"><p class="ride-pace-level">' +
+          route.pace + " · " + route.levelLabel + "</p></td></tr>" +
+          '<tr><td class="ride-td-right"><p class="ride-desc">' +
+          (route.shortDesc || "") + '</p><p class="ride-meet-spot">' + meet + "</p></td></tr>" +
+          "</tbody></table>"
+        );
+      }
+
+      function updateRideCard(route) {
+        const d = route.depart;
         const signupIntro = document.getElementById("signup-intro");
-
-        if (dayEl) dayEl.textContent = d.day;
-        if (monthEl) monthEl.textContent = d.month;
-        if (timeEl) timeEl.textContent = SHARED.time;
-        if (kmEl) kmEl.textContent = formatKm(p.totalKm);
-        if (courseEl) courseEl.textContent = route.track;
-        if (groupEl) groupEl.textContent = route.name;
-        if (paceEl) paceEl.textContent = route.pace + " · " + route.levelLabel;
-        if (descEl) descEl.textContent = route.shortDesc || "";
-        if (meetEl) meetEl.textContent = "RDV " + SHARED.time + " · " + SHARED.meetup;
-
         const detailPanel = document.getElementById("route-detail-panel");
-        const rideCard = document.getElementById("ride-event-card");
+
         if (detailPanel) {
           detailPanel.classList.remove("is-falaises", "is-boucle");
           detailPanel.classList.add("is-" + route.id);
-        }
-        if (rideCard) {
-          rideCard.classList.remove("is-route-falaises", "is-route-boucle");
-          rideCard.classList.add("is-route-" + route.id);
         }
         if (signupIntro) {
           signupIntro.textContent =
@@ -2228,16 +2130,9 @@
             card.className = "route-choice-card";
             card.dataset.routeId = route.id;
             card.setAttribute("role", "tab");
+            card.setAttribute("aria-label", route.track + " · " + route.name);
             card.style.setProperty("--route-color", route.color);
-            card.innerHTML =
-              '<span class="route-choice-km" data-choice-km="' + route.id + '">' +
-              formatKm(route.profile.totalKm) + "</span>" +
-              '<span class="route-choice-date">' + route.depart.dateLabel + "</span>" +
-              '<span class="route-choice-title">' + route.track + "</span>" +
-              '<span class="route-choice-group"><span class="route-choice-dot" aria-hidden="true"></span>' +
-              route.name + "</span>" +
-              '<span class="route-choice-pace">' + route.pace + " · " + route.levelLabel + "</span>" +
-              '<span class="route-choice-desc">' + (route.shortDesc || "") + "</span>";
+            card.innerHTML = buildRouteChoiceTable(route);
             card.addEventListener("click", function () {
               showRoute(route);
             });
