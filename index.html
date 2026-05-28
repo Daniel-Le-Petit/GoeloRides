@@ -16,6 +16,7 @@
       --teal: #3d8b8b;
       --teal-dark: #2d6b6b;
       --gold: #f4a43a;
+      --gold-dark: #d9892f;
       --white: #ffffff;
       --muted: rgba(255, 255, 255, 0.72);
       --card-bg: rgba(255, 255, 255, 0.04);
@@ -49,14 +50,10 @@
     .home-hero-photo {
       position: relative;
       width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-      min-height: clamp(420px, 58vw, 520px);
+      min-height: min(100vh, 920px);
+      min-height: min(100dvh, 920px);
       overflow: hidden;
       background: #0a1218;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
     }
 
     .home-hero-photo img {
@@ -65,8 +62,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 52%;
-      filter: saturate(1.1) contrast(1.03);
+      object-position: center 42%;
+      filter: saturate(1.08) contrast(1.05);
     }
 
     .home-hero-photo::after {
@@ -77,71 +74,247 @@
       pointer-events: none;
       background: linear-gradient(
         180deg,
-        rgba(13, 24, 32, 0) 0%,
-        rgba(13, 24, 32, 0.05) 35%,
-        rgba(13, 24, 32, 0.55) 68%,
-        rgba(13, 24, 32, 0.9) 100%
+        rgba(255, 252, 248, 0.72) 0%,
+        rgba(255, 255, 255, 0.38) 22%,
+        rgba(255, 255, 255, 0.12) 38%,
+        rgba(13, 24, 32, 0.08) 50%,
+        rgba(13, 24, 32, 0.62) 72%,
+        rgba(8, 15, 20, 0.94) 100%
       );
     }
 
-    .home-hero-inner {
-      position: relative;
+    .home-hero-decor {
+      position: absolute;
+      top: -8%;
+      right: -12%;
+      width: min(52vw, 260px);
+      height: min(52vw, 260px);
       z-index: 2;
-      width: 100%;
-      max-width: 640px;
+      pointer-events: none;
+      opacity: 0.45;
+    }
+
+    .home-hero-decor::before,
+    .home-hero-decor::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(13, 24, 32, 0.18);
+      border-radius: 50%;
+    }
+
+    .home-hero-decor::after {
+      inset: 18%;
+      border-color: rgba(13, 24, 32, 0.12);
+    }
+
+    .home-hero-panel {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: min(100vh, 920px);
+      min-height: min(100dvh, 920px);
+      max-width: 720px;
       margin: 0 auto;
-      padding: 1.75rem 1.5rem 2rem;
-      text-align: center;
+      padding: clamp(1.25rem, 4vw, 2rem) clamp(1.25rem, 5vw, 2.5rem) clamp(1.75rem, 5vw, 2.75rem);
     }
 
-    .home-hero .logo-box {
-      margin-bottom: 1rem;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    .home-hero-sky {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: 0.25rem;
+      padding-bottom: 1.5rem;
     }
 
-    .home-badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      letter-spacing: 0.06em;
-      color: var(--gold);
-      border: 1px solid rgba(244, 164, 58, 0.45);
-      padding: 0.35rem 0.75rem;
-      border-radius: 2px;
-      margin-bottom: 1rem;
-      background: rgba(13, 24, 32, 0.5);
-      backdrop-filter: blur(6px);
+    .home-hero-sea {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
     }
 
-    .home-hero h1 {
+    .home-topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+      margin-bottom: clamp(2rem, 8vw, 3.5rem);
+    }
+
+    .home-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      text-align: left;
+    }
+
+    .home-brand-title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.05rem, 3.2vw, 1.35rem);
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      line-height: 1.2;
+      color: #0a1218;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.65);
+    }
+
+    .home-brand-sub {
+      font-family: var(--font-sans);
+      font-size: clamp(0.58rem, 1.8vw, 0.68rem);
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #1e3a4a;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .home-season-badge {
+      flex-shrink: 0;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #8b5a14;
+      border: 1px solid rgba(180, 120, 40, 0.65);
+      padding: 0.4rem 0.65rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 12px rgba(13, 24, 32, 0.12);
+    }
+
+    .home-region {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0 0 1rem;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #2d6b6b;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    .home-region-line {
+      display: block;
+      width: 1.75rem;
+      height: 1px;
+      background: #3d8b8b;
+      flex-shrink: 0;
+    }
+
+    .home-title {
+      margin: 0;
       font-family: var(--font-serif);
       font-style: italic;
       font-weight: 500;
-      font-size: clamp(1.75rem, 5vw, 2.5rem);
-      line-height: 1.15;
-      margin-bottom: 0.85rem;
-      color: var(--white);
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+      line-height: 0.98;
+      letter-spacing: -0.02em;
     }
 
-    .home-lead {
-      font-size: clamp(0.92rem, 2.4vw, 1.05rem);
-      color: rgba(255, 255, 255, 0.9);
-      max-width: 520px;
-      margin: 0 auto 1.35rem;
-      line-height: 1.6;
-      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+    .home-title-line {
+      display: block;
+      font-size: clamp(2.5rem, 11vw, 4.25rem);
+      color: #0a1218;
+      text-shadow: 0 2px 0 rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 255, 255, 0.5);
+    }
+
+    .home-title-accent {
+      display: block;
+      font-size: clamp(2.5rem, 11vw, 4.25rem);
+      color: #9a6520;
+      text-shadow: 0 2px 0 rgba(255, 255, 255, 0.75), 0 0 32px rgba(255, 255, 255, 0.4);
+    }
+
+    .home-quote {
+      margin: 0 0 1.15rem;
+      padding-left: 1rem;
+      border-left: 2px solid rgba(61, 139, 139, 0.85);
+      max-width: 36rem;
+    }
+
+    .home-intro {
+      margin: 0 0 0.65rem;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: clamp(1rem, 2.8vw, 1.2rem);
+      line-height: 1.45;
+      color: #fff;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.85);
+    }
+
+    .home-sub {
+      margin: 0;
+      font-size: clamp(0.82rem, 2.2vw, 0.92rem);
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.88);
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.9);
+    }
+
+    .home-pills {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0 0 1.35rem;
+      padding: 0;
+    }
+
+    .home-pills li {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.7rem;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.92);
+      background: rgba(8, 15, 20, 0.35);
+      backdrop-filter: blur(6px);
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    .home-pills li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #2f9d62;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px rgba(47, 157, 98, 0.6);
     }
 
     .home-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
-      justify-content: center;
+      gap: 0.65rem;
+      width: 100%;
+      max-width: 28rem;
     }
 
-    .home-hero .btn-secondary {
-      background: rgba(13, 24, 32, 0.4);
-      backdrop-filter: blur(4px);
+    .home-hero-sea .btn-primary {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-hero-sea .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+      color: var(--white);
+      backdrop-filter: blur(6px);
+      text-shadow: none;
+    }
+
+    .home-hero-sea .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: var(--white);
     }
 
     /* —— Hero (legacy, unused) —— */
@@ -379,7 +552,7 @@
     .signup-modal {
       position: fixed;
       inset: 0;
-      z-index: 10000;
+      z-index: 100000;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -501,6 +674,33 @@
 
     .signup-modal-done.is-visible {
       display: block;
+    }
+
+    .signup-registered-actions {
+      margin-bottom: 1rem;
+    }
+
+    .signup-registered-actions[hidden] {
+      display: none;
+    }
+
+    .btn-unregister {
+      width: 100%;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid rgba(248, 113, 113, 0.55);
+      background: rgba(248, 113, 113, 0.12);
+      color: #fecaca;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-unregister:hover {
+      background: rgba(248, 113, 113, 0.22);
+      border-color: rgba(248, 113, 113, 0.75);
     }
 
     .signup-modal .participants-panel {
@@ -879,24 +1079,85 @@
       padding: 0 1.5rem 2rem;
     }
 
-    .route-choices-hint {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 1rem;
-      text-align: center;
+    .route-choices-scroll {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .route-choices-scroll::before,
+    .route-choices-scroll::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0.75rem;
+      width: 2rem;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .route-choices-scroll::before {
+      left: 0;
+      background: linear-gradient(90deg, #0a1218 0%, transparent 100%);
+    }
+
+    .route-choices-scroll::after {
+      right: 0;
+      background: linear-gradient(270deg, #0a1218 0%, transparent 100%);
+    }
+
+    .route-choices-scroll.can-scroll-left::before,
+    .route-choices-scroll.can-scroll-right::after {
+      opacity: 1;
     }
 
     .route-choices {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: stretch;
       gap: 1rem;
-      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 2.1rem 0.15rem 0.85rem;
+      scroll-snap-type: x proximity;
+      scroll-padding-inline: 0.25rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+    }
+
+    .route-choices::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .route-choices::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 3px;
+    }
+
+    /* 2 parcours : côte à côte sur grand écran, sans scroll forcé */
+    .route-choices:not(.route-choices--many) {
+      justify-content: center;
+    }
+
+    .route-choices:not(.route-choices--many) .route-choice-card {
+      flex: 1 1 0;
+      min-width: min(280px, 100%);
+      max-width: 520px;
+    }
+
+    /* 3+ parcours : carrousel horizontal */
+    .route-choices.route-choices--many .route-choice-card {
+      flex: 0 0 clamp(300px, 78vw, 400px);
+      width: clamp(300px, 78vw, 400px);
+      scroll-snap-align: start;
     }
 
     .route-choice-card {
       position: relative;
       display: block;
-      width: 100%;
+      flex-shrink: 0;
       font-family: var(--font-sans);
       padding: 0;
       border-radius: 12px;
@@ -925,8 +1186,9 @@
       left: 0;
       right: 0;
       height: 4px;
-      z-index: 1;
+      z-index: 3;
       background: var(--route-color, var(--teal));
+      pointer-events: none;
     }
 
     .route-choice-card:hover {
@@ -938,22 +1200,32 @@
       border-color: var(--route-color);
       box-shadow: 0 0 0 1px var(--route-color), 0 12px 32px rgba(0, 0, 0, 0.35);
       transform: translateY(-2px);
+      overflow: visible;
     }
 
     .route-choice-card.is-active::after {
       content: "Sur la carte";
       position: absolute;
-      top: 0.55rem;
-      right: 0.55rem;
-      z-index: 2;
+      left: 50%;
+      bottom: calc(100% + 0.5rem);
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 6.75rem;
+      height: 1.55rem;
+      padding: 0 0.7rem;
       font-size: 0.58rem;
       font-weight: 600;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       color: #fff;
-      background: rgba(0, 0, 0, 0.55);
-      padding: 0.2rem 0.45rem;
-      border-radius: 4px;
+      background: var(--route-color, var(--teal));
+      border-radius: 6px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+      white-space: nowrap;
     }
 
     .route-choice-card .ride-event-card {
@@ -1025,6 +1297,8 @@
     }
 
     .route-choice-card .btn-join {
+      position: relative;
+      z-index: 4;
       font-size: 0.78rem;
       padding: 0.55rem 0.8rem;
     }
@@ -1222,22 +1496,28 @@
       padding: 0.6rem 1rem;
       border-radius: 6px;
       border: none;
-      background: var(--teal);
-      color: var(--white);
+      background: var(--gold);
+      color: #1a1208;
       cursor: pointer;
       white-space: nowrap;
-      box-shadow: 0 4px 14px rgba(61, 139, 139, 0.45);
+      box-shadow: 0 4px 14px rgba(244, 164, 58, 0.5);
       transition: background 0.2s, transform 0.15s;
     }
 
     .btn-join:hover {
-      background: var(--teal-dark);
+      background: var(--gold-dark);
       transform: translateY(-1px);
     }
 
     .btn-join--done {
-      background: #3d8b6b;
-      box-shadow: 0 4px 14px rgba(61, 139, 139, 0.3);
+      background: #2f9d62;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(47, 157, 98, 0.45);
+    }
+
+    .btn-join--done:hover {
+      background: #268a54;
+      transform: translateY(-1px);
     }
 
     .ride-event-card.is-route-falaises .ride-km { color: #6b7280; }
@@ -1484,22 +1764,24 @@
       }
 
       .home-hero-photo {
-        min-height: clamp(480px, 92vw, 560px);
+        min-height: min(100dvh, 780px);
       }
 
       .home-hero-photo img {
-        object-position: center 48%;
+        object-position: center 40%;
       }
 
-      .home-hero-inner {
-        padding: 1.5rem 1rem 1.75rem;
+      .home-hero-panel {
+        padding: 1.15rem 1rem 1.5rem;
+      }
+
+      .home-topbar {
+        margin-bottom: 2rem;
       }
 
       .home-actions {
         flex-direction: column;
-        width: 100%;
-        max-width: 360px;
-        margin: 0 auto;
+        max-width: none;
       }
 
       .home-actions .btn-primary,
@@ -1545,14 +1827,31 @@
 
       .strava-view { padding: 0 1rem 1.5rem; }
 
-      .route-choices {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
+      .route-choices:not(.route-choices--many) {
+        flex-wrap: wrap;
+        overflow-x: visible;
+      }
+
+      .route-choices:not(.route-choices--many) .route-choice-card {
+        flex: 1 1 100%;
+        max-width: none;
+        width: 100%;
+      }
+
+      .route-choices-scroll:not(:has(.route-choices--many))::before,
+      .route-choices-scroll:not(:has(.route-choices--many))::after {
+        display: none;
+      }
+
+      .route-choices.route-choices--many .route-choice-card {
+        flex: 0 0 min(88vw, 360px);
+        width: min(88vw, 360px);
       }
 
       .route-choice-card.is-active::after {
-        top: 0.4rem;
-        right: 0.4rem;
+        height: 1.45rem;
+        font-size: 0.55rem;
+        bottom: calc(100% + 0.4rem);
       }
 
       .route-detail-panel {
@@ -1685,21 +1984,43 @@
         height="3024"
         decoding="async"
         fetchpriority="high">
-      <div class="home-hero-inner">
-        <div class="logo-box">
-          <div class="logo-title">GOËLO RIDES</div>
-          <div class="logo-sub">Saint-Quay-Portrieux</div>
+      <div class="home-hero-decor" aria-hidden="true"></div>
+      <div class="home-hero-panel">
+        <div class="home-hero-sky">
+          <div class="home-topbar">
+            <div class="home-brand">
+              <span class="home-brand-title">GOËLO RIDES</span>
+              <span class="home-brand-sub">Saint-Quay-Portrieux</span>
+            </div>
+            <span class="home-season-badge">Été 2026</span>
+          </div>
+          <p class="home-region">
+            <span class="home-region-line" aria-hidden="true"></span>
+            Baie du Goëlo
+          </p>
+          <h1 class="home-title">
+            <span class="home-title-line">La côte,</span>
+            <span class="home-title-accent">à vélo</span>
+          </h1>
         </div>
-        <p class="home-badge">Baie du Goëlo · été 2026</p>
-        <h1>La côte, à vélo</h1>
-        <p class="home-lead">
-          Sorties vélo conviviales au bord de l’eau — départ au port de Saint-Quay-Portrieux.<br><br>
-          Tu es de passage ou du coin ? Rejoins un groupe à ton rythme.<br><br>
-          Pas d’adhésion. Pas de chronomètre. Juste rouler ensemble.
-        </p>
-        <div class="home-actions">
-          <a href="#groups" class="btn-primary">Voir les groupes</a>
-          <a href="#map-section" class="btn-secondary">Je suis partant</a>
+        <div class="home-hero-sea">
+          <div class="home-quote">
+            <p class="home-intro">
+              Sorties conviviales au bord de l’eau — départ au port de Saint-Quay.
+            </p>
+            <p class="home-sub">
+              Tu es de passage ou du coin ? Rejoins un groupe à ton rythme.
+            </p>
+          </div>
+          <ul class="home-pills" aria-label="L’esprit Goëlo Rides">
+            <li>Pas d’adhésion</li>
+            <li>Pas de chronomètre</li>
+            <li>Rouler ensemble</li>
+          </ul>
+          <div class="home-actions">
+            <a href="#groups" class="btn-primary">Voir les groupes</a>
+            <a href="#map-section" class="btn-secondary">Voir les parcours</a>
+          </div>
         </div>
       </div>
     </div>
@@ -1772,8 +2093,9 @@
       <code style="color: var(--white);">http://127.0.0.1:8765</code>.
     </p>
     <div class="strava-view">
-      <p class="route-choices-hint">Compare les deux parcours, puis touche celui que tu veux voir sur la carte.</p>
-      <div class="route-choices" id="route-picker" role="tablist" aria-label="Choisir un parcours"></div>
+      <div class="route-choices-scroll" id="route-choices-scroll">
+        <div class="route-choices" id="route-picker" role="tablist" aria-label="Choisir un parcours"></div>
+      </div>
       <p class="route-pick-prompt" id="route-pick-prompt">
         Choisis un parcours pour la carte, ou clique sur « J’en suis ? » pour t’inscrire.
       </p>
@@ -1804,6 +2126,9 @@
       <h2 id="signup-modal-title">J’en suis !</h2>
       <div class="signup-modal-route" id="signup-modal-route"></div>
       <p class="signup-modal-done" id="signup-modal-done" role="status"></p>
+      <div class="signup-registered-actions" id="signup-registered-actions" hidden>
+        <button type="button" class="btn-unregister" id="signup-unregister-btn">Me désinscrire de ce parcours</button>
+      </div>
       <form class="signup-modal-form" id="signup-modal-form">
         <label>
           <span class="sr-only">Pseudo ou prénom</span>
@@ -1857,6 +2182,7 @@
       let participantsByRoute = { falaises: [], boucle: [] };
       let localSignupsByRoute = { falaises: [], boucle: [] };
       let modalRouteRef = null;
+      let showRouteHandler = null;
 
       const ROUTES = [
         {
@@ -1998,6 +2324,23 @@
         });
       }
 
+      function getLocalSignup(routeId, email) {
+        const norm = (email || "").trim().toLowerCase();
+        if (!norm) return null;
+        return (localSignupsByRoute[routeId] || []).find(function (e) {
+          return (e.email || "").trim().toLowerCase() === norm;
+        }) || null;
+      }
+
+      function getLastStoredEmail() {
+        try {
+          const last = JSON.parse(localStorage.getItem("goeloRides_last_email") || '""');
+          return typeof last === "string" ? last : "";
+        } catch {
+          return "";
+        }
+      }
+
       function renderParticipantsInModal(routeId) {
         const names = getParticipantNames(routeId);
         const countEl = document.getElementById("modal-participants-count");
@@ -2021,26 +2364,23 @@
         document.querySelectorAll(".btn-join").forEach(function (btn) {
           const routeId = btn.dataset.joinRoute;
           const emailInput = document.getElementById("signup-modal-email");
-          const checkEmail = emailInput && emailInput.value
-            ? emailInput.value
-            : (function () {
-                try {
-                  const last = JSON.parse(localStorage.getItem("goeloRides_last_email") || '""');
-                  return last;
-                } catch {
-                  return "";
-                }
-              })();
+          const checkEmail = emailInput && emailInput.value ? emailInput.value : getLastStoredEmail();
           const registered = isRegisteredForRoute(routeId, checkEmail);
           btn.textContent = registered ? "Inscrit·e ✓" : "J’en suis ?";
           btn.classList.toggle("btn-join--done", registered);
           btn.setAttribute("aria-pressed", registered ? "true" : "false");
+          btn.setAttribute("aria-label", registered
+            ? "Inscrit·e sur ce parcours — gérer l’inscription"
+            : "S’inscrire sur ce parcours");
         });
       }
 
       function closeSignupModal() {
         const modal = document.getElementById("signup-modal");
-        if (modal) modal.hidden = true;
+        if (modal) {
+          modal.hidden = true;
+          modal.setAttribute("aria-hidden", "true");
+        }
         document.body.style.overflow = "";
         modalRouteRef = null;
       }
@@ -2048,16 +2388,16 @@
       function fillSignupModal(route) {
         const info = document.getElementById("signup-modal-route");
         const done = document.getElementById("signup-modal-done");
+        const registeredActions = document.getElementById("signup-registered-actions");
         const form = document.getElementById("signup-modal-form");
         const pseudoInput = document.getElementById("signup-modal-pseudo");
         const emailInput = document.getElementById("signup-modal-email");
         const mailto = document.getElementById("signup-modal-mailto");
+        const title = document.getElementById("signup-modal-title");
 
         if (emailInput && !emailInput.value) {
-          try {
-            const last = JSON.parse(localStorage.getItem("goeloRides_last_email") || '""');
-            if (last) emailInput.value = last;
-          } catch { /* ignore */ }
+          const last = getLastStoredEmail();
+          if (last) emailInput.value = last;
         }
 
         if (info) {
@@ -2084,25 +2424,47 @@
         }
 
         if (registered) {
+          const entry = getLocalSignup(route.id, emailInput.value);
+          if (entry && pseudoInput && !pseudoInput.value) pseudoInput.value = entry.pseudo || "";
+          if (title) title.textContent = "Tu es inscrit·e !";
           if (done) {
-            done.textContent = "Tu es déjà inscrit·e sur ce parcours. À bientôt au départ !";
+            done.textContent = entry && entry.pseudo
+              ? entry.pseudo + ", tu es bien inscrit·e sur ce parcours. À bientôt au départ !"
+              : "Tu es bien inscrit·e sur ce parcours. À bientôt au départ !";
             done.classList.add("is-visible");
           }
+          if (registeredActions) registeredActions.hidden = false;
           if (form) form.style.display = "none";
+          if (mailto) mailto.style.display = "none";
         } else {
-          if (done) done.classList.remove("is-visible");
+          if (title) title.textContent = "J’en suis !";
+          if (done) {
+            done.textContent = "";
+            done.classList.remove("is-visible");
+          }
+          if (registeredActions) registeredActions.hidden = true;
           if (form) form.style.display = "";
+          if (mailto) mailto.style.display = "";
+          if (pseudoInput && !pseudoInput.value) pseudoInput.focus();
         }
-        if (pseudoInput && !pseudoInput.value) pseudoInput.focus();
       }
 
       function openSignupModal(route) {
+        if (!route) return;
         modalRouteRef = route;
-        showRoute(route);
-        fillSignupModal(route);
         const modal = document.getElementById("signup-modal");
-        if (modal) modal.hidden = false;
+        if (!modal) return;
+        fillSignupModal(route);
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
+        if (showRouteHandler) {
+          try {
+            showRouteHandler(route, { scroll: false });
+          } catch (err) {
+            console.error("showRoute:", err);
+          }
+        }
         refreshJoinButtons();
       }
 
@@ -2122,6 +2484,43 @@
             headers: { Accept: "application/json" }
           });
         } catch { /* ignore */ }
+      }
+
+      async function notifyUnregisterByEmail(route, pseudo, email) {
+        if (!SIGNUP.formEmail) return;
+        const fd = new FormData();
+        fd.append("pseudo", pseudo || "—");
+        fd.append("email", email);
+        fd.append("parcours", route.track + " · " + route.depart.dateLabel);
+        fd.append("message", "Désinscription du parcours");
+        fd.append("_subject", "Désinscription Goëlo Rides — " + route.track);
+        fd.append("_captcha", "false");
+        fd.append("_template", "table");
+        try {
+          await fetch("https://formsubmit.co/ajax/" + encodeURIComponent(SIGNUP.formEmail), {
+            method: "POST",
+            body: fd,
+            headers: { Accept: "application/json" }
+          });
+        } catch { /* ignore */ }
+      }
+
+      function unregisterForRoute(route, email) {
+        const e = (email || "").trim().toLowerCase();
+        if (!route || !e) return false;
+        const entry = getLocalSignup(route.id, e);
+        if (!entry) return false;
+        const before = (localSignupsByRoute[route.id] || []).length;
+        localSignupsByRoute[route.id] = (localSignupsByRoute[route.id] || []).filter(function (item) {
+          return (item.email || "").trim().toLowerCase() !== e;
+        });
+        if ((localSignupsByRoute[route.id] || []).length === before) return false;
+        saveLocalSignups();
+        notifyUnregisterByEmail(route, entry.pseudo, e);
+        renderParticipantsInModal(route.id);
+        refreshJoinButtons();
+        fillSignupModal(route);
+        return true;
       }
 
       function registerForRoute(route, pseudo, email) {
@@ -2171,9 +2570,68 @@
             refreshJoinButtons();
           });
         }
+
+        const unregisterBtn = document.getElementById("signup-unregister-btn");
+        if (unregisterBtn) {
+          unregisterBtn.addEventListener("click", function () {
+            if (!modalRouteRef) return;
+            const emailEl = document.getElementById("signup-modal-email");
+            const email = emailEl ? emailEl.value.trim() : getLastStoredEmail();
+            if (!email) {
+              window.alert("Indique ton e-mail pour te désinscrire.");
+              if (emailEl) emailEl.focus();
+              return;
+            }
+            if (!isRegisteredForRoute(modalRouteRef.id, email)) {
+              window.alert("Aucune inscription trouvée avec cet e-mail sur ce parcours.");
+              if (modalRouteRef) fillSignupModal(modalRouteRef);
+              return;
+            }
+            const label = modalRouteRef.track;
+            if (!window.confirm("Te désinscrire du parcours « " + label + " » ?")) return;
+            if (unregisterForRoute(modalRouteRef, email)) {
+              const done = document.getElementById("signup-modal-done");
+              if (done) {
+                done.textContent = "Tu es désinscrit·e. On espère te revoir sur un autre parcours !";
+                done.classList.add("is-visible");
+              }
+              const registeredActions = document.getElementById("signup-registered-actions");
+              if (registeredActions) registeredActions.hidden = true;
+              const form = document.getElementById("signup-modal-form");
+              if (form) form.style.display = "";
+              const mailto = document.getElementById("signup-modal-mailto");
+              if (mailto) mailto.style.display = "";
+              const title = document.getElementById("signup-modal-title");
+              if (title) title.textContent = "J’en suis !";
+            }
+          });
+        }
       }
 
       let activeRouteRef = null;
+
+      function updateRoutePickerLayout() {
+        const picker = document.getElementById("route-picker");
+        const scrollWrap = document.getElementById("route-choices-scroll");
+        const n = loadedRoutesCache.length;
+
+        if (picker) picker.classList.toggle("route-choices--many", n > 2);
+
+        if (!picker || !scrollWrap) return;
+
+        function updateScrollHints() {
+          const max = picker.scrollWidth - picker.clientWidth;
+          scrollWrap.classList.toggle("can-scroll-left", picker.scrollLeft > 8);
+          scrollWrap.classList.toggle("can-scroll-right", max > 8 && picker.scrollLeft < max - 8);
+        }
+
+        if (!picker.dataset.scrollBound) {
+          picker.dataset.scrollBound = "1";
+          picker.addEventListener("scroll", updateScrollHints, { passive: true });
+          window.addEventListener("resize", updateScrollHints);
+        }
+        updateScrollHints();
+      }
 
       function syncRouteDistances(routes) {
         routes.forEach(function (route) {
@@ -2485,7 +2943,8 @@
           return L.latLngBounds(latlngs);
         }
 
-        function showRoute(route) {
+        function showRoute(route, options) {
+          const opts = options || {};
           activeRoute = route;
           activeRouteRef = route;
           setRouteSectionsVisible(true);
@@ -2506,6 +2965,9 @@
             const isActive = card.dataset.routeId === route.id;
             card.classList.toggle("is-active", isActive);
             card.setAttribute("aria-selected", isActive ? "true" : "false");
+            if (isActive) {
+              card.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+            }
           });
           document.querySelectorAll(".group-card[data-route-id]").forEach(function (card) {
             card.classList.toggle("is-route-active", card.dataset.routeId === route.id);
@@ -2514,10 +2976,12 @@
           setTimeout(refreshMapSize, 50);
 
           const detailPanel = document.getElementById("route-detail-panel");
-          if (detailPanel && window.matchMedia("(max-width: 768px)").matches) {
+          if (opts.scroll !== false && detailPanel && window.matchMedia("(max-width: 768px)").matches) {
             detailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }
+
+        showRouteHandler = showRoute;
 
         function bindRouteUi(route) {
           if (routePicker) {
@@ -2540,13 +3004,6 @@
                 showRoute(route);
               }
             });
-            const joinBtn = card.querySelector(".btn-join");
-            if (joinBtn) {
-              joinBtn.addEventListener("click", function (e) {
-                e.stopPropagation();
-                openSignupModal(route);
-              });
-            }
             routePicker.appendChild(card);
           }
 
@@ -2576,7 +3033,21 @@
           bindRouteUi(route);
         });
 
+        if (routePicker && !routePicker.dataset.joinDelegated) {
+          routePicker.dataset.joinDelegated = "1";
+          routePicker.addEventListener("click", function (e) {
+            const joinBtn = e.target.closest(".btn-join");
+            if (!joinBtn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const routeId = joinBtn.getAttribute("data-join-route");
+            const route = loadedRoutesCache.find(function (r) { return r.id === routeId; });
+            if (route) openSignupModal(route);
+          });
+        }
+
         syncRouteDistances(loadedRoutesCache);
+        updateRoutePickerLayout();
         refreshJoinButtons();
 
         if (mapLoading) mapLoading.classList.add("is-hidden");
