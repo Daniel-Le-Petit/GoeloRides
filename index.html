@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1820">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Goëlo Rides · Saint-Quay-Portrieux</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <style>
+    :root {
+      --ocean: #0d1820;
+      --teal: #3d8b8b;
+      --teal-dark: #2d6b6b;
+      --gold: #f4a43a;
+      --white: #ffffff;
+      --muted: rgba(255, 255, 255, 0.72);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --font-serif: "Playfair Display", Georgia, serif;
+      --font-sans: "DM Sans", system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--ocean);
+      color: var(--white);
+      line-height: 1.6;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    img, svg, video { max-width: 100%; height: auto; }
+
+    /* —— Social ad preview —— */
+    .ad-preview-wrap {
+      padding: 2.5rem 1.25rem 2rem;
+      background: #111a22;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ad-preview-label {
+      text-align: center;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 1.25rem;
+    }
+
+    .ad-card {
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+      background: var(--ocean);
+    }
+
+    .ad-photo {
+      position: relative;
+      height: 200px;
+      background: linear-gradient(
+        180deg,
+        #f4a43a 0%,
+        #e87a4a 18%,
+        #c45a6a 32%,
+        #5a4a7a 50%,
+        #2a3a5a 68%,
+        #0d1820 100%
+      );
+      overflow: hidden;
+    }
+
+    .ad-photo::before {
+      content: "";
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      top: 28%;
+      right: 22%;
+      background: radial-gradient(circle, #ffe8b0 0%, #f4a43a 45%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0.9;
+    }
+
+    .ad-silhouettes {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 55%;
+    }
+
+    .ad-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--gold);
+      color: var(--ocean);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.35rem 0.6rem;
+      border-radius: 4px;
+      z-index: 2;
+    }
+
+    .ad-panel {
+      background: linear-gradient(135deg, #1a3535 0%, #0f2828 100%);
+      padding: 1rem 1.1rem 1.1rem;
+    }
+
+    .ad-logo {
+      display: inline-block;
+      background: var(--white);
+      color: var(--ocean);
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      padding: 0.35rem 0.5rem;
+      margin-bottom: 0.6rem;
+      line-height: 1.3;
+    }
+
+    .ad-logo span {
+      display: block;
+      font-size: 0.45rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      opacity: 0.75;
+    }
+
+    .ad-photo-overlay {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 2;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .ad-photo-brand {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+    }
+
+    .ad-photo-place {
+      font-size: 0.5rem;
+      opacity: 0.85;
+      margin-bottom: 0.35rem;
+    }
+
+    .ad-photo-tagline {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 0.85rem;
+      line-height: 1.25;
+    }
+
+    .ad-headline {
+      font-size: 0.85rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 0.5rem;
+      color: var(--white);
+    }
+
+    .ad-lead {
+      font-size: 0.72rem;
+      line-height: 1.5;
+      color: var(--muted);
+      margin-bottom: 0.65rem;
+    }
+
+    .ad-promise {
+      font-size: 0.72rem;
+      font-style: italic;
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 0.65rem;
+    }
+
+    .ad-checks {
+      list-style: none;
+      font-size: 0.72rem;
+      margin-bottom: 0.85rem;
+      color: var(--muted);
+    }
+
+    .ad-checks li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .ad-checks .check { color: var(--gold); flex-shrink: 0; }
+
+    .ad-cta {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: var(--teal);
+      color: var(--white);
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.55rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ad-cta:hover { background: var(--teal-dark); }
+
+    .ad-footer-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1rem;
+      background: #0a1218;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .ad-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--teal);
+      color: var(--white);
+      font-size: 0.6rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ad-handle { color: var(--white); font-weight: 500; }
+    .ad-sponsored { margin-left: auto; }
+
+    .ad-caption-ref {
+      max-width: 360px;
+      margin: 1.25rem auto 0;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    .ad-caption-ref strong {
+      display: block;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .page-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(244, 164, 58, 0.35), transparent);
+    }
+
+    /* —— Hero —— */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 2rem 1.5rem 3.5rem;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        #f4a43a 0%,
+        #e07850 12%,
+        #b85868 25%,
+        #6a5088 42%,
+        #2a4060 58%,
+        #152838 75%,
+        #0d1820 92%
+      );
+      animation: sunsetShift 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes sunsetShift {
+      0% { filter: hue-rotate(0deg) brightness(1); }
+      100% { filter: hue-rotate(-8deg) brightness(1.05); }
+    }
+
+    .hero-sun {
+      position: absolute;
+      width: min(140px, 28vw);
+      height: min(140px, 28vw);
+      top: 18%;
+      right: 15%;
+      background: radial-gradient(circle, #fff5d8 0%, #f4a43a 50%, transparent 72%);
+      border-radius: 50%;
+      animation: sunPulse 6s ease-in-out infinite;
+    }
+
+    @keyframes sunPulse {
+      0%, 100% { transform: scale(1); opacity: 0.92; }
+      50% { transform: scale(1.06); opacity: 1; }
+    }
+
+    .hero-coast {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 42%;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+    }
+
+    .logo-box {
+      display: inline-block;
+      background: var(--white);
+      color: var(--ocean);
+      padding: 0.65rem 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .logo-box .logo-title {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      line-height: 1.2;
+    }
+
+    .logo-box .logo-sub {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      opacity: 0.7;
+      margin-top: 0.15rem;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+      border: 1px solid rgba(244, 164, 58, 0.4);
+      padding: 0.35rem 0.75rem;
+      border-radius: 2px;
+      background: rgba(13, 24, 32, 0.35);
+      backdrop-filter: blur(4px);
+    }
+
+    .hero h1 {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-lead {
+      font-size: clamp(1rem, 2.8vw, 1.15rem);
+      color: var(--white);
+      max-width: 520px;
+      margin-bottom: 1rem;
+      line-height: 1.55;
+    }
+
+    .hero-body {
+      font-size: clamp(0.9rem, 2.4vw, 1rem);
+      color: var(--muted);
+      max-width: 520px;
+      margin-bottom: 1.75rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn-secondary {
+      display: inline-block;
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.85rem 1.4rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gold);
+      background: rgba(244, 164, 58, 0.08);
+    }
+
+  /* —— Prochaine sortie & confiance —— */
+    .info-section {
+      padding: 3.5rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .sortie-card {
+      background: linear-gradient(135deg, rgba(61, 139, 139, 0.15) 0%, rgba(13, 24, 32, 0.8) 100%);
+      border: 1px solid rgba(61, 139, 139, 0.35);
+      border-radius: 10px;
+      padding: 1.75rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .sortie-card h2 {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .sortie-details {
+      list-style: none;
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .sortie-details li {
+      font-size: 0.95rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+    }
+
+    .sortie-details .icon { flex-shrink: 0; }
+
+    .sortie-note {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sortie-note a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .sortie-note a:hover { text-decoration: underline; }
+
+    .trust-text {
+      font-size: 0.95rem;
+      color: var(--muted);
+      max-width: 640px;
+      line-height: 1.75;
+    }
+
+    .trust-text strong { color: var(--white); font-weight: 500; }
+
+    .groups-note {
+      text-align: center;
+      max-width: 520px;
+      margin: 2rem auto 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+      padding: 1rem 1.25rem;
+      border-left: 2px solid var(--gold);
+      background: rgba(244, 164, 58, 0.05);
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* —— Inscription —— */
+    .signup-section {
+      text-align: center;
+      padding: 4rem 1.5rem 5rem;
+      max-width: 640px;
+      margin: 0 auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .signup-section h2 {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      margin-bottom: 0.75rem;
+    }
+
+    .signup-section p {
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.65;
+    }
+
+    .signup-hint {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--teal);
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.85rem 1.6rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+    }
+
+    /* —— Sections —— */
+    section {
+      padding: 4.5rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.85rem, 4vw, 2.5rem);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    /* —— Groups —— */
+    #groups { padding-top: 5rem; }
+
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .group-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 1.5rem;
+      border-top: 3px solid;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .group-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .group-card h3 {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .group-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.8rem;
+      color: var(--gold);
+      margin-bottom: 0.85rem;
+    }
+
+    .group-meta span::after {
+      content: "·";
+      margin-left: 1rem;
+      opacity: 0.4;
+    }
+
+    .group-meta span:last-child::after { display: none; }
+
+    .group-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+    }
+
+    .group-tags span {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.25rem 0.5rem;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 2px;
+      color: var(--muted);
+    }
+
+    .group-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .group-route-name {
+      margin-top: 0.85rem;
+      font-size: 0.78rem;
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    /* —— Map —— */
+    #map-section {
+      max-width: 100%;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    #map-section .section-header {
+      padding: 0 1.5rem;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .map-wrap {
+      position: relative;
+      margin: 0 auto 2rem;
+      max-width: 1100px;
+      padding: 0 1.5rem;
+    }
+
+    .map-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+      padding: 0 1.5rem;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .map-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .map-legend-item:hover,
+    .map-legend-item.is-active {
+      border-color: var(--gold);
+      background: rgba(244, 164, 58, 0.08);
+      color: var(--white);
+    }
+
+    .map-legend-line {
+      width: 28px;
+      height: 0;
+      border-top: 3px solid;
+    }
+
+    .map-legend-line.dashed {
+      border-style: dashed;
+    }
+
+    .map-alert {
+      display: none;
+      max-width: 1100px;
+      margin: 0 auto 1rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: var(--gold);
+      background: rgba(244, 164, 58, 0.1);
+      border: 1px solid rgba(244, 164, 58, 0.3);
+      border-radius: 6px;
+    }
+
+    .map-alert.is-visible { display: block; }
+
+    .map-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 18, 24, 0.85);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      z-index: 500;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .map-loading.is-hidden {
+      opacity: 0;
+    }
+
+    .strava-view {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+    }
+
+    .route-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .route-picker-btn {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .route-picker-btn.is-active {
+      background: #fc4c02;
+      border-color: #fc4c02;
+      color: #fff;
+    }
+
+    .route-picker-btn.route-bleu.is-active {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .active-route-banner {
+      font-size: 0.85rem;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+      min-height: 1.25rem;
+    }
+
+    .active-route-banner strong {
+      color: var(--white);
+    }
+
+    .group-card.has-route {
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .group-card.has-route:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .group-card.is-route-active {
+      outline: 1px solid var(--gold);
+      outline-offset: 2px;
+    }
+
+    .ride-event-card {
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      gap: 1rem 1.25rem;
+      align-items: start;
+      background: #fff;
+      color: #1a1a1a;
+      border-radius: 10px;
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .ride-event-date {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      line-height: 1.1;
+    }
+
+    .ride-day {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fc4c02;
+      letter-spacing: -0.02em;
+    }
+
+    .ride-month {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-top: 0.15rem;
+    }
+
+    .ride-year {
+      font-size: 0.6rem;
+      color: #6b7280;
+      margin-top: 0.2rem;
+    }
+
+    .ride-event-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 1.5rem;
+    }
+
+    .ride-event-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .ride-event-title {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.35;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .level-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.65rem;
+      border-radius: 4px;
+      color: #1a1a1a;
+      white-space: nowrap;
+    }
+
+    .level-badge.level-blanc { background: #e8e8e8; }
+    .level-badge.level-vert { background: #4caf6e; color: #fff; }
+    .level-badge.level-bleu { background: #4a90d9; color: #fff; }
+    .level-badge.level-rouge { background: #e05252; color: #fff; }
+
+    .ride-meet-label {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 0.15rem;
+    }
+
+    .ride-meet-spot {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .ride-meta {
+      font-size: 0.85rem;
+      color: #374151;
+    }
+
+    .ride-date-note {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 0.35rem;
+    }
+
+    .map-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .map-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .map-options input {
+      accent-color: var(--teal);
+      width: 15px;
+      height: 15px;
+    }
+
+    .cities-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+      min-height: 1.5rem;
+    }
+
+    .city-chip {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 20px;
+      background: rgba(61, 139, 139, 0.2);
+      border: 1px solid rgba(61, 139, 139, 0.45);
+      color: var(--white);
+    }
+
+    .city-chip.is-start {
+      border-color: var(--gold);
+      background: rgba(244, 164, 58, 0.15);
+      color: var(--gold);
+    }
+
+    .strava-map-block {
+      background: #f4f4f5;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .city-marker {
+      background: none !important;
+      border: none !important;
+    }
+
+    .city-label {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #1e3a5f;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      margin-top: -6px;
+    }
+
+    .city-label.city-start {
+      background: #fff8eb;
+      border-color: var(--gold);
+      color: #92400e;
+    }
+
+    #route-map {
+      height: 420px;
+      width: 100%;
+      background: #e8eef2;
+    }
+
+
+    .leaflet-control-layers {
+      border-radius: 6px !important;
+      font-family: var(--font-sans) !important;
+      font-size: 0.8rem !important;
+    }
+
+    .leaflet-container.strava-map-tiles { background: #f4f4f5; }
+
+    .route-stat.is-loaded { cursor: pointer; }
+    .route-stat.is-loaded:hover { border-color: rgba(244, 164, 58, 0.35); }
+    .route-stat:not(.is-loaded) { opacity: 0.55; }
+
+    .route-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+    }
+
+    .route-stat {
+      text-align: center;
+      padding: 1rem 0.5rem;
+      background: var(--card-bg);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .route-stat .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 0 auto 0.5rem;
+    }
+
+    .route-stat .name {
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .route-stat .detail {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Leaflet overrides */
+    .leaflet-container { font-family: var(--font-sans); }
+    .leaflet-popup-content-wrapper {
+      background: var(--ocean);
+      color: var(--white);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .leaflet-popup-tip { background: var(--ocean); }
+    .leaflet-popup-content { margin: 0.65rem 0.85rem; font-size: 0.85rem; }
+    .leaflet-popup-content strong { color: var(--gold); }
+
+    .gold-pin {
+      width: 24px;
+      height: 24px;
+      margin-left: -12px;
+      margin-top: -24px;
+    }
+
+    .gold-pin svg { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
+    /* —— Footer —— */
+    footer {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      background: #080f14;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.45);
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 768px) {
+      .ad-preview-wrap { padding: 1.5rem 1rem 1.25rem; }
+      .ad-caption-ref { display: none; }
+
+      .hero {
+        padding: 1.5rem 1rem 2.5rem;
+        min-height: auto;
+        min-height: 85dvh;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .hero-actions .btn-primary,
+      .hero-actions .btn-secondary {
+        width: 100%;
+        text-align: center;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .info-section { padding: 2.5rem 1rem; }
+      .sortie-card { padding: 1.25rem 1rem; }
+
+      .groups-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #map-section { padding-top: 3rem; padding-bottom: 2rem; }
+      #map-section .section-header { padding: 0 1rem; }
+
+      .strava-view { padding: 0 1rem 1.5rem; }
+
+      .route-picker {
+        flex-direction: column;
+      }
+
+      .route-picker-btn {
+        width: 100%;
+        text-align: center;
+        min-height: 44px;
+        font-size: 0.85rem;
+      }
+
+      .ride-event-card {
+        grid-template-columns: auto 1fr;
+        padding: 1rem;
+        gap: 0.75rem 1rem;
+      }
+
+      .ride-event-icon { display: none; }
+
+      .ride-event-title {
+        font-size: 0.9rem;
+        min-width: 0;
+      }
+
+      .level-badge {
+        font-size: 0.65rem;
+      }
+
+      .active-route-banner {
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .route-stats {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 0 1rem 1.5rem;
+        gap: 0.65rem;
+      }
+
+      #route-map {
+        height: min(55dvh, 380px);
+        min-height: 260px;
+      }
+
+      .map-options {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.65rem;
+      }
+
+      .map-options label {
+        min-height: 44px;
+        align-items: center;
+      }
+
+      .signup-section {
+        padding: 3rem 1rem 4rem;
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+      }
+
+      .signup-section .btn-primary {
+        width: 100%;
+        max-width: 100%;
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      footer {
+        padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+      }
+
+      .leaflet-control-zoom a {
+        width: 36px !important;
+        height: 36px !important;
+        line-height: 36px !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .route-stats { grid-template-columns: 1fr; }
+      .group-meta span::after { display: none; }
+      section { padding: 3rem 1rem; }
+
+      .section-header h2 {
+        font-size: 1.65rem;
+      }
+
+      .ride-meta {
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+
+      .city-label {
+        font-size: 0.6rem;
+        max-width: 90px;
+        white-space: normal;
+        text-align: center;
+      }
+
+      .route-stat .detail {
+        font-size: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Social ad preview -->
+  <div class="ad-preview-wrap">
+    <p class="ad-preview-label">Aperçu annonce Instagram / Facebook</p>
+    <article class="ad-card">
+      <div class="ad-photo">
+        <span class="ad-badge">🚴 1ère sortie · début juillet</span>
+        <div class="ad-photo-overlay">
+          <div class="ad-photo-brand">GOËLO RIDES</div>
+          <div class="ad-photo-place">Saint-Quay-Portrieux · Été 2026</div>
+          <p class="ad-photo-tagline">La route est plus belle à plusieurs.</p>
+        </div>
+        <svg class="ad-silhouettes" viewBox="0 0 360 110" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+          <path fill="#0d1820" d="M0,110 L0,75 Q40,55 80,70 T160,62 T240,78 T360,68 L360,110 Z"/>
+          <g fill="#0a1218" opacity="0.9">
+            <ellipse cx="90" cy="58" rx="8" ry="8"/><circle cx="90" cy="48" r="5"/>
+            <path d="M88,66 L82,78 L86,78 L90,72 L94,78 L98,78 L92,66 Z"/>
+            <circle cx="82" cy="78" r="4"/><circle cx="98" cy="78" r="4"/>
+          </g>
+          <g fill="#0a1218" opacity="0.85">
+            <ellipse cx="200" cy="62" rx="7" ry="7"/><circle cx="200" cy="54" r="4"/>
+            <path d="M198,69 L193,80 L196,80 L200,74 L204,80 L207,80 L202,69 Z"/>
+            <circle cx="193" cy="80" r="3.5"/><circle cx="207" cy="80" r="3.5"/>
+          </g>
+        </svg>
+      </div>
+      <div class="ad-panel">
+        <div class="ad-logo">GOËLO RIDES<span>Saint-Quay-Portrieux</span></div>
+        <p class="ad-headline">Tu roules seul à Saint-Quay cet été ?</p>
+        <p class="ad-lead">Goëlo Rides — premières sorties groupées début juillet 2026. Locaux et vacanciers. 4 groupes selon ton niveau.</p>
+        <p class="ad-promise">Pas un club. Pas une course. Juste la route.</p>
+        <ul class="ad-checks">
+          <li><span class="check">✓</span> Blanc · Vert · Bleu · Rouge — choisis ton rythme</li>
+          <li><span class="check">✓</span> Départ : port de Saint-Quay-Portrieux</li>
+          <li><span class="check">✓</span> 1ère sortie : début juillet (date sur le site)</li>
+        </ul>
+        <a href="#inscription" class="ad-cta">Voir les groupes et s'inscrire →</a>
+      </div>
+      <div class="ad-footer-bar">
+        <div class="ad-avatar">GR</div>
+        <span class="ad-handle">goelo.rides</span>
+        <span class="ad-sponsored">Sponsorisé</span>
+      </div>
+    </article>
+    <div class="ad-caption-ref">
+      <strong>Texte principal Meta (copier-coller)</strong>
+Tu roules seul à Saint-Quay cet été ?
+
+Goëlo Rides — premières sorties groupées début juillet 2026.
+Locaux et vacanciers. 4 groupes selon ton niveau.
+Pas un club. Pas une course. Juste la route.
+
+✓ Blanc · Vert · Bleu · Rouge — choisis ton rythme
+✓ Départ : port de Saint-Quay-Portrieux
+✓ 1ère sortie : début juillet (date exacte sur le site)
+
+→ Voir les groupes et s'inscrire</div>
+  </div>
+
+  <div class="page-divider"></div>
+
+  <!-- Hero -->
+  <header class="hero" id="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-sun" aria-hidden="true"></div>
+    <svg class="hero-coast" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#152838" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#0d1820"/>
+        </linearGradient>
+      </defs>
+      <path fill="url(#seaGrad)" d="M0,500 L0,280 Q150,220 300,250 T600,230 T900,260 T1200,240 L1200,500 Z"/>
+      <path fill="#0a1218" d="M0,500 L0,320 Q120,260 250,290 Q400,340 550,300 Q700,260 850,310 Q1000,360 1200,300 L1200,500 Z"/>
+      <path fill="#060d12" d="M0,500 L0,380 Q200,350 400,370 Q600,390 800,360 Q1000,330 1200,380 L1200,500 Z"/>
+      <g fill="#050a0e" opacity="0.95">
+        <g transform="translate(180, 295)">
+          <ellipse cx="0" cy="0" rx="14" ry="14"/><circle cx="0" cy="-14" r="8"/>
+          <path d="M-2,8 L-12,32 L-4,32 L0,22 L4,32 L12,32 L2,8 Z"/>
+          <circle cx="-12" cy="32" r="7"/><circle cx="12" cy="32" r="7"/>
+        </g>
+        <g transform="translate(420, 310)">
+          <ellipse cx="0" cy="0" rx="12" ry="12"/><circle cx="0" cy="-12" r="7"/>
+          <path d="M-2,6 L-10,28 L-3,28 L0,20 L3,28 L10,28 L2,6 Z"/>
+          <circle cx="-10" cy="28" r="6"/><circle cx="10" cy="28" r="6"/>
+        </g>
+        <g transform="translate(720, 300)">
+          <ellipse cx="0" cy="0" rx="13" ry="13"/><circle cx="0" cy="-13" r="7.5"/>
+          <path d="M-2,7 L-11,30 L-4,30 L0,21 L4,30 L11,30 L2,7 Z"/>
+          <circle cx="-11" cy="30" r="6.5"/><circle cx="11" cy="30" r="6.5"/>
+        </g>
+        <g transform="translate(950, 315)">
+          <ellipse cx="0" cy="0" rx="11" ry="11"/><circle cx="0" cy="-11" r="6.5"/>
+          <path d="M-2,5 L-9,26 L-3,26 L0,19 L3,26 L9,26 L2,5 Z"/>
+          <circle cx="-9" cy="26" r="5.5"/><circle cx="9" cy="26" r="5.5"/>
+        </g>
+      </g>
+    </svg>
+    <div class="hero-content">
+      <div class="logo-box">
+        <div class="logo-title">GOËLO RIDES</div>
+        <div class="logo-sub">Saint-Quay-Portrieux</div>
+      </div>
+      <p class="hero-badge">✦ 1ère sortie début juillet 2026</p>
+      <h1>La route est plus belle à plusieurs</h1>
+      <p class="hero-lead">Sorties vélo conviviales à Saint-Quay-Portrieux — été 2026. Tu es de passage ou du coin ? Rejoins un groupe à ton rythme.</p>
+      <p class="hero-body">Pas d'adhésion. Pas de chronomètre. Juste rouler ensemble sur la Côte du Goëlo.</p>
+      <div class="hero-actions">
+        <a href="#sortie" class="btn-primary">Prochaine sortie</a>
+        <a href="#groups" class="btn-secondary">Voir les groupes &amp; parcours</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="info-section" id="sortie" aria-labelledby="sortie-title">
+    <div class="sortie-card">
+      <h2 id="sortie-title">Prochaine sortie</h2>
+      <ul class="sortie-details">
+        <li><span class="icon">🚴</span> <span><strong>Première sortie</strong> — début juillet 2026</span></li>
+        <li><span class="icon">📍</span> <span><strong>Rendez-vous</strong> — parking du port, Saint-Quay-Portrieux</span></li>
+        <li><span class="icon">⏰</span> <span><strong>Départ</strong> — 8h30</span></li>
+        <li><span class="icon">📅</span> <span><strong>Date précise</strong> — annoncée sur Instagram <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a></span></li>
+      </ul>
+      <p class="sortie-note">Choisis ton groupe ci-dessous, puis confirme ta participation — gratuit, sans engagement.</p>
+    </div>
+    <p class="trust-text"><strong>Goëlo Rides</strong>, c'est une initiative locale entre cyclistes — pas une association, pas de licence à payer. On se retrouve, on choisit un groupe, on part.</p>
+  </section>
+
+  <!-- Groups -->
+  <section id="groups">
+    <div class="section-header">
+      <h2>Les groupes</h2>
+      <p>Choisis ton niveau, rejoins la route</p>
+    </div>
+    <div class="groups-grid">
+      <article class="group-card has-route" data-route-id="falaises" style="border-top-color: #e8e8e8;">
+        <h3>Groupe Blanc</h3>
+        <div class="group-meta">
+          <span>15–18 km/h</span>
+          <span class="route-km" data-route-id="falaises">— km</span>
+        </div>
+        <div class="group-tags">
+          <span>Découverte</span><span>Famille</span><span>Vacanciers</span>
+        </div>
+        <p>Tu reprends le vélo ou tu veux juste profiter du paysage. On roule tranquille, on s'arrête, on profite.</p>
+        <p class="group-route-name">Parcours · La Route des Falaises</p>
+      </article>
+      <article class="group-card" style="border-top-color: #4caf6e;">
+        <h3>Groupe Vert</h3>
+        <div class="group-meta">
+          <span>18–22 km/h</span>
+          <span>~60 km</span>
+        </div>
+        <div class="group-tags">
+          <span>Intermédiaire</span><span>Convivial</span><span>Sans dropped</span>
+        </div>
+        <p>Tu roules régulièrement mais l'ambiance compte autant que la performance. On attend tout le monde.</p>
+      </article>
+      <article class="group-card has-route" data-route-id="boucle" style="border-top-color: #4a90d9;">
+        <h3>Groupe Bleu</h3>
+        <div class="group-meta">
+          <span>22–26 km/h</span>
+          <span class="route-km" data-route-id="boucle">— km</span>
+        </div>
+        <div class="group-tags">
+          <span>Confirmé</span><span>Rouleur</span><span>Relais</span>
+        </div>
+        <p>Tu maîtrises le peloton, tu fais des relais. Parcours structuré avec un bon groupe.</p>
+        <p class="group-route-name">Parcours · La Grande Boucle du Goëlo</p>
+      </article>
+      <article class="group-card" style="border-top-color: #e05252;">
+        <h3>Groupe Rouge</h3>
+        <div class="group-meta">
+          <span>26+ km/h</span>
+          <span>110+ km</span>
+        </div>
+        <div class="group-tags">
+          <span>Expert</span><span>Compétiteur</span>
+        </div>
+        <p>Pour les jambes solides. Rythme élevé. Si tu te reconnais ici, tu sais ce qui t'attend.</p>
+      </article>
+    </div>
+    <p class="groups-note">Pas sûr de ton groupe ? Viens en Blanc ou Vert pour la première fois — on t'aide à te placer, sans pression.</p>
+  </section>
+
+  <!-- Map -->
+  <section id="map-section">
+    <div class="section-header">
+      <h2>Les parcours</h2>
+      <p>Autour de Saint-Quay-Portrieux · Côte du Goëlo</p>
+    </div>
+    <p class="map-alert" id="map-alert" role="status">
+      Les tracés GPX ne se chargent pas en ouvrant le fichier directement. Lance un serveur local
+      (<code style="color: var(--white);">python3 -m http.server 8765</code>) puis ouvre
+      <code style="color: var(--white);">http://127.0.0.1:8765</code>.
+    </p>
+    <div class="strava-view">
+      <p class="active-route-banner" id="active-route-banner" aria-live="polite"></p>
+      <div class="route-picker" id="route-picker" aria-label="Choisir un parcours"></div>
+      <div class="map-options" id="map-options">
+        <label>
+          <input type="checkbox" id="opt-cities" checked>
+          Villes traversées
+        </label>
+      </div>
+      <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
+      <article class="ride-event-card" id="ride-event-card" aria-live="polite">
+        <div class="ride-event-date">
+          <span class="ride-day" id="ride-day">5</span>
+          <span class="ride-month" id="ride-month">JUIL</span>
+          <span class="ride-year" id="ride-year">2026</span>
+        </div>
+        <div class="ride-event-icon" aria-hidden="true">🚴</div>
+        <div class="ride-event-body">
+          <div class="ride-event-head">
+            <h3 class="ride-event-title" id="ride-title">Sam 8h30 · Goëlo Rides · Côte du Goëlo</h3>
+            <span class="level-badge level-blanc" id="level-badge">Groupe Blanc</span>
+          </div>
+          <p class="ride-meet-label">Rendez-vous</p>
+          <p class="ride-meet-spot" id="ride-meet">Parking du port, 22410 Saint-Quay-Portrieux, Bretagne</p>
+          <p class="ride-meta" id="ride-meta">Sortie · Convivial · — km · Route</p>
+          <p class="ride-date-note" id="ride-date-note">Date exacte annoncée sur @goelo.rides</p>
+        </div>
+      </article>
+      <div class="strava-map-block">
+        <div class="map-wrap" style="padding:0;margin:0;max-width:none;">
+          <div class="map-loading" id="map-loading">Chargement des parcours…</div>
+          <div id="route-map" role="application" aria-label="Carte du parcours"></div>
+        </div>
+      </div>
+    </div>
+    <div class="route-stats" id="route-stats">
+      <div class="route-stat is-loaded" data-group="blanc" data-route-id="falaises">
+        <div class="dot" style="background:#fc4c02;"></div>
+        <div class="name">Groupe Blanc</div>
+        <div class="detail" data-route-id="falaises">La Route des Falaises · — km</div>
+      </div>
+      <div class="route-stat" data-group="vert">
+        <div class="dot" style="background:#4caf6e;"></div>
+        <div class="name">Groupe Vert</div>
+        <div class="detail">Parcours à venir · ~60 km</div>
+      </div>
+      <div class="route-stat is-loaded" data-group="bleu" data-route-id="boucle">
+        <div class="dot" style="background:#4a90d9;"></div>
+        <div class="name">Groupe Bleu</div>
+        <div class="detail" data-route-id="boucle">La Grande Boucle du Goëlo · — km</div>
+      </div>
+      <div class="route-stat" data-group="rouge">
+        <div class="dot" style="background:#e05252;"></div>
+        <div class="name">Groupe Rouge</div>
+        <div class="detail">Parcours à venir · 110+ km</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="signup-section" id="inscription">
+    <h2>Je suis partant</h2>
+    <p>Envoie-nous un message sur Instagram avec ton prénom et le groupe que tu vises (Blanc, Vert, Bleu ou Rouge). On te confirme la date dès qu'elle est fixée.</p>
+    <a href="https://www.instagram.com/goelo.rides/" class="btn-primary" target="_blank" rel="noopener noreferrer">Je suis partant → DM @goelo.rides</a>
+    <p class="signup-hint">Gratuit · sans engagement · préviens-nous juste pour qu'on sache combien on est.</p>
+  </section>
+
+  <footer>
+    Goëlo Rides · Saint-Quay-Portrieux, Côtes-d'Armor · Été 2026 · <a href="https://www.instagram.com/goelo.rides/" style="color: var(--gold); text-decoration: none;">@goelo.rides</a>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    (function () {
+      const START = { lat: 48.6536, lon: -2.8353, label: "Saint-Quay-Portrieux" };
+      const GPX_MAX_POINTS = 6000;
+
+      const EVENT = {
+        day: "5",
+        month: "JUIL",
+        year: "2026",
+        weekday: "Sam",
+        time: "8h30",
+        meetup: "Parking du port, 22410 Saint-Quay-Portrieux, Bretagne",
+        region: "Côte du Goëlo",
+        dateNote: "Date exacte annoncée sur @goelo.rides"
+      };
+
+      const ROUTES = [
+        {
+          id: "falaises",
+          file: "La Route des Falaises.gpx",
+          color: "#fc4c02",
+          pickerClass: "",
+          name: "Groupe Blanc",
+          track: "La Route des Falaises",
+          pace: "15–18 km/h",
+          levelClass: "level-blanc",
+          levelLabel: "Découverte",
+          vibe: "Convivial",
+          cities: [
+            { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
+            { name: "Plouha", lat: 48.6728, lon: -2.903 },
+            { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
+            { name: "Binic", lat: 48.6077, lon: -2.8296 }
+          ]
+        },
+        {
+          id: "boucle",
+          file: "La Grande Boucle du Goëlo.gpx",
+          color: "#2563eb",
+          pickerClass: "route-bleu",
+          name: "Groupe Bleu",
+          track: "La Grande Boucle du Goëlo",
+          pace: "22–26 km/h",
+          levelClass: "level-bleu",
+          levelLabel: "Confirmé",
+          vibe: "Rouleur",
+          cities: [
+            { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true },
+            { name: "Lantic", lat: 48.5976, lon: -2.899 },
+            { name: "Plélo", lat: 48.5333, lon: -2.932 },
+            { name: "Goudelin", lat: 48.6025, lon: -3.0194 },
+            { name: "Pléguien", lat: 48.6218, lon: -2.9349 },
+            { name: "Binic", lat: 48.6077, lon: -2.8296 }
+          ]
+        }
+      ];
+
+      function formatKm(km) {
+        return km.toFixed(1).replace(".", ",") + " km";
+      }
+
+      function syncRouteDistances(routes) {
+        routes.forEach(function (route) {
+          const kmLabel = formatKm(route.profile.totalKm);
+          document.querySelectorAll('.route-km[data-route-id="' + route.id + '"]').forEach(function (el) {
+            el.textContent = kmLabel;
+          });
+          document.querySelectorAll('.detail[data-route-id="' + route.id + '"]').forEach(function (el) {
+            el.textContent = route.track + " · " + kmLabel;
+          });
+        });
+      }
+
+      let loadedRoutesCache = [];
+
+      function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const p = Math.PI / 180;
+        const a =
+          Math.pow(Math.sin((lat2 - lat1) * p / 2), 2) +
+          Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.pow(Math.sin((lon2 - lon1) * p / 2), 2);
+        return 2 * R * Math.asin(Math.sqrt(a));
+      }
+
+      function parseGpxTrack(xmlText) {
+        const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+        if (doc.querySelector("parsererror")) return [];
+
+        const points = [];
+        const nodes = doc.getElementsByTagName("*");
+        for (let i = 0; i < nodes.length; i++) {
+          const el = nodes[i];
+          const tag = el.localName || el.nodeName.split(":").pop();
+          if (tag !== "trkpt" && tag !== "rtept") continue;
+          const lat = parseFloat(el.getAttribute("lat"));
+          const lon = parseFloat(el.getAttribute("lon"));
+          if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
+          points.push({ lat, lon });
+        }
+        return points;
+      }
+
+      function simplifyTrack(points, maxPoints) {
+        if (points.length <= maxPoints) return points.slice();
+        const step = Math.ceil(points.length / maxPoints);
+        const out = [points[0]];
+        for (let i = step; i < points.length - 1; i += step) out.push(points[i]);
+        out.push(points[points.length - 1]);
+        return out;
+      }
+
+      function buildTrack(points) {
+        let distM = 0;
+        for (let i = 1; i < points.length; i++) {
+          distM += haversine(
+            points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon
+          );
+        }
+        return { points: points, totalKm: distM / 1000 };
+      }
+
+      async function loadGpxTrack(url) {
+        try {
+          const res = await fetch(encodeURI(url));
+          if (!res.ok) return null;
+          const pts = simplifyTrack(parseGpxTrack(await res.text()), GPX_MAX_POINTS);
+          return pts.length ? buildTrack(pts) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function updateRideCard(route) {
+        const p = route.profile;
+        const dayEl = document.getElementById("ride-day");
+        const monthEl = document.getElementById("ride-month");
+        const yearEl = document.getElementById("ride-year");
+        const titleEl = document.getElementById("ride-title");
+        const badgeEl = document.getElementById("level-badge");
+        const meetEl = document.getElementById("ride-meet");
+        const metaEl = document.getElementById("ride-meta");
+        const noteEl = document.getElementById("ride-date-note");
+
+        if (dayEl) dayEl.textContent = EVENT.day;
+        if (monthEl) monthEl.textContent = EVENT.month;
+        if (yearEl) yearEl.textContent = EVENT.year;
+        if (titleEl) {
+          titleEl.textContent =
+            EVENT.weekday + " " + EVENT.time + " · " + route.track + " · " + EVENT.region;
+        }
+        if (badgeEl) {
+          badgeEl.textContent = route.name + " · " + route.levelLabel;
+          badgeEl.className = "level-badge " + route.levelClass;
+        }
+        if (meetEl) meetEl.textContent = EVENT.meetup;
+        if (metaEl) {
+          metaEl.textContent =
+            "Sortie · " + route.vibe + " · " + formatKm(p.totalKm) + " · " +
+            route.pace + " · " + route.track;
+        }
+        if (noteEl) noteEl.textContent = EVENT.dateNote;
+
+        const banner = document.getElementById("active-route-banner");
+        if (banner) {
+          banner.innerHTML =
+            "Parcours affiché : <strong>" + route.track + "</strong> · " +
+            formatKm(p.totalKm) + " · " + route.name;
+        }
+      }
+
+      function cityMarkerIcon(city) {
+        return L.divIcon({
+          className: "city-marker",
+          html: '<span class="city-label' + (city.start ? " city-start" : "") + '">' + city.name + "</span>",
+          iconAnchor: [0, 0]
+        });
+      }
+
+      function updateCitiesList(cities) {
+        const list = document.getElementById("cities-list");
+        if (!list) return;
+        list.innerHTML = "";
+        if (!cities || !cities.length) return;
+        cities.forEach(function (city) {
+          const chip = document.createElement("span");
+          chip.className = "city-chip" + (city.start ? " is-start" : "");
+          chip.textContent = city.name;
+          list.appendChild(chip);
+        });
+      }
+
+      function addCityMarkers(map, cities) {
+        const group = L.layerGroup();
+        cities.forEach(function (city) {
+          const marker = L.marker([city.lat, city.lon], { icon: cityMarkerIcon(city) });
+          marker.bindPopup("<strong>" + city.name + "</strong>" + (city.start ? "<br>Départ · arrivée" : ""));
+          group.addLayer(marker);
+        });
+        return group;
+      }
+
+      function addStravaTrack(map, latlngs, color) {
+        const weight = 5;
+        const casing = L.polyline(latlngs, {
+          color: "#ffffff",
+          weight: weight + 4,
+          opacity: 1,
+          lineCap: "round",
+          lineJoin: "round"
+        });
+        const line = L.polyline(latlngs, {
+          color: color,
+          weight: weight,
+          opacity: 1,
+          lineCap: "round",
+          lineJoin: "round"
+        });
+        const group = L.layerGroup([casing, line]);
+        group.mainLine = line;
+        return group;
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        const mapEl = document.getElementById("route-map");
+        const mapLoading = document.getElementById("map-loading");
+        const mapAlert = document.getElementById("map-alert");
+        const routePicker = document.getElementById("route-picker");
+        if (!mapEl || typeof L === "undefined") return;
+
+        const map = L.map("route-map", {
+          scrollWheelZoom: true,
+          zoomControl: true
+        }).setView([START.lat, START.lon], 11);
+        mapEl.classList.add("strava-map-tiles");
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19
+        }).addTo(map);
+
+        let activeRoute = null;
+        let trackLayer = null;
+        let citiesLayer = null;
+        const optCities = document.getElementById("opt-cities");
+
+        function refreshMapSize() {
+          map.invalidateSize({ animate: false });
+        }
+
+        function clearTrack() {
+          if (trackLayer) {
+            map.removeLayer(trackLayer);
+            trackLayer = null;
+          }
+          if (citiesLayer) {
+            map.removeLayer(citiesLayer);
+            citiesLayer = null;
+          }
+        }
+
+        function showCities(route) {
+          if (citiesLayer) {
+            map.removeLayer(citiesLayer);
+            citiesLayer = null;
+          }
+          if (!route.cities || !route.cities.length) {
+            updateCitiesList([]);
+            return;
+          }
+          updateCitiesList(route.cities);
+          if (optCities && !optCities.checked) return;
+          citiesLayer = addCityMarkers(map, route.cities);
+          citiesLayer.addTo(map);
+        }
+
+        if (optCities) {
+          optCities.addEventListener("change", function () {
+            if (activeRoute) showCities(activeRoute);
+          });
+        }
+
+        function boundsForLatLngs(latlngs) {
+          return L.latLngBounds(latlngs);
+        }
+
+        function showRoute(route) {
+          activeRoute = route;
+          clearTrack();
+          const latlngs = route.profile.points.map(function (p) { return [p.lat, p.lon]; });
+          trackLayer = addStravaTrack(map, latlngs, route.color);
+          trackLayer.addTo(map);
+          trackLayer.mainLine.bindPopup(
+            "<strong>" + route.track + "</strong><br>" + formatKm(route.profile.totalKm) +
+            "<br>" + route.name + " · " + route.pace
+          );
+          map.fitBounds(boundsForLatLngs(latlngs), { padding: [40, 40], maxZoom: 14 });
+
+          updateRideCard(route);
+          showCities(route);
+
+          document.querySelectorAll(".route-picker-btn").forEach(function (btn) {
+            btn.classList.toggle("is-active", btn.dataset.routeId === route.id);
+          });
+          document.querySelectorAll(".route-stat[data-route-id]").forEach(function (stat) {
+            stat.style.outline = stat.dataset.routeId === route.id
+              ? "1px solid var(--gold)" : "none";
+          });
+          document.querySelectorAll(".group-card[data-route-id]").forEach(function (card) {
+            card.classList.toggle("is-route-active", card.dataset.routeId === route.id);
+          });
+        }
+
+        function bindRouteUi(route) {
+          if (routePicker) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "route-picker-btn " + (route.pickerClass || "");
+            btn.dataset.routeId = route.id;
+            btn.textContent = route.track + " (" + formatKm(route.profile.totalKm) + ")";
+            btn.addEventListener("click", function () {
+              showRoute(route);
+            });
+            routePicker.appendChild(btn);
+          }
+
+          document.querySelectorAll('.route-stat[data-route-id="' + route.id + '"]').forEach(function (stat) {
+            stat.classList.add("is-loaded");
+            stat.addEventListener("click", function () { showRoute(route); });
+          });
+
+          document.querySelectorAll('.group-card[data-route-id="' + route.id + '"]').forEach(function (card) {
+            card.addEventListener("click", function () {
+              showRoute(route);
+              document.getElementById("map-section").scrollIntoView({ behavior: "smooth" });
+            });
+          });
+        }
+
+        const results = await Promise.all(
+          ROUTES.map(async function (cfg) {
+            const profile = await loadGpxTrack(cfg.file);
+            if (!profile) return null;
+            return Object.assign({}, cfg, { profile: profile });
+          })
+        );
+
+        loadedRoutesCache = results.filter(function (r) { return r !== null; });
+
+        loadedRoutesCache.forEach(function (route) {
+          bindRouteUi(route);
+        });
+
+        syncRouteDistances(loadedRoutesCache);
+
+        if (mapLoading) mapLoading.classList.add("is-hidden");
+
+        if (loadedRoutesCache.length === 0) {
+          if (mapAlert) mapAlert.classList.add("is-visible");
+          return;
+        }
+
+        showRoute(loadedRoutesCache[0]);
+
+        setTimeout(refreshMapSize, 150);
+        if ("IntersectionObserver" in window) {
+          new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) refreshMapSize();
+            });
+          }, { threshold: 0.1 }).observe(mapEl);
+        }
+        window.addEventListener("resize", refreshMapSize);
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Static site — no build. All files in repo root are published as-is.
+# https://render.com/docs/static-sites
+services:
+  - type: web
+    name: goelo-rides
+    runtime: static
+    staticPublishPath: .
