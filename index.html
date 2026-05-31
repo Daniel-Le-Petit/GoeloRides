@@ -173,7 +173,7 @@
     .home-hero-sky-right {
       position: relative;
       margin: 0;
-      min-height: 0;
+      min-height: auto;
       display: flex;
       flex-direction: column;
       border-top: 1px solid rgba(13, 24, 32, 0.09);
@@ -185,7 +185,9 @@
       display: block;
       width: 100%;
       flex: 0 0 auto;
-      max-height: 200px;
+      min-height: 168px;
+      height: clamp(168px, 42vw, 220px);
+      max-height: 240px;
       object-fit: cover;
       object-position: 30% 42%;
     }
@@ -222,9 +224,9 @@
       align-items: flex-start;
       padding: 1.2rem 1.25rem 1.35rem;
       border-radius: 16px;
-      background: rgba(252, 249, 242, 0.82);
-      border: 1px solid rgba(255, 255, 255, 0.65);
-      box-shadow: 0 8px 32px rgba(13, 24, 32, 0.1), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+      background: rgba(210, 240, 248, 0.55);
+      border: 1px solid rgba(94, 180, 200, 0.42);
+      box-shadow: 0 8px 28px rgba(13, 40, 55, 0.08), 0 1px 0 rgba(255, 255, 255, 0.65) inset;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
@@ -1456,7 +1458,7 @@
     }
 
     .route-choice-card.is-active::after {
-      content: "Sur la carte";
+      content: "Sélectionné";
       position: absolute;
       left: 50%;
       bottom: calc(100% + 0.5rem);
@@ -1987,40 +1989,97 @@
       }
 
       .home-hero-photo {
-        min-height: min(100dvh, 780px);
+        min-height: min(100dvh, 720px);
       }
 
       .home-hero-photo img {
         object-position: center 52%;
       }
 
+      .home-hero-photo::after {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.12) 0%,
+          rgba(255, 255, 255, 0.05) 28%,
+          rgba(255, 255, 255, 0.02) 45%,
+          rgba(20, 55, 65, 0.04) 62%,
+          rgba(12, 35, 45, 0.1) 82%,
+          rgba(10, 28, 36, 0.16) 100%
+        );
+      }
+
       .home-hero-panel {
-        padding: 1.15rem 1rem 1.5rem;
+        min-height: auto;
+        justify-content: flex-start;
+        gap: 0.65rem;
+        padding: 0.85rem 0.85rem 1.1rem;
+        max-width: 100%;
+      }
+
+      .home-hero-sky {
+        border-radius: 12px;
+        background: rgba(255, 253, 250, 0.58);
+        box-shadow: 0 6px 20px rgba(13, 24, 32, 0.08), 0 1px 0 rgba(255, 255, 255, 0.55) inset;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
 
       .home-hero-sky-left {
-        padding: 1rem 1rem 1.1rem;
+        padding: 0.75rem 0.85rem 0.85rem;
+      }
+
+      .home-hero-sky-split .home-topbar {
+        margin-bottom: 1rem;
       }
 
       .home-topbar {
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      .home-hero-sea {
+        padding: 0.85rem 0.9rem 1rem;
+        border-radius: 12px;
+        background: rgba(186, 230, 253, 0.42);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        box-shadow: 0 6px 20px rgba(12, 50, 70, 0.07), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+      }
+
+      .home-title-line,
+      .home-title-accent {
+        font-size: clamp(1.55rem, 7.5vw, 2.4rem);
+      }
+
+      .home-pills {
+        margin-bottom: 0.85rem;
+      }
+
+      .home-hero-lower {
+        gap: 0.55rem;
       }
 
       .home-actions--hero {
-        flex-direction: column;
-        max-width: 22rem;
-        margin-left: auto;
-        margin-right: auto;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: stretch;
+        gap: 0.45rem;
+        max-width: none;
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0.1rem 0 0.2rem;
       }
 
       .home-actions--hero .btn-primary,
       .home-actions--hero .btn-secondary {
-        width: 100%;
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        padding: 0.65rem 0.45rem;
+        font-size: 0.78rem;
+        line-height: 1.25;
+        min-height: 44px;
         text-align: center;
-        min-height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
       }
 
       .hero {
@@ -2240,6 +2299,23 @@
       }
     }
 
+    @media (max-width: 699px) {
+      .home-hero-sky-right {
+        min-height: 10rem;
+      }
+
+      .home-hero-sky-right img {
+        width: 100%;
+        min-height: 200px;
+        height: min(46vw, 260px);
+        max-height: 280px;
+        object-fit: cover;
+        object-position: 32% 40%;
+        display: block;
+        flex: none;
+      }
+    }
+
     @media (max-width: 390px) {
       .route-stats { grid-template-columns: 1fr; }
       .group-meta span::after { display: none; }
@@ -2423,7 +2499,7 @@
         <div class="map-options" id="map-options">
           <label>
             <input type="checkbox" id="opt-cities" checked>
-            Villes traversées sur la carte
+            Villes traversées
           </label>
           <label>
             <input type="checkbox" id="opt-grade-colors" checked>
