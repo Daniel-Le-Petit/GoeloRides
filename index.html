@@ -8,7 +8,7 @@
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Outfit:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fredoka:wght@600;700&family=Outfit:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <style>
     :root {
@@ -22,6 +22,7 @@
       --card-bg: rgba(255, 255, 255, 0.04);
       --font-serif: "Playfair Display", Georgia, serif;
       --font-sans: "DM Sans", system-ui, sans-serif;
+      --font-brand: "Fredoka", "Outfit", system-ui, sans-serif;
       --font-display: "Outfit", "DM Sans", system-ui, sans-serif;
     }
 
@@ -248,12 +249,26 @@
     }
 
     .home-brand-title {
-      font-family: var(--font-serif);
-      font-size: clamp(1.05rem, 3.2vw, 1.35rem);
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      line-height: 1.2;
-      color: var(--gold);
+      font-family: var(--font-brand);
+      font-size: clamp(1.2rem, 4.6vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      line-height: 1.12;
+      background: linear-gradient(168deg, #fffbeb 0%, #fde047 18%, #f59e0b 52%, #ea580c 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: #c2410c;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 1px 0 rgba(124, 45, 18, 0.55)) drop-shadow(0 2px 10px rgba(251, 146, 60, 0.42));
+    }
+
+    @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+      .home-brand-title {
+        background: none;
+        color: #ea580c;
+        -webkit-text-fill-color: unset;
+        filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.6));
+      }
     }
 
     .home-brand-sub {
@@ -676,15 +691,20 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 640px;
+      max-width: min(96vw, 880px);
       max-height: min(94dvh, 900px);
       overflow-y: auto;
       background: #152028;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
-      padding: 1.5rem 1.35rem 1.35rem;
+      padding: 1.55rem 1.5rem 1.45rem;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
       text-align: center;
+    }
+
+    .signup-modal h2:focus {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
     }
 
     .signup-modal-map-section {
@@ -704,6 +724,11 @@
     .signup-modal-map-section.is-boucle {
       border-color: rgba(37, 99, 235, 0.45);
       box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+    }
+
+    .signup-modal-map-section.is-brehec {
+      border-color: rgba(46, 125, 82, 0.5);
+      box-shadow: 0 0 0 1px rgba(76, 175, 110, 0.22);
     }
 
     .signup-modal .map-options {
@@ -1509,6 +1534,11 @@
       color: var(--route-color);
     }
 
+    .route-choice-card .ride-event-card.is-route-brehec .ride-aside-bike svg {
+      fill: var(--route-color);
+      color: var(--route-color);
+    }
+
     .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-month,
     .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-time,
     .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-meet-place {
@@ -1744,6 +1774,7 @@
     }
 
     .ride-event-card.is-route-falaises .ride-km { color: #6b7280; }
+    .ride-event-card.is-route-brehec .ride-km { color: #15803d; }
     .ride-event-card.is-route-boucle .ride-km { color: #2563eb; }
 
     .ride-course {
@@ -2429,16 +2460,17 @@
         <p>Tu reprends le vélo ou tu veux juste profiter du paysage. On roule tranquille, on s'arrête, on profite.</p>
         <p class="group-route-name">Parcours · La Route des Falaises</p>
       </article>
-      <article class="group-card" style="border-top-color: #4caf6e;">
+      <article class="group-card has-route" data-route-id="brehec" style="border-top-color: #4caf6e;">
         <h3>Groupe Vert</h3>
         <div class="group-meta">
           <span>18–22 km/h</span>
-          <span>~60 km</span>
+          <span class="route-km" data-route-id="brehec">— km</span>
         </div>
         <div class="group-tags">
           <span>Intermédiaire</span><span>Convivial</span><span>Sans dropped</span>
         </div>
         <p>Tu roules régulièrement mais l'ambiance compte autant que la performance. On attend tout le monde.</p>
+        <p class="group-route-name">Parcours · Vers Bréhec</p>
       </article>
       <article class="group-card has-route" data-route-id="boucle" style="border-top-color: #2563eb;">
         <h3>Groupe Bleu</h3>
@@ -2470,7 +2502,7 @@
   <section id="map-section" style="padding-top: 2.5rem;">
     <div class="section-header">
       <h2>Les parcours</h2>
-      <p>Deux itinéraires au départ de Saint-Quay-Portrieux · Côte du Goëlo</p>
+      <p>Trois itinéraires au départ de Saint-Quay-Portrieux · Côte du Goëlo</p>
     </div>
     <p class="map-alert" id="map-alert" role="status">
       Les tracés GPX ne se chargent pas en ouvrant le fichier directement. Lance un serveur local
@@ -2491,7 +2523,7 @@
     <div class="signup-modal-backdrop" data-close-modal aria-hidden="true"></div>
     <div class="signup-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="signup-modal-title">
       <button type="button" class="signup-modal-close" data-close-modal aria-label="Fermer">×</button>
-      <h2 id="signup-modal-title">J’en suis !</h2>
+      <h2 id="signup-modal-title" tabindex="-1">J’en suis !</h2>
       <div class="signup-modal-route" id="signup-modal-route"></div>
       <div class="signup-modal-course" id="signup-modal-course" aria-label="Détail de la sortie"></div>
 
@@ -2576,8 +2608,8 @@
 
       const LOCAL_SIGNUPS_KEY = "goeloRides_inscriptions_v1";
 
-      let participantsByRoute = { falaises: [], boucle: [] };
-      let localSignupsByRoute = { falaises: [], boucle: [] };
+      let participantsByRoute = { falaises: [], brehec: [], boucle: [] };
+      let localSignupsByRoute = { falaises: [], brehec: [], boucle: [] };
       let modalRouteRef = null;
       let showRouteHandler = null;
 
@@ -2600,6 +2632,32 @@
             year: "2026",
             weekday: "Mar",
             dateLabel: "7 juillet 2026 · 8h30"
+          },
+          cities: [
+            { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
+            { name: "Plouha", lat: 48.6728, lon: -2.903 },
+            { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
+            { name: "Binic", lat: 48.6077, lon: -2.8296 }
+          ]
+        },
+        {
+          id: "brehec",
+          file: "Bréhec.gpx",
+          color: "#2e7d52",
+          casingColor: "#14532d",
+          name: "Groupe Vert",
+          track: "Vers Bréhec",
+          pace: "18–22 km/h",
+          levelClass: "level-vert",
+          levelLabel: "Intermédiaire",
+          vibe: "Convivial",
+          shortDesc: "Littoral et Bréhec · rythme régulier sans pression",
+          depart: {
+            day: "21",
+            month: "JUILLET",
+            year: "2026",
+            weekday: "Mar",
+            dateLabel: "21 juillet 2026 · 8h30"
           },
           cities: [
             { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
@@ -2653,16 +2711,23 @@
         const prof = route.profile;
         const kmLine = prof ? formatKm(prof.totalKm) : "— (chargement de la trace…)";
         const isBlanc = route.id === "falaises";
+        const isVert = route.id === "brehec";
         const pacePhil =
           isBlanc
             ? "Allure visée sur le plat : <strong>15–18 km/h</strong> pour que chacun puisse suivre. " +
               "Merci de ne pas augmenter le rythme sans l’accord du groupe : on roule ensemble."
+            : isVert
+            ? "Allure visée sur le plat : <strong>18–22 km/h</strong>, sans « sprints » sauf accord du groupe. " +
+              "On garde un rythme régulier pour que personne ne se retrouve seul."
             : "Allure visée sur le plat : <strong>22–26 km/h</strong>, parcours plus long. " +
               "Relais et attentes aux points convenus pour garder le groupe cohérent.";
         const philo =
           isBlanc
             ? "La philosophie du <strong>Groupe Blanc</strong> : on roule à un rythme raisonnable pour que tout le monde prenne du plaisir. " +
               "On part ensemble, on roule ensemble, on rentre ensemble. C’est une sortie <strong>sociale et conviviale</strong>."
+            : isVert
+            ? "La philosophie du <strong>Groupe Vert</strong> : un cran au-dessus du Blanc, tout en gardant l’esprit <strong>convivial</strong>. " +
+              "On roule proprement, on veille les uns sur les autres, on profite du paysage côtier jusqu’à Bréhec."
             : "La philosophie du <strong>Groupe Bleu</strong> : rythme soutenu mais respectueux du peloton. " +
               "On s’entraide, on communique, on garde l’esprit d’équipe sur toute la sortie.";
 
@@ -2734,7 +2799,7 @@
       }
 
       function parseParticipantsCsv(text) {
-        const out = { falaises: [], boucle: [] };
+        const out = { falaises: [], brehec: [], boucle: [] };
         const lines = text.trim().split(/\r?\n/);
         if (lines.length < 2) return out;
         const header = lines[0].toLowerCase().split(",");
@@ -2752,8 +2817,12 @@
       }
 
       function mergeParticipants(base, extra) {
-        const merged = { falaises: base.falaises.slice(), boucle: base.boucle.slice() };
-        ["falaises", "boucle"].forEach(function (id) {
+        const merged = {
+          falaises: (base.falaises || []).slice(),
+          brehec: (base.brehec || []).slice(),
+          boucle: (base.boucle || []).slice()
+        };
+        ["falaises", "brehec", "boucle"].forEach(function (id) {
           (extra[id] || []).forEach(function (name) {
             if (merged[id].indexOf(name) === -1) merged[id].push(name);
           });
@@ -2762,7 +2831,7 @@
       }
 
       async function loadParticipants() {
-        let data = { falaises: [], boucle: [] };
+        let data = { falaises: [], brehec: [], boucle: [] };
         try {
           const res = await fetch("participants.json");
           if (res.ok) data = await res.json();
@@ -2775,7 +2844,11 @@
             }
           } catch { /* ignore */ }
         }
-        participantsByRoute = data;
+        participantsByRoute = {
+          falaises: data.falaises || [],
+          brehec: data.brehec || [],
+          boucle: data.boucle || []
+        };
       }
 
       function loadLocalSignups() {
@@ -2784,6 +2857,7 @@
           if (!raw) return;
           const data = JSON.parse(raw);
           if (data.falaises) localSignupsByRoute.falaises = data.falaises;
+          if (data.brehec) localSignupsByRoute.brehec = data.brehec;
           if (data.boucle) localSignupsByRoute.boucle = data.boucle;
         } catch { /* ignore */ }
       }
@@ -2941,7 +3015,6 @@
           if (registeredActions) registeredActions.hidden = true;
           if (form) form.style.display = "";
           if (mailto) mailto.style.display = "";
-          if (pseudoInput && !pseudoInput.value) pseudoInput.focus();
         }
       }
 
@@ -2962,6 +3035,19 @@
           }
         }
         refreshJoinButtons();
+        const dlg = modal.querySelector(".signup-modal-dialog");
+        function scrollModalTopAndFocusTitle() {
+          if (dlg) dlg.scrollTop = 0;
+          const t = document.getElementById("signup-modal-title");
+          if (t) {
+            t.setAttribute("tabindex", "-1");
+            t.focus({ preventScroll: true });
+          }
+          if (dlg) dlg.scrollTop = 0;
+        }
+        scrollModalTopAndFocusTitle();
+        requestAnimationFrame(scrollModalTopAndFocusTitle);
+        setTimeout(scrollModalTopAndFocusTitle, 160);
       }
 
       async function notifySignupByEmail(route, pseudo, email) {
@@ -3324,7 +3410,7 @@
       function updateRideCard(route) {
         const wrap = document.getElementById("signup-modal-map-section");
         if (wrap) {
-          wrap.classList.remove("is-falaises", "is-boucle");
+          wrap.classList.remove("is-falaises", "is-brehec", "is-boucle");
           wrap.classList.add("is-" + route.id);
         }
         refreshJoinButtons();
