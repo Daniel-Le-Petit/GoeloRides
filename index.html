@@ -8,7 +8,7 @@
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Outfit:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <style>
     :root {
@@ -22,11 +22,16 @@
       --card-bg: rgba(255, 255, 255, 0.04);
       --font-serif: "Playfair Display", Georgia, serif;
       --font-sans: "DM Sans", system-ui, sans-serif;
+      --font-display: "Outfit", "DM Sans", system-ui, sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
 
     body {
       font-family: var(--font-sans);
@@ -44,7 +49,9 @@
 
     /* —— Accueil —— */
     .home-hero {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      z-index: 1;
+      border-bottom: none;
     }
 
     .home-hero-photo {
@@ -62,8 +69,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 42%;
-      filter: saturate(1.08) contrast(1.05);
+      object-position: center 58%;
+      filter: saturate(1.08) contrast(1.02);
     }
 
     .home-hero-photo::after {
@@ -74,12 +81,12 @@
       pointer-events: none;
       background: linear-gradient(
         180deg,
-        rgba(255, 252, 248, 0.72) 0%,
-        rgba(255, 255, 255, 0.38) 22%,
-        rgba(255, 255, 255, 0.12) 38%,
-        rgba(13, 24, 32, 0.08) 50%,
-        rgba(13, 24, 32, 0.62) 72%,
-        rgba(8, 15, 20, 0.94) 100%
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.08) 25%,
+        rgba(255, 255, 255, 0.03) 42%,
+        rgba(20, 55, 65, 0.06) 58%,
+        rgba(12, 35, 45, 0.14) 78%,
+        rgba(10, 28, 36, 0.22) 100%
       );
     }
 
@@ -114,20 +121,98 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      gap: clamp(0.85rem, 3vw, 1.35rem);
       min-height: min(100vh, 920px);
       min-height: min(100dvh, 920px);
-      max-width: 720px;
+      max-width: min(94vw, 860px);
       margin: 0 auto;
-      padding: clamp(1.25rem, 4vw, 2rem) clamp(1.25rem, 5vw, 2.5rem) clamp(1.75rem, 5vw, 2.75rem);
+      padding: clamp(1.25rem, 4vw, 2rem) clamp(1.25rem, 5vw, 2.5rem) clamp(2rem, 6vw, 3rem);
     }
 
-    .home-hero-sky {
-      flex: 1 1 auto;
+    .home-hero-lower {
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      padding-top: 0.25rem;
-      padding-bottom: 1.5rem;
+      gap: 0.7rem;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    /* Bloc vitré : 2 colonnes (texte | photo), même carte — padding uniquement à gauche pour garder le texte lisible. */
+    .home-hero-sky {
+      flex: 0 0 auto;
+      padding: 0;
+      overflow: hidden;
+      border-radius: 16px;
+      background: rgba(255, 253, 250, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 0 10px 40px rgba(13, 24, 32, 0.12), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .home-hero-sky-split {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+    }
+
+    .home-hero-sky-split > * {
+      min-width: 0;
+    }
+
+    .home-hero-sky-left {
+      padding: 1.15rem 1.25rem 1.35rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .home-hero-sky-split .home-topbar {
+      margin-bottom: clamp(1.25rem, 5vw, 2.75rem);
+    }
+
+    .home-hero-sky-right {
+      position: relative;
+      margin: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid rgba(13, 24, 32, 0.09);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .home-hero-sky-right img {
+      display: block;
+      width: 100%;
+      flex: 0 0 auto;
+      max-height: 200px;
+      object-fit: cover;
+      object-position: 30% 42%;
+    }
+
+    @media (min-width: 700px) {
+      .home-hero-sky-split {
+        grid-template-columns: minmax(0, 1fr) minmax(200px, 40%);
+      }
+
+      .home-hero-sky-left {
+        padding: 1.2rem 1rem 1.35rem 1.35rem;
+      }
+
+      .home-hero-sky-right {
+        border-top: none;
+        border-left: 1px solid rgba(13, 24, 32, 0.1);
+        min-height: 12rem;
+      }
+
+      .home-hero-sky-right img {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        height: 100%;
+        object-fit: cover;
+        object-position: 28% 45%;
+      }
     }
 
     .home-hero-sea {
@@ -135,6 +220,13 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      padding: 1.2rem 1.25rem 1.35rem;
+      border-radius: 16px;
+      background: rgba(252, 249, 242, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 8px 32px rgba(13, 24, 32, 0.1), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
     .home-topbar {
@@ -159,8 +251,7 @@
       font-weight: 600;
       letter-spacing: 0.14em;
       line-height: 1.2;
-      color: #0a1218;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.65);
+      color: var(--gold);
     }
 
     .home-brand-sub {
@@ -169,8 +260,7 @@
       font-weight: 500;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: #1e3a4a;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+      color: #3d5a6b;
     }
 
     .home-season-badge {
@@ -179,13 +269,12 @@
       font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: #8b5a14;
-      border: 1px solid rgba(180, 120, 40, 0.65);
+      color: #7a4a0f;
+      border: 1px solid rgba(180, 120, 40, 0.45);
       padding: 0.4rem 0.65rem;
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 12px rgba(13, 24, 32, 0.12);
+      background: rgba(255, 255, 255, 0.65);
+      box-shadow: 0 1px 4px rgba(13, 24, 32, 0.08);
     }
 
     .home-region {
@@ -198,7 +287,6 @@
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: #2d6b6b;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
     }
 
     .home-region-line {
@@ -211,50 +299,53 @@
 
     .home-title {
       margin: 0;
-      font-family: var(--font-serif);
-      font-style: italic;
-      font-weight: 500;
-      line-height: 0.98;
-      letter-spacing: -0.02em;
+      font-family: var(--font-display);
+      font-style: normal;
+      font-weight: 600;
+      line-height: 1.02;
+      letter-spacing: -0.045em;
     }
 
     .home-title-line {
       display: block;
-      font-size: clamp(2.5rem, 11vw, 4.25rem);
-      color: #0a1218;
-      text-shadow: 0 2px 0 rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 255, 255, 0.5);
+      font-size: clamp(2.35rem, 9.5vw, 3.85rem);
+      font-weight: 500;
+      color: #0c1a22;
     }
 
     .home-title-accent {
       display: block;
-      font-size: clamp(2.5rem, 11vw, 4.25rem);
-      color: #9a6520;
-      text-shadow: 0 2px 0 rgba(255, 255, 255, 0.75), 0 0 32px rgba(255, 255, 255, 0.4);
+      font-size: clamp(2.35rem, 9.5vw, 3.85rem);
+      font-weight: 700;
+      color: #1a6b6b;
+      letter-spacing: -0.05em;
     }
 
     .home-quote {
       margin: 0 0 1.15rem;
       padding-left: 1rem;
-      border-left: 2px solid rgba(61, 139, 139, 0.85);
+      border-left: 3px solid rgba(61, 139, 139, 0.55);
       max-width: 36rem;
     }
 
     .home-intro {
       margin: 0 0 0.65rem;
-      font-family: var(--font-serif);
-      font-style: italic;
-      font-size: clamp(1rem, 2.8vw, 1.2rem);
-      line-height: 1.45;
-      color: #fff;
-      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.85);
+      font-family: var(--font-sans);
+      font-style: normal;
+      font-weight: 500;
+      font-size: clamp(0.98rem, 2.6vw, 1.12rem);
+      line-height: 1.55;
+      letter-spacing: -0.015em;
+      color: #1a3550;
     }
 
     .home-sub {
       margin: 0;
-      font-size: clamp(0.82rem, 2.2vw, 0.92rem);
+      font-family: var(--font-sans);
+      font-size: clamp(0.84rem, 2.2vw, 0.95rem);
+      font-weight: 400;
       line-height: 1.55;
-      color: rgba(255, 255, 255, 0.88);
-      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.9);
+      color: #3d5a6b;
     }
 
     .home-pills {
@@ -271,15 +362,13 @@
       align-items: center;
       gap: 0.45rem;
       padding: 0.38rem 0.7rem;
-      border: 1px solid rgba(255, 255, 255, 0.38);
+      border: 1px solid rgba(61, 139, 139, 0.35);
       border-radius: 999px;
       font-size: 0.68rem;
       font-weight: 500;
       letter-spacing: 0.04em;
-      color: rgba(255, 255, 255, 0.92);
-      background: rgba(8, 15, 20, 0.35);
-      backdrop-filter: blur(6px);
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+      color: #1e3a4a;
+      background: rgba(255, 255, 255, 0.55);
     }
 
     .home-pills li::before {
@@ -289,32 +378,43 @@
       border-radius: 50%;
       background: #2f9d62;
       flex-shrink: 0;
-      box-shadow: 0 0 6px rgba(47, 157, 98, 0.6);
     }
 
-    .home-actions {
+    .home-actions--hero {
       display: flex;
       flex-wrap: wrap;
       gap: 0.65rem;
+      justify-content: center;
+      align-items: center;
       width: 100%;
-      max-width: 28rem;
+      padding: 0.15rem 0 0.35rem;
     }
 
-    .home-hero-sea .btn-primary {
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    .home-actions--hero .btn-primary {
+      background: rgba(61, 139, 139, 0.88);
+      color: #f8fafb;
+      border: 1px solid rgba(45, 107, 107, 0.45);
+      box-shadow: 0 2px 12px rgba(13, 24, 32, 0.12);
     }
 
-    .home-hero-sea .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.5);
-      color: var(--white);
-      backdrop-filter: blur(6px);
-      text-shadow: none;
+    .home-actions--hero .btn-primary:hover {
+      background: var(--teal-dark);
+      border-color: rgba(45, 107, 107, 0.6);
     }
 
-    .home-hero-sea .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.22);
-      border-color: var(--white);
+    .home-actions--hero .btn-secondary {
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(61, 139, 139, 0.38);
+      color: #164e52;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .home-actions--hero .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.62);
+      border-color: var(--teal);
+      color: #0f3d42;
     }
 
     /* —— Hero (legacy, unused) —— */
@@ -574,8 +674,8 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 440px;
-      max-height: min(92vh, 720px);
+      max-width: 640px;
+      max-height: min(94dvh, 900px);
       overflow-y: auto;
       background: #152028;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -583,6 +683,85 @@
       padding: 1.5rem 1.35rem 1.35rem;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
       text-align: center;
+    }
+
+    .signup-modal-map-section {
+      text-align: left;
+      margin-bottom: 1.15rem;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .signup-modal-map-section.is-falaises {
+      border-color: rgba(232, 232, 232, 0.45);
+      box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.15);
+    }
+
+    .signup-modal-map-section.is-boucle {
+      border-color: rgba(37, 99, 235, 0.45);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+    }
+
+    .signup-modal .map-options {
+      margin: 0;
+      border-radius: 0;
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.2);
+      color: rgba(255, 255, 255, 0.82);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem 1.25rem;
+      align-items: center;
+    }
+
+    .grade-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.85rem;
+      align-items: center;
+      margin: 0;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.75);
+      background: rgba(0, 0, 0, 0.18);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .grade-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+
+    .grade-swatch {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 2px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .signup-modal .map-options label {
+      color: inherit;
+    }
+
+    .signup-modal .cities-list {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .signup-modal-map-inner {
+      position: relative;
+    }
+
+    .signup-modal #route-map {
+      height: min(42dvh, 300px);
+      min-height: 200px;
+      border-radius: 0;
     }
 
     .signup-modal-close {
@@ -629,6 +808,74 @@
       display: block;
       font-size: 0.95rem;
       margin-bottom: 0.35rem;
+    }
+
+    .signup-modal-course {
+      text-align: left;
+      font-size: 0.8rem;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.88);
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 1rem 1.05rem 1.1rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .signup-modal-course-title {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-style: normal;
+      color: var(--gold);
+      margin: 1.1rem 0 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .signup-modal-course-title:first-child {
+      margin-top: 0;
+    }
+
+    .signup-modal-course p {
+      margin: 0.45rem 0;
+    }
+
+    .signup-modal-course ul {
+      margin: 0.35rem 0 0.65rem;
+      padding-left: 1.15rem;
+    }
+
+    .signup-modal-course li {
+      margin: 0.25rem 0;
+    }
+
+    .signup-modal-course .course-warn {
+      margin: 0.65rem 0 0.85rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      background: rgba(244, 164, 58, 0.12);
+      border: 1px solid rgba(244, 164, 58, 0.38);
+      color: rgba(255, 248, 235, 0.95);
+      font-weight: 600;
+    }
+
+    .signup-modal-course a {
+      color: var(--gold);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      word-break: break-word;
+    }
+
+    .signup-modal-course a:hover {
+      color: #ffc46b;
+    }
+
+    .signup-modal-course-footer {
+      margin-top: 0.85rem;
+      margin-bottom: 0;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 0.78rem;
+      font-weight: 400;
     }
 
     .signup-modal-form {
@@ -900,7 +1147,12 @@
     }
 
     /* —— Groups —— */
-    #groups { padding-top: 5rem; }
+    #groups {
+      position: relative;
+      z-index: 2;
+      padding-top: 4rem;
+      background: var(--ocean);
+    }
 
     .groups-grid {
       display: grid;
@@ -1239,7 +1491,26 @@
     }
 
     .route-choice-card .ride-td-left {
-      background: #f9fafb;
+      background: color-mix(in srgb, var(--route-color, #94a3b8) 44%, #ffffff);
+      border-right: 1px solid color-mix(in srgb, var(--route-color, #64748b) 32%, #e2e8f0);
+    }
+
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left {
+      background: linear-gradient(180deg, #f2f2f3 0%, #e6e6e8 100%);
+      border-right: 1px solid #d1d5db;
+    }
+
+    /* Colonne gauche boucle : même teinte que le tracé via --route-color (règle .ride-td-left ci-dessus). */
+
+    .route-choice-card .ride-event-card.is-route-boucle .ride-aside-bike svg {
+      fill: var(--route-color);
+      color: var(--route-color);
+    }
+
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-month,
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-time,
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-meet-place {
+      color: #374151;
     }
 
     .route-choice-card .ride-td-right {
@@ -1266,14 +1537,23 @@
     .route-choice-card .ride-td-bike {
       min-height: 5.25rem;
       vertical-align: middle;
+      text-align: center;
+    }
+
+    .route-choice-card .ride-meet-place {
+      margin: 0 0 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      line-height: 1.3;
+      color: #374151;
     }
 
     .route-choice-card .ride-aside-bike {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 4.5rem;
-      padding: 0.35rem 0;
+      min-height: 3.5rem;
+      padding: 0.15rem 0;
     }
 
     .route-choice-card .ride-aside-bike svg {
@@ -1285,7 +1565,6 @@
     }
 
     .route-choice-card .ride-desc,
-    .route-choice-card .ride-meet-spot,
     .route-choice-card .ride-pace-level,
     .route-choice-card .ride-group,
     .route-choice-card .ride-course {
@@ -1310,64 +1589,6 @@
       padding: 1.25rem 1rem 0.5rem;
       max-width: 480px;
       margin: 0 auto;
-    }
-
-    .route-detail-panel {
-      display: none;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(0, 0, 0, 0.2);
-      padding: 1.25rem;
-      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
-      transition: border-color 0.25s, box-shadow 0.25s;
-    }
-
-    .route-detail-panel.is-visible {
-      display: block;
-    }
-
-
-    .route-detail-panel.is-falaises {
-      border-color: rgba(232, 232, 232, 0.55);
-      box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.25), 0 20px 48px rgba(0, 0, 0, 0.3);
-    }
-
-    .route-detail-panel.is-boucle {
-      border-color: rgba(37, 99, 235, 0.45);
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2), 0 20px 48px rgba(0, 0, 0, 0.3);
-    }
-
-    .route-detail-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 0.5rem 1rem;
-      margin-bottom: 1rem;
-      padding-bottom: 0.85rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .route-detail-header h3 {
-      font-family: var(--font-serif);
-      font-size: 1.35rem;
-      font-weight: 500;
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .route-detail-km {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .route-detail-panel.is-falaises .route-detail-km { color: #e8e8e8; }
-    .route-detail-panel.is-boucle .route-detail-km { color: #60a5fa; }
-
-    .route-detail-meta {
-      width: 100%;
-      font-size: 0.85rem;
-      color: var(--muted);
     }
 
     .group-card.has-route {
@@ -1553,11 +1774,13 @@
       font-style: italic;
     }
 
-    .ride-meet-spot {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      margin: 0;
-      line-height: 1.4;
+    .ride-meet-place {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #374151;
+      margin: 0 0 0.4rem;
+      line-height: 1.3;
+      text-align: center;
     }
 
     .map-options {
@@ -1768,24 +1991,30 @@
       }
 
       .home-hero-photo img {
-        object-position: center 40%;
+        object-position: center 52%;
       }
 
       .home-hero-panel {
         padding: 1.15rem 1rem 1.5rem;
       }
 
+      .home-hero-sky-left {
+        padding: 1rem 1rem 1.1rem;
+      }
+
       .home-topbar {
         margin-bottom: 2rem;
       }
 
-      .home-actions {
+      .home-actions--hero {
         flex-direction: column;
-        max-width: none;
+        max-width: 22rem;
+        margin-left: auto;
+        margin-right: auto;
       }
 
-      .home-actions .btn-primary,
-      .home-actions .btn-secondary {
+      .home-actions--hero .btn-primary,
+      .home-actions--hero .btn-secondary {
         width: 100%;
         text-align: center;
         min-height: 48px;
@@ -1854,10 +2083,6 @@
         bottom: calc(100% + 0.4rem);
       }
 
-      .route-detail-panel {
-        padding: 1rem;
-      }
-
       .ride-event-card--choice .ride-km {
         font-size: 1.35rem;
       }
@@ -1874,10 +2099,6 @@
       .route-choice-card .btn-join {
         width: 100%;
         text-align: center;
-      }
-
-      .route-detail-header h3 {
-        font-size: 1.15rem;
       }
 
       .ride-td-left {
@@ -1907,8 +2128,8 @@
       }
 
       #route-map {
-        height: min(55dvh, 380px);
-        min-height: 260px;
+        height: min(38dvh, 260px);
+        min-height: 180px;
       }
 
       .map-options {
@@ -1937,6 +2158,79 @@
 
       footer {
         padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+      }
+
+      .signup-modal {
+        align-items: flex-start;
+        padding-top: max(0.65rem, env(safe-area-inset-top));
+        padding-right: max(0.65rem, env(safe-area-inset-right));
+        padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+        padding-left: max(0.65rem, env(safe-area-inset-left));
+      }
+
+      .signup-modal-dialog {
+        padding: 1.15rem 1rem calc(1.15rem + env(safe-area-inset-bottom));
+        max-height: min(100dvh - 1.25rem, 900px);
+        margin-top: 0.15rem;
+      }
+
+      .signup-modal h2 {
+        font-size: clamp(1.35rem, 5.5vw, 1.65rem);
+        padding-right: 2.75rem;
+      }
+
+      .signup-modal-close {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        top: 0.4rem;
+        right: 0.4rem;
+      }
+
+      .signup-modal-route {
+        font-size: 0.9rem;
+        padding: 0.75rem 0.85rem;
+      }
+
+      .signup-modal-course {
+        font-size: 0.875rem;
+        line-height: 1.62;
+        padding: 0.9rem 0.85rem 1rem;
+      }
+
+      .signup-modal-course-title {
+        font-size: 0.92rem;
+      }
+
+      .signup-modal-form input {
+        font-size: 16px;
+      }
+
+      .signup-modal-form .btn-primary {
+        min-height: 48px;
+        font-size: 1rem;
+      }
+
+      .btn-unregister {
+        min-height: 48px;
+        padding: 0.85rem 1rem;
+      }
+
+      .signup-modal .signup-mailto-link {
+        font-size: 0.92rem;
+        padding: 0.7rem 0.35rem;
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 100%;
+      }
+
+      .signup-modal #route-map {
+        min-height: 220px;
+        height: min(42dvh, 280px);
       }
 
       .leaflet-control-zoom a {
@@ -1987,37 +2281,52 @@
       <div class="home-hero-decor" aria-hidden="true"></div>
       <div class="home-hero-panel">
         <div class="home-hero-sky">
-          <div class="home-topbar">
-            <div class="home-brand">
-              <span class="home-brand-title">GOËLO RIDES</span>
-              <span class="home-brand-sub">Saint-Quay-Portrieux</span>
+          <div class="home-hero-sky-split">
+            <div class="home-hero-sky-left">
+              <div class="home-topbar">
+                <div class="home-brand">
+                  <span class="home-brand-title">GOËLO RIDES</span>
+                  <span class="home-brand-sub">Saint-Quay-Portrieux</span>
+                </div>
+                <span class="home-season-badge">Été 2026</span>
+              </div>
+              <p class="home-region">
+                <span class="home-region-line" aria-hidden="true"></span>
+                Baie du Goëlo
+              </p>
+              <h1 class="home-title">
+                <span class="home-title-line">La côte,</span>
+                <span class="home-title-accent">à vélo</span>
+              </h1>
             </div>
-            <span class="home-season-badge">Été 2026</span>
+            <div class="home-hero-sky-right">
+              <img
+                src="assets/hero-sky-cote.png"
+                alt="Vue depuis le vélo sur une route en bord de mer"
+                width="399"
+                height="605"
+                loading="eager"
+                decoding="async">
+            </div>
           </div>
-          <p class="home-region">
-            <span class="home-region-line" aria-hidden="true"></span>
-            Baie du Goëlo
-          </p>
-          <h1 class="home-title">
-            <span class="home-title-line">La côte,</span>
-            <span class="home-title-accent">à vélo</span>
-          </h1>
         </div>
-        <div class="home-hero-sea">
-          <div class="home-quote">
-            <p class="home-intro">
-              Sorties conviviales au bord de l’eau — départ au port de Saint-Quay.
-            </p>
-            <p class="home-sub">
-              Tu es de passage ou du coin ? Rejoins un groupe à ton rythme.
-            </p>
+        <div class="home-hero-lower">
+          <div class="home-hero-sea">
+            <div class="home-quote">
+              <p class="home-intro">
+                Sorties conviviales au bord de l’eau — départ parking du Kasino de Saint-Quay.
+              </p>
+              <p class="home-sub">
+                Tu es de passage ou du coin ? Rejoins un groupe à ton rythme.
+              </p>
+            </div>
+            <ul class="home-pills" aria-label="L’esprit Goëlo Rides">
+              <li>Pas d’adhésion</li>
+              <li>Pas de chronomètre</li>
+              <li>Rouler ensemble</li>
+            </ul>
           </div>
-          <ul class="home-pills" aria-label="L’esprit Goëlo Rides">
-            <li>Pas d’adhésion</li>
-            <li>Pas de chronomètre</li>
-            <li>Rouler ensemble</li>
-          </ul>
-          <div class="home-actions">
+          <div class="home-actions home-actions--hero">
             <a href="#groups" class="btn-primary">Voir les groupes</a>
             <a href="#map-section" class="btn-secondary">Voir les parcours</a>
           </div>
@@ -2055,7 +2364,7 @@
         </div>
         <p>Tu roules régulièrement mais l'ambiance compte autant que la performance. On attend tout le monde.</p>
       </article>
-      <article class="group-card has-route" data-route-id="boucle" style="border-top-color: #4a90d9;">
+      <article class="group-card has-route" data-route-id="boucle" style="border-top-color: #2563eb;">
         <h3>Groupe Bleu</h3>
         <div class="group-meta">
           <span>22–26 km/h</span>
@@ -2097,25 +2406,8 @@
         <div class="route-choices" id="route-picker" role="tablist" aria-label="Choisir un parcours"></div>
       </div>
       <p class="route-pick-prompt" id="route-pick-prompt">
-        Choisis un parcours pour la carte, ou clique sur « J’en suis ? » pour t’inscrire.
+        Touche un parcours ou « J’en suis ? » pour ouvrir la fenêtre : carte, détails et inscription.
       </p>
-
-      <div class="route-detail-panel" id="route-detail-panel" aria-live="polite" hidden>
-        <div class="map-options" id="map-options">
-          <label>
-            <input type="checkbox" id="opt-cities" checked>
-            Villes traversées sur la carte
-          </label>
-        </div>
-        <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
-
-        <div class="strava-map-block">
-          <div class="map-wrap" style="padding:0;margin:0;max-width:none;">
-            <div class="map-loading" id="map-loading">Chargement des parcours…</div>
-            <div id="route-map" role="application" aria-label="Carte du parcours sélectionné"></div>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -2125,6 +2417,33 @@
       <button type="button" class="signup-modal-close" data-close-modal aria-label="Fermer">×</button>
       <h2 id="signup-modal-title">J’en suis !</h2>
       <div class="signup-modal-route" id="signup-modal-route"></div>
+      <div class="signup-modal-course" id="signup-modal-course" aria-label="Détail de la sortie"></div>
+
+      <div class="signup-modal-map-section" id="signup-modal-map-section" aria-label="Carte du parcours">
+        <div class="map-options" id="map-options">
+          <label>
+            <input type="checkbox" id="opt-cities" checked>
+            Villes traversées sur la carte
+          </label>
+          <label>
+            <input type="checkbox" id="opt-grade-colors" checked>
+            Couleurs selon la pente (rouge = montée raide)
+          </label>
+        </div>
+        <p class="grade-legend" id="grade-legend" hidden>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#64748b"></span> Plat</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#ca8a04"></span> Montée légère</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#ea580c"></span> Modérée</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#dc2626"></span> Raide</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#2563eb"></span> Descente</span>
+        </p>
+        <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
+        <div class="signup-modal-map-inner strava-map-block">
+          <div class="map-loading" id="map-loading">Chargement des parcours…</div>
+          <div id="route-map" role="application" aria-label="Carte du parcours sélectionné"></div>
+        </div>
+      </div>
+
       <p class="signup-modal-done" id="signup-modal-done" role="status"></p>
       <div class="signup-registered-actions" id="signup-registered-actions" hidden>
         <button type="button" class="btn-unregister" id="signup-unregister-btn">Me désinscrire de ce parcours</button>
@@ -2166,7 +2485,9 @@
       const GPX_MAX_POINTS = 6000;
 
       const SHARED = {
-        meetup: "Parking du port, 22410 Saint-Quay-Portrieux, Bretagne",
+        meetPlace: "Devant le Kasino",
+        meetParking: "Parking du Kasino, Saint-Quay-Portrieux",
+        meetRv: "8h20",
         region: "Côte du Goëlo",
         time: "8h30"
       };
@@ -2242,6 +2563,98 @@
 
       function formatKm(km) {
         return km.toFixed(1).replace(".", ",") + " km";
+      }
+
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;");
+      }
+
+      function buildCourseDetailsHtml(route) {
+        const prof = route.profile;
+        const kmLine = prof ? formatKm(prof.totalKm) : "— (chargement de la trace…)";
+        const isBlanc = route.id === "falaises";
+        const pacePhil =
+          isBlanc
+            ? "Allure visée sur le plat : <strong>15–18 km/h</strong> pour que chacun puisse suivre. " +
+              "Merci de ne pas augmenter le rythme sans l’accord du groupe : on roule ensemble."
+            : "Allure visée sur le plat : <strong>22–26 km/h</strong>, parcours plus long. " +
+              "Relais et attentes aux points convenus pour garder le groupe cohérent.";
+        const philo =
+          isBlanc
+            ? "La philosophie du <strong>Groupe Blanc</strong> : on roule à un rythme raisonnable pour que tout le monde prenne du plaisir. " +
+              "On part ensemble, on roule ensemble, on rentre ensemble. C’est une sortie <strong>sociale et conviviale</strong>."
+            : "La philosophie du <strong>Groupe Bleu</strong> : rythme soutenu mais respectueux du peloton. " +
+              "On s’entraide, on communique, on garde l’esprit d’équipe sur toute la sortie.";
+
+        return (
+          "<h3 class=\"signup-modal-course-title\">Détail sortie</h3>" +
+          "<p><strong>Parcours</strong> · " +
+          escapeHtml(route.track) +
+          "</p>" +
+          "<p><strong>Groupe</strong> · " +
+          escapeHtml(route.name) +
+          " · " +
+          escapeHtml(route.pace) +
+          "</p>" +
+          "<p><strong>Date</strong> · " +
+          escapeHtml(route.depart.dateLabel) +
+          "</p>" +
+          "<p><strong>Distance (trace GPX)</strong> · " +
+          kmLine +
+          "</p>" +
+          "<p><strong>Point de départ</strong> · " +
+          escapeHtml(SHARED.meetParking) +
+          "</p>" +
+          "<p><strong>Rendez-vous</strong> · " +
+          escapeHtml(SHARED.meetRv) +
+          " · <strong>Départ roulant</strong> · " +
+          escapeHtml(SHARED.time) +
+          "</p>" +
+          "<h3 class=\"signup-modal-course-title\">À propos</h3>" +
+          "<p class=\"course-warn\">Merci de bien lire la description avant de t’inscrire.</p>" +
+          "<p>La sortie pourra être <strong>annulée ou décalée</strong> selon les conditions météorologiques. " +
+          "En cas de doute, suis les messages sur " +
+          "<a href=\"https://www.instagram.com/goelo.rides/\" target=\"_blank\" rel=\"noopener noreferrer\">@goelo.rides</a> " +
+          "ou contacte-nous par e-mail.</p>" +
+          "<p>" +
+          pacePhil +
+          "</p>" +
+          "<p>" +
+          philo +
+          "</p>" +
+          "<p class=\"course-sub\">En montée</p>" +
+          "<p>Chacun roule à son rythme ; <strong>regroupement en haut</strong> des bosses pour repartir groupés.</p>" +
+          "<p class=\"course-sub\">Préparation et autonomie</p>" +
+          "<ul>" +
+          "<li>Aie la <strong>trace GPS</strong> du parcours sur ton téléphone ou GPS pour pouvoir rentrer en autonomie en cas de problème.</li>" +
+          "<li>Sois autonome : <strong>outillage</strong>, chambre à air / patins, <strong>alimentation</strong> et eau adaptées à la durée.</li>" +
+          "</ul>" +
+          "<p class=\"course-sub\">Consignes de sécurité</p>" +
+          "<ul>" +
+          "<li>Sur routes larges, roulez en <strong>file à deux</strong> au maximum ; en file indienne sur les portions étroites.</li>" +
+          "<li>Signale les obstacles (poteaux, nids-de-poule, dos-d’âne…).</li>" +
+          "<li>Garde ta ligne et signale clairement tout dépassement.</li>" +
+          "</ul>" +
+          "<p class=\"course-sub\">Matériel</p>" +
+          "<ul>" +
+          "<li>Respect du <strong>code de la route</strong> et du bon sens collectif. Comportement dangereux = exclusion possible de la sortie.</li>" +
+          "<li><strong>Casque obligatoire</strong> (quelle que soit la météo).</li>" +
+          "<li><strong>Éclairage</strong> et <strong>avertisseur</strong> conformes si les conditions l’exigent.</li>" +
+          "<li>Prolongateurs de cintre type « clip-on » : <strong>interdits</strong> sur la sortie.</li>" +
+          "<li>Prévois l’équipement adapté à la météo (couche chaude, coupe-vent, protection pluie…).</li>" +
+          "</ul>" +
+          "<p class=\"course-sub\">Inscription</p>" +
+          "<p><strong>Goëlo Rides</strong> : pas de cotisation annuelle. L’inscription sur cette page ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. " +
+          "Préviens-nous si tu ne peux finalement pas venir.</p>" +
+          "<p class=\"signup-modal-course-footer\">" +
+          "Bonne sortie · Goëlo Rides · " +
+          escapeHtml(SHARED.region) +
+          "</p>"
+        );
       }
 
       function parseParticipantsCsv(text) {
@@ -2402,10 +2815,17 @@
 
         if (info) {
           info.innerHTML =
-            "<strong>" + route.track + "</strong>" +
-            route.name + " · " + route.depart.dateLabel + "<br>" +
-            formatKm(route.profile.totalKm) + " · " + route.pace + " · " + route.levelLabel + "<br>" +
-            (route.shortDesc || "") + "<br>RDV " + SHARED.time + " · " + SHARED.meetup;
+            "<strong>" + escapeHtml(route.track) + "</strong><br>" +
+            escapeHtml(route.name) + " · " + escapeHtml(route.depart.dateLabel) + "<br>" +
+            (route.profile ? formatKm(route.profile.totalKm) + " · " : "") +
+            escapeHtml(route.pace) + " · " + escapeHtml(route.levelLabel) + "<br>" +
+            escapeHtml(route.shortDesc || "") + "<br>" +
+            escapeHtml(SHARED.meetPlace) + " · " + escapeHtml(SHARED.time);
+        }
+
+        const courseEl = document.getElementById("signup-modal-course");
+        if (courseEl) {
+          courseEl.innerHTML = buildCourseDetailsHtml(route);
         }
 
         if (mailto) {
@@ -2669,9 +3089,99 @@
           const lat = parseFloat(el.getAttribute("lat"));
           const lon = parseFloat(el.getAttribute("lon"));
           if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
-          points.push({ lat, lon });
+          let ele = null;
+          for (let c = el.firstElementChild; c; c = c.nextElementSibling) {
+            const n = c.localName || c.nodeName.split(":").pop();
+            if (n === "ele" && c.textContent) {
+              const v = parseFloat(c.textContent.trim());
+              if (!Number.isNaN(v)) ele = v;
+              break;
+            }
+          }
+          if (ele !== null) points.push({ lat: lat, lon: lon, ele: ele });
+          else points.push({ lat: lat, lon: lon });
         }
         return points;
+      }
+
+      function fillElevationGaps(points) {
+        const n = points.length;
+        if (!n) return [];
+        const hasAny = points.some(function (p) {
+          return typeof p.ele === "number" && !Number.isNaN(p.ele);
+        });
+        if (!hasAny) {
+          return points.map(function (p) {
+            return { lat: p.lat, lon: p.lon };
+          });
+        }
+        const out = points.map(function (p) {
+          return {
+            lat: p.lat,
+            lon: p.lon,
+            ele: typeof p.ele === "number" && !Number.isNaN(p.ele) ? p.ele : null
+          };
+        });
+        let first = -1;
+        let last = -1;
+        for (let i = 0; i < n; i++) {
+          if (out[i].ele !== null) {
+            if (first < 0) first = i;
+            last = i;
+          }
+        }
+        if (first < 0) {
+          return out.map(function (p) {
+            return { lat: p.lat, lon: p.lon };
+          });
+        }
+        for (let i = 0; i < first; i++) out[i].ele = out[first].ele;
+        for (let i = last + 1; i < n; i++) out[i].ele = out[last].ele;
+        let i = first;
+        while (i < last) {
+          let j = i + 1;
+          while (j <= last && out[j].ele === null) j++;
+          if (j > last) break;
+          const e0 = out[i].ele;
+          const e1 = out[j].ele;
+          const steps = j - i;
+          for (let k = 1; k < steps; k++) {
+            out[i + k].ele = e0 + (e1 - e0) * (k / steps);
+          }
+          i = j;
+        }
+        return out;
+      }
+
+      function gradePercentBetween(p0, p1) {
+        const horiz = haversine(p0.lat, p0.lon, p1.lat, p1.lon);
+        if (horiz < 0.5) return 0;
+        if (typeof p0.ele !== "number" || typeof p1.ele !== "number") return null;
+        return ((p1.ele - p0.ele) / horiz) * 100;
+      }
+
+      function smoothedEdgeGrade(points, i) {
+        const w = 2;
+        let sum = 0;
+        let cnt = 0;
+        for (let k = -w; k <= w; k++) {
+          const idx = i + k;
+          if (idx < 0 || idx >= points.length - 1) continue;
+          const g = gradePercentBetween(points[idx], points[idx + 1]);
+          if (g !== null) {
+            sum += g;
+            cnt++;
+          }
+        }
+        return cnt ? sum / cnt : 0;
+      }
+
+      function segmentColorForGrade(gradePct) {
+        if (gradePct < -2.5) return "#2563eb";
+        if (gradePct < 2) return "#64748b";
+        if (gradePct < 4.5) return "#ca8a04";
+        if (gradePct < 8) return "#ea580c";
+        return "#dc2626";
       }
 
       function simplifyTrack(points, maxPoints) {
@@ -2684,13 +3194,14 @@
       }
 
       function buildTrack(points) {
+        const filled = fillElevationGaps(points);
         let distM = 0;
-        for (let i = 1; i < points.length; i++) {
+        for (let i = 1; i < filled.length; i++) {
           distM += haversine(
-            points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon
+            filled[i - 1].lat, filled[i - 1].lon, filled[i].lat, filled[i].lon
           );
         }
-        return { points: points, totalKm: distM / 1000 };
+        return { points: filled, totalKm: distM / 1000 };
       }
 
       async function loadGpxTrack(url) {
@@ -2704,17 +3215,6 @@
         }
       }
 
-      function setRouteSectionsVisible(visible) {
-        const detailPanel = document.getElementById("route-detail-panel");
-        const prompt = document.getElementById("route-pick-prompt");
-
-        if (detailPanel) {
-          detailPanel.classList.toggle("is-visible", visible);
-          detailPanel.hidden = !visible;
-        }
-        if (prompt) prompt.hidden = visible;
-      }
-
       const BIKE_SVG =
         '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
         '<path fill="#1f2937" d="M5 20.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm14 0a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z' +
@@ -2722,38 +3222,34 @@
 
       function buildRouteChoiceTable(route) {
         const d = route.depart;
-        const meet = "RDV " + SHARED.time + " · " + SHARED.meetup;
         return (
           '<table class="ride-event-card ride-event-card--choice is-route-' + route.id + '">' +
           "<tbody>" +
-          '<tr><td class="ride-td-left"><span class="ride-aside-label">Jour</span>' +
-          '<span class="ride-day">' + d.day + "</span></td>" +
+          '<tr><td class="ride-td-left"><span class="ride-day">' + d.day + "</span></td>" +
           '<td class="ride-td-right"><div class="ride-km-row">' +
           '<p class="ride-km" data-choice-km="' + route.id + '">' + formatKm(route.profile.totalKm) + "</p>" +
           '<button type="button" class="btn-join" data-join-route="' + route.id + '">J’en suis ?</button>' +
           "</div></td></tr>" +
-          '<tr><td class="ride-td-left"><span class="ride-aside-label">Mois</span>' +
-          '<span class="ride-month">' + d.month + "</span></td>" +
+          '<tr><td class="ride-td-left"><span class="ride-month">' + d.month + "</span></td>" +
           '<td class="ride-td-right"><h4 class="ride-course">' + route.track + "</h4></td></tr>" +
-          '<tr><td class="ride-td-left"><span class="ride-aside-label">Heure</span>' +
-          '<span class="ride-time">' + SHARED.time + "</span></td>" +
+          '<tr><td class="ride-td-left"><span class="ride-time">' + SHARED.time + "</span></td>" +
           '<td class="ride-td-right"><p class="ride-group">' + route.name + "</p></td></tr>" +
-          '<tr><td class="ride-td-left ride-td-bike" rowspan="2"><div class="ride-aside-bike">' +
-          BIKE_SVG + "</div></td>" +
+          '<tr><td class="ride-td-left ride-td-bike" rowspan="2">' +
+          '<p class="ride-meet-place">' + SHARED.meetPlace + "</p>" +
+          '<div class="ride-aside-bike">' + BIKE_SVG + "</div></td>" +
           '<td class="ride-td-right"><p class="ride-pace-level">' +
           route.pace + " · " + route.levelLabel + "</p></td></tr>" +
           '<tr><td class="ride-td-right"><p class="ride-desc">' +
-          (route.shortDesc || "") + '</p><p class="ride-meet-spot">' + meet + "</p></td></tr>" +
+          (route.shortDesc || "") + "</p></td></tr>" +
           "</tbody></table>"
         );
       }
 
       function updateRideCard(route) {
-        const detailPanel = document.getElementById("route-detail-panel");
-
-        if (detailPanel) {
-          detailPanel.classList.remove("is-falaises", "is-boucle");
-          detailPanel.classList.add("is-" + route.id);
+        const wrap = document.getElementById("signup-modal-map-section");
+        if (wrap) {
+          wrap.classList.remove("is-falaises", "is-boucle");
+          wrap.classList.add("is-" + route.id);
         }
         refreshJoinButtons();
         if (modalRouteRef && modalRouteRef.id === route.id) {
@@ -2880,6 +3376,97 @@
         return group;
       }
 
+      function profileHasElevation(points) {
+        return points.some(function (p) {
+          return typeof p.ele === "number" && !Number.isNaN(p.ele);
+        });
+      }
+
+      function addGradeColoredTrack(map, points, routeFallbackColor, casingColor) {
+        const weight = 5;
+        const latlngs = points.map(function (p) {
+          return [p.lat, p.lon];
+        });
+        const casing = L.polyline(latlngs, {
+          color: casingColor || "#ffffff",
+          weight: weight + 4,
+          opacity: 1,
+          lineCap: "round",
+          lineJoin: "round"
+        });
+        const colored = L.layerGroup();
+        let i = 0;
+        while (i < points.length - 1) {
+          const g = smoothedEdgeGrade(points, i);
+          const col = segmentColorForGrade(g);
+          const path = [[points[i].lat, points[i].lon]];
+          let j = i;
+          while (j < points.length - 1) {
+            const gj = smoothedEdgeGrade(points, j);
+            if (segmentColorForGrade(gj) !== col) break;
+            j++;
+            path.push([points[j].lat, points[j].lon]);
+          }
+          if (j === i) {
+            j = i + 1;
+            path.push([points[j].lat, points[j].lon]);
+          }
+          colored.addLayer(
+            L.polyline(path, {
+              color: col,
+              weight: weight,
+              opacity: 1,
+              lineCap: "round",
+              lineJoin: "round"
+            })
+          );
+          i = j;
+        }
+        const arrowColor = resolveArrowColor(routeFallbackColor, casingColor);
+        const layers = [casing, colored];
+        if (typeof L.polylineDecorator === "function" && typeof L.Symbol !== "undefined") {
+          layers.push(
+            L.polylineDecorator(casing, {
+              patterns: [
+                {
+                  offset: "4%",
+                  repeat: "7%",
+                  symbol: L.Symbol.arrowHead({
+                    pixelSize: 12,
+                    headAngle: 42,
+                    polygon: false,
+                    pathOptions: {
+                      color: arrowColor,
+                      weight: 3,
+                      opacity: 1,
+                      lineCap: "round",
+                      lineJoin: "round"
+                    }
+                  })
+                }
+              ]
+            })
+          );
+        } else {
+          layers.push(addManualDirectionArrows(latlngs, arrowColor));
+        }
+        const group = L.layerGroup(layers);
+        group.mainLine = casing;
+        return group;
+      }
+
+      function addTrackForRoute(map, route, useGradeColors) {
+        const pts = route.profile.points;
+        const latlngs = pts.map(function (p) {
+          return [p.lat, p.lon];
+        });
+        const canGrade = useGradeColors && profileHasElevation(pts);
+        if (canGrade) {
+          return addGradeColoredTrack(map, pts, route.color, route.casingColor);
+        }
+        return addStravaTrack(map, latlngs, route.color, route.casingColor);
+      }
+
       document.addEventListener("DOMContentLoaded", async function () {
         const mapEl = document.getElementById("route-map");
         const mapLoading = document.getElementById("map-loading");
@@ -2902,6 +3489,7 @@
         let trackLayer = null;
         let citiesLayer = null;
         const optCities = document.getElementById("opt-cities");
+        const optGradeColors = document.getElementById("opt-grade-colors");
 
         function refreshMapSize() {
           map.invalidateSize({ animate: false });
@@ -2939,6 +3527,12 @@
           });
         }
 
+        if (optGradeColors) {
+          optGradeColors.addEventListener("change", function () {
+            if (activeRoute) showRoute(activeRoute, { scroll: false });
+          });
+        }
+
         function boundsForLatLngs(latlngs) {
           return L.latLngBounds(latlngs);
         }
@@ -2947,14 +3541,27 @@
           const opts = options || {};
           activeRoute = route;
           activeRouteRef = route;
-          setRouteSectionsVisible(true);
           clearTrack();
-          const latlngs = route.profile.points.map(function (p) { return [p.lat, p.lon]; });
-          trackLayer = addStravaTrack(map, latlngs, route.color, route.casingColor);
+          const pts = route.profile.points;
+          const latlngs = pts.map(function (p) { return [p.lat, p.lon]; });
+          const useGrade = optGradeColors && optGradeColors.checked;
+          const hasElev = typeof pts[0] !== "undefined" && typeof pts[0].ele === "number";
+          if (optGradeColors) {
+            optGradeColors.disabled = !hasElev;
+            const lab = optGradeColors.closest("label");
+            if (lab) lab.style.opacity = hasElev ? "" : "0.5";
+          }
+          const gradeLegend = document.getElementById("grade-legend");
+          if (gradeLegend) gradeLegend.hidden = !(useGrade && hasElev);
+
+          trackLayer = addTrackForRoute(map, route, useGrade);
           trackLayer.addTo(map);
           trackLayer.mainLine.bindPopup(
             "<strong>" + route.track + "</strong><br>" + route.depart.dateLabel +
-            "<br>" + formatKm(route.profile.totalKm) + " · " + route.name
+            "<br>" + formatKm(route.profile.totalKm) + " · " + route.name +
+            (useGrade && hasElev
+              ? "<br><span style=\"font-size:0.8em;opacity:0.9\">Couleurs = pente (rouge = montée raide).</span>"
+              : "")
           );
           map.fitBounds(boundsForLatLngs(latlngs), { padding: [40, 40], maxZoom: 14 });
 
@@ -2974,11 +3581,7 @@
           });
 
           setTimeout(refreshMapSize, 50);
-
-          const detailPanel = document.getElementById("route-detail-panel");
-          if (opts.scroll !== false && detailPanel && window.matchMedia("(max-width: 768px)").matches) {
-            detailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
+          setTimeout(refreshMapSize, 350);
         }
 
         showRouteHandler = showRoute;
@@ -2995,13 +3598,13 @@
             card.innerHTML = buildRouteChoiceTable(route);
             card.addEventListener("click", function (e) {
               if (e.target.closest(".btn-join")) return;
-              showRoute(route);
+              openSignupModal(route);
             });
             card.addEventListener("keydown", function (e) {
               if (e.key === "Enter" || e.key === " ") {
                 if (e.target.closest(".btn-join")) return;
                 e.preventDefault();
-                showRoute(route);
+                openSignupModal(route);
               }
             });
             routePicker.appendChild(card);
@@ -3009,7 +3612,7 @@
 
           document.querySelectorAll('.group-card[data-route-id="' + route.id + '"]').forEach(function (card) {
             card.addEventListener("click", function () {
-              showRoute(route);
+              openSignupModal(route);
               document.getElementById("map-section").scrollIntoView({ behavior: "smooth" });
             });
           });
@@ -3056,8 +3659,6 @@
           if (mapAlert) mapAlert.classList.add("is-visible");
           return;
         }
-
-        setRouteSectionsVisible(false);
 
         setTimeout(refreshMapSize, 150);
         if ("IntersectionObserver" in window) {
