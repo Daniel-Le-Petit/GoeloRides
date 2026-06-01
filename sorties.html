@@ -263,6 +263,11 @@
       box-shadow: 0 4px 14px rgba(15, 30, 45, 0.08);
     }
 
+    /* Desktop / tablette : rail + corps restent des flex items directs de la carte */
+    .sorties-card-mid {
+      display: contents;
+    }
+
     .sorties-card--blanc:hover { border-left-color: #6b7280; }
     .sorties-card--vert:hover { border-left-color: #16a34a; }
     .sorties-card--bleu:hover { border-left-color: #2563eb; }
@@ -382,7 +387,7 @@
     .sorties-card-type-line {
       font-size: 0.78rem;
       color: var(--app-muted);
-      margin: 0 0 0.55rem;
+      margin: 0.35rem 0 0.55rem;
       line-height: 1.4;
       max-width: 100%;
     }
@@ -561,7 +566,7 @@
         width: 100px;
         align-self: stretch;
       }
-      .sorties-card-rail {
+      .sorties-card-mid .sorties-card-rail {
         width: 2.85rem;
       }
     }
@@ -620,13 +625,25 @@
         align-self: stretch;
         min-height: 6.5rem;
       }
-      .sorties-card-rail {
-        width: 2.75rem;
-        min-height: 100px;
-      }
-      .sorties-card-body {
-        flex: 1 1 55%;
+      /* Date / heure à gauche, titre + km + ligne type à droite (même ligne que le rail). */
+      .sorties-card-mid {
+        display: flex;
+        flex-direction: row;
+        flex: 1 1 calc(60% - 0.25rem);
         min-width: 0;
+        align-items: flex-start;
+        gap: 0;
+      }
+      .sorties-card-mid .sorties-card-rail {
+        width: 2.75rem;
+        flex-shrink: 0;
+        min-height: 0;
+        align-self: stretch;
+      }
+      .sorties-card-mid .sorties-card-body {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 0.55rem 0.65rem 0.65rem 0.5rem;
       }
       .sorties-card-aside {
         flex-direction: row;

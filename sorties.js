@@ -649,6 +649,7 @@
           '<div class="sorties-card-thumb"><img src="' +
           escapeAttr(thumb) +
           '" alt="" loading="lazy" decoding="async"></div>' +
+          '<div class="sorties-card-mid">' +
           '<div class="sorties-card-rail sorties-card-rail--' +
           railMod +
           '" aria-hidden="true">' +
@@ -667,9 +668,6 @@
           '<h3 class="sorties-card-title">' +
           escapeHtml(route.track) +
           "</h3>" +
-          '<p class="sorties-card-type-line">' +
-          typeLine +
-          "</p>" +
           '<div class="sorties-card-hero-stats" aria-label="Distance et dénivelé">' +
           '<span class="sorties-hero-km">' +
           escapeHtml(km) +
@@ -678,6 +676,9 @@
           '<span class="sorties-hero-dplus">' +
           escapeHtml(dpl) +
           "</span></div>" +
+          '<p class="sorties-card-type-line">' +
+          typeLine +
+          "</p>" +
           '<div class="sorties-card-details">' +
           '<p class="sorties-card-line"><strong>Départ</strong> · ' +
           meet +
@@ -691,7 +692,7 @@
           '" aria-hidden="true"></span>' +
           '<span class="sorties-level-text">· ' +
           escapeHtml(route.levelLabel || "—") +
-          "</span></p></div></div>" +
+          "</span></p></div></div></div>" +
           '<div class="sorties-card-aside sorties-card-aside--' +
           railMod +
           '">' +
