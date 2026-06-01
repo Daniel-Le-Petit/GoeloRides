@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#eef2f6">
+  <title>Sortie · Goëlo Rides</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="parcours.css">
+  <link rel="stylesheet" href="app-chrome.css">
+  <style>
+    :root {
+      --app-sea: #1565a8;
+      --app-sea-hover: #0e4d80;
+      --app-bg: #eef2f6;
+      --app-surface: #ffffff;
+      --app-text: #15232d;
+      --app-muted: #5a6b78;
+      --app-border: #dce6ee;
+      --sidebar-w: 15.5rem;
+      --font-sans: "DM Sans", system-ui, sans-serif;
+      --font-logo: "Comfortaa", "Nunito", "DM Sans", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; background: var(--app-bg); }
+    body {
+      font-family: var(--font-sans);
+      background: var(--app-bg);
+      color: var(--app-text);
+      min-height: 100dvh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--app-sea); }
+    .app-shell { display: flex; min-height: 100dvh; background: var(--app-bg); }
+    .app-logo {
+      font-family: var(--font-logo);
+      font-weight: 700;
+      font-size: 1.22rem;
+      letter-spacing: 0.02em;
+      color: var(--app-text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.5rem 1rem;
+      border-bottom: 1px solid rgba(21, 101, 168, 0.2);
+      margin-bottom: 0.75rem;
+    }
+    .app-logo span { color: var(--app-sea); }
+    .app-nav { list-style: none; flex: 1; }
+    .app-nav a {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--app-muted);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .app-nav a:hover { background: #f0f4f8; color: var(--app-text); }
+    .app-nav a.is-active { background: #e8f2fa; color: var(--app-sea); }
+    .app-nav-icon { font-size: 1.1rem; width: 1.35rem; text-align: center; }
+    .app-sidebar-footer {
+      border-top: 1px solid rgba(21, 101, 168, 0.18);
+      padding-top: 0.85rem;
+      font-size: 0.78rem;
+      color: var(--app-muted);
+    }
+    .app-main {
+      flex: 1;
+      min-width: 0;
+      padding: 1.35rem 1.75rem 2.5rem;
+      background: var(--app-bg);
+    }
+    .sortie-back { margin-bottom: 0.65rem; }
+    .sortie-back a {
+      font-weight: 700;
+      font-size: 0.88rem;
+      text-decoration: none;
+    }
+    .sortie-back a:hover { text-decoration: underline; }
+    .sortie-header h1 {
+      font-size: clamp(1.35rem, 2.8vw, 1.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.35rem;
+    }
+    .sortie-reg-line {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--app-muted);
+    }
+    .sortie-reg-line--ok { color: #15803d; }
+    .sortie-signup-count {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--app-muted);
+      margin: 0.15rem 0 0;
+    }
+    .sorties-empty {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--app-muted);
+      font-size: 0.95rem;
+    }
+    /* Hauteur de la ligne = carte ; la photo remplit la même hauteur (l’image ne impose plus la hauteur). */
+    .sortie-hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: 1.25rem;
+      align-items: stretch;
+      margin: 1.25rem 0 1.5rem;
+    }
+    .sortie-hero-thumb {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--app-border);
+      background: #e4ecf4;
+      box-shadow: 0 2px 10px rgba(15, 30, 45, 0.06);
+    }
+    .sortie-hero-thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    .sortie-hero-table {
+      min-width: 0;
+    }
+    .sortie-hero-table .ride-event-card { width: 100%; max-width: 100%; }
+    .sortie-map-section {
+      max-width: 52rem;
+      margin: 0 0 1.5rem;
+    }
+    .sortie-map-section[hidden],
+    .sortie-map-section.is-hidden {
+      display: none !important;
+    }
+    .sortie-map-heading {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.35rem;
+      color: var(--app-text);
+    }
+    .sortie-map-type-line {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--app-text);
+      margin: 0 0 0.65rem;
+    }
+    .sortie-map-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .sortie-map-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem 1.15rem;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--app-text);
+    }
+    .sortie-map-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+    }
+    .sortie-map-zoom-btns {
+      display: inline-flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .sortie-map-zoom-btns button {
+      width: 2.1rem;
+      height: 2.1rem;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      font-size: 1.15rem;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--app-text);
+    }
+    .sortie-map-zoom-btns button:hover {
+      border-color: var(--app-sea);
+      color: var(--app-sea);
+    }
+    .sortie-grade-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.75rem;
+      align-items: center;
+      margin: 0 0 0.5rem;
+      padding: 0.4rem 0.55rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--app-muted);
+      background: #f1f5f9;
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+    }
+    .sortie-grade-legend[hidden] {
+      display: none !important;
+    }
+    .sortie-grade-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    .sortie-grade-swatch {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 2px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+    }
+    .sortie-cities-heading {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--app-muted);
+      margin: 0 0 0.35rem;
+    }
+    .sortie-cities-heading[hidden] {
+      display: none !important;
+    }
+    .sortie-cities-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0 0 0.65rem;
+      min-height: 0;
+    }
+    .sortie-city-chip {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 20px;
+      background: #e0f2fe;
+      border: 1px solid #7dd3fc;
+      color: #0369a1;
+      font-weight: 600;
+    }
+    .sortie-city-chip.is-start {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+    }
+    .sortie-map-inner {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--app-border);
+      background: #e8eef4;
+    }
+    .sortie-map-inner .sortie-map {
+      height: 320px;
+      width: 100%;
+      border: none;
+      border-radius: 0;
+      margin: 0;
+    }
+    .sortie-map-inner .leaflet-container.strava-map-tiles {
+      background: #f4f4f5;
+    }
+    .sortie-city-marker {
+      background: none !important;
+      border: none !important;
+    }
+    .sortie-city-label {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #1e3a5f;
+      background: rgba(255, 255, 255, 0.94);
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      margin-top: -6px;
+    }
+    .sortie-city-label.city-start {
+      background: #fff8eb;
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+    .sortie-map-inner .route-arrow-marker {
+      background: none !important;
+      border: none !important;
+    }
+    .sortie-map-inner .route-arrow {
+      display: block;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: inherit;
+      text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 1px 2px rgba(0, 0, 0, 0.35);
+      transform-origin: 50% 50%;
+    }
+    .sortie-course {
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
+      padding: 0;
+      max-width: 52rem;
+      overflow: hidden;
+    }
+    .sortie-detail {
+      padding: 0;
+      text-align: left;
+    }
+    .sortie-detail-head {
+      padding: 1.1rem 1.25rem 0.85rem;
+      background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+      border-bottom: 1px solid var(--app-border);
+    }
+    .sortie-detail-h {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--app-text);
+      margin: 0;
+    }
+    .sortie-facts {
+      margin: 0;
+      padding: 0.35rem 0 0;
+    }
+    .sortie-fact {
+      display: grid;
+      grid-template-columns: minmax(7.5rem, 32%) 1fr;
+      gap: 0.35rem 1rem;
+      padding: 0.65rem 1.25rem;
+      border-bottom: 1px solid rgba(220, 230, 238, 0.85);
+      align-items: start;
+    }
+    .sortie-fact:last-of-type {
+      border-bottom: none;
+    }
+    .sortie-fact dt {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--app-muted);
+    }
+    .sortie-fact dd {
+      margin: 0;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--app-text);
+      line-height: 1.45;
+    }
+    .sortie-block {
+      padding: 1rem 1.25rem 1.15rem;
+      border-top: 1px solid var(--app-border);
+      background: #fff;
+    }
+    .sortie-block:first-of-type {
+      border-top: none;
+    }
+    .sortie-block-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--app-sea);
+      margin: 0 0 0.55rem;
+    }
+    .sortie-warn {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #9a3412;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      padding: 0.55rem 0.65rem;
+      margin: 0 0 0.75rem;
+    }
+    .sortie-prose {
+      font-size: 0.9rem;
+      color: var(--app-text);
+      line-height: 1.55;
+      margin: 0 0 0.65rem;
+    }
+    .sortie-prose:last-child { margin-bottom: 0; }
+    .sortie-list {
+      margin: 0.35rem 0 0;
+      padding-left: 1.15rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--app-text);
+    }
+    .sortie-list li { margin: 0.25rem 0; }
+    .sortie-footer-note {
+      font-size: 0.82rem;
+      color: var(--app-muted);
+      padding: 0.85rem 1.25rem 1.1rem;
+      background: #f8fafc;
+      border-top: 1px solid var(--app-border);
+      margin: 0;
+    }
+    .sortie-hero-table .ride-km-row--sortie {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem 0.75rem;
+    }
+    .sortie-hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.45rem;
+      flex: 1;
+      min-width: 0;
+    }
+    .sortie-hero-inscrit-row {
+      display: inline-flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 0;
+    }
+    .btn-je-participe {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.45rem 0.95rem;
+      border-radius: 8px;
+      border: none;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35);
+      text-decoration: none;
+    }
+    .btn-je-participe:hover {
+      background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%);
+      color: #fff;
+    }
+    .btn-je-participe:focus-visible {
+      outline: 2px solid #ea580c;
+      outline-offset: 2px;
+    }
+    .btn-je-participe--confirm {
+      width: 100%;
+      max-width: 16rem;
+      padding: 0.55rem 1rem;
+    }
+    .sortie-inscrit-badge {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+      padding: 0.42rem 0.75rem;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+    .btn-sortie-ghost {
+      font-family: inherit;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 0.35rem 0.55rem;
+      border-radius: 6px;
+      border: 1px solid var(--app-border);
+      background: #fff;
+      color: var(--app-muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-sortie-ghost:hover {
+      border-color: #cbd5e1;
+      color: var(--app-text);
+    }
+    .btn-sortie-unsub {
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+    .btn-sortie-unsub:hover {
+      background: #fef2f2;
+    }
+    .sortie-signup-panel {
+      max-width: 52rem;
+      margin: 0 0 1rem;
+      padding: 1rem 1.15rem;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: #fffbeb;
+      box-shadow: 0 2px 10px rgba(15, 30, 45, 0.05);
+      position: relative;
+      z-index: 2;
+    }
+    .sortie-signup-intro {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--app-text);
+      margin: 0 0 0.75rem;
+    }
+    .sortie-signup-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      max-width: 22rem;
+    }
+    .sortie-signup-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .sortie-signup-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--app-muted);
+    }
+    .sortie-signup-field input {
+      font: inherit;
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--app-border);
+    }
+    .sortie-signup-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.25rem;
+    }
+    .sortie-participants {
+      max-width: 52rem;
+      margin: 0 0 1.25rem;
+      padding: 1rem 1.15rem 1.1rem;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: 0 1px 8px rgba(15, 30, 45, 0.04);
+    }
+    .sortie-participants[hidden] {
+      display: none !important;
+    }
+    .sortie-participants-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--app-sea);
+      margin: 0 0 0.65rem;
+    }
+    .sortie-participants-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.5rem;
+    }
+    .sortie-participants-item {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--app-text);
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+    }
+    .sortie-participants-empty {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--app-muted);
+      margin: 0;
+    }
+    .sortie-participants-empty[hidden] {
+      display: none !important;
+    }
+    @media (max-width: 640px) {
+      .sortie-fact {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+      }
+    }
+    @media (max-width: 900px) {
+      .app-shell { flex-direction: column; }
+      .app-logo { border: none; margin: 0; padding: 0.35rem 0.5rem; }
+      .app-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: 1 1 auto; }
+      .app-sidebar-footer { width: 100%; border: none; padding-top: 0.5rem; }
+      .sortie-hero-grid {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      .sortie-hero-thumb {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        max-height: min(52vh, 22rem);
+      }
+      .sortie-hero-thumb img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  </style>
+  <script>
+    window.GOELO_SUPABASE_URL = "";
+    window.GOELO_SUPABASE_ANON_KEY = "";
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="app-sidebar">
+      <a class="app-logo" href="index.html">Goëlo<span>Rides</span></a>
+      <ul class="app-nav">
+        <li><a href="index.html"><span class="app-nav-icon" aria-hidden="true">⌂</span> Accueil</a></li>
+        <li><a class="is-active" href="sorties.html"><span class="app-nav-icon" aria-hidden="true">≡</span> Sorties</a></li>
+        <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◇</span> Groupes</a></li>
+        <li><a href="sorties.html#sorties-list"><span class="app-nav-icon" aria-hidden="true">↗</span> Mes parcours</a></li>
+        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer"><span class="app-nav-icon" aria-hidden="true">◎</span> Messages</a></li>
+        <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◎</span> Membres</a></li>
+      </ul>
+      <div class="app-sidebar-footer">
+        <p><a href="sorties.html">Liste des sorties</a> · <a href="sorties.html#sorties-list">Toutes les sorties</a></p>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <p class="sortie-back"><a href="sorties.html">← Toutes les sorties</a></p>
+      <header class="sortie-header">
+        <h1 id="sortie-title">Sortie</h1>
+        <p id="sortie-reg-line" class="sortie-reg-line" hidden></p>
+        <p id="sortie-signup-count" class="sortie-signup-count" hidden></p>
+      </header>
+
+      <p id="sortie-error" class="sorties-empty" hidden></p>
+
+      <div id="sortie-content" hidden>
+        <div id="sortie-hero-wrap"></div>
+        <div id="sortie-signup-panel" class="sortie-signup-panel" hidden>
+          <p class="sortie-signup-intro">Inscription à cette sortie — renseigne tes infos (enregistrées comme sur la page Sorties).</p>
+          <form id="sortie-signup-form" class="sortie-signup-form" novalidate>
+            <label class="sortie-signup-field">
+              <span class="sortie-signup-label">Pseudo ou prénom</span>
+              <input type="text" id="sortie-signup-pseudo" name="pseudo" required maxlength="40" autocomplete="nickname">
+            </label>
+            <label class="sortie-signup-field">
+              <span class="sortie-signup-label">E-mail</span>
+              <input type="email" id="sortie-signup-email" name="email" required maxlength="120" autocomplete="email">
+            </label>
+            <div class="sortie-signup-actions">
+              <button type="submit" class="btn-je-participe btn-je-participe--confirm">Valider mon inscription</button>
+              <button type="button" class="btn-sortie-ghost" id="sortie-signup-cancel">Annuler</button>
+            </div>
+          </form>
+        </div>
+        <section id="sortie-participants-section" class="sortie-participants" aria-labelledby="sortie-participants-title" hidden>
+          <h2 id="sortie-participants-title" class="sortie-participants-title">Participant·e·s</h2>
+          <ul id="sortie-participants-list" class="sortie-participants-list"></ul>
+          <p id="sortie-participants-empty" class="sortie-participants-empty" hidden>
+            Personne pour l’instant — sois le ou la première !
+          </p>
+        </section>
+        <section id="sortie-map-section" class="sortie-map-section" aria-label="Carte du parcours" hidden>
+          <h2 class="sortie-map-heading">Carte du parcours</h2>
+          <p class="sortie-map-type-line" id="sortie-map-type-line"></p>
+          <div class="sortie-map-toolbar">
+            <div class="sortie-map-options">
+              <label>
+                <input type="checkbox" id="sortie-opt-cities" checked>
+                Villes traversées
+              </label>
+              <label>
+                <input type="checkbox" id="sortie-opt-grade-colors" checked>
+                Couleurs selon la pente (rouge = montée raide)
+              </label>
+            </div>
+            <div class="sortie-map-zoom-btns" aria-label="Zoom carte">
+              <button type="button" id="sortie-zoom-in" title="Zoom avant">+</button>
+              <button type="button" id="sortie-zoom-out" title="Zoom arrière">−</button>
+            </div>
+          </div>
+          <p class="sortie-grade-legend" id="sortie-grade-legend" hidden>
+            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#64748b"></span> Plat</span>
+            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#ca8a04"></span> Montée légère</span>
+            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#ea580c"></span> Modérée</span>
+            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#dc2626"></span> Raide</span>
+            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#2563eb"></span> Descente</span>
+          </p>
+          <p class="sortie-cities-heading" id="sortie-cities-heading">Villes traversées</p>
+          <div class="sortie-cities-list" id="sortie-cities-list" aria-label="Villes sur le parcours"></div>
+          <div class="sortie-map-inner strava-map-block">
+            <div id="sortie-map" class="sortie-map" role="application" aria-label="Carte du parcours"></div>
+          </div>
+        </section>
+        <div id="sortie-course" class="sortie-course"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
+  <script src="sortie.js" defer></script>
+</body>
+</html>

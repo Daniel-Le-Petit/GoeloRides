@@ -1,3 +1,6 @@
+# Secrets / config locale — ne pas pousser sur GitHub
+env.txt
+
 .DS_Store
 Thumbs.db
 *.log

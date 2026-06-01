@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#eef2f6">
+  <title>Les groupes · Goëlo Rides</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="parcours.css">
+  <link rel="stylesheet" href="app-chrome.css">
+  <style>
+    :root {
+      --app-sea: #1565a8;
+      --app-sea-hover: #0e4d80;
+      --app-bg: #eef2f6;
+      --app-surface: #ffffff;
+      --app-text: #15232d;
+      --app-muted: #5a6b78;
+      --app-border: #dce6ee;
+      --sidebar-w: 15.5rem;
+      --font-sans: "DM Sans", system-ui, sans-serif;
+      --font-logo: "Comfortaa", "Nunito", "DM Sans", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; background: var(--app-bg); }
+    body {
+      font-family: var(--font-sans);
+      background: var(--app-bg);
+      color: var(--app-text);
+      min-height: 100dvh;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--app-sea); }
+    .app-shell { display: flex; min-height: 100dvh; background: var(--app-bg); }
+    .app-logo {
+      font-family: var(--font-logo);
+      font-weight: 700;
+      font-size: 1.22rem;
+      letter-spacing: 0.02em;
+      color: var(--app-text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.5rem 1rem;
+      border-bottom: 1px solid rgba(21, 101, 168, 0.2);
+      margin-bottom: 0.75rem;
+    }
+    .app-logo span { color: var(--app-sea); }
+    .app-nav { list-style: none; flex: 1; }
+    .app-nav a {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--app-muted);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .app-nav a:hover { background: #f0f4f8; color: var(--app-text); }
+    .app-nav a.is-active { background: #e8f2fa; color: var(--app-sea); }
+    .app-nav-icon { font-size: 1.1rem; width: 1.35rem; text-align: center; }
+    .app-sidebar-footer {
+      border-top: 1px solid rgba(21, 101, 168, 0.18);
+      padding-top: 0.85rem;
+      font-size: 0.78rem;
+      color: var(--app-muted);
+    }
+    .app-main {
+      flex: 1;
+      min-width: 0;
+      padding: 1.35rem 1.75rem 2.5rem;
+      background: var(--app-bg);
+    }
+    .groupes-header { margin-bottom: 1.75rem; max-width: 40rem; }
+    .groupes-header h1 {
+      font-size: clamp(1.5rem, 3vw, 1.9rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.45rem;
+    }
+    .groupes-lead {
+      font-size: 1.05rem;
+      color: var(--app-muted);
+      font-weight: 500;
+    }
+    .groupes-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 44rem;
+    }
+    .groupe-card {
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15, 30, 45, 0.06);
+      border-left-width: 5px;
+    }
+    .groupe-card-visual {
+      position: relative;
+      height: clamp(148px, 28vw, 200px);
+      background: #e2e8f0;
+    }
+    .groupe-card-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 42%;
+      display: block;
+    }
+    .groupe-card-body {
+      padding: 1.1rem 1.2rem 1.2rem;
+    }
+    .groupe-card--blanc { border-left-color: #9ca3af; }
+    .groupe-card--vert { border-left-color: #16a34a; }
+    .groupe-card--bleu { border-left-color: #2563eb; }
+    .groupe-card--rouge { border-left-color: #dc2626; }
+    .groupe-card h2 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.55rem;
+    }
+    .groupe-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem 1.1rem;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--app-text);
+      margin-bottom: 0.55rem;
+    }
+    .groupe-stats span { color: var(--app-muted); font-weight: 600; }
+    .groupe-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.65rem;
+    }
+    .groupe-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.22rem 0.55rem;
+      border-radius: 6px;
+      background: #f0f4f8;
+      color: var(--app-text);
+    }
+    .groupe-card--blanc .groupe-pill { background: #f3f4f6; color: #374151; }
+    .groupe-card--vert .groupe-pill { background: #dcfce7; color: #14532d; }
+    .groupe-card--bleu .groupe-pill { background: #dbeafe; color: #1e3a8a; }
+    .groupe-card--rouge .groupe-pill { background: #fee2e2; color: #991b1b; }
+    .groupe-desc {
+      font-size: 0.92rem;
+      color: var(--app-text);
+      margin-bottom: 0.75rem;
+    }
+    .groupe-parcours {
+      font-size: 0.86rem;
+      font-weight: 600;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--app-border);
+    }
+    .groupe-parcours a {
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .groupe-parcours a:hover { text-decoration: underline; }
+    .groupes-photo-credit {
+      margin-top: 1.25rem;
+      max-width: 44rem;
+      font-size: 0.72rem;
+      color: var(--app-muted);
+      line-height: 1.45;
+    }
+    .groupes-footnote {
+      margin-top: 1.75rem;
+      max-width: 44rem;
+      padding: 1rem 1.15rem;
+      background: rgba(21, 101, 168, 0.08);
+      border: 1px solid rgba(21, 101, 168, 0.2);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      color: var(--app-text);
+    }
+    .groupes-footnote strong { color: var(--app-sea-hover); }
+    @media (max-width: 900px) {
+      .app-shell { flex-direction: column; }
+      .app-logo { border: none; margin: 0; padding: 0.35rem 0.5rem; }
+      .app-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: 1 1 auto; }
+      .app-sidebar-footer { width: 100%; border: none; padding-top: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="app-sidebar">
+      <a class="app-logo" href="index.html">Goëlo<span>Rides</span></a>
+      <ul class="app-nav">
+        <li><a href="index.html"><span class="app-nav-icon" aria-hidden="true">⌂</span> Accueil</a></li>
+        <li><a href="sorties.html"><span class="app-nav-icon" aria-hidden="true">≡</span> Sorties</a></li>
+        <li><a class="is-active" href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◇</span> Groupes</a></li>
+        <li><a href="sorties.html#sorties-list"><span class="app-nav-icon" aria-hidden="true">↗</span> Mes parcours</a></li>
+        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer"><span class="app-nav-icon" aria-hidden="true">◎</span> Messages</a></li>
+        <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◎</span> Membres</a></li>
+      </ul>
+      <div class="app-sidebar-footer">
+        <p><a href="sorties.html">Sorties &amp; inscriptions</a> · <a href="index.html">Accueil</a></p>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <header class="groupes-header">
+        <h1>Les groupes</h1>
+        <p class="groupes-lead">Choisis ton niveau, rejoins la route</p>
+      </header>
+
+      <ul class="groupes-list">
+        <li>
+          <article class="groupe-card groupe-card--blanc">
+            <div class="groupe-card-visual">
+              <img src="assets/groupe-blanc-cyclistes.png" alt="Deux cyclistes sur une promenade en bord de mer, baie et bateaux" width="537" height="421" loading="lazy" decoding="async">
+            </div>
+            <div class="groupe-card-body">
+              <h2>Groupe Blanc</h2>
+              <p class="groupe-stats">
+                <span>Allure</span> 15–18 km/h
+                <span>Distance type</span> 42,6 km
+                <span>Niveau</span> Découverte
+              </p>
+              <div class="groupe-pills">
+                <span class="groupe-pill">Famille</span>
+                <span class="groupe-pill">Vacanciers</span>
+              </div>
+              <p class="groupe-desc">
+                Tu reprends le vélo ou tu veux juste profiter du paysage. On roule tranquille, on s’arrête, on profite.
+              </p>
+              <p class="groupe-parcours">
+                Parcours · <a href="sortie.html?id=falaises">La Route des Falaises</a>
+              </p>
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="groupe-card groupe-card--vert">
+            <div class="groupe-card-visual">
+              <img src="assets/groupe-vert-cyclistes.png" alt="Peloton de cyclistes en passage dans un village" width="707" height="433" loading="lazy" decoding="async">
+            </div>
+            <div class="groupe-card-body">
+              <h2>Groupe Vert</h2>
+              <p class="groupe-stats">
+                <span>Allure</span> 18–22 km/h
+                <span>Distance type</span> 66,0 km
+                <span>Niveau</span> Intermédiaire
+              </p>
+              <div class="groupe-pills">
+                <span class="groupe-pill">Convivial</span>
+                <span class="groupe-pill">Sans dropped</span>
+              </div>
+              <p class="groupe-desc">
+                Tu roules régulièrement mais l’ambiance compte autant que la performance. On attend tout le monde.
+              </p>
+              <p class="groupe-parcours">
+                Parcours · <a href="sortie.html?id=brehec">Vers Bréhec</a>
+              </p>
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="groupe-card groupe-card--bleu">
+            <div class="groupe-card-visual">
+              <img src="assets/groupe-bleu-cyclistes.png" alt="Peloton sur la route, rythme soutenu" width="1024" height="581" loading="lazy" decoding="async">
+            </div>
+            <div class="groupe-card-body">
+              <h2>Groupe Bleu</h2>
+              <p class="groupe-stats">
+                <span>Allure</span> 22–26 km/h
+                <span>Distance type</span> 84,5 km
+                <span>Niveau</span> Confirmé
+              </p>
+              <div class="groupe-pills">
+                <span class="groupe-pill">Rouleur</span>
+                <span class="groupe-pill">Relais</span>
+              </div>
+              <p class="groupe-desc">
+                Tu maîtrises le peloton, tu fais des relais. Parcours structuré avec un bon groupe.
+              </p>
+              <p class="groupe-parcours">
+                Parcours · <a href="sortie.html?id=boucle">La Grande Boucle du Goëlo</a>
+              </p>
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="groupe-card groupe-card--rouge">
+            <div class="groupe-card-visual">
+              <img src="assets/groupe-rouge-cyclistes.png" alt="Peloton de cyclistes sur route humide, allure course" width="859" height="548" loading="lazy" decoding="async">
+            </div>
+            <div class="groupe-card-body">
+              <h2>Groupe Rouge</h2>
+              <p class="groupe-stats">
+                <span>Allure</span> 26+ km/h
+                <span>Distance type</span> 110+ km
+                <span>Niveau</span> Expert
+              </p>
+              <div class="groupe-pills">
+                <span class="groupe-pill">Compétiteur</span>
+              </div>
+              <p class="groupe-desc">
+                Pour les jambes solides. Rythme élevé. Si tu te reconnais ici, tu sais ce qui t’attend.
+              </p>
+              <p class="groupe-parcours">
+                Parcours annoncés sur les <a href="sorties.html">sorties</a> — suis le calendrier.
+              </p>
+            </div>
+          </article>
+        </li>
+      </ul>
+
+      <p class="groupes-photo-credit">
+        <strong>Blanc</strong> — visuel fourni (<code>assets/groupe-blanc-cyclistes.png</code>).
+        <strong>Bleu</strong> (Thomas Tapio) — <code>assets/groupe-bleu-cyclistes.png</code> · <a href="https://www.pexels.com/license/" target="_blank" rel="noopener noreferrer">licence Pexels</a>.
+        <strong>Vert</strong> — visuel fourni (<code>assets/groupe-vert-cyclistes.png</code>).
+        <strong>Rouge</strong> — visuel fourni (<code>assets/groupe-rouge-cyclistes.png</code>).
+      </p>
+
+      <p class="groupes-footnote">
+        <strong>Pas sûr de ton groupe ?</strong> Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.
+      </p>
+    </main>
+  </div>
+</body>
+</html>

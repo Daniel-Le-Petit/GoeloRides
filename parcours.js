@@ -1,0 +1,2292 @@
+    (function () {
+      const START = { lat: 48.6536, lon: -2.8353, label: "Saint-Quay-Portrieux" };
+      const GPX_MAX_POINTS = 6000;
+      const EMBEDDED_POINTS_MAX = 1400;
+      let newRoutePreviewMapInst = null;
+      let newRoutePreviewLine = null;
+
+      const SHARED = {
+        meetPlace: "Devant le Kasino",
+        meetParking: "Parking du Kasino, Saint-Quay-Portrieux",
+        meetRv: "8h20",
+        region: "Côte du Goëlo",
+        time: "8h30"
+      };
+
+      /* E-mail pour recevoir les inscriptions (Formsubmit). Laisse vide pour lien mailto uniquement.
+         formSubmitOnUnregister : envoyer aussi un POST FormSubmit à la désinscription (défaut false :
+         FormSubmit renvoie souvent 521 / ERR_ABORTED côté CDN — la désinscription reste gérée par Supabase). */
+      const SIGNUP = {
+        formEmail: "goelo.rides@gmail.com",
+        participantsCsvUrl: "",
+        formSubmitOnUnregister: false
+      };
+
+      /**
+       * Supabase (optionnel) : `window.GOELO_SUPABASE_URL` + `window.GOELO_SUPABASE_ANON_KEY`
+       * (voir supabase/SUPABASE.md). Valeurs relues à chaque appel — le petit script de config peut
+       * être placé juste après ce fichier. Termine chaque assignation par `;` si les deux lignes
+       * sont sur la même ligne (sinon erreur de syntaxe).
+       */
+      function normalizeApiKey(raw) {
+        let k = raw == null ? "" : String(raw).trim().replace(/\s/g, "");
+        if (k.indexOf("sb_publishedable_") === 0) {
+          console.warn(
+            "Goëlo Rides : faute de frappe dans la clé — « sb_publishedable_ » n’existe pas. " +
+              "Le bon préfixe Supabase est « sb_publishable_ » (publishable, sans « ed »)."
+          );
+        }
+        return k;
+      }
+      function getSupabaseConfig() {
+        const url =
+          typeof window !== "undefined"
+            ? String(window.GOELO_SUPABASE_URL || "")
+                .trim()
+                .replace(/\s/g, "")
+            : "";
+        const anonKey =
+          typeof window !== "undefined" ? normalizeApiKey(window.GOELO_SUPABASE_ANON_KEY) : "";
+        return { url: url, anonKey: anonKey };
+      }
+      function isSupabaseEnabled() {
+        const c = getSupabaseConfig();
+        return !!(c.url && c.anonKey);
+      }
+      (function warnSupabaseHalfConfig() {
+        const c = getSupabaseConfig();
+        if (typeof window !== "undefined" && c.url && !c.anonKey) {
+          console.warn(
+            "Goëlo Rides : GOELO_SUPABASE_URL est défini mais GOELO_SUPABASE_ANON_KEY est vide — " +
+              "inscriptions en localStorage uniquement. Colle la clé anon (JWT eyJ…) ou retire aussi l’URL " +
+              "(voir supabase/SUPABASE.md)."
+          );
+        }
+      })();
+      const supabaseNamesByRoute = {};
+      let registeredRouteIdsCache = { email: "", routes: [] };
+      let emailSupabaseDebounce = null;
+      /** Dernier échec transport / HTTP pour message utilisateur (codes 36–39). Réinitialisé à chaque appel RPC. */
+      let goeloLastRpcFailure = null;
+
+      function goeloFormatDbFailureAlert(code, httpStatus) {
+        if (code === 41) {
+          return (
+            "Impossible d’enregistrer dans la mémoire de ce navigateur (quota plein, navigation privée ou blocage).\n\n" +
+            "Erreur 41 — contacter l’administrateur ou réessaie après avoir libéré de l’espace."
+          );
+        }
+        var ref = "Erreur " + code;
+        if (httpStatus) ref += " (HTTP " + httpStatus + ")";
+        ref += " — contacter l’administrateur en communiquant ce code exact.";
+        return (
+          "La demande n’a pas pu être enregistrée sur le serveur de données (réseau, serveur occupé ou refus).\n\n" +
+          ref +
+          "\n\nRéessaie plus tard si la connexion semble instable."
+        );
+      }
+
+      async function supabaseRpc(fnName, payload) {
+        goeloLastRpcFailure = null;
+        const { url, anonKey } = getSupabaseConfig();
+        if (!url || !anonKey) return null;
+        if (url.indexOf("xxxxxxxx.supabase.co") !== -1) {
+          console.warn(
+            "Goëlo Rides : GOELO_SUPABASE_URL contient encore l’exemple « xxxxxxxx » — mets ton vrai identifiant projet " +
+              "(ex. https://abcd1234xyz.supabase.co depuis Settings → API)."
+          );
+          return null;
+        }
+        const base = url.replace(/\/?$/, "");
+        let res;
+        try {
+          res = await fetch(base + "/rest/v1/rpc/" + encodeURIComponent(fnName), {
+            method: "POST",
+            headers: {
+              apikey: anonKey,
+              Authorization: "Bearer " + anonKey,
+              "Content-Type": "application/json",
+              Prefer: "return=representation"
+            },
+            body: JSON.stringify(payload || {})
+          });
+        } catch (err) {
+          goeloLastRpcFailure = { code: 36, httpStatus: 0, fnName: fnName };
+          console.warn("Supabase RPC", fnName, "réseau / fetch :", err && err.message ? err.message : err);
+          return null;
+        }
+        if (!res.ok) {
+          goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName };
+          const txt = await res.text();
+          console.warn("Supabase RPC", fnName, res.status, txt);
+          if (res.status === 401 && txt.indexOf("Invalid API key") !== -1) {
+            console.warn(
+              "Goëlo — 401 : vérifie la clé (Legacy **anon** JWT eyJ…, ou **sb_publishable_** sans faute). " +
+                "Même URL et clé pour le même projet."
+            );
+          }
+          return null;
+        }
+        if (res.status === 204) {
+          goeloLastRpcFailure = { code: 38, httpStatus: res.status, fnName: fnName };
+          return null;
+        }
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.includes("application/json")) {
+          goeloLastRpcFailure = { code: 38, httpStatus: res.status, fnName: fnName };
+          return null;
+        }
+        try {
+          return await res.json();
+        } catch (e) {
+          goeloLastRpcFailure = { code: 39, httpStatus: res.status, fnName: fnName };
+          console.warn("Supabase RPC", fnName, "réponse JSON invalide", e);
+          return null;
+        }
+      }
+
+      async function refreshSupabaseNames() {
+        if (!isSupabaseEnabled()) return;
+        const data = await supabaseRpc("signup_list_all_names", {});
+        if (!data || typeof data !== "object") return;
+        Object.keys(supabaseNamesByRoute).forEach(function (k) {
+          delete supabaseNamesByRoute[k];
+        });
+        Object.keys(data).forEach(function (id) {
+          const arr = data[id];
+          supabaseNamesByRoute[id] = Array.isArray(arr) ? arr.map(function (x) { return String(x); }) : [];
+        });
+      }
+
+      async function refreshRegisteredRoutesCache(emailRaw) {
+        if (!isSupabaseEnabled()) return;
+        const e = (emailRaw || "").trim().toLowerCase();
+        if (!e) {
+          registeredRouteIdsCache = { email: "", routes: [] };
+          return;
+        }
+        const data = await supabaseRpc("signup_list_registered_routes", { p_email: e });
+        const routes = data && data.routes;
+        registeredRouteIdsCache = {
+          email: e,
+          routes: Array.isArray(routes) ? routes.map(function (r) { return String(r); }) : []
+        };
+      }
+
+      const LOCAL_SIGNUPS_KEY = "goeloRides_inscriptions_v1";
+
+      let participantsByRoute = {};
+      let localSignupsByRoute = {};
+      let modalRouteRef = null;
+      let showRouteHandler = null;
+
+      const ROUTES_BUILTIN = [
+        {
+          id: "falaises",
+          file: "La Route des Falaises.gpx",
+          color: "#e8e8e8",
+          casingColor: "#4b5563",
+          name: "Groupe Blanc",
+          track: "La Route des Falaises",
+          pace: "15–18 km/h",
+          levelClass: "level-blanc",
+          levelLabel: "Découverte",
+          vibe: "Convivial",
+          shortDesc: "Falaises et villages côtiers · rythme tranquille",
+          depart: {
+            day: "7",
+            month: "JUILLET",
+            year: "2026",
+            weekday: "Mar",
+            dateLabel: "7 juillet 2026 · 8h30"
+          },
+          cities: [
+            { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
+            { name: "Plouha", lat: 48.6728, lon: -2.903 },
+            { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
+            { name: "Binic", lat: 48.6077, lon: -2.8296 }
+          ]
+        },
+        {
+          id: "brehec",
+          file: "Bréhec.gpx",
+          color: "#2e7d52",
+          casingColor: "#14532d",
+          name: "Groupe Vert",
+          track: "Vers Bréhec",
+          pace: "18–22 km/h",
+          levelClass: "level-vert",
+          levelLabel: "Intermédiaire",
+          vibe: "Convivial",
+          shortDesc: "Littoral et Bréhec · rythme régulier sans pression",
+          depart: {
+            day: "21",
+            month: "JUILLET",
+            year: "2026",
+            weekday: "Mar",
+            dateLabel: "21 juillet 2026 · 8h30"
+          },
+          cities: [
+            { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
+            { name: "Plouha", lat: 48.6728, lon: -2.903 },
+            { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
+            { name: "Binic", lat: 48.6077, lon: -2.8296 }
+          ]
+        },
+        {
+          id: "boucle",
+          file: "La Grande Boucle du Goëlo.gpx",
+          color: "#2563eb",
+          name: "Groupe Bleu",
+          track: "La Grande Boucle du Goëlo",
+          pace: "22–26 km/h",
+          levelClass: "level-bleu",
+          levelLabel: "Confirmé",
+          vibe: "Rouleur",
+          shortDesc: "Grande boucle du Goëlo · parcours long et soutenu",
+          depart: {
+            day: "14",
+            month: "JUILLET",
+            year: "2026",
+            weekday: "Mar",
+            dateLabel: "14 juillet 2026 · 8h30"
+          },
+          cities: [
+            { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true },
+            { name: "Lantic", lat: 48.5976, lon: -2.899 },
+            { name: "Plélo", lat: 48.5333, lon: -2.932 },
+            { name: "Goudelin", lat: 48.6025, lon: -3.0194 },
+            { name: "Pléguien", lat: 48.6218, lon: -2.9349 },
+            { name: "Binic", lat: 48.6077, lon: -2.8296 }
+          ]
+        }
+      ];
+
+      function dbRowToRoute(row) {
+        const fc = row && row.front_config && typeof row.front_config === "object" ? row.front_config : {};
+        return {
+          id: row.id,
+          file: String(fc.file || "").trim(),
+          embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : undefined,
+          raceType: fc.raceType || "",
+          coverImageDataUrl: typeof fc.coverImageDataUrl === "string" ? fc.coverImageDataUrl : "",
+          color: fc.color || "#3d8b8b",
+          casingColor: fc.casingColor || "#2d6b6b",
+          name: row.group_label || "Sortie",
+          track: row.track_name,
+          pace: row.pace_label || "—",
+          levelClass: fc.levelClass || "level-bleu",
+          levelLabel: fc.levelLabel || (row.group_label || "—"),
+          vibe: fc.vibe || "",
+          shortDesc: fc.shortDesc || "",
+          depart: fc.depart && typeof fc.depart === "object"
+            ? fc.depart
+            : {
+              day: "",
+              month: "",
+              year: "2026",
+              weekday: "",
+              dateLabel: String(fc.dateLabel || row.track_name || "")
+            },
+          cities: Array.isArray(fc.cities) && fc.cities.length ? fc.cities : [
+            { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }
+          ],
+          routeKind: row.route_kind || "custom"
+        };
+      }
+
+      async function fetchCustomRoutesFromSupabase() {
+        if (!isSupabaseEnabled()) return [];
+        const rows = await supabaseRpc("routes_list", { p_filter: {} });
+        if (!Array.isArray(rows)) return [];
+        const builtIds = {};
+        ROUTES_BUILTIN.forEach(function (r) {
+          builtIds[r.id] = true;
+        });
+        const out = [];
+        rows.forEach(function (row) {
+          if (!row || !row.id || builtIds[row.id]) return;
+          if (row.route_kind !== "custom") return;
+          out.push(dbRowToRoute(row));
+        });
+        return out;
+      }
+
+      function formatKm(km) {
+        return km.toFixed(1).replace(".", ",") + " km";
+      }
+
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;");
+      }
+
+      function buildCourseDetailsHtml(route) {
+        const prof = route.profile;
+        const kmLine = prof ? formatKm(prof.totalKm) : "— (chargement de la trace…)";
+        const isBlanc = route.id === "falaises";
+        const isVert = route.id === "brehec";
+        const pacePhil =
+          isBlanc
+            ? "Allure visée sur le plat : <strong>15–18 km/h</strong> pour que chacun puisse suivre. " +
+              "Merci de ne pas augmenter le rythme sans l’accord du groupe : on roule ensemble."
+            : isVert
+            ? "Allure visée sur le plat : <strong>18–22 km/h</strong>, sans « sprints » sauf accord du groupe. " +
+              "On garde un rythme régulier pour que personne ne se retrouve seul."
+            : "Allure visée sur le plat : <strong>22–26 km/h</strong>, parcours plus long. " +
+              "Relais et attentes aux points convenus pour garder le groupe cohérent.";
+        const philo =
+          isBlanc
+            ? "La philosophie du <strong>Groupe Blanc</strong> : on roule à un rythme raisonnable pour que tout le monde prenne du plaisir. " +
+              "On part ensemble, on roule ensemble, on rentre ensemble. C’est une sortie <strong>sociale et conviviale</strong>."
+            : isVert
+            ? "La philosophie du <strong>Groupe Vert</strong> : un cran au-dessus du Blanc, tout en gardant l’esprit <strong>convivial</strong>. " +
+              "On roule proprement, on veille les uns sur les autres, on profite du paysage côtier jusqu’à Bréhec."
+            : "La philosophie du <strong>Groupe Bleu</strong> : rythme soutenu mais respectueux du peloton. " +
+              "On s’entraide, on communique, on garde l’esprit d’équipe sur toute la sortie.";
+
+        return (
+          "<h3 class=\"signup-modal-course-title\">Détail sortie</h3>" +
+          "<p><strong>Parcours</strong> · " +
+          escapeHtml(route.track) +
+          "</p>" +
+          "<p><strong>Groupe</strong> · " +
+          escapeHtml(route.name) +
+          " · " +
+          escapeHtml(route.pace) +
+          "</p>" +
+          "<p><strong>Date</strong> · " +
+          escapeHtml(route.depart.dateLabel) +
+          "</p>" +
+          "<p><strong>Distance (trace GPX)</strong> · " +
+          kmLine +
+          "</p>" +
+          "<p><strong>Point de départ</strong> · " +
+          escapeHtml(SHARED.meetParking) +
+          "</p>" +
+          "<p><strong>Rendez-vous</strong> · " +
+          escapeHtml(SHARED.meetRv) +
+          " · <strong>Départ roulant</strong> · " +
+          escapeHtml(SHARED.time) +
+          "</p>" +
+          "<h3 class=\"signup-modal-course-title\">À propos</h3>" +
+          "<p class=\"course-warn\">Merci de bien lire la description avant de t’inscrire.</p>" +
+          "<p>La sortie pourra être <strong>annulée ou décalée</strong> selon les conditions météorologiques. " +
+          "En cas de doute, suis les messages sur " +
+          "<a href=\"https://www.instagram.com/goelo.rides/\" target=\"_blank\" rel=\"noopener noreferrer\">@goelo.rides</a> " +
+          "ou contacte-nous par e-mail.</p>" +
+          "<p>" +
+          pacePhil +
+          "</p>" +
+          "<p>" +
+          philo +
+          "</p>" +
+          "<p class=\"course-sub\">En montée</p>" +
+          "<p>Chacun roule à son rythme ; <strong>regroupement en haut</strong> des bosses pour repartir groupés.</p>" +
+          "<p class=\"course-sub\">Préparation et autonomie</p>" +
+          "<ul>" +
+          "<li>Aie la <strong>trace GPS</strong> du parcours sur ton téléphone ou GPS pour pouvoir rentrer en autonomie en cas de problème.</li>" +
+          "<li>Sois autonome : <strong>outillage</strong>, chambre à air / patins, <strong>alimentation</strong> et eau adaptées à la durée.</li>" +
+          "</ul>" +
+          "<p class=\"course-sub\">Consignes de sécurité</p>" +
+          "<ul>" +
+          "<li>Sur routes larges, roulez en <strong>file à deux</strong> au maximum ; en file indienne sur les portions étroites.</li>" +
+          "<li>Signale les obstacles (poteaux, nids-de-poule, dos-d’âne…).</li>" +
+          "<li>Garde ta ligne et signale clairement tout dépassement.</li>" +
+          "</ul>" +
+          "<p class=\"course-sub\">Matériel</p>" +
+          "<ul>" +
+          "<li>Respect du <strong>code de la route</strong> et du bon sens collectif. Comportement dangereux = exclusion possible de la sortie.</li>" +
+          "<li><strong>Casque obligatoire</strong> (quelle que soit la météo).</li>" +
+          "<li><strong>Éclairage</strong> et <strong>avertisseur</strong> conformes si les conditions l’exigent.</li>" +
+          "<li>Prolongateurs de cintre type « clip-on » : <strong>interdits</strong> sur la sortie.</li>" +
+          "<li>Prévois l’équipement adapté à la météo (couche chaude, coupe-vent, protection pluie…).</li>" +
+          "</ul>" +
+          "<p class=\"course-sub\">Inscription</p>" +
+          "<p><strong>Goëlo Rides</strong> : pas de cotisation annuelle. L’inscription sur cette page ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. " +
+          "Préviens-nous si tu ne peux finalement pas venir.</p>" +
+          "<p class=\"signup-modal-course-footer\">" +
+          "Bonne sortie · Goëlo Rides · " +
+          escapeHtml(SHARED.region) +
+          "</p>"
+        );
+      }
+
+      function parseParticipantsCsv(text) {
+        const out = { falaises: [], brehec: [], boucle: [] };
+        const lines = text.trim().split(/\r?\n/);
+        if (lines.length < 2) return out;
+        const header = lines[0].toLowerCase().split(",");
+        const routeIdx = header.findIndex(function (h) { return h.includes("route"); });
+        const nameIdx = header.findIndex(function (h) { return h.includes("prenom") || h.includes("prénom") || h.includes("nom"); });
+        if (routeIdx < 0 || nameIdx < 0) return out;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(",");
+          const routeId = (cols[routeIdx] || "").trim().toLowerCase();
+          const name = (cols[nameIdx] || "").trim();
+          if (!name || !out[routeId]) continue;
+          if (out[routeId].indexOf(name) === -1) out[routeId].push(name);
+        }
+        return out;
+      }
+
+      function mergeParticipants(base, extra) {
+        const merged = {};
+        Object.keys(base || {}).forEach(function (id) {
+          merged[id] = (base[id] || []).slice();
+        });
+        Object.keys(extra || {}).forEach(function (id) {
+          if (!merged[id]) merged[id] = [];
+          (extra[id] || []).forEach(function (name) {
+            if (merged[id].indexOf(name) === -1) merged[id].push(name);
+          });
+        });
+        return merged;
+      }
+
+      async function loadParticipants() {
+        let data = { falaises: [], brehec: [], boucle: [] };
+        try {
+          const res = await fetch("participants.json");
+          if (res.ok) data = await res.json();
+        } catch { /* ignore */ }
+        if (SIGNUP.participantsCsvUrl) {
+          try {
+            const csvRes = await fetch(SIGNUP.participantsCsvUrl);
+            if (csvRes.ok) {
+              data = mergeParticipants(data, parseParticipantsCsv(await csvRes.text()));
+            }
+          } catch { /* ignore */ }
+        }
+        participantsByRoute = { falaises: [], brehec: [], boucle: [] };
+        Object.keys(data).forEach(function (k) {
+          participantsByRoute[k] = Array.isArray(data[k]) ? data[k].slice() : [];
+        });
+      }
+
+      function loadLocalSignups() {
+        try {
+          const raw = localStorage.getItem(LOCAL_SIGNUPS_KEY);
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          localSignupsByRoute = { falaises: [], brehec: [], boucle: [] };
+          Object.keys(data).forEach(function (k) {
+            if (Array.isArray(data[k])) localSignupsByRoute[k] = data[k];
+          });
+        } catch { /* ignore */ }
+      }
+
+      function saveLocalSignups() {
+        try {
+          localStorage.setItem(LOCAL_SIGNUPS_KEY, JSON.stringify(localSignupsByRoute));
+          return true;
+        } catch {
+          return false;
+        }
+      }
+
+      function getParticipantNames(routeId) {
+        const names = (participantsByRoute[routeId] || []).slice();
+        if (isSupabaseEnabled()) {
+          (supabaseNamesByRoute[routeId] || []).forEach(function (n) {
+            const ntrim = String(n).trim();
+            if (!ntrim) return;
+            const key = ntrim.toLowerCase();
+            if (!names.some(function (x) { return x.toLowerCase() === key; })) names.push(ntrim);
+          });
+          return names;
+        }
+        (localSignupsByRoute[routeId] || []).forEach(function (entry) {
+          const n = (entry.pseudo || "").trim();
+          if (!n) return;
+          const key = n.toLowerCase();
+          if (!names.some(function (x) { return x.toLowerCase() === key; })) names.push(n);
+        });
+        return names;
+      }
+
+      function isRegisteredForRoute(routeId, email) {
+        const norm = (email || "").trim().toLowerCase();
+        if (!norm) return false;
+        if (isSupabaseEnabled()) {
+          if (registeredRouteIdsCache.email !== norm) return false;
+          return registeredRouteIdsCache.routes.indexOf(routeId) >= 0;
+        }
+        return (localSignupsByRoute[routeId] || []).some(function (e) {
+          return (e.email || "").trim().toLowerCase() === norm;
+        });
+      }
+
+      function getLocalSignup(routeId, email) {
+        const norm = (email || "").trim().toLowerCase();
+        if (!norm) return null;
+        return (localSignupsByRoute[routeId] || []).find(function (e) {
+          return (e.email || "").trim().toLowerCase() === norm;
+        }) || null;
+      }
+
+      function getLastStoredEmail() {
+        try {
+          const last = JSON.parse(localStorage.getItem("goeloRides_last_email") || '""');
+          return typeof last === "string" ? last : "";
+        } catch {
+          return "";
+        }
+      }
+
+      function renderParticipantsInModal(routeId) {
+        const names = getParticipantNames(routeId);
+        const countEl = document.getElementById("modal-participants-count");
+        const listEl = document.getElementById("modal-participants-list");
+        const emptyEl = document.getElementById("modal-participants-empty");
+
+        if (countEl) countEl.textContent = String(names.length);
+        if (listEl) {
+          listEl.innerHTML = "";
+          names.forEach(function (name) {
+            const li = document.createElement("li");
+            li.textContent = name;
+            listEl.appendChild(li);
+          });
+          listEl.classList.toggle("is-hidden", names.length === 0);
+        }
+        if (emptyEl) emptyEl.classList.toggle("is-hidden", names.length > 0);
+      }
+
+      async function refreshJoinButtons() {
+        if (isSupabaseEnabled()) {
+          const emailInput = document.getElementById("signup-modal-email");
+          const checkEmail =
+            emailInput && emailInput.value.trim()
+              ? emailInput.value
+              : getLastStoredEmail();
+          await refreshRegisteredRoutesCache(checkEmail);
+        }
+        document.querySelectorAll(".btn-join").forEach(function (btn) {
+          const routeId = btn.dataset.joinRoute;
+          const emailInput = document.getElementById("signup-modal-email");
+          const checkEmail = emailInput && emailInput.value ? emailInput.value : getLastStoredEmail();
+          const registered = isRegisteredForRoute(routeId, checkEmail);
+          btn.textContent = registered ? "Inscrit·e ✓" : "J’en suis ?";
+          btn.classList.toggle("btn-join--done", registered);
+          btn.setAttribute("aria-pressed", registered ? "true" : "false");
+          btn.setAttribute("aria-label", registered
+            ? "Inscrit·e sur ce parcours — gérer l’inscription"
+            : "S’inscrire sur ce parcours");
+        });
+      }
+
+      function closeSignupModal() {
+        const modal = document.getElementById("signup-modal");
+        if (modal) {
+          modal.hidden = true;
+          modal.setAttribute("aria-hidden", "true");
+        }
+        document.body.style.overflow = "";
+        modalRouteRef = null;
+      }
+
+      async function fillSignupModal(route) {
+        const info = document.getElementById("signup-modal-route");
+        const done = document.getElementById("signup-modal-done");
+        const registeredActions = document.getElementById("signup-registered-actions");
+        const form = document.getElementById("signup-modal-form");
+        const pseudoInput = document.getElementById("signup-modal-pseudo");
+        const emailInput = document.getElementById("signup-modal-email");
+        const mailto = document.getElementById("signup-modal-mailto");
+        const title = document.getElementById("signup-modal-title");
+
+        if (emailInput && !emailInput.value) {
+          const last = getLastStoredEmail();
+          if (last) emailInput.value = last;
+        }
+
+        if (isSupabaseEnabled()) {
+          const em = (emailInput && emailInput.value.trim()) || getLastStoredEmail();
+          await refreshRegisteredRoutesCache(em);
+        }
+
+        if (info) {
+          info.innerHTML =
+            "<strong>" + escapeHtml(route.track) + "</strong><br>" +
+            escapeHtml(route.name) + " · " + escapeHtml(route.depart.dateLabel) + "<br>" +
+            (route.profile ? formatKm(route.profile.totalKm) + " · " : "") +
+            escapeHtml(route.pace) + " · " + escapeHtml(route.levelLabel) + "<br>" +
+            escapeHtml(route.shortDesc || "") + "<br>" +
+            escapeHtml(SHARED.meetPlace) + " · " + escapeHtml(SHARED.time);
+        }
+
+        const courseEl = document.getElementById("signup-modal-course");
+        if (courseEl) {
+          courseEl.innerHTML = buildCourseDetailsHtml(route);
+        }
+
+        if (mailto) {
+          const subject = encodeURIComponent("Inscription Goëlo Rides — " + route.track);
+          const body = encodeURIComponent(
+            "Pseudo :\nE-mail :\nParcours : " + route.track + "\nDate : " + route.depart.dateLabel
+          );
+          mailto.href = "mailto:goelo.rides@gmail.com?subject=" + subject + "&body=" + body;
+        }
+
+        renderParticipantsInModal(route.id);
+
+        let registered = false;
+        if (emailInput && emailInput.value) {
+          registered = isRegisteredForRoute(route.id, emailInput.value);
+        }
+
+        let welcomePseudo = "";
+        if (registered) {
+          if (isSupabaseEnabled() && emailInput && emailInput.value) {
+            const regData = await supabaseRpc("signup_get_registration", {
+              p_route_id: route.id,
+              p_email: emailInput.value
+            });
+            welcomePseudo = regData && regData.pseudo ? String(regData.pseudo).trim() : "";
+            if (welcomePseudo && pseudoInput && !pseudoInput.value) pseudoInput.value = welcomePseudo;
+          } else {
+            const entry = getLocalSignup(route.id, emailInput.value);
+            welcomePseudo = entry && entry.pseudo ? String(entry.pseudo).trim() : "";
+            if (entry && pseudoInput && !pseudoInput.value) pseudoInput.value = entry.pseudo || "";
+          }
+          if (title) title.textContent = "Tu es inscrit·e !";
+          if (done) {
+            done.textContent = welcomePseudo
+              ? welcomePseudo + ", tu es bien inscrit·e sur ce parcours. À bientôt au départ !"
+              : "Tu es bien inscrit·e sur ce parcours. À bientôt au départ !";
+            done.classList.add("is-visible");
+          }
+          if (registeredActions) registeredActions.hidden = false;
+          if (form) form.style.display = "none";
+          if (mailto) mailto.style.display = "none";
+        } else {
+          if (title) title.textContent = "J’en suis !";
+          if (done) {
+            done.textContent = "";
+            done.classList.remove("is-visible");
+          }
+          if (registeredActions) registeredActions.hidden = true;
+          if (form) form.style.display = "";
+          if (mailto) mailto.style.display = "";
+        }
+      }
+
+      async function openSignupModal(route) {
+        if (!route) return;
+        modalRouteRef = route;
+        const modal = document.getElementById("signup-modal");
+        if (!modal) return;
+        await fillSignupModal(route);
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        if (showRouteHandler) {
+          try {
+            showRouteHandler(route, { scroll: false });
+          } catch (err) {
+            console.error("showRoute:", err);
+          }
+        }
+        await refreshJoinButtons();
+        const dlg = modal.querySelector(".signup-modal-dialog");
+        function scrollModalTopAndFocusTitle() {
+          if (dlg) dlg.scrollTop = 0;
+          const t = document.getElementById("signup-modal-title");
+          if (t) {
+            t.setAttribute("tabindex", "-1");
+            t.focus({ preventScroll: true });
+          }
+          if (dlg) dlg.scrollTop = 0;
+        }
+        scrollModalTopAndFocusTitle();
+        requestAnimationFrame(scrollModalTopAndFocusTitle);
+        setTimeout(scrollModalTopAndFocusTitle, 160);
+      }
+
+      /**
+       * FormSubmit : POST no-cors vers l’URL classique. Si formsubmit.co renvoie 521 / panne CDN,
+       * l’inscription Supabase n’en dépend pas — on logue et on continue sans faire planter la page.
+       */
+      async function notifySignupByEmail(route, pseudo, email) {
+        try {
+          if (!SIGNUP.formEmail) return;
+          const body = new URLSearchParams({
+            pseudo: pseudo,
+            email: email,
+            parcours: route.track + " · " + route.depart.dateLabel,
+            _subject: "Inscription Goëlo Rides — " + route.track,
+            _captcha: "false",
+            _template: "table"
+          });
+          await fetch("https://formsubmit.co/" + encodeURIComponent(SIGNUP.formEmail), {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body
+          });
+        } catch (err) {
+          console.warn(
+            "Goëlo : notification FormSubmit non envoyée (réseau ou panne côté formsubmit.co, ex. 521). " +
+              "L’inscription reste enregistrée.",
+            err && err.message ? err.message : err
+          );
+        }
+      }
+
+      async function notifyUnregisterByEmail(route, pseudo, email) {
+        try {
+          if (!SIGNUP.formEmail) return;
+          if (!SIGNUP.formSubmitOnUnregister) return;
+          const body = new URLSearchParams({
+            pseudo: pseudo || "—",
+            email: email,
+            parcours: route.track + " · " + route.depart.dateLabel,
+            message: "Désinscription du parcours",
+            _subject: "Désinscription Goëlo Rides — " + route.track,
+            _captcha: "false",
+            _template: "table"
+          });
+          await fetch("https://formsubmit.co/" + encodeURIComponent(SIGNUP.formEmail), {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body
+          });
+        } catch (err) {
+          console.warn(
+            "Goëlo : notification FormSubmit (désinscription) non envoyée — service indisponible ou réseau.",
+            err && err.message ? err.message : err
+          );
+        }
+      }
+
+      async function unregisterForRoute(route, email) {
+        const e = (email || "").trim().toLowerCase();
+        if (!route || !e) return false;
+        if (isSupabaseEnabled()) {
+          let data = await supabaseRpc("signup_unregister", { p_route_id: route.id, p_email: e });
+          if (Array.isArray(data)) data = data[0];
+          if (!data || !data.ok) {
+            const fail = goeloLastRpcFailure;
+            const code = fail ? fail.code : 40;
+            window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
+            return false;
+          }
+          await refreshSupabaseNames();
+          await refreshRegisteredRoutesCache(e);
+          notifyUnregisterByEmail(route, (data.pseudo && String(data.pseudo)) || "—", e);
+          renderParticipantsInModal(route.id);
+          await refreshJoinButtons();
+          await fillSignupModal(route);
+          return true;
+        }
+        const entry = getLocalSignup(route.id, e);
+        if (!entry) return false;
+        const before = (localSignupsByRoute[route.id] || []).length;
+        localSignupsByRoute[route.id] = (localSignupsByRoute[route.id] || []).filter(function (item) {
+          return (item.email || "").trim().toLowerCase() !== e;
+        });
+        if ((localSignupsByRoute[route.id] || []).length === before) return false;
+        if (!saveLocalSignups()) {
+          localSignupsByRoute[route.id].push(entry);
+          window.alert(goeloFormatDbFailureAlert(41, 0));
+          return false;
+        }
+        notifyUnregisterByEmail(route, entry.pseudo, e);
+        renderParticipantsInModal(route.id);
+        await refreshJoinButtons();
+        await fillSignupModal(route);
+        return true;
+      }
+
+      async function registerForRoute(route, pseudo, email) {
+        const p = pseudo.trim();
+        const e = email.trim().toLowerCase();
+        if (!p || !e) return false;
+        if (isSupabaseEnabled()) {
+          let data = await supabaseRpc("signup_register", {
+            p_route_id: route.id,
+            p_pseudo: p,
+            p_email: e
+          });
+          if (Array.isArray(data)) data = data[0];
+          if (!data || !data.ok) {
+            if (data && data.error === "already_registered") {
+              window.alert("Tu es déjà inscrit·e sur ce parcours avec cet e-mail.");
+            } else {
+              const fail = goeloLastRpcFailure;
+              const code = fail ? fail.code : 40;
+              window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
+            }
+            return false;
+          }
+          await refreshSupabaseNames();
+          await refreshRegisteredRoutesCache(e);
+          try {
+            localStorage.setItem("goeloRides_last_email", JSON.stringify(e));
+          } catch { /* ignore */ }
+          notifySignupByEmail(route, p, e);
+          renderParticipantsInModal(route.id);
+          await refreshJoinButtons();
+          await fillSignupModal(route);
+          return true;
+        }
+        if (!localSignupsByRoute[route.id]) localSignupsByRoute[route.id] = [];
+        if (!isRegisteredForRoute(route.id, e)) {
+          localSignupsByRoute[route.id].push({ pseudo: p, email: e, at: new Date().toISOString() });
+          if (!saveLocalSignups()) {
+            localSignupsByRoute[route.id].pop();
+            window.alert(goeloFormatDbFailureAlert(41, 0));
+            return false;
+          }
+        }
+        try {
+          localStorage.setItem("goeloRides_last_email", JSON.stringify(e));
+        } catch { /* ignore */ }
+        notifySignupByEmail(route, p, e);
+        renderParticipantsInModal(route.id);
+        await refreshJoinButtons();
+        await fillSignupModal(route);
+        return true;
+      }
+
+      function setupSignupModal() {
+        const modal = document.getElementById("signup-modal");
+        const form = document.getElementById("signup-modal-form");
+        if (!modal || !form) return;
+
+        modal.querySelectorAll("[data-close-modal]").forEach(function (el) {
+          el.addEventListener("click", closeSignupModal);
+        });
+
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && modal && !modal.hidden) closeSignupModal();
+        });
+
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          if (!modalRouteRef) return;
+          const pseudo = document.getElementById("signup-modal-pseudo").value;
+          const email = document.getElementById("signup-modal-email").value;
+          await registerForRoute(modalRouteRef, pseudo, email);
+        });
+
+        const emailInput = document.getElementById("signup-modal-email");
+        if (emailInput) {
+          emailInput.addEventListener("input", function () {
+            if (isSupabaseEnabled()) {
+              clearTimeout(emailSupabaseDebounce);
+              emailSupabaseDebounce = setTimeout(async function () {
+                if (modalRouteRef) await fillSignupModal(modalRouteRef);
+                await refreshJoinButtons();
+              }, 420);
+            } else {
+              if (modalRouteRef) void fillSignupModal(modalRouteRef);
+              void refreshJoinButtons();
+            }
+          });
+        }
+
+        const unregisterBtn = document.getElementById("signup-unregister-btn");
+        if (unregisterBtn) {
+          unregisterBtn.addEventListener("click", async function () {
+            if (!modalRouteRef) return;
+            const emailEl = document.getElementById("signup-modal-email");
+            const email = emailEl ? emailEl.value.trim() : getLastStoredEmail();
+            if (!email) {
+              window.alert("Indique ton e-mail pour te désinscrire.");
+              if (emailEl) emailEl.focus();
+              return;
+            }
+            if (!isRegisteredForRoute(modalRouteRef.id, email)) {
+              window.alert("Aucune inscription trouvée avec cet e-mail sur ce parcours.");
+              if (modalRouteRef) await fillSignupModal(modalRouteRef);
+              return;
+            }
+            const label = modalRouteRef.track;
+            if (!window.confirm("Te désinscrire du parcours « " + label + " » ?")) return;
+            if (await unregisterForRoute(modalRouteRef, email)) {
+              const done = document.getElementById("signup-modal-done");
+              if (done) {
+                done.textContent = "Tu es désinscrit·e. On espère te revoir sur un autre parcours !";
+                done.classList.add("is-visible");
+              }
+              const registeredActions = document.getElementById("signup-registered-actions");
+              if (registeredActions) registeredActions.hidden = true;
+              const form = document.getElementById("signup-modal-form");
+              if (form) form.style.display = "";
+              const mailto = document.getElementById("signup-modal-mailto");
+              if (mailto) mailto.style.display = "";
+              const title = document.getElementById("signup-modal-title");
+              if (title) title.textContent = "J’en suis !";
+            }
+          });
+        }
+      }
+
+      function closeGpxUploadPop() {
+        const pop = document.getElementById("gpx-upload-pop");
+        if (pop) {
+          pop.hidden = true;
+          pop.setAttribute("aria-hidden", "true");
+        }
+      }
+
+      function destroyNewRoutePreviewMap() {
+        if (newRoutePreviewMapInst) {
+          try {
+            newRoutePreviewMapInst.remove();
+          } catch (err) {
+            void err;
+          }
+          newRoutePreviewMapInst = null;
+          newRoutePreviewLine = null;
+        }
+        const el = document.getElementById("new-route-preview-map");
+        if (el) {
+          el.innerHTML = "";
+          el.className = "";
+        }
+      }
+
+      function closeNewRouteModal() {
+        const modal = document.getElementById("new-route-modal");
+        closeGpxUploadPop();
+        destroyNewRoutePreviewMap();
+        if (modal && typeof modal.__goeloResetNewRouteDraft === "function") {
+          modal.__goeloResetNewRouteDraft();
+        }
+        if (modal) {
+          modal.hidden = true;
+          modal.setAttribute("aria-hidden", "true");
+        }
+        document.body.style.overflow = "";
+      }
+
+      function openNewRouteModal() {
+        const modal = document.getElementById("new-route-modal");
+        const form = document.getElementById("new-route-form");
+        if (!modal || !form) return;
+        closeGpxUploadPop();
+        destroyNewRoutePreviewMap();
+        if (typeof modal.__goeloResetNewRouteDraft === "function") {
+          modal.__goeloResetNewRouteDraft();
+        }
+        form.reset();
+        const timeIn = document.getElementById("new-route-time");
+        if (timeIn) timeIn.value = "08:30";
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        const first = document.getElementById("new-route-date");
+        if (first) first.focus();
+      }
+
+      function raceTypeLabel(v) {
+        if (v === "gravel") return "Gravel";
+        if (v === "vtt" || v === "rtt") return "VTT";
+        return "Route";
+      }
+
+      function inferDifficultyBand(totalKm, elevGainM) {
+        const eg = elevGainM == null || !Number.isFinite(elevGainM) ? 0 : elevGainM;
+        const score = totalKm * 1.15 + eg / 48;
+        if (score < 40) return { levelClass: "level-blanc", levelLabel: "Blanc" };
+        if (score < 62) return { levelClass: "level-vert", levelLabel: "Vert" };
+        if (score < 92) return { levelClass: "level-bleu", levelLabel: "Bleu" };
+        return { levelClass: "level-rouge", levelLabel: "Rouge" };
+      }
+
+      function colorsForRaceType(rt) {
+        if (rt === "gravel") return { color: "#6d5544", casingColor: "#3e3428" };
+        if (rt === "vtt" || rt === "rtt") return { color: "#2e6b3f", casingColor: "#1a4025" };
+        return { color: "#1565a8", casingColor: "#0a3d66" };
+      }
+
+      function formatFrenchRideDateLabel(dateStr, timeStr) {
+        if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return "";
+        const parts = dateStr.split("-");
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const dt = new Date(y, m, d);
+        const t = timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : "08:30";
+        const th = parseInt(t.slice(0, 2), 10);
+        const tm = parseInt(t.slice(3, 5), 10);
+        dt.setHours(th, tm, 0, 0);
+        const weekday = dt.toLocaleDateString("fr-FR", { weekday: "long" });
+        const month = dt.toLocaleDateString("fr-FR", { month: "long" });
+        const cap = function (s) {
+          return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+        };
+        const timeLabel = (th < 10 ? "0" + th : String(th)) + "h" + (tm < 10 ? "0" + tm : String(tm));
+        return cap(weekday) + " " + d + " " + month + " " + y + " · " + timeLabel;
+      }
+
+      function setupNewRouteModal() {
+        const modal = document.getElementById("new-route-modal");
+        const form = document.getElementById("new-route-form");
+        const btn = document.getElementById("btn-new-route");
+        const gpxPop = document.getElementById("gpx-upload-pop");
+        const gpxDrop = document.getElementById("gpx-upload-drop");
+        const gpxInput = document.getElementById("gpx-upload-input");
+        const btnOpenGpx = document.getElementById("new-route-open-gpx");
+        const coverBtn = document.getElementById("new-route-cover-btn");
+        const coverInput = document.getElementById("new-route-cover-input");
+        const coverPreview = document.getElementById("new-route-cover-preview");
+
+        if (btn) btn.hidden = !isSupabaseEnabled();
+        const hdrNew = document.getElementById("sorties-header-new-route");
+        if (hdrNew) hdrNew.hidden = !isSupabaseEnabled();
+        if (!modal || !form) return;
+
+        let wizardStep = 1;
+        let newRouteProfile = null;
+        let newRouteGpxName = "";
+        let newRouteCoverDataUrl = null;
+
+        function fillRecap() {
+          const recap = document.getElementById("new-route-recap");
+          if (!recap) return;
+          const trackEl = document.getElementById("new-route-track");
+          const dateEl = document.getElementById("new-route-date");
+          const timeEl = document.getElementById("new-route-time");
+          const track = trackEl ? trackEl.value.trim() : "";
+          const dateStr = dateEl ? dateEl.value : "";
+          const timeStr = timeEl ? timeEl.value : "";
+          const dt = formatFrenchRideDateLabel(dateStr, timeStr) || "—";
+          const rt = raceTypeLabel((form.querySelector('input[name="new-route-race"]:checked') || {}).value || "route");
+          const lvEl = form.querySelector('input[name="new-route-level"]:checked');
+          const lm = { "level-blanc": "Blanc", "level-vert": "Vert", "level-bleu": "Bleu", "level-rouge": "Rouge" };
+          const lv = lvEl && lm[lvEl.value] ? lm[lvEl.value] : "Vert";
+          const gpx = escapeHtml(newRouteGpxName || "—");
+          let km = "—";
+          let dpl = "—";
+          if (newRouteProfile) {
+            km = formatKm(newRouteProfile.totalKm);
+            dpl =
+              newRouteProfile.elevGainM != null && newRouteProfile.elevGainM > 5
+                ? "+" + Math.round(newRouteProfile.elevGainM) + " m"
+                : "—";
+          }
+          const grpEl = document.getElementById("new-route-group");
+          const paceEl = document.getElementById("new-route-pace");
+          const descEl = document.getElementById("new-route-desc");
+          const grp = grpEl ? grpEl.value.trim() : "";
+          const pace = paceEl ? paceEl.value.trim() : "";
+          const desc = descEl ? descEl.value.trim() : "";
+          recap.innerHTML =
+            "<ul class=\"new-route-recap-list\">" +
+            "<li><strong>Titre</strong> · " + escapeHtml(track) + "</li>" +
+            "<li><strong>Date</strong> · " + escapeHtml(dt) + "</li>" +
+            "<li><strong>Type</strong> · " + escapeHtml(rt) + "</li>" +
+            "<li><strong>Niveau</strong> · " + escapeHtml(lv) + "</li>" +
+            "<li><strong>GPX</strong> · " + gpx + "</li>" +
+            "<li><strong>Distance / D+</strong> · " + escapeHtml(km) + " · " + escapeHtml(dpl) + "</li>" +
+            (grp ? "<li><strong>Groupe</strong> · " + escapeHtml(grp) + "</li>" : "") +
+            (pace ? "<li><strong>Allure</strong> · " + escapeHtml(pace) + "</li>" : "") +
+            (desc ? "<li><strong>Description</strong> · " + escapeHtml(desc) + "</li>" : "") +
+            "</ul>";
+        }
+
+        function setWizardStep(s) {
+          wizardStep = Math.max(1, Math.min(5, s));
+          for (let i = 1; i <= 5; i++) {
+            const p = document.getElementById("new-route-panel-" + i);
+            if (p) p.hidden = i !== wizardStep;
+          }
+          modal.querySelectorAll(".new-route-steps li").forEach(function (li, idx) {
+            li.classList.toggle("is-active", idx === wizardStep - 1);
+          });
+          const prevBtn = document.getElementById("new-route-prev");
+          const nextBtn = document.getElementById("new-route-next");
+          const submitBtn = document.getElementById("new-route-submit");
+          if (prevBtn) prevBtn.hidden = wizardStep <= 1;
+          if (nextBtn) nextBtn.hidden = wizardStep >= 5;
+          if (submitBtn) submitBtn.hidden = wizardStep < 5;
+          if (wizardStep === 5) fillRecap();
+          setTimeout(function () {
+            if (newRoutePreviewMapInst && typeof newRoutePreviewMapInst.invalidateSize === "function") {
+              try {
+                newRoutePreviewMapInst.invalidateSize(false);
+              } catch (err) {
+                void err;
+              }
+            }
+          }, 120);
+        }
+
+        modal.__goeloSetWizardStep = setWizardStep;
+
+        function resetDraft() {
+          newRouteProfile = null;
+          newRouteGpxName = "";
+          newRouteCoverDataUrl = null;
+          const gl = document.getElementById("new-route-gpx-label");
+          if (gl) gl.textContent = "Aucun fichier";
+          const stats = document.getElementById("new-route-stats");
+          if (stats) stats.hidden = true;
+          const sk = document.getElementById("new-route-stat-km");
+          const sd = document.getElementById("new-route-stat-dplus");
+          const sg = document.getElementById("new-route-suggest-diff");
+          if (sk) sk.textContent = "—";
+          if (sd) sd.textContent = "—";
+          if (sg) sg.textContent = "—";
+          if (coverPreview) {
+            coverPreview.hidden = true;
+            coverPreview.innerHTML = "";
+          }
+          const titleIn = document.getElementById("new-route-track");
+          if (titleIn) titleIn.removeAttribute("data-title-auto");
+          if (gpxInput) gpxInput.value = "";
+          setWizardStep(1);
+        }
+
+        modal.__goeloResetNewRouteDraft = resetDraft;
+
+        function drawNewRoutePreview(profile) {
+          if (typeof L === "undefined") return;
+          const el = document.getElementById("new-route-preview-map");
+          if (!el || !profile || !profile.points || profile.points.length < 2) return;
+          destroyNewRoutePreviewMap();
+          const latlngs = profile.points.map(function (p) {
+            return [p.lat, p.lon];
+          });
+          newRoutePreviewMapInst = L.map(el, { zoomControl: true, attributionControl: true });
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+            maxZoom: 19
+          }).addTo(newRoutePreviewMapInst);
+          newRoutePreviewLine = L.polyline(latlngs, {
+            color: "#b4232f",
+            weight: 4,
+            opacity: 1,
+            lineCap: "round",
+            lineJoin: "round"
+          }).addTo(newRoutePreviewMapInst);
+          newRoutePreviewMapInst.fitBounds(L.latLngBounds(latlngs), { padding: [14, 14], maxZoom: 14 });
+          setTimeout(function () {
+            if (newRoutePreviewMapInst) newRoutePreviewMapInst.invalidateSize(false);
+          }, 280);
+        }
+
+        function applyGpxText(text, filename) {
+          const prof = loadGpxProfileFromText(text);
+          if (!prof || !prof.points || prof.points.length < 2) {
+            window.alert("GPX invalide ou trace trop courte.");
+            return;
+          }
+          newRouteProfile = prof;
+          newRouteGpxName = filename || "trace.gpx";
+          const gl = document.getElementById("new-route-gpx-label");
+          if (gl) gl.textContent = newRouteGpxName;
+          const stats = document.getElementById("new-route-stats");
+          const sk = document.getElementById("new-route-stat-km");
+          const sd = document.getElementById("new-route-stat-dplus");
+          const sg = document.getElementById("new-route-suggest-diff");
+          if (sk) sk.textContent = formatKm(prof.totalKm);
+          if (sd) {
+            sd.textContent =
+              prof.elevGainM != null && prof.elevGainM > 5
+                ? "+" + prof.elevGainM + " m"
+                : "— (élévation absente dans le GPX)";
+          }
+          const band = inferDifficultyBand(prof.totalKm, prof.elevGainM);
+          if (sg) sg.textContent = band.levelLabel;
+          if (stats) stats.hidden = false;
+          const levelRadios = form.querySelectorAll('input[name="new-route-level"]');
+          levelRadios.forEach(function (radio) {
+            radio.checked = radio.value === band.levelClass;
+          });
+          const rt = (form.querySelector('input[name="new-route-race"]:checked') || {}).value || "route";
+          const titleIn = document.getElementById("new-route-track");
+          if (titleIn && !titleIn.value.trim()) {
+            titleIn.value =
+              raceTypeLabel(rt) +
+              " · " +
+              formatKm(prof.totalKm) +
+              (prof.elevGainM != null && prof.elevGainM > 5 ? " · +" + Math.round(prof.elevGainM) + " m · " : " · ") +
+              band.levelLabel;
+            titleIn.setAttribute("data-title-auto", "1");
+          }
+          drawNewRoutePreview(prof);
+          closeGpxUploadPop();
+        }
+
+        function openGpxUploadPop() {
+          if (!gpxPop) return;
+          gpxPop.hidden = false;
+          gpxPop.setAttribute("aria-hidden", "false");
+        }
+
+        function shrinkImageToDataUrl(file, maxW, quality, done) {
+          const fr = new FileReader();
+          fr.onload = function () {
+            const url = fr.result;
+            const img = new Image();
+            img.onload = function () {
+              let w = img.naturalWidth;
+              let h = img.naturalHeight;
+              const scale = Math.min(1, maxW / w);
+              const cw = Math.max(1, Math.round(w * scale));
+              const ch = Math.max(1, Math.round(h * scale));
+              const canvas = document.createElement("canvas");
+              canvas.width = cw;
+              canvas.height = ch;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) {
+                done(null);
+                return;
+              }
+              ctx.drawImage(img, 0, 0, cw, ch);
+              let dataUrl = canvas.toDataURL("image/jpeg", quality);
+              if (dataUrl.length > 480000) dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+              done(dataUrl.length > 620000 ? null : dataUrl);
+            };
+            img.onerror = function () {
+              done(null);
+            };
+            img.src = url;
+          };
+          fr.onerror = function () {
+            done(null);
+          };
+          fr.readAsDataURL(file);
+        }
+
+        modal.querySelectorAll("[data-close-new-route]").forEach(function (el) {
+          el.addEventListener("click", closeNewRouteModal);
+        });
+
+        document.addEventListener("keydown", function (e) {
+          if (e.key !== "Escape") return;
+          if (gpxPop && !gpxPop.hidden) {
+            closeGpxUploadPop();
+            return;
+          }
+          if (modal && !modal.hidden) closeNewRouteModal();
+        });
+
+        if (btn) {
+          btn.addEventListener("click", function () {
+            openNewRouteModal();
+          });
+        }
+
+        if (hdrNew) {
+          hdrNew.addEventListener("click", function () {
+            openNewRouteModal();
+          });
+        }
+
+        if (btnOpenGpx) {
+          btnOpenGpx.addEventListener("click", function () {
+            openGpxUploadPop();
+          });
+        }
+
+        if (gpxPop) {
+          gpxPop.querySelectorAll("[data-close-gpx-pop]").forEach(function (el) {
+            el.addEventListener("click", function (ev) {
+              ev.preventDefault();
+              closeGpxUploadPop();
+            });
+          });
+        }
+
+        if (gpxDrop && gpxInput) {
+          gpxDrop.addEventListener("click", function () {
+            gpxInput.click();
+          });
+          gpxDrop.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              gpxInput.click();
+            }
+          });
+          ["dragenter", "dragover"].forEach(function (evt) {
+            gpxDrop.addEventListener(evt, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              gpxDrop.classList.add("is-drag");
+            });
+          });
+          ["dragleave", "drop"].forEach(function (evt) {
+            gpxDrop.addEventListener(evt, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              gpxDrop.classList.remove("is-drag");
+            });
+          });
+          gpxDrop.addEventListener("drop", function (e) {
+            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = function () {
+              applyGpxText(String(reader.result || ""), f.name);
+            };
+            reader.readAsText(f);
+          });
+          gpxInput.addEventListener("change", function () {
+            const f = gpxInput.files && gpxInput.files[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = function () {
+              applyGpxText(String(reader.result || ""), f.name);
+            };
+            reader.readAsText(f);
+          });
+        }
+
+        const prevBtn = document.getElementById("new-route-prev");
+        const nextBtn = document.getElementById("new-route-next");
+        if (nextBtn) {
+          nextBtn.addEventListener("click", function () {
+            if (wizardStep === 1) {
+              const d = document.getElementById("new-route-date");
+              if (!d || !d.value) {
+                window.alert("Choisis une date pour continuer.");
+                return;
+              }
+            }
+            if (wizardStep === 2) {
+              if (!newRouteProfile) {
+                window.alert("Importe un fichier GPX avant de passer à l’étape suivante.");
+                return;
+              }
+            }
+            if (wizardStep === 3) {
+              const t = document.getElementById("new-route-track");
+              if (!t || !t.value.trim()) {
+                window.alert("Indique un titre pour la sortie.");
+                return;
+              }
+            }
+            setWizardStep(wizardStep + 1);
+          });
+        }
+        if (prevBtn) {
+          prevBtn.addEventListener("click", function () {
+            setWizardStep(wizardStep - 1);
+          });
+        }
+
+        form.querySelectorAll('input[name="new-route-race"]').forEach(function (r) {
+          r.addEventListener("change", function () {
+            const titleIn = document.getElementById("new-route-track");
+            if (!titleIn || titleIn.getAttribute("data-title-auto") !== "1" || !newRouteProfile) return;
+            const prof = newRouteProfile;
+            const band = inferDifficultyBand(prof.totalKm, prof.elevGainM);
+            const rt = (form.querySelector('input[name="new-route-race"]:checked') || {}).value || "route";
+            titleIn.value =
+              raceTypeLabel(rt) +
+              " · " +
+              formatKm(prof.totalKm) +
+              (prof.elevGainM != null && prof.elevGainM > 5 ? " · +" + Math.round(prof.elevGainM) + " m · " : " · ") +
+              band.levelLabel;
+          });
+        });
+
+        form.querySelectorAll('input[name="new-route-level"]').forEach(function (r) {
+          r.addEventListener("change", function () {
+            const titleIn = document.getElementById("new-route-track");
+            if (!titleIn || titleIn.getAttribute("data-title-auto") !== "1" || !newRouteProfile) return;
+            const prof = newRouteProfile;
+            const rt = (form.querySelector('input[name="new-route-race"]:checked') || {}).value || "route";
+            const lv = form.querySelector('input[name="new-route-level"]:checked');
+            const lab =
+              lv && lv.value === "level-blanc"
+                ? "Blanc"
+                : lv && lv.value === "level-vert"
+                  ? "Vert"
+                  : lv && lv.value === "level-bleu"
+                    ? "Bleu"
+                    : lv && lv.value === "level-rouge"
+                      ? "Rouge"
+                      : "Vert";
+            titleIn.value =
+              raceTypeLabel(rt) +
+              " · " +
+              formatKm(prof.totalKm) +
+              (prof.elevGainM != null && prof.elevGainM > 5 ? " · +" + Math.round(prof.elevGainM) + " m · " : " · ") +
+              lab;
+          });
+        });
+
+        const titleField = document.getElementById("new-route-track");
+        if (titleField) {
+          titleField.addEventListener("input", function () {
+            titleField.removeAttribute("data-title-auto");
+          });
+        }
+
+        if (coverBtn && coverInput && coverPreview) {
+          coverBtn.addEventListener("click", function () {
+            coverInput.click();
+          });
+          coverInput.addEventListener("change", function () {
+            const f = coverInput.files && coverInput.files[0];
+            if (!f || !/^image\//.test(f.type)) return;
+            shrinkImageToDataUrl(f, 960, 0.82, function (dataUrl) {
+              if (!dataUrl) {
+                window.alert("Image trop lourde après compression — choisis une photo plus petite.");
+                newRouteCoverDataUrl = null;
+                coverPreview.hidden = true;
+                coverPreview.innerHTML = "";
+                return;
+              }
+              newRouteCoverDataUrl = dataUrl;
+              coverPreview.innerHTML = "";
+              const im = document.createElement("img");
+              im.alt = "Aperçu couverture";
+              im.src = dataUrl;
+              coverPreview.appendChild(im);
+              coverPreview.hidden = false;
+            });
+          });
+        }
+
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          if (!isSupabaseEnabled()) {
+            window.alert("Connecte Supabase (clé anon) pour créer une sortie.");
+            return;
+          }
+          if (wizardStep !== 5) {
+            window.alert("Va jusqu’à l’étape « Confirmation » avec « Suivant », puis valide.");
+            setWizardStep(5);
+            return;
+          }
+          const track = document.getElementById("new-route-track").value.trim();
+          const group = document.getElementById("new-route-group").value.trim();
+          const pace = document.getElementById("new-route-pace").value.trim();
+          const desc = document.getElementById("new-route-desc").value.trim();
+          const dateStr = document.getElementById("new-route-date").value;
+          const timeStr = document.getElementById("new-route-time").value;
+          const dateText = formatFrenchRideDateLabel(dateStr, timeStr);
+          const rt = (form.querySelector('input[name="new-route-race"]:checked') || {}).value || "route";
+          const levelEl = form.querySelector('input[name="new-route-level"]:checked');
+          const levelClass = levelEl ? levelEl.value : "level-vert";
+          const levelLabelMap = {
+            "level-blanc": "Blanc",
+            "level-vert": "Vert",
+            "level-bleu": "Bleu",
+            "level-rouge": "Rouge"
+          };
+          const levelLabel = levelLabelMap[levelClass] || "Vert";
+
+          if (!track) {
+            window.alert("Indique un titre pour la sortie.");
+            return;
+          }
+          if (!dateStr) {
+            window.alert("Choisis une date.");
+            return;
+          }
+          if (!newRouteProfile || !newRouteGpxName) {
+            window.alert("Importe un fichier GPX (fenêtre dédiée) avant de créer la sortie.");
+            return;
+          }
+
+          const emb = serializeEmbeddedPoints(newRouteProfile.points, EMBEDDED_POINTS_MAX);
+          const cols = colorsForRaceType(rt);
+          const yearFromDate = parseInt(String(dateStr).slice(0, 4), 10) || 2026;
+          const frontConfig = {
+            file: newRouteGpxName,
+            embeddedPoints: emb,
+            raceType: rt,
+            stats: {
+              totalKm: newRouteProfile.totalKm,
+              elevGainM: newRouteProfile.elevGainM
+            },
+            depart: {
+              day: "",
+              month: "",
+              year: String(yearFromDate),
+              weekday: "",
+              dateLabel: dateText
+            },
+            shortDesc: desc,
+            color: cols.color,
+            casingColor: cols.casingColor,
+            levelClass: levelClass,
+            levelLabel: levelLabel,
+            vibe: raceTypeLabel(rt),
+            coverImageDataUrl: newRouteCoverDataUrl || ""
+          };
+
+          let data = await supabaseRpc("route_create", {
+            p_track_name: track,
+            p_group_label: group || raceTypeLabel(rt),
+            p_pace_label: pace || "—",
+            p_front_config: frontConfig,
+            p_sort_order: 40
+          });
+          if (Array.isArray(data)) data = data[0];
+          if (!data || !data.ok) {
+            if (data && data.error === "limit_reached") {
+              window.alert("Nombre maximum de sorties personnalisées atteint. Contacte l’organisation.");
+            } else {
+              const fail = goeloLastRpcFailure;
+              const code = fail ? fail.code : 40;
+              window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
+            }
+            return;
+          }
+          closeNewRouteModal();
+          window.alert("Sortie créée. La page va se recharger pour afficher le nouveau parcours.");
+          window.location.reload();
+        });
+      }
+
+      let activeRouteRef = null;
+
+      function updateRoutePickerLayout() {
+        const picker = document.getElementById("route-picker");
+        const scrollWrap = document.getElementById("route-choices-scroll");
+        const n = loadedRoutesCache.length;
+
+        if (picker) {
+          picker.classList.toggle("route-choices--many", n > 2);
+          if (n > 2) picker.setAttribute("aria-orientation", "horizontal");
+          else picker.removeAttribute("aria-orientation");
+        }
+
+        if (!picker || !scrollWrap) return;
+
+        function updateScrollHints() {
+          const max = picker.scrollWidth - picker.clientWidth;
+          scrollWrap.classList.toggle("can-scroll-left", picker.scrollLeft > 8);
+          scrollWrap.classList.toggle("can-scroll-right", max > 8 && picker.scrollLeft < max - 8);
+        }
+
+        if (!picker.dataset.scrollBound) {
+          picker.dataset.scrollBound = "1";
+          picker.addEventListener("scroll", updateScrollHints, { passive: true });
+          window.addEventListener("resize", updateScrollHints);
+        }
+        updateScrollHints();
+        requestAnimationFrame(function () {
+          requestAnimationFrame(updateScrollHints);
+        });
+      }
+
+      function syncRouteDistances(routes) {
+        routes.forEach(function (route) {
+          const kmLabel = formatKm(route.profile.totalKm);
+          document.querySelectorAll('.route-km[data-route-id="' + route.id + '"]').forEach(function (el) {
+            el.textContent = kmLabel;
+          });
+          document.querySelectorAll('[data-choice-km="' + route.id + '"]').forEach(function (el) {
+            el.textContent = kmLabel;
+          });
+        });
+      }
+
+      let loadedRoutesCache = [];
+
+      function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const p = Math.PI / 180;
+        const a =
+          Math.pow(Math.sin((lat2 - lat1) * p / 2), 2) +
+          Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.pow(Math.sin((lon2 - lon1) * p / 2), 2);
+        return 2 * R * Math.asin(Math.sqrt(a));
+      }
+
+      function parseGpxTrack(xmlText) {
+        const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+        if (doc.querySelector("parsererror")) return [];
+
+        const points = [];
+        const nodes = doc.getElementsByTagName("*");
+        for (let i = 0; i < nodes.length; i++) {
+          const el = nodes[i];
+          const tag = el.localName || el.nodeName.split(":").pop();
+          if (tag !== "trkpt" && tag !== "rtept") continue;
+          const lat = parseFloat(el.getAttribute("lat"));
+          const lon = parseFloat(el.getAttribute("lon"));
+          if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
+          let ele = null;
+          for (let c = el.firstElementChild; c; c = c.nextElementSibling) {
+            const n = c.localName || c.nodeName.split(":").pop();
+            if (n === "ele" && c.textContent) {
+              const v = parseFloat(c.textContent.trim());
+              if (!Number.isNaN(v)) ele = v;
+              break;
+            }
+          }
+          if (ele !== null) points.push({ lat: lat, lon: lon, ele: ele });
+          else points.push({ lat: lat, lon: lon });
+        }
+        return points;
+      }
+
+      function fillElevationGaps(points) {
+        const n = points.length;
+        if (!n) return [];
+        const hasAny = points.some(function (p) {
+          return typeof p.ele === "number" && !Number.isNaN(p.ele);
+        });
+        if (!hasAny) {
+          return points.map(function (p) {
+            return { lat: p.lat, lon: p.lon };
+          });
+        }
+        const out = points.map(function (p) {
+          return {
+            lat: p.lat,
+            lon: p.lon,
+            ele: typeof p.ele === "number" && !Number.isNaN(p.ele) ? p.ele : null
+          };
+        });
+        let first = -1;
+        let last = -1;
+        for (let i = 0; i < n; i++) {
+          if (out[i].ele !== null) {
+            if (first < 0) first = i;
+            last = i;
+          }
+        }
+        if (first < 0) {
+          return out.map(function (p) {
+            return { lat: p.lat, lon: p.lon };
+          });
+        }
+        for (let i = 0; i < first; i++) out[i].ele = out[first].ele;
+        for (let i = last + 1; i < n; i++) out[i].ele = out[last].ele;
+        let i = first;
+        while (i < last) {
+          let j = i + 1;
+          while (j <= last && out[j].ele === null) j++;
+          if (j > last) break;
+          const e0 = out[i].ele;
+          const e1 = out[j].ele;
+          const steps = j - i;
+          for (let k = 1; k < steps; k++) {
+            out[i + k].ele = e0 + (e1 - e0) * (k / steps);
+          }
+          i = j;
+        }
+        return out;
+      }
+
+      function gradePercentBetween(p0, p1) {
+        const horiz = haversine(p0.lat, p0.lon, p1.lat, p1.lon);
+        if (horiz < 0.5) return 0;
+        if (typeof p0.ele !== "number" || typeof p1.ele !== "number") return null;
+        return ((p1.ele - p0.ele) / horiz) * 100;
+      }
+
+      function smoothedEdgeGrade(points, i) {
+        const w = 2;
+        let sum = 0;
+        let cnt = 0;
+        for (let k = -w; k <= w; k++) {
+          const idx = i + k;
+          if (idx < 0 || idx >= points.length - 1) continue;
+          const g = gradePercentBetween(points[idx], points[idx + 1]);
+          if (g !== null) {
+            sum += g;
+            cnt++;
+          }
+        }
+        return cnt ? sum / cnt : 0;
+      }
+
+      function segmentColorForGrade(gradePct) {
+        if (gradePct < -2.5) return "#2563eb";
+        if (gradePct < 2) return "#64748b";
+        if (gradePct < 4.5) return "#ca8a04";
+        if (gradePct < 8) return "#ea580c";
+        return "#dc2626";
+      }
+
+      function simplifyTrack(points, maxPoints) {
+        if (points.length <= maxPoints) return points.slice();
+        const step = Math.ceil(points.length / maxPoints);
+        const out = [points[0]];
+        for (let i = step; i < points.length - 1; i += step) out.push(points[i]);
+        out.push(points[points.length - 1]);
+        return out;
+      }
+
+      function computeElevationGainM(points) {
+        if (!points || points.length < 2) return null;
+        let gain = 0;
+        let any = false;
+        for (let i = 1; i < points.length; i++) {
+          const e0 = points[i - 1].ele;
+          const e1 = points[i].ele;
+          if (typeof e0 !== "number" || typeof e1 !== "number" || Number.isNaN(e0) || Number.isNaN(e1)) continue;
+          any = true;
+          const d = e1 - e0;
+          if (d > 0) gain += d;
+        }
+        return any ? Math.round(gain) : null;
+      }
+
+      function buildTrack(points) {
+        const filled = fillElevationGaps(points);
+        let distM = 0;
+        for (let i = 1; i < filled.length; i++) {
+          distM += haversine(
+            filled[i - 1].lat, filled[i - 1].lon, filled[i].lat, filled[i].lon
+          );
+        }
+        return {
+          points: filled,
+          totalKm: distM / 1000,
+          elevGainM: computeElevationGainM(filled)
+        };
+      }
+
+      function loadGpxProfileFromText(xmlText) {
+        const raw = parseGpxTrack(xmlText);
+        if (!raw.length) return null;
+        const pts = simplifyTrack(raw, GPX_MAX_POINTS);
+        return buildTrack(pts);
+      }
+
+      function deserializeEmbeddedPointRow(r) {
+        if (!Array.isArray(r) || r.length < 2) return null;
+        const lat = r[0];
+        const lon = r[1];
+        const ele = r.length > 2 && r[2] != null && !Number.isNaN(Number(r[2])) ? Number(r[2]) : undefined;
+        return { lat: lat, lon: lon, ele: ele };
+      }
+
+      function profileFromEmbeddedRows(rows) {
+        if (!rows || !rows.length) return null;
+        const pts = rows.map(deserializeEmbeddedPointRow).filter(Boolean);
+        if (pts.length < 2) return null;
+        return buildTrack(pts);
+      }
+
+      async function loadRouteProfile(cfg) {
+        const emb = cfg && cfg.embeddedPoints;
+        if (emb && Array.isArray(emb) && emb.length >= 2) {
+          const prof = profileFromEmbeddedRows(emb);
+          if (prof && prof.points && prof.points.length) return prof;
+        }
+        const file = cfg && cfg.file != null ? String(cfg.file).trim() : "";
+        if (file) return loadGpxTrack(file);
+        return null;
+      }
+
+      function serializeEmbeddedPoints(points, maxN) {
+        const simp = simplifyTrack(points, maxN);
+        return simp.map(function (p) {
+          const row = [Math.round(p.lat * 1e5) / 1e5, Math.round(p.lon * 1e5) / 1e5];
+          if (typeof p.ele === "number" && !Number.isNaN(p.ele)) row.push(Math.round(p.ele * 10) / 10);
+          return row;
+        });
+      }
+
+      async function loadGpxTrack(url) {
+        try {
+          const res = await fetch(encodeURI(url));
+          if (!res.ok) return null;
+          const pts = simplifyTrack(parseGpxTrack(await res.text()), GPX_MAX_POINTS);
+          return pts.length ? buildTrack(pts) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      const BIKE_SVG =
+        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<path fill="#1f2937" d="M5 20.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm14 0a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z' +
+        'M6.8 15h10.4l1.2-3.5H8.3L6.8 15zm2.5-5.2L10 8h3.2l.5 1.8h-4.4z"/></svg>';
+
+      function buildRouteChoiceTable(route) {
+        const d = route.depart;
+        return (
+          '<table class="ride-event-card ride-event-card--choice is-route-' + route.id + '">' +
+          "<tbody>" +
+          '<tr><td class="ride-td-left"><span class="ride-day">' + d.day + "</span></td>" +
+          '<td class="ride-td-right"><div class="ride-km-row">' +
+          '<p class="ride-km" data-choice-km="' + route.id + '">' + formatKm(route.profile.totalKm) + "</p>" +
+          '<button type="button" class="btn-join" data-join-route="' + route.id + '">J’en suis ?</button>' +
+          "</div></td></tr>" +
+          '<tr><td class="ride-td-left"><span class="ride-month">' + d.month + "</span></td>" +
+          '<td class="ride-td-right"><h4 class="ride-course">' + route.track + "</h4></td></tr>" +
+          '<tr><td class="ride-td-left"><span class="ride-time">' + SHARED.time + "</span></td>" +
+          '<td class="ride-td-right"><p class="ride-group">' + route.name + "</p></td></tr>" +
+          '<tr><td class="ride-td-left ride-td-bike" rowspan="2">' +
+          '<p class="ride-meet-place">' + SHARED.meetPlace + "</p>" +
+          '<div class="ride-aside-bike">' + BIKE_SVG + "</div></td>" +
+          '<td class="ride-td-right"><p class="ride-pace-level">' +
+          route.pace + " · " + route.levelLabel + "</p></td></tr>" +
+          '<tr><td class="ride-td-right"><p class="ride-desc">' +
+          (route.shortDesc || "") + "</p></td></tr>" +
+          "</tbody></table>"
+        );
+      }
+
+      async function updateRideCard(route) {
+        const wrap = document.getElementById("signup-modal-map-section");
+        if (wrap) {
+          wrap.classList.remove("is-falaises", "is-brehec", "is-boucle", "is-custom-route");
+          if (route.id === "falaises") wrap.classList.add("is-falaises");
+          else if (route.id === "brehec") wrap.classList.add("is-brehec");
+          else if (route.id === "boucle") wrap.classList.add("is-boucle");
+          else wrap.classList.add("is-custom-route");
+        }
+        await refreshJoinButtons();
+        if (modalRouteRef && modalRouteRef.id === route.id) {
+          await fillSignupModal(route);
+        }
+      }
+
+      function cityMarkerIcon(city) {
+        return L.divIcon({
+          className: "city-marker",
+          html: '<span class="city-label' + (city.start ? " city-start" : "") + '">' + city.name + "</span>",
+          iconAnchor: [0, 0]
+        });
+      }
+
+      function updateCitiesList(cities) {
+        const list = document.getElementById("cities-list");
+        if (!list) return;
+        list.innerHTML = "";
+        if (!cities || !cities.length) return;
+        cities.forEach(function (city) {
+          const chip = document.createElement("span");
+          chip.className = "city-chip" + (city.start ? " is-start" : "");
+          chip.textContent = city.name;
+          list.appendChild(chip);
+        });
+      }
+
+      function addCityMarkers(map, cities) {
+        const group = L.layerGroup();
+        cities.forEach(function (city) {
+          const marker = L.marker([city.lat, city.lon], { icon: cityMarkerIcon(city) });
+          marker.bindPopup("<strong>" + city.name + "</strong>" + (city.start ? "<br>Départ · arrivée" : ""));
+          group.addLayer(marker);
+        });
+        return group;
+      }
+
+      function resolveArrowColor(routeColor, casingColor) {
+        if (routeColor === "#e8e8e8") return casingColor || "#4b5563";
+        return routeColor;
+      }
+
+      function bearingDegrees(lat1, lon1, lat2, lon2) {
+        const toRad = Math.PI / 180;
+        const toDeg = 180 / Math.PI;
+        const dLon = (lon2 - lon1) * toRad;
+        const y = Math.sin(dLon) * Math.cos(lat2 * toRad);
+        const x =
+          Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+          Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos(dLon);
+        return (Math.atan2(y, x) * toDeg + 360) % 360;
+      }
+
+      function addManualDirectionArrows(latlngs, arrowColor) {
+        const group = L.layerGroup();
+        if (latlngs.length < 2) return group;
+        const step = Math.max(1, Math.floor(latlngs.length / 14));
+        for (let i = step; i < latlngs.length - 1; i += step) {
+          const from = latlngs[i - 1];
+          const at = latlngs[i];
+          const bearing = bearingDegrees(from[0], from[1], at[0], at[1]);
+          const icon = L.divIcon({
+            className: "route-arrow-marker",
+            html:
+              '<span class="route-arrow" style="color:' + arrowColor + ";transform:rotate(" +
+              (bearing - 90) + 'deg)">▶</span>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+          });
+          group.addLayer(L.marker(at, { icon: icon, interactive: false }));
+        }
+        return group;
+      }
+
+      function addStravaTrack(map, latlngs, color, casingColor) {
+        const weight = 5;
+        const arrowColor = resolveArrowColor(color, casingColor);
+        const casing = L.polyline(latlngs, {
+          color: casingColor || "#ffffff",
+          weight: weight + 4,
+          opacity: 1,
+          lineCap: "round",
+          lineJoin: "round"
+        });
+        const line = L.polyline(latlngs, {
+          color: color,
+          weight: weight,
+          opacity: 1,
+          lineCap: "round",
+          lineJoin: "round"
+        });
+        const layers = [casing, line];
+
+        if (typeof L.polylineDecorator === "function" && typeof L.Symbol !== "undefined") {
+          layers.push(
+            L.polylineDecorator(line, {
+              patterns: [
+                {
+                  offset: "4%",
+                  repeat: "7%",
+                  symbol: L.Symbol.arrowHead({
+                    pixelSize: 12,
+                    headAngle: 42,
+                    polygon: false,
+                    pathOptions: {
+                      color: arrowColor,
+                      weight: 3,
+                      opacity: 1,
+                      lineCap: "round",
+                      lineJoin: "round"
+                    }
+                  })
+                }
+              ]
+            })
+          );
+        } else {
+          layers.push(addManualDirectionArrows(latlngs, arrowColor));
+        }
+
+        const group = L.layerGroup(layers);
+        group.mainLine = line;
+        return group;
+      }
+
+      function profileHasElevation(points) {
+        return points.some(function (p) {
+          return typeof p.ele === "number" && !Number.isNaN(p.ele);
+        });
+      }
+
+      function addGradeColoredTrack(map, points, routeFallbackColor, casingColor) {
+        const weight = 5;
+        const latlngs = points.map(function (p) {
+          return [p.lat, p.lon];
+        });
+        const casing = L.polyline(latlngs, {
+          color: casingColor || "#ffffff",
+          weight: weight + 4,
+          opacity: 1,
+          lineCap: "round",
+          lineJoin: "round"
+        });
+        const colored = L.layerGroup();
+        let i = 0;
+        while (i < points.length - 1) {
+          const g = smoothedEdgeGrade(points, i);
+          const col = segmentColorForGrade(g);
+          const path = [[points[i].lat, points[i].lon]];
+          let j = i;
+          while (j < points.length - 1) {
+            const gj = smoothedEdgeGrade(points, j);
+            if (segmentColorForGrade(gj) !== col) break;
+            j++;
+            path.push([points[j].lat, points[j].lon]);
+          }
+          if (j === i) {
+            j = i + 1;
+            path.push([points[j].lat, points[j].lon]);
+          }
+          colored.addLayer(
+            L.polyline(path, {
+              color: col,
+              weight: weight,
+              opacity: 1,
+              lineCap: "round",
+              lineJoin: "round"
+            })
+          );
+          i = j;
+        }
+        const arrowColor = resolveArrowColor(routeFallbackColor, casingColor);
+        const layers = [casing, colored];
+        if (typeof L.polylineDecorator === "function" && typeof L.Symbol !== "undefined") {
+          layers.push(
+            L.polylineDecorator(casing, {
+              patterns: [
+                {
+                  offset: "4%",
+                  repeat: "7%",
+                  symbol: L.Symbol.arrowHead({
+                    pixelSize: 12,
+                    headAngle: 42,
+                    polygon: false,
+                    pathOptions: {
+                      color: arrowColor,
+                      weight: 3,
+                      opacity: 1,
+                      lineCap: "round",
+                      lineJoin: "round"
+                    }
+                  })
+                }
+              ]
+            })
+          );
+        } else {
+          layers.push(addManualDirectionArrows(latlngs, arrowColor));
+        }
+        const group = L.layerGroup(layers);
+        group.mainLine = casing;
+        return group;
+      }
+
+      function addTrackForRoute(map, route, useGradeColors) {
+        const pts = route.profile.points;
+        const latlngs = pts.map(function (p) {
+          return [p.lat, p.lon];
+        });
+        const canGrade = useGradeColors && profileHasElevation(pts);
+        if (canGrade) {
+          return addGradeColoredTrack(map, pts, route.color, route.casingColor);
+        }
+        return addStravaTrack(map, latlngs, route.color, route.casingColor);
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        const mapEl = document.getElementById("route-map");
+        const mapLoading = document.getElementById("map-loading");
+        const mapAlert = document.getElementById("map-alert");
+        const routePicker = document.getElementById("route-picker");
+        if (!mapEl || typeof L === "undefined") return;
+
+        const map = L.map("route-map", {
+          scrollWheelZoom: true,
+          zoomControl: true
+        }).setView([START.lat, START.lon], 11);
+        mapEl.classList.add("strava-map-tiles");
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19
+        }).addTo(map);
+
+        let activeRoute = null;
+        let trackLayer = null;
+        let citiesLayer = null;
+        const optCities = document.getElementById("opt-cities");
+        const optGradeColors = document.getElementById("opt-grade-colors");
+
+        function refreshMapSize() {
+          map.invalidateSize({ animate: false });
+        }
+
+        function clearTrack() {
+          if (trackLayer) {
+            map.removeLayer(trackLayer);
+            trackLayer = null;
+          }
+          if (citiesLayer) {
+            map.removeLayer(citiesLayer);
+            citiesLayer = null;
+          }
+        }
+
+        function showCities(route) {
+          if (citiesLayer) {
+            map.removeLayer(citiesLayer);
+            citiesLayer = null;
+          }
+          if (!route.cities || !route.cities.length) {
+            updateCitiesList([]);
+            return;
+          }
+          updateCitiesList(route.cities);
+          if (optCities && !optCities.checked) return;
+          citiesLayer = addCityMarkers(map, route.cities);
+          citiesLayer.addTo(map);
+        }
+
+        if (optCities) {
+          optCities.addEventListener("change", function () {
+            if (activeRoute) showCities(activeRoute);
+          });
+        }
+
+        if (optGradeColors) {
+          optGradeColors.addEventListener("change", function () {
+            if (activeRoute) showRoute(activeRoute, { scroll: false });
+          });
+        }
+
+        function boundsForLatLngs(latlngs) {
+          return L.latLngBounds(latlngs);
+        }
+
+        function showRoute(route, options) {
+          const opts = options || {};
+          activeRoute = route;
+          activeRouteRef = route;
+          clearTrack();
+          const pts = route.profile.points;
+          const latlngs = pts.map(function (p) { return [p.lat, p.lon]; });
+          const useGrade = optGradeColors && optGradeColors.checked;
+          const hasElev = typeof pts[0] !== "undefined" && typeof pts[0].ele === "number";
+          if (optGradeColors) {
+            optGradeColors.disabled = !hasElev;
+            const lab = optGradeColors.closest("label");
+            if (lab) lab.style.opacity = hasElev ? "" : "0.5";
+          }
+          const gradeLegend = document.getElementById("grade-legend");
+          if (gradeLegend) gradeLegend.hidden = !(useGrade && hasElev);
+
+          trackLayer = addTrackForRoute(map, route, useGrade);
+          trackLayer.addTo(map);
+          trackLayer.mainLine.bindPopup(
+            "<strong>" + route.track + "</strong><br>" + route.depart.dateLabel +
+            "<br>" + formatKm(route.profile.totalKm) + " · " + route.name +
+            (useGrade && hasElev
+              ? "<br><span style=\"font-size:0.8em;opacity:0.9\">Couleurs = pente (rouge = montée raide).</span>"
+              : "")
+          );
+          map.fitBounds(boundsForLatLngs(latlngs), { padding: [40, 40], maxZoom: 14 });
+
+          void updateRideCard(route);
+          showCities(route);
+
+          document.querySelectorAll(".route-choice-card").forEach(function (card) {
+            const isActive = card.dataset.routeId === route.id;
+            card.classList.toggle("is-active", isActive);
+            card.setAttribute("aria-selected", isActive ? "true" : "false");
+            if (isActive) {
+              card.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+            }
+          });
+          document.querySelectorAll(".group-card[data-route-id]").forEach(function (card) {
+            card.classList.toggle("is-route-active", card.dataset.routeId === route.id);
+          });
+
+          setTimeout(refreshMapSize, 50);
+          setTimeout(refreshMapSize, 350);
+        }
+
+        showRouteHandler = showRoute;
+
+        function bindRouteUi(route) {
+          if (routePicker) {
+            const card = document.createElement("div");
+            card.className = "route-choice-card";
+            card.dataset.routeId = route.id;
+            card.setAttribute("role", "tab");
+            card.tabIndex = 0;
+            card.setAttribute("aria-label", route.track + " · " + route.name);
+            card.style.setProperty("--route-color", route.color);
+            card.innerHTML = buildRouteChoiceTable(route);
+            card.addEventListener("click", function (e) {
+              if (e.target.closest(".btn-join")) return;
+              openSignupModal(route);
+            });
+            card.addEventListener("keydown", function (e) {
+              if (e.key === "Enter" || e.key === " ") {
+                if (e.target.closest(".btn-join")) return;
+                e.preventDefault();
+                openSignupModal(route);
+              }
+            });
+            routePicker.appendChild(card);
+          }
+
+          document.querySelectorAll('.group-card[data-route-id="' + route.id + '"]').forEach(function (card) {
+            card.addEventListener("click", function () {
+              openSignupModal(route);
+              var _mapSec = document.getElementById("map-section");
+              if (_mapSec) _mapSec.scrollIntoView({ behavior: "smooth" });
+            });
+          });
+        }
+
+        const extraFromDb = await fetchCustomRoutesFromSupabase();
+        const routesToLoad = ROUTES_BUILTIN.concat(extraFromDb);
+
+        const results = await Promise.all(
+          routesToLoad.map(async function (cfg) {
+            const profile = await loadRouteProfile(cfg);
+            if (!profile) return null;
+            return Object.assign({}, cfg, { profile: profile });
+          })
+        );
+
+        loadedRoutesCache = results.filter(function (r) { return r !== null; });
+
+        if (!isSupabaseEnabled()) loadLocalSignups();
+        await loadParticipants();
+        if (isSupabaseEnabled()) await refreshSupabaseNames();
+        /* Si le script qui définit GOELO_SUPABASE_* est placé après ce fichier, il s’exécute après ce bloc : on resynchronise au tick suivant. */
+        setTimeout(async function () {
+          if (!isSupabaseEnabled()) return;
+          await refreshSupabaseNames();
+          await refreshJoinButtons();
+        }, 0);
+        setupSignupModal();
+        setupNewRouteModal();
+
+        loadedRoutesCache.forEach(function (route) {
+          bindRouteUi(route);
+        });
+
+        if (routePicker && !routePicker.dataset.joinDelegated) {
+          routePicker.dataset.joinDelegated = "1";
+          routePicker.addEventListener("click", function (e) {
+            const joinBtn = e.target.closest(".btn-join");
+            if (!joinBtn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const routeId = joinBtn.getAttribute("data-join-route");
+            const route = loadedRoutesCache.find(function (r) { return r.id === routeId; });
+            if (route) openSignupModal(route);
+          });
+        }
+
+        syncRouteDistances(loadedRoutesCache);
+        updateRoutePickerLayout();
+        await refreshJoinButtons();
+
+        if (mapLoading) mapLoading.classList.add("is-hidden");
+
+        if (loadedRoutesCache.length === 0) {
+          if (mapAlert) mapAlert.classList.add("is-visible");
+          return;
+        }
+
+        setTimeout(refreshMapSize, 150);
+        if ("IntersectionObserver" in window) {
+          new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) refreshMapSize();
+            });
+          }, { threshold: 0.1 }).observe(mapEl);
+        }
+        window.addEventListener("resize", refreshMapSize);
+
+        var openParams = new URLSearchParams(window.location.search);
+        var openRouteId = openParams.get("openRoute");
+        if (openRouteId && loadedRoutesCache.length) {
+          var routeToOpen = loadedRoutesCache.find(function (r) {
+            return String(r.id) === String(openRouteId);
+          });
+          if (routeToOpen) {
+            var mapSec = document.getElementById("map-section");
+            if (mapSec) mapSec.scrollIntoView({ behavior: "smooth", block: "start" });
+            setTimeout(function () {
+              openSignupModal(routeToOpen);
+            }, 280);
+          }
+          try {
+            openParams.delete("openRoute");
+            var q2 = openParams.toString();
+            var cleanUrl = window.location.pathname + (q2 ? "?" + q2 : "") + (window.location.hash || "");
+            history.replaceState(null, "", cleanUrl);
+          } catch (eOpen) { /* ignore */ }
+        }
+      });
+    })();
