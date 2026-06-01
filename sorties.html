@@ -273,7 +273,7 @@
     .sorties-card--bleu:hover { border-left-color: #2563eb; }
     .sorties-card--rouge:hover { border-left-color: #dc2626; }
 
-    /* Colonne vignette : image + (mobile) Départ / Allure sous la photo */
+    /* Colonne vignette (image seule ; Départ/Allure en pleine largeur sur mobile). */
     .sorties-card-thumb-col {
       flex-shrink: 0;
       width: min(32%, 180px);
@@ -355,9 +355,19 @@
       display: block;
     }
 
-    .sorties-card-photo-meta {
+    .sorties-card-mobile-meta {
       display: none;
     }
+
+    .sorties-card--blanc .sorties-card-mobile-meta { color: #4b5563; }
+    .sorties-card--vert .sorties-card-mobile-meta { color: #166534; }
+    .sorties-card--bleu .sorties-card-mobile-meta { color: #1d4ed8; }
+    .sorties-card--rouge .sorties-card-mobile-meta { color: #b91c1c; }
+
+    .sorties-card--blanc .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #374151; }
+    .sorties-card--vert .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #14532d; }
+    .sorties-card--bleu .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #1e3a8a; }
+    .sorties-card--rouge .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #991b1b; }
 
     .sorties-photo-meta-line {
       margin: 0;
@@ -671,13 +681,14 @@
     }
 
     @media (max-width: 560px) {
-      /* Grille : colonne photo+Départ/Allure | date/niveau | titre+stats+desc ; puis ligne Je participe. */
+      /* Ligne 1 : 3 colonnes | ligne 2 : Départ/Allure pleine largeur | ligne 3 : Je participe */
       .sorties-card {
         display: grid;
         grid-template-columns: minmax(4.25rem, 26%) minmax(2.65rem, 3.35rem) 1fr;
-        grid-template-rows: auto auto;
+        grid-template-rows: auto auto auto;
         grid-template-areas:
           "thumbcol rail body"
+          "meta meta meta"
           "aside aside aside";
         align-items: stretch;
         gap: 0;
@@ -697,21 +708,28 @@
         width: 100%;
       }
 
-      .sorties-card-photo-meta {
+      .sorties-card-mobile-meta {
         display: block;
-        flex-shrink: 0;
-        padding: 0.35rem 0.3rem 0.4rem;
-        border-top: 1px solid rgba(15, 35, 50, 0.08);
-        background: rgba(255, 255, 255, 0.65);
+        grid-area: meta;
+        grid-column: 1 / -1;
+        padding: 0.45rem 0.6rem 0.5rem;
+        border-top: 1px solid rgba(15, 35, 50, 0.1);
+        background: rgba(255, 255, 255, 0.72);
+        font-size: 0.68rem;
+        line-height: 1.4;
       }
 
-      .sorties-card--blanc .sorties-card-photo-meta { border-top-color: rgba(107, 114, 128, 0.18); }
-      .sorties-card--vert .sorties-card-photo-meta { border-top-color: rgba(34, 197, 94, 0.2); }
-      .sorties-card--bleu .sorties-card-photo-meta { border-top-color: rgba(59, 130, 246, 0.2); }
-      .sorties-card--rouge .sorties-card-photo-meta { border-top-color: rgba(239, 68, 68, 0.2); }
+      .sorties-card--blanc .sorties-card-mobile-meta { border-top-color: rgba(107, 114, 128, 0.22); }
+      .sorties-card--vert .sorties-card-mobile-meta { border-top-color: rgba(34, 197, 94, 0.22); }
+      .sorties-card--bleu .sorties-card-mobile-meta { border-top-color: rgba(59, 130, 246, 0.22); }
+      .sorties-card--rouge .sorties-card-mobile-meta { border-top-color: rgba(239, 68, 68, 0.22); }
 
-      .sorties-card-photo-meta .sorties-photo-meta-line + .sorties-photo-meta-line {
+      .sorties-card-mobile-meta .sorties-photo-meta-line + .sorties-photo-meta-line {
         margin-top: 0.2rem;
+      }
+
+      .sorties-card-mobile-meta .sorties-photo-meta-line {
+        font-size: inherit;
       }
 
       .sorties-card-mid .sorties-card-rail {

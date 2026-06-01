@@ -634,8 +634,8 @@
         const typeLine =
           '<span class="sorties-pill sorties-pill--type' + typeExtra + '">' + escapeHtml(meta.label) + "</span>" +
           (shortDescEsc ? '<span class="sorties-type-desc"> · ' + shortDescEsc + "</span>" : "");
-        const photoMeta =
-          '<div class="sorties-card-photo-meta">' +
+        const mobileMeta =
+          '<div class="sorties-card-mobile-meta">' +
           '<p class="sorties-photo-meta-line"><strong>Départ</strong> : ' +
           meet +
           "</p>" +
@@ -657,9 +657,7 @@
           '<div class="sorties-card-thumb-col">' +
           '<div class="sorties-card-thumb"><img src="' +
           escapeAttr(thumb) +
-          '" alt="" loading="lazy" decoding="async"></div>' +
-          photoMeta +
-          "</div>" +
+          '" alt="" loading="lazy" decoding="async"></div></div>' +
           '<div class="sorties-card-mid">' +
           '<div class="sorties-card-rail sorties-card-rail--' +
           railMod +
@@ -709,6 +707,7 @@
           '<span class="sorties-level-text">· ' +
           escapeHtml(route.levelLabel || "—") +
           "</span></p></div></div></div>" +
+          mobileMeta +
           '<div class="sorties-card-aside sorties-card-aside--' +
           railMod +
           '">' +
