@@ -719,7 +719,8 @@
     });
 
     if (!keys.length) {
-      html = '<p class="sorties-empty">Aucune sortie pour ce filtre.</p>';
+      html =
+        '<div class="sorties-state-msg" role="status"><p>Aucune sortie pour ce filtre.</p></div>';
     }
     host.innerHTML = html;
   }
@@ -731,8 +732,40 @@
     const statusSel = document.getElementById("sorties-filter-status");
     if (!listEl) return;
 
+    const INSTA_HREF = "https://www.instagram.com/goelo.rides/";
+    const instaAT =
+      '<a href="' +
+      escapeAttr(INSTA_HREF) +
+      '" target="_blank" rel="noopener">@goelo.rides</a>';
+
+    function showTotalEmpty() {
+      listEl.innerHTML =
+        '<div class="sorties-state-msg" role="status">' +
+        "<p>Aucune sortie programmée pour l'instant.</p>" +
+        "<p>Reviens bientôt ou suis-nous sur Instagram → " +
+        instaAT +
+        "</p></div>";
+    }
+
+    function showNetworkOrTimeout() {
+      listEl.innerHTML =
+        '<div class="sorties-state-msg" role="alert">' +
+        "<p>Impossible de charger les sorties pour l'instant.</p>" +
+        "<p>Contacte-nous sur Instagram → " +
+        instaAT +
+        "</p></div>";
+    }
+
+    function showLoading() {
+      listEl.innerHTML =
+        '<p class="sorties-empty" id="sorties-loading-msg">Chargement des sorties…</p>';
+    }
+
     let routesAll = [];
     const regState = { supabaseIds: new Set(), localObj: {} };
+    let loadFailed = false;
+    let slowTimer = null;
+    let loadDone = false;
 
     async function refreshRegState() {
       regState.localObj = loadLocalSignupsObject();
@@ -748,20 +781,51 @@
       }
     }
 
-    const extra = await fetchCustomRoutesFromSupabase();
-    const merged = ROUTES_BUILTIN.concat(extra);
-    const results = await Promise.all(
-      merged.map(async function (cfg) {
-        const profile = await loadRouteProfile(cfg);
-        if (!profile) return null;
-        return Object.assign({}, cfg, { profile: profile });
-      })
-    );
-    routesAll = results.filter(function (r) {
-      return r !== null;
-    });
+    async function loadAllRoutes() {
+      const extra = await fetchCustomRoutesFromSupabase();
+      const merged = ROUTES_BUILTIN.concat(extra);
+      const results = await Promise.all(
+        merged.map(async function (cfg) {
+          const profile = await loadRouteProfile(cfg);
+          if (!profile) return null;
+          return Object.assign({}, cfg, { profile: profile });
+        })
+      );
+      return results.filter(function (r) {
+        return r !== null;
+      });
+    }
 
-    await refreshRegState();
+    showLoading();
+    slowTimer = window.setTimeout(function () {
+      if (!loadDone && listEl.querySelector("#sorties-loading-msg")) {
+        showNetworkOrTimeout();
+      }
+    }, 8000);
+
+    try {
+      routesAll = await loadAllRoutes();
+      await refreshRegState();
+    } catch (e) {
+      loadFailed = true;
+      console.warn("Sorties : chargement", e);
+    } finally {
+      loadDone = true;
+      if (slowTimer) {
+        window.clearTimeout(slowTimer);
+        slowTimer = null;
+      }
+    }
+
+    if (loadFailed) {
+      showNetworkOrTimeout();
+      return;
+    }
+
+    if (!routesAll.length) {
+      showTotalEmpty();
+      return;
+    }
 
     function readFilterState() {
       return {

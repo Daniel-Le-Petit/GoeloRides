@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#eef2f6">
   <title>Les groupes · Goëlo Rides</title>
+  <meta property="og:title" content="Les groupes · GoëloRides" />
+  <meta property="og:description" content="Blanc, Vert, Bleu ou Rouge — trouve ton groupe et ta vitesse." />
+  <meta property="og:image" content="https://goelorides.onrender.com/assets/groupe-vert-cyclistes.png" />
+  <meta property="og:url" content="https://goelorides.onrender.com/groupes.html" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E">
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,43 +45,6 @@
       max-width: 100%;
     }
     a { color: var(--app-sea); }
-    .app-shell {
-      display: flex;
-      min-height: 100dvh;
-      background: var(--app-bg);
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-    }
-    .app-logo {
-      font-family: var(--font-logo);
-      font-weight: 700;
-      font-size: 1.22rem;
-      letter-spacing: -0.01em;
-      color: var(--app-text);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: baseline;
-      gap: 0;
-      padding: 0.35rem 0.5rem 1rem;
-      border-bottom: 1px solid rgba(21, 101, 168, 0.2);
-      margin-bottom: 0.75rem;
-    }
-    .app-nav { list-style: none; flex: 1; }
-    .app-nav a {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      padding: 0.55rem 0.65rem;
-      border-radius: 8px;
-      text-decoration: none;
-      color: var(--app-muted);
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-    .app-nav a:hover { background: #f0f4f8; color: var(--app-text); }
-    .app-nav a.is-active { background: #e8f2fa; color: var(--app-sea); }
-    .app-nav-icon { font-size: 1.1rem; width: 1.35rem; text-align: center; }
     .app-main {
       flex: 1;
       min-width: 0;
@@ -101,6 +72,7 @@
       max-width: 44rem;
     }
     .groupe-card {
+      scroll-margin-top: 1rem;
       background: var(--app-surface);
       border: 1px solid var(--app-border);
       border-radius: 12px;
@@ -212,13 +184,6 @@
       text-decoration: none;
     }
     .groupe-parcours a:hover { text-decoration: underline; }
-    .groupes-photo-credit {
-      margin-top: 1.25rem;
-      max-width: 44rem;
-      font-size: 0.72rem;
-      color: var(--app-muted);
-      line-height: 1.45;
-    }
     .groupes-footnote {
       margin-top: 1.75rem;
       max-width: 44rem;
@@ -230,9 +195,6 @@
       color: var(--app-text);
     }
     .groupes-footnote strong { color: var(--app-sea-hover); }
-    @media (max-width: 1024px) {
-      .app-shell { flex-direction: column; }
-    }
     @media (max-width: 640px) {
       .app-main { padding: 1rem 0.85rem 2rem; }
       .groupe-card-body { padding: 0.95rem 1rem 1.05rem; }
@@ -241,15 +203,13 @@
 </head>
 <body>
   <div class="app-shell">
-    <aside class="app-sidebar">
+    <aside class="app-sidebar" aria-label="Navigation principale">
       <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
       <ul class="app-nav">
-        <li><a href="index.html"><span class="app-nav-icon" aria-hidden="true">⌂</span> Accueil</a></li>
-        <li><a href="sorties.html"><span class="app-nav-icon" aria-hidden="true">≡</span> Sorties</a></li>
-        <li><a class="is-active" href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◇</span> Groupes</a></li>
-        <li><a href="sorties.html#sorties-list"><span class="app-nav-icon" aria-hidden="true">↗</span> Mes parcours</a></li>
-        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer"><span class="app-nav-icon" aria-hidden="true">◎</span> Messages</a></li>
-        <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◎</span> Membres</a></li>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="sorties.html">Sorties</a></li>
+        <li><a class="is-active" href="groupes.html">Groupes</a></li>
+        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">Instagram↗</a></li>
       </ul>
     </aside>
 
@@ -261,7 +221,7 @@
 
       <ul class="groupes-list">
         <li>
-          <article class="groupe-card groupe-card--blanc">
+          <article class="groupe-card groupe-card--blanc" id="groupe-blanc">
             <div class="groupe-card-visual">
               <img src="assets/groupe-blanc-cyclistes.png" alt="Deux cyclistes sur une promenade en bord de mer, baie et bateaux" width="537" height="421" loading="lazy" decoding="async">
             </div>
@@ -286,7 +246,7 @@
           </article>
         </li>
         <li>
-          <article class="groupe-card groupe-card--vert">
+          <article class="groupe-card groupe-card--vert" id="groupe-vert">
             <div class="groupe-card-visual">
               <img src="assets/groupe-vert-cyclistes.png" alt="Peloton de cyclistes en passage dans un village" width="707" height="433" loading="lazy" decoding="async">
             </div>
@@ -311,7 +271,7 @@
           </article>
         </li>
         <li>
-          <article class="groupe-card groupe-card--bleu">
+          <article class="groupe-card groupe-card--bleu" id="groupe-bleu">
             <div class="groupe-card-visual">
               <img src="assets/groupe-bleu-cyclistes.png" alt="Peloton sur la route, rythme soutenu" width="1024" height="581" loading="lazy" decoding="async">
             </div>
@@ -336,7 +296,7 @@
           </article>
         </li>
         <li>
-          <article class="groupe-card groupe-card--rouge">
+          <article class="groupe-card groupe-card--rouge" id="groupe-rouge">
             <div class="groupe-card-visual">
               <img src="assets/groupe-rouge-cyclistes.png" alt="Peloton de cyclistes sur route humide, allure course" width="859" height="548" loading="lazy" decoding="async">
             </div>
@@ -361,16 +321,27 @@
         </li>
       </ul>
 
-      <p class="groupes-photo-credit">
-        <strong>Blanc</strong> — visuel fourni (<code>assets/groupe-blanc-cyclistes.png</code>).
-        <strong>Bleu</strong> (Thomas Tapio) — <code>assets/groupe-bleu-cyclistes.png</code> · <a href="https://www.pexels.com/license/" target="_blank" rel="noopener noreferrer">licence Pexels</a>.
-        <strong>Vert</strong> — visuel fourni (<code>assets/groupe-vert-cyclistes.png</code>).
-        <strong>Rouge</strong> — visuel fourni (<code>assets/groupe-rouge-cyclistes.png</code>).
-      </p>
-
       <p class="groupes-footnote">
         <strong>Pas sûr de ton groupe ?</strong> Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.
       </p>
+
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <div class="site-footer-brand">
+            <span class="site-footer-name">GoëloRides</span>
+            <span class="site-footer-season">Été 2026</span>
+          </div>
+          <div class="site-footer-loc">
+            <span class="site-footer-loc-icon" aria-hidden="true">📍</span>
+            <span class="site-footer-loc-text">Départ · <strong>Parking du Kasino</strong>, Saint-Quay-Portrieux <span class="site-footer-cp">(22410)</span></span>
+          </div>
+          <div class="site-footer-contact">
+            <a class="site-footer-pill site-footer-pill--ig" href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span class="site-footer-pill-icon" aria-hidden="true">📸</span> @goelo.rides</a>
+            <a class="site-footer-pill site-footer-pill--mail" href="mailto:goelo.rides@gmail.com"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
+          </div>
+          <p class="site-footer-note">Initiative locale et indépendante · Pas d'adhésion · Pas de fédération</p>
+        </div>
+      </footer>
     </main>
   </div>
 </body>

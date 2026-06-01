@@ -171,24 +171,48 @@
           });
         } catch (err) {
           void err;
-          return null;
+          return { ok: false, message: "Réseau indisponible ou CORS bloqué." };
         }
-        if (!res.ok) return null;
+        let body;
         try {
-          return await res.json();
+          body = await res.json();
         } catch (e) {
           void e;
-          return null;
+          return { ok: false, message: "Réponse du serveur illisible." };
         }
+        if (!res.ok) {
+          const msg =
+            (body && (body.error_description || body.msg || body.message)) ||
+            (body && body.error ? String(body.error) : "") ||
+            "HTTP " + res.status;
+          return { ok: false, message: String(msg).trim() || "Connexion refusée." };
+        }
+        if (!body.access_token) {
+          return { ok: false, message: "Réponse sans jeton de session." };
+        }
+        return {
+          ok: true,
+          access_token: body.access_token,
+          refresh_token: body.refresh_token != null ? String(body.refresh_token) : "",
+          expires_in: body.expires_in
+        };
       }
 
+      /**
+       * @returns {Promise<{ email: string, hint: null } | { email: null, hint: 'empty'|'alias'|'rpc' }>}
+       */
       async function resolveAdminEmailForLogin(loginRaw) {
         const raw = (loginRaw || "").trim();
-        if (!raw) return null;
-        if (raw.indexOf("@") !== -1) return raw.toLowerCase();
+        if (!raw) return { email: null, hint: "empty" };
+        if (raw.indexOf("@") !== -1) return { email: raw.toLowerCase(), hint: null };
         const data = await supabaseRpc("goelo_admin_resolve_login", { p_raw: raw });
-        if (data && data.ok === true && data.email) return String(data.email).trim().toLowerCase();
-        return null;
+        if (data && data.ok === true && data.email) {
+          return { email: String(data.email).trim().toLowerCase(), hint: null };
+        }
+        if (data && data.ok === false && data.error === "not_found") {
+          return { email: null, hint: "alias" };
+        }
+        return { email: null, hint: "rpc" };
       }
 
       async function supabaseRpc(fnName, payload, rpcOpts) {
@@ -1215,33 +1239,57 @@
               return;
             }
             admSubmit.disabled = true;
-            const email = await resolveAdminEmailForLogin(login);
+            const resolved = await resolveAdminEmailForLogin(login);
+            const email = resolved.email;
             if (!email) {
               admSubmit.disabled = false;
               if (errEl) {
-                errEl.textContent = "Identifiant inconnu ou compte non configuré.";
+                if (resolved.hint === "alias") {
+                  errEl.textContent =
+                    "Pseudo inconnu : utilise l’e-mail exact du compte Supabase, ou ajoute une ligne pour ce pseudo dans la table goelo_admin_login_aliases (voir supabase/SUPABASE.md §5).";
+                } else if (resolved.hint === "rpc") {
+                  errEl.textContent =
+                    "Impossible de résoudre le pseudo (réseau, clé API, ou migration SQL 20250607120000 non appliquée).";
+                } else {
+                  errEl.textContent = "Identifiant inconnu ou compte non configuré.";
+                }
                 errEl.hidden = false;
               }
               return;
             }
-            const tok = await supabasePasswordGrant(email, password);
-            if (!tok || !tok.access_token) {
+            const grant = await supabasePasswordGrant(email, password);
+            if (!grant || grant.ok !== true || !grant.access_token) {
               admSubmit.disabled = false;
               if (errEl) {
-                errEl.textContent = "Mot de passe incorrect ou compte introuvable.";
+                let userMsg = "E-mail ou mot de passe incorrect.";
+                if (grant === null) {
+                  userMsg = "Supabase non configuré (URL / clé vide) ou erreur inattendue.";
+                } else if (grant.message) {
+                  const rawMsg = String(grant.message);
+                  if (/confirm|confirmed|verify|vérifi|email.*not.*confirm/i.test(rawMsg)) {
+                    userMsg =
+                      "E-mail non confirmé : ouvre le lien reçu dans ta boîte, puis réessaie.";
+                  } else if (/Invalid login|invalid_grant|Invalid credentials|wrong password/i.test(rawMsg)) {
+                    userMsg = "E-mail ou mot de passe incorrect.";
+                  } else if (rawMsg.length < 220) {
+                    userMsg = rawMsg;
+                  }
+                }
+                errEl.textContent = userMsg;
                 errEl.hidden = false;
               }
               return;
             }
-            if (!jwtIsGoeloAdmin(tok.access_token)) {
+            if (!jwtIsGoeloAdmin(grant.access_token)) {
               admSubmit.disabled = false;
               if (errEl) {
-                errEl.textContent = "Ce compte n’est pas administrateur du site.";
+                errEl.textContent =
+                  "Connexion OK, mais ce compte n’a pas le rôle admin : dans Supabase → Authentication → ton utilisateur → Raw App Meta Data, ajoute \"goelo_admin\": true (voir supabase/SUPABASE.md §5).";
                 errEl.hidden = false;
               }
               return;
             }
-            saveAdminSession(tok);
+            saveAdminSession(grant);
             if (admPass) admPass.value = "";
             admSubmit.disabled = false;
             syncNewRouteAdminUi();

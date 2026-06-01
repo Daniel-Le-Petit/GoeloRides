@@ -6,12 +6,18 @@
   <meta name="theme-color" content="#eef2f6">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
-  <!-- Icône onglet (SVG inline). Fichier /favicon.ico à la racine du dépôt pour éviter le 404 automatique du navigateur en prod (git add favicon.ico puis push → Render). -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1820'/%3E%3Cpath fill='%23f4a43a' d='M8 20c0-4 3-7 8-7s8 3 8 7'/%3E%3Ccircle cx='16' cy='12' r='3' fill='%23f4a43a'/%3E%3C/svg%3E" type="image/svg+xml">
+  <meta property="og:title" content="GoëloRides · Sorties vélo à Saint-Quay-Portrieux" />
+  <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du Kasino. Été 2026." />
+  <meta property="og:image" content="https://goelorides.onrender.com/assets/hero-accueil.png" />
+  <meta property="og:url" content="https://goelorides.onrender.com" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E">
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lato:wght@400;700&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="app-chrome.css">
   <style>
@@ -74,55 +80,7 @@
       color: var(--app-sea);
     }
 
-    /* —— Coque app (même base que sorties.html) —— */
-    .app-shell {
-      display: flex;
-      min-height: 100dvh;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-    }
-
-    .app-logo {
-      font-family: var(--font-logo);
-      font-weight: 700;
-      font-size: 1.22rem;
-      letter-spacing: -0.01em;
-      color: var(--app-text);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: baseline;
-      gap: 0;
-      padding: 0.35rem 0.5rem 1rem;
-      border-bottom: 1px solid rgba(21, 101, 168, 0.2);
-      margin-bottom: 0.75rem;
-    }
-
-    .app-nav {
-      list-style: none;
-      flex: 1;
-    }
-
-    .app-nav a {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      padding: 0.55rem 0.65rem;
-      border-radius: 8px;
-      text-decoration: none;
-      color: var(--app-muted);
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .app-nav a:hover { background: #f0f4f8; color: var(--app-text); }
-
-    .app-nav a.is-active {
-      background: #e8f2fa;
-      color: var(--app-sea);
-    }
-
-    .app-nav-icon { font-size: 1.1rem; width: 1.35rem; text-align: center; }
+    /* —— Coque app : layout global dans app-chrome.css —— */
 
     .app-main--home {
       flex: 1;
@@ -379,6 +337,93 @@
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
     }
 
+    /* Bloc accroche : (1) Baie seule (2) La côte + sorties → (3) sous-titre + groupes → */
+    .home-landing-tagline-stack {
+      margin-top: 1.15rem;
+      max-width: 100%;
+      --hero-cta-w: min(15.75rem, 100%);
+    }
+
+    .home-landing-tagline-stack > .home-landing-region {
+      margin: 0 0 0.35rem;
+    }
+
+    .home-landing-tagline-mid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.85rem 1.75rem;
+    }
+
+    .home-landing-tagline-mid .home-landing-title {
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: min(100%, 8rem);
+      font-size: clamp(1.55rem, 6vw, 3.35rem);
+      line-height: 1.06;
+    }
+
+    .home-landing-tagline-mid .home-landing-cta-wrap {
+      margin: 0;
+      flex-shrink: 0;
+      width: var(--hero-cta-w, min(15.75rem, 100%));
+      max-width: 100%;
+    }
+
+    .home-landing-tagline-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem 1.75rem;
+      margin-top: 0.9rem;
+    }
+
+    .home-landing-tagline-bottom .home-landing-subtitle {
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: min(100%, 12rem);
+    }
+
+    .home-landing-tagline-bottom .home-landing-cta-wrap {
+      margin: 0;
+      flex-shrink: 0;
+      width: var(--hero-cta-w, min(15.75rem, 100%));
+      max-width: 100%;
+    }
+
+    .home-hero-arrow {
+      display: inline-block;
+      margin-left: 1.1em;
+      font-weight: 700;
+    }
+
+    @media (max-width: 520px) {
+      .home-landing-tagline-mid {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+      }
+
+      .home-landing-tagline-mid .home-landing-cta-wrap {
+        align-self: flex-end;
+        width: min(var(--hero-cta-w), 100%);
+      }
+
+      .home-landing-tagline-bottom {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+        margin-top: 1rem;
+      }
+
+      .home-landing-tagline-bottom .home-landing-cta-wrap {
+        align-self: flex-end;
+        width: min(var(--hero-cta-w), 100%);
+      }
+    }
+
     .btn-home {
       display: inline-flex;
       align-items: center;
@@ -422,16 +467,6 @@
       color: var(--app-text);
     }
 
-    .app-main--home footer {
-      background: var(--app-surface);
-      border-top: 1px solid var(--app-border);
-      color: var(--app-muted);
-    }
-
-    .app-main--home footer a {
-      color: var(--app-sea);
-    }
-
     .app-main--home .route-stat {
       background: var(--app-surface);
       border: 1px solid var(--app-border);
@@ -443,10 +478,6 @@
 
     .app-main--home .route-stat .name {
       color: var(--app-text);
-    }
-
-    @media (max-width: 1024px) {
-      .app-shell { flex-direction: column; }
     }
 
     @media (max-width: 640px) {
@@ -513,8 +544,8 @@
         display: none;
       }
 
-      .home-landing-title {
-        font-size: clamp(1.55rem, 8vw, 2.45rem);
+      .home-landing-tagline-mid .home-landing-title {
+        font-size: clamp(1.45rem, 8vw, 2.45rem);
       }
 
       .home-landing-visual img {
@@ -523,10 +554,9 @@
         transform: scale(1.04);
       }
 
-      .app-main--home footer {
+      .app-main--home .site-footer-inner {
         padding-left: max(1rem, env(safe-area-inset-left));
         padding-right: max(1rem, env(safe-area-inset-right));
-        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
       }
     }
 
@@ -2357,6 +2387,104 @@
       transform: translateY(-1px);
     }
 
+    /* CTA hero « Sorties » : typo jaune Saint-Quay sur fond bleu drapeau */
+    .home-landing-inner .btn-primary.home-hero-sorties {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Lato", var(--font-sans);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--sq-yellow);
+      background: linear-gradient(180deg, rgba(0, 85, 164, 0.82) 0%, rgba(0, 55, 112, 0.92) 100%);
+      padding: 0.95rem 1.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(249, 215, 28, 0.45);
+      box-shadow: 0 4px 22px rgba(0, 0, 0, 0.4);
+      text-decoration: none;
+      cursor: pointer;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.65),
+        0 0 1px rgba(0, 0, 0, 0.85);
+      transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .home-landing-inner .btn-primary.home-hero-sorties:hover {
+      color: #fff3a8;
+      background: linear-gradient(180deg, rgba(0, 95, 180, 0.9) 0%, rgba(0, 65, 128, 0.96) 100%);
+      border-color: rgba(249, 215, 28, 0.75);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.48);
+      transform: translateY(-2px);
+    }
+
+    /* Second CTA hero : groupes — dégradé blanc → vert → bleu → rouge */
+    .home-landing-inner .btn-primary.home-hero-groupes {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Lato", var(--font-sans);
+      font-weight: 700;
+      font-size: 1rem;
+      color: #0f172a;
+      background: linear-gradient(
+        118deg,
+        #ffffff 0%,
+        #22c55e 34%,
+        #2563eb 66%,
+        #dc2626 100%
+      );
+      padding: 0.95rem 1.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.22);
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.22);
+      text-decoration: none;
+      cursor: pointer;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .home-landing-inner .btn-primary.home-hero-groupes:hover {
+      background: linear-gradient(
+        118deg,
+        #f8fafc 0%,
+        #16a34a 34%,
+        #1d4ed8 66%,
+        #b91c1c 100%
+      );
+      border-color: rgba(15, 23, 42, 0.32);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+      filter: brightness(1.03);
+    }
+
+    .home-landing-inner .home-landing-tagline-stack .btn-primary.home-hero-sorties,
+    .home-landing-tagline-mid .btn-primary.home-hero-sorties,
+    .home-landing-inner .home-landing-tagline-stack .btn-primary.home-hero-groupes,
+    .home-landing-tagline-bottom .btn-primary.home-hero-groupes {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      border-radius: 12px;
+      border-width: 1px;
+      border-style: solid;
+    }
+
+    .home-landing-tagline-mid .btn-primary.home-hero-sorties {
+      border-color: rgba(249, 215, 28, 0.5);
+    }
+
+    .home-landing-tagline-bottom .btn-primary.home-hero-groupes {
+      border-color: rgba(15, 23, 42, 0.22);
+    }
+
     /* —— Sections —— */
     section {
       padding: 4.5rem 1.5rem;
@@ -3116,17 +3244,6 @@
 
     .gold-pin svg { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
-    /* —— Footer —— */
-    footer {
-      text-align: center;
-      padding: 2.5rem 1.5rem;
-      background: #080f14;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.45);
-      letter-spacing: 0.02em;
-    }
-
       @media (max-width: 768px) {
       .signup-form {
         flex-direction: column;
@@ -3348,8 +3465,8 @@
         justify-content: center;
       }
 
-      footer {
-        padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+      .site-footer-inner {
+        padding-bottom: max(2.35rem, calc(1.25rem + env(safe-area-inset-bottom)));
       }
 
       .signup-modal {
@@ -3478,15 +3595,13 @@
 <body>
 
   <div class="app-shell">
-    <aside class="app-sidebar">
+    <aside class="app-sidebar" aria-label="Navigation principale">
       <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
       <ul class="app-nav">
-        <li><a class="is-active" href="index.html"><span class="app-nav-icon" aria-hidden="true">⌂</span> Accueil</a></li>
-        <li><a href="sorties.html"><span class="app-nav-icon" aria-hidden="true">≡</span> Sorties</a></li>
-        <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◇</span> Groupes</a></li>
-        <li><a href="sorties.html#sorties-list"><span class="app-nav-icon" aria-hidden="true">↗</span> Mes parcours</a></li>
-        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer"><span class="app-nav-icon" aria-hidden="true">◎</span> Messages</a></li>
-        <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◎</span> Membres</a></li>
+        <li><a class="is-active" href="index.html">Accueil</a></li>
+        <li><a href="sorties.html">Sorties</a></li>
+        <li><a href="groupes.html">Groupes</a></li>
+        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">Instagram↗</a></li>
       </ul>
     </aside>
 
@@ -3509,9 +3624,21 @@
       </div>
       <p class="home-landing-lead"><span class="home-landing-accent">Sorties en vélo</span> — départ parking du <strong>Kasino</strong> de Saint-Quay.</p>
       <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie : partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
-      <p class="home-landing-region">Baie du Goëlo</p>
-      <h1 class="home-landing-title">La côte</h1>
-      <p class="home-landing-subtitle">À vélo · Saint-Quay-Portrieux</p>
+      <div class="home-landing-tagline-stack">
+        <p class="home-landing-region">Baie du Goëlo</p>
+        <div class="home-landing-tagline-mid">
+          <h1 class="home-landing-title">La côte</h1>
+          <p class="home-landing-cta-wrap">
+            <a href="sorties.html" class="btn-primary home-hero-sorties">Voir les sorties<span class="home-hero-arrow" aria-hidden="true">→</span></a>
+          </p>
+        </div>
+        <div class="home-landing-tagline-bottom">
+          <p class="home-landing-subtitle">À vélo · Saint-Quay-Portrieux</p>
+          <p class="home-landing-cta-wrap">
+            <a href="groupes.html" class="btn-primary home-hero-groupes">Voir les groupes<span class="home-hero-arrow" aria-hidden="true">→</span></a>
+          </p>
+        </div>
+      </div>
       <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
         <li>Pas d’adhésion</li>
         <li>Pas de chronomètre</li>
@@ -3520,8 +3647,22 @@
     </div>
   </header>
 
-  <footer>
-    Goëlo Rides · Saint-Quay-Portrieux, Côtes-d'Armor · Été 2026 · <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a>
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-brand">
+        <span class="site-footer-name">GoëloRides</span>
+        <span class="site-footer-season">Été 2026</span>
+      </div>
+      <div class="site-footer-loc">
+        <span class="site-footer-loc-icon" aria-hidden="true">📍</span>
+        <span class="site-footer-loc-text">Départ · <strong>Parking du Kasino</strong>, Saint-Quay-Portrieux <span class="site-footer-cp">(22410)</span></span>
+      </div>
+      <div class="site-footer-contact">
+        <a class="site-footer-pill site-footer-pill--ig" href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span class="site-footer-pill-icon" aria-hidden="true">📸</span> @goelo.rides</a>
+        <a class="site-footer-pill site-footer-pill--mail" href="mailto:goelo.rides@gmail.com"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
+      </div>
+      <p class="site-footer-note">Initiative locale et indépendante · Pas d'adhésion · Pas de fédération</p>
+    </div>
   </footer>
     </main>
   </div>
@@ -3536,7 +3677,8 @@
       </div>
       <div class="new-route-admin-gate" id="new-route-admin-gate">
         <p class="new-route-admin-intro">
-          Accès réservé : connecte-toi avec ton <strong>e-mail</strong> (compte Supabase) ou un <strong>pseudo</strong> enregistré pour l’admin, plus le <strong>mot de passe</strong>. Le compte doit être <strong>administrateur</strong> du site.
+          Accès réservé : <strong>e-mail du compte Supabase</strong> (recommandé) ou <strong>pseudo</strong> déjà enregistré dans la table <code>goelo_admin_login_aliases</code>, plus le <strong>mot de passe</strong> du compte.
+          Dans Supabase → <strong>Authentication → utilisateur → Raw App Meta Data</strong>, il faut <code>&quot;goelo_admin&quot;: true</code> pour pouvoir créer une sortie (voir <code>supabase/SUPABASE.md</code> §5).
         </p>
         <label class="new-route-admin-field">
           <span>E-mail ou pseudo</span>
