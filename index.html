@@ -98,20 +98,6 @@
       margin-bottom: 0.75rem;
     }
 
-    .app-logo-part--rides { color: var(--app-sea); margin-left: -0.035em; }
-
-    .app-logo--sq .app-logo-part--go {
-      color: var(--sq-yellow);
-      font-weight: 700;
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
-    }
-
-    .app-logo--sq .app-logo-part--rides {
-      color: var(--sq-blue);
-      font-weight: 700;
-      text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
-    }
-
     .app-nav {
       list-style: none;
       flex: 1;
@@ -265,12 +251,11 @@
     }
 
     .home-brand-rides {
+      /* Même bleu que « Rides » du logo menu (app-chrome .app-logo-part--rides). */
       color: var(--sq-blue);
+      font-weight: 700;
       margin-left: -0.04em;
-      text-shadow:
-        0 0 2px rgba(255, 255, 255, 0.9),
-        0 1px 2px rgba(0, 0, 0, 0.85),
-        0 4px 22px rgba(0, 85, 164, 0.55);
+      text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
     }
 
     .home-landing-lead {
@@ -298,10 +283,12 @@
       font-family: var(--font-accent-tag);
       font-weight: 700;
       letter-spacing: -0.02em;
-      color: var(--gold);
+      /* Même jaune que « Goëlo » (drapeau / marque) */
+      color: var(--sq-yellow);
       text-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.75),
-        0 0 18px rgba(244, 164, 58, 0.35);
+        0 2px 0 rgba(120, 80, 0, 0.35),
+        0 4px 20px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(249, 215, 28, 0.45);
     }
 
     .home-landing-body {
@@ -328,7 +315,7 @@
       flex-wrap: wrap;
       align-items: stretch;
       gap: 0;
-      margin: 0 0 1.75rem;
+      margin: 0.85rem 0 0;
       padding: 0.5rem 0.35rem;
       border-radius: 12px;
       background: rgba(15, 23, 42, 0.45);
@@ -496,7 +483,7 @@
         align-items: center;
         justify-content: flex-start;
         gap: 0.35rem;
-        margin: 0 0 1rem;
+        margin: 0.65rem 0 0;
         padding: 0.28rem 0.4rem;
         overflow-x: auto;
         overflow-y: hidden;
@@ -3479,7 +3466,7 @@
 
   <div class="app-shell">
     <aside class="app-sidebar">
-      <a class="app-logo app-logo--sq" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
+      <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
       <ul class="app-nav">
         <li><a class="is-active" href="index.html"><span class="app-nav-icon" aria-hidden="true">⌂</span> Accueil</a></li>
         <li><a href="sorties.html"><span class="app-nav-icon" aria-hidden="true">≡</span> Sorties</a></li>
@@ -3509,14 +3496,14 @@
       </div>
       <p class="home-landing-lead"><span class="home-landing-accent">Sorties en vélo</span> — départ parking du <strong>Kasino</strong> de Saint-Quay.</p>
       <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie : partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
+      <p class="home-landing-region">Baie du Goëlo</p>
+      <h1 class="home-landing-title">La côte</h1>
+      <p class="home-landing-subtitle">À vélo · Saint-Quay-Portrieux</p>
       <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
         <li>Pas d’adhésion</li>
         <li>Pas de chronomètre</li>
         <li>Rouler ensemble</li>
       </ul>
-      <p class="home-landing-region">Baie du Goëlo</p>
-      <h1 class="home-landing-title">La côte</h1>
-      <p class="home-landing-subtitle">À vélo · Saint-Quay-Portrieux</p>
     </div>
   </header>
 
