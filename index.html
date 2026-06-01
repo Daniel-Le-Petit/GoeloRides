@@ -165,7 +165,9 @@
       z-index: 0;
       width: 100%;
       height: 100%;
-      min-height: 100%;
+      /* Au moins la hauteur viewport (évite image « vide » si % mal résolu). */
+      min-height: 100dvh;
+      min-height: 100svh;
       overflow: hidden;
       background: #0b1724;
     }
@@ -173,7 +175,9 @@
     .home-landing-visual img {
       width: 100%;
       height: 100%;
-      min-height: 100%;
+      min-height: 100dvh;
+      min-height: 100svh;
+      max-width: none;
       object-fit: cover;
       object-position: center 45%;
       display: block;
@@ -192,6 +196,19 @@
         rgba(6, 14, 26, 0.28) 52%,
         rgba(6, 14, 26, 0.72) 100%
       );
+    }
+
+    @media (max-width: 640px) {
+      /* Voile un peu plus léger pour laisser voir l’eau / la côte sur petit écran. */
+      .home-landing-scrim {
+        background: linear-gradient(
+          165deg,
+          rgba(6, 14, 26, 0.62) 0%,
+          rgba(6, 14, 26, 0.32) 40%,
+          rgba(6, 14, 26, 0.22) 55%,
+          rgba(6, 14, 26, 0.58) 100%
+        );
+      }
     }
 
     .home-landing-scrim::after {
@@ -490,7 +507,9 @@
       }
 
       .home-landing-visual img {
-        object-position: center 42%;
+        /* Photo : mer en bas — éviter de ne montrer que le ciel sur téléphone. */
+        object-position: center 76%;
+        transform: scale(1.04);
       }
 
       .app-main--home footer {
@@ -500,7 +519,13 @@
       }
     }
 
-    img, svg, video { max-width: 100%; height: auto; }
+    svg, video { max-width: 100%; height: auto; }
+
+    /* Ne pas appliquer height:auto au hero plein écran (.home-landing-visual img). */
+    img:not(.home-landing-visual img) {
+      max-width: 100%;
+      height: auto;
+    }
 
     /* —— Accueil —— */
     .home-hero {
@@ -1362,14 +1387,84 @@
         grid-template-columns: 1fr;
       }
 
-      .new-route-steps {
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps {
         border-right: none !important;
         border-bottom: 1px solid var(--app-border);
+        padding: 0.5rem 0.55rem 0.55rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps-title {
+        margin: 0 0 0.4rem;
+        font-size: 0.72rem;
+      }
+
+      /* Étapes en une ligne défilante : moins de hauteur que 5 lignes empilées. */
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps-list {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.35rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        padding-bottom: 0.15rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps li {
+        flex: 0 0 auto;
+        padding: 0.32rem 0.45rem 0.32rem 1.55rem;
+        font-size: 0.74rem;
+        line-height: 1.25;
+        margin: 0;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(21, 101, 168, 0.12);
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps li::before {
+        top: 50%;
+        transform: translateY(-50%);
+        left: 0.28rem;
+        width: 1.15rem;
+        height: 1.15rem;
+        font-size: 0.62rem;
+        line-height: 1.15rem;
       }
 
       .new-route-aside {
         border-left: none !important;
         border-top: 1px solid var(--app-border);
+      }
+    }
+
+    @media (max-width: 560px) {
+      #new-route-modal.new-route-modal--goelo-app .new-route-datetime-row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.45rem;
+        align-items: stretch;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-datetime-row input {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        min-height: 2.35rem;
+        padding: 0.28rem 0.45rem;
+        font-size: 16px;
+        line-height: 1.2;
+        box-sizing: border-box;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-modal-head {
+        padding: 0.95rem 2.75rem 0.55rem 1rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-sub {
+        font-size: 0.76rem;
+        line-height: 1.35;
       }
     }
 
