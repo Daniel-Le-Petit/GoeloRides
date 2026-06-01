@@ -392,22 +392,6 @@
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
     }
 
-    @media (max-width: 480px) {
-      .home-landing-values {
-        flex-direction: column;
-      }
-      .home-landing-values li {
-        text-align: left;
-        padding: 0.6rem 0.65rem;
-      }
-      .home-landing-values li:not(:last-child) {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-      }
-      .home-landing-values li:not(:last-child)::after {
-        display: none;
-      }
-    }
-
     .btn-home {
       display: inline-flex;
       align-items: center;
@@ -500,6 +484,46 @@
       .home-landing-body {
         font-size: 0.95rem;
         padding: 0.65rem 0.75rem;
+      }
+
+      /* Trois accroches : une ligne compacte (scroll si besoin), plus de bloc 3 lignes. */
+      .home-landing-values {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.35rem;
+        margin: 0 0 1rem;
+        padding: 0.28rem 0.4rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .home-landing-values::-webkit-scrollbar {
+        display: none;
+      }
+
+      .home-landing-values li {
+        flex: 0 0 auto;
+        min-width: 0;
+        text-align: center;
+        padding: 0.24rem 0.5rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.03em;
+        line-height: 1.2;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+      }
+
+      .home-landing-values li:not(:last-child) {
+        border-bottom: none;
+      }
+
+      .home-landing-values li:not(:last-child)::after {
+        display: none;
       }
 
       .home-landing-title {
