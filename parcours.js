@@ -675,13 +675,13 @@
               : getLastStoredEmail();
           await refreshRegisteredRoutesCache(checkEmail);
         }
-        document.querySelectorAll(".btn-join").forEach(function (btn) {
+        document.querySelectorAll(".btn-je-participe[data-join-route]").forEach(function (btn) {
           const routeId = btn.dataset.joinRoute;
           const emailInput = document.getElementById("signup-modal-email");
           const checkEmail = emailInput && emailInput.value ? emailInput.value : getLastStoredEmail();
           const registered = isRegisteredForRoute(routeId, checkEmail);
-          btn.textContent = registered ? "Inscrit·e ✓" : "J’en suis ?";
-          btn.classList.toggle("btn-join--done", registered);
+          btn.textContent = registered ? "Inscrit·e ✓" : "Je participe !";
+          btn.classList.toggle("btn-je-participe--done", registered);
           btn.setAttribute("aria-pressed", registered ? "true" : "false");
           btn.setAttribute("aria-label", registered
             ? "Inscrit·e sur ce parcours — gérer l’inscription"
@@ -774,7 +774,7 @@
           if (form) form.style.display = "none";
           if (mailto) mailto.style.display = "none";
         } else {
-          if (title) title.textContent = "J’en suis !";
+          if (title) title.textContent = "Je participe !";
           if (done) {
             done.textContent = "";
             done.classList.remove("is-visible");
@@ -1032,7 +1032,7 @@
               const mailto = document.getElementById("signup-modal-mailto");
               if (mailto) mailto.style.display = "";
               const title = document.getElementById("signup-modal-title");
-              if (title) title.textContent = "J’en suis !";
+              if (title) title.textContent = "Je participe !";
             }
           });
         }
@@ -2055,7 +2055,7 @@
           '<tr><td class="ride-td-left"><span class="ride-day">' + d.day + "</span></td>" +
           '<td class="ride-td-right"><div class="ride-km-row">' +
           '<p class="ride-km" data-choice-km="' + route.id + '">' + formatKm(route.profile.totalKm) + "</p>" +
-          '<button type="button" class="btn-join" data-join-route="' + route.id + '">J’en suis ?</button>' +
+          '<button type="button" class="btn-je-participe" data-join-route="' + route.id + '">Je participe !</button>' +
           "</div></td></tr>" +
           '<tr><td class="ride-td-left"><span class="ride-month">' + d.month + "</span></td>" +
           '<td class="ride-td-right"><h4 class="ride-course">' + route.track + "</h4></td></tr>" +
@@ -2427,12 +2427,12 @@
             card.style.setProperty("--route-color", route.color);
             card.innerHTML = buildRouteChoiceTable(route);
             card.addEventListener("click", function (e) {
-              if (e.target.closest(".btn-join")) return;
+              if (e.target.closest(".btn-je-participe")) return;
               openSignupModal(route);
             });
             card.addEventListener("keydown", function (e) {
               if (e.key === "Enter" || e.key === " ") {
-                if (e.target.closest(".btn-join")) return;
+                if (e.target.closest(".btn-je-participe")) return;
                 e.preventDefault();
                 openSignupModal(route);
               }
@@ -2481,7 +2481,7 @@
         if (routePicker && !routePicker.dataset.joinDelegated) {
           routePicker.dataset.joinDelegated = "1";
           routePicker.addEventListener("click", function (e) {
-            const joinBtn = e.target.closest(".btn-join");
+            const joinBtn = e.target.closest(".btn-je-participe");
             if (!joinBtn) return;
             e.preventDefault();
             e.stopPropagation();

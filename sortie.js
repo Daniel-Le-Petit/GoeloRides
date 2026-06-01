@@ -971,7 +971,7 @@
       row.className = "sortie-hero-inscrit-row";
 
       const badge = document.createElement("span");
-      badge.className = "sortie-inscrit-badge";
+      badge.className = "btn-je-participe btn-je-participe--done";
       badge.setAttribute("role", "status");
       badge.textContent = "Inscrit·e ✓";
       row.appendChild(badge);

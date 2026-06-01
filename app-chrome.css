@@ -15,11 +15,15 @@
     0 0 28px rgba(249, 215, 28, 0.45);
 }
 
-.app-logo .app-logo-part--rides {
+.app-logo .app-logo-part--rides,
+.home-brand-rides {
   color: var(--sq-blue);
   font-weight: 700;
-  margin-left: -0.035em;
   text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.app-logo .app-logo-part--rides {
+  margin-left: -0.035em;
 }
 
 /* Évite le scroll horizontal « fantôme » (flex + contenus larges / 100vw) */

@@ -636,8 +636,8 @@
           (shortDescEsc ? '<span class="sorties-type-desc"> · ' + shortDescEsc + "</span>" : "");
         const registered = isUserRegistered(route.id, regState);
         const regBlock = registered
-          ? '<span class="sorties-reg sorties-reg--ok">Inscrit·e ✓</span>'
-          : '<span class="sorties-reg">J’en suis ?</span>';
+          ? '<span class="btn-je-participe btn-je-participe--done" role="presentation">Inscrit·e ✓</span>'
+          : '<span class="btn-je-participe" role="presentation">Je participe !</span>';
         const sortieHref = "sortie.html?id=" + encodeURIComponent(String(route.id));
         html +=
           '<li>' +
@@ -661,7 +661,9 @@
           "</span>" +
           '<span class="sorties-rail-time">' +
           timeDisp +
-          "</span></div>" +
+          '</span><span class="sorties-rail-level-dot sorties-level-dot sorties-level-dot--' +
+          tone +
+          '" aria-hidden="true"></span></div>' +
           '<div class="sorties-card-body sorties-card-body--' +
           railMod +
           '">' +

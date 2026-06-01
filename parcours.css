@@ -1510,7 +1510,7 @@ body {
       width: 100%;
     }
 
-    .route-choice-card .btn-join {
+    .route-choice-card .btn-je-participe {
       position: relative;
       z-index: 4;
       font-size: 0.78rem;
@@ -1643,37 +1643,61 @@ body {
       flex: 0 1 auto;
     }
 
-    .btn-join {
+    /* Inscription — même style orange que la page sortie (sortie.html). */
+    .btn-je-participe {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
       font-family: var(--font-sans);
       font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      padding: 0.45rem 0.95rem;
+      border-radius: 8px;
       border: none;
-      background: var(--gold);
-      color: #1a1208;
+      background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+      color: #fff;
       cursor: pointer;
       white-space: nowrap;
-      box-shadow: 0 4px 14px rgba(244, 164, 58, 0.5);
-      transition: background 0.2s, transform 0.15s;
+      box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+      text-decoration: none;
     }
 
-    .btn-join:hover {
-      background: var(--gold-dark);
-      transform: translateY(-1px);
-    }
-
-    .btn-join--done {
-      background: #2f9d62;
+    .btn-je-participe:hover:not(.btn-je-participe--done) {
+      background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%);
       color: #fff;
-      box-shadow: 0 4px 14px rgba(47, 157, 98, 0.45);
+      transform: translateY(-1px);
     }
 
-    .btn-join--done:hover {
-      background: #268a54;
+    .btn-je-participe:focus-visible:not(.btn-je-participe--done) {
+      outline: 2px solid #ea580c;
+      outline-offset: 2px;
+    }
+
+    /* Même « forme » que le bouton orange, fond vert. */
+    .btn-je-participe--done {
+      background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.38);
+    }
+
+    .btn-je-participe--done:hover {
+      background: linear-gradient(180deg, #86efac 0%, #15803d 100%);
+      color: #fff;
       transform: translateY(-1px);
+    }
+
+    .btn-je-participe--done:focus-visible {
+      outline: 2px solid #15803d;
+      outline-offset: 2px;
+    }
+
+    .btn-je-participe--confirm {
+      width: 100%;
+      max-width: 16rem;
+      padding: 0.55rem 1rem;
     }
 
     .ride-event-card.is-route-falaises .ride-km { color: #6b7280; }
@@ -2071,7 +2095,7 @@ body {
         align-items: flex-start;
       }
 
-      .route-choice-card .btn-join {
+      .route-choice-card .btn-je-participe {
         width: 100%;
         text-align: center;
       }

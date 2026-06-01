@@ -491,6 +491,14 @@
     .sorties-level-dot--is-bleu { background: #2563eb; }
     .sorties-level-dot--is-rouge { background: #dc2626; }
 
+    /* Rail : pastille niveau sous l’heure (même couleurs, taille un peu plus lisible). */
+    .sorties-rail-level-dot.sorties-level-dot {
+      margin-top: 0.4rem;
+      width: 0.62rem;
+      height: 0.62rem;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+    }
+
     .sorties-card-tags {
       display: flex;
       flex-wrap: wrap;
@@ -519,7 +527,7 @@
       justify-content: center;
       padding: 0.75rem 0.85rem;
       border-left: 1px solid var(--app-border);
-      min-width: 5.75rem;
+      min-width: 6.85rem;
       gap: 0.35rem;
       background: rgba(255, 255, 255, 0.55);
     }
@@ -529,17 +537,12 @@
     .sorties-card-aside--bleu { background: linear-gradient(180deg, rgba(239, 246, 255, 0.95) 0%, #fff 100%); }
     .sorties-card-aside--rouge { background: linear-gradient(180deg, rgba(254, 242, 242, 0.9) 0%, #fff 100%); }
 
-    .sorties-reg {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--app-sea);
-      text-align: right;
-      max-width: 7rem;
-      line-height: 1.2;
-    }
-
-    .sorties-reg--ok {
-      color: #15803d;
+    .sorties-card-aside .btn-je-participe {
+      font-size: 0.72rem;
+      padding: 0.38rem 0.62rem;
+      cursor: inherit;
+      max-width: 100%;
+      text-align: center;
     }
 
     .sorties-card-chev {
@@ -654,9 +657,6 @@
         border-top: 1px solid var(--app-border);
         min-height: 2.75rem;
         min-width: 0;
-      }
-      .sorties-reg {
-        max-width: none;
       }
     }
   </style>
@@ -858,7 +858,7 @@
                 <strong>Étape 4 — Participants</strong>
               </p>
               <p class="new-route-panel-hint">
-                Après création, les inscriptions se font ici sur la page Sorties : bouton <strong>« J’en suis ? »</strong> sur la carte du parcours.
+                Après création, les inscriptions se font ici sur la page Sorties : bouton <strong>« Je participe ! »</strong> sur la carte du parcours.
               </p>
             </div>
 
@@ -915,7 +915,7 @@
     <div class="signup-modal-backdrop" data-close-modal aria-hidden="true"></div>
     <div class="signup-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="signup-modal-title">
       <button type="button" class="signup-modal-close" data-close-modal aria-label="Fermer">×</button>
-      <h2 id="signup-modal-title" tabindex="-1">J’en suis !</h2>
+      <h2 id="signup-modal-title" tabindex="-1">Je participe !</h2>
       <div class="signup-modal-route" id="signup-modal-route"></div>
       <div class="signup-modal-course" id="signup-modal-course" aria-label="Détail de la sortie"></div>
 
@@ -957,7 +957,7 @@
           <span class="sr-only">E-mail</span>
           <input type="email" name="email" id="signup-modal-email" placeholder="Ton e-mail" required autocomplete="email" maxlength="120">
         </label>
-        <button type="submit" class="btn-primary">J’en suis !</button>
+        <button type="submit" class="btn-primary">Je participe !</button>
       </form>
       <div class="participants-panel" aria-live="polite">
         <p class="participants-heading">
