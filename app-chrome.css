@@ -140,29 +140,38 @@ body {
   box-shadow: inset 3px 0 0 var(--app-sea, #1565a8);
 }
 
-/* —— Navigation mobile / tablette : barre sticky + liens sur une ligne —— */
+/* —— Navigation mobile / tablette : barre sticky, logo + liens (+ compte) sur une ligne —— */
 @media (max-width: 1024px) {
   .app-sidebar {
     width: 100%;
     position: sticky;
     top: 0;
     z-index: 300;
-    padding: max(0.4rem, env(safe-area-inset-top, 0px)) max(0.65rem, env(safe-area-inset-right, 0px)) 0.6rem max(0.65rem, env(safe-area-inset-left, 0px));
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: max(0.4rem, env(safe-area-inset-top, 0px)) max(0.55rem, env(safe-area-inset-right, 0px)) 0.55rem max(0.55rem, env(safe-area-inset-left, 0px));
     border-right: none;
     border-bottom: 1px solid rgba(21, 101, 168, 0.22);
     background: linear-gradient(180deg, rgba(230, 242, 250, 0.97) 0%, rgba(198, 222, 240, 0.98) 100%);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     box-shadow: 0 4px 18px rgba(15, 40, 65, 0.1);
-    gap: 0.4rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 
   .app-shell .app-logo {
     align-self: center;
-    margin-bottom: 0;
-    padding: 0.35rem 0.5rem 0.4rem;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0.28rem 0.42rem 0.32rem;
     border-bottom: none;
-    font-size: 1.12rem;
+    font-size: clamp(0.92rem, 3.6vw, 1.12rem);
+    white-space: nowrap;
   }
 
   .app-shell .app-nav {
@@ -171,8 +180,8 @@ body {
     flex-wrap: nowrap;
     align-items: stretch;
     gap: 0.28rem;
-    width: 100%;
-    flex: none;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 0.1rem 0 0.15rem;
     overflow: visible;
   }
@@ -211,6 +220,29 @@ body {
     box-shadow:
       0 2px 8px rgba(21, 101, 168, 0.12),
       inset 0 0 0 1.5px rgba(21, 101, 168, 0.28);
+  }
+
+  .app-sidebar .goelo-auth-slot {
+    width: auto;
+    flex-shrink: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0.1rem;
+    border-top: none;
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+  }
+
+  .app-sidebar .goelo-auth-trigger {
+    padding: 0.42rem 0.5rem;
+    font-size: clamp(0.62rem, 2.55vw, 0.78rem);
+    border-radius: 12px;
+    min-height: 2.35rem;
+    border-width: 1.5px;
+    border-color: rgba(21, 101, 168, 0.38);
+    width: auto;
+    min-width: 0;
   }
 }
 
@@ -729,24 +761,4 @@ html.goelo-auth-modal-open {
   line-height: 1.5;
   color: var(--app-text, #15232d);
   word-break: break-word;
-}
-
-@media (max-width: 1024px) {
-  .app-sidebar .goelo-auth-slot {
-    width: 100%;
-    padding-top: 0.45rem;
-    margin-top: 0.15rem;
-    border-top: 1px solid rgba(21, 101, 168, 0.22);
-    position: relative;
-    z-index: 1;
-  }
-
-  .app-sidebar .goelo-auth-trigger {
-    padding: 0.42rem 0.5rem;
-    font-size: clamp(0.68rem, 2.8vw, 0.78rem);
-    border-radius: 12px;
-    min-height: 2.35rem;
-    border-width: 1.5px;
-    border-color: rgba(21, 101, 168, 0.38);
-  }
 }
