@@ -1,5 +1,27 @@
 /* Cadre menu (bleu mer) — partagé par toutes les pages avec .app-sidebar */
 
+/* Saint-Quay / hero accueil — même jaune « Goëlo » et bleu « Rides » que la page d’accueil */
+:root {
+  --sq-yellow: #f9d71c;
+  --sq-blue: #0055a4;
+}
+
+.app-logo .app-logo-part--go {
+  color: var(--sq-yellow);
+  font-weight: 700;
+  text-shadow:
+    0 2px 0 rgba(120, 80, 0, 0.35),
+    0 4px 20px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(249, 215, 28, 0.45);
+}
+
+.app-logo .app-logo-part--rides {
+  color: var(--sq-blue);
+  font-weight: 700;
+  margin-left: -0.035em;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
 /* Évite le scroll horizontal « fantôme » (flex + contenus larges / 100vw) */
 html,
 body {
