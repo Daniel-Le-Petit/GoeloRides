@@ -132,7 +132,7 @@ body {
   box-shadow: inset 3px 0 0 var(--app-sea, #1565a8);
 }
 
-/* —— Navigation mobile / tablette : barre sticky + grille 2×2 —— */
+/* —— Navigation mobile / tablette : barre sticky + liens sur une ligne —— */
 @media (max-width: 1024px) {
   .app-sidebar {
     width: 100%;
@@ -158,9 +158,11 @@ body {
   }
 
   .app-shell .app-nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.45rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.28rem;
     width: 100%;
     flex: none;
     padding: 0.1rem 0 0.15rem;
@@ -169,19 +171,25 @@ body {
 
   .app-shell .app-nav li {
     min-width: 0;
+    flex: 1 1 0;
   }
 
   .app-shell .app-nav a {
     justify-content: center;
-    min-height: 2.85rem;
-    padding: 0.48rem 0.5rem;
-    font-size: 0.8125rem;
+    align-items: center;
+    text-align: center;
+    min-height: 2.35rem;
+    padding: 0.32rem 0.2rem;
+    font-size: clamp(0.62rem, 2.55vw, 0.8rem);
     font-weight: 600;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.52);
     box-shadow: 0 1px 3px rgba(15, 35, 55, 0.07);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .app-shell .app-nav a:hover {

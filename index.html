@@ -337,11 +337,10 @@
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
     }
 
-    /* Bloc accroche : (1) Baie seule (2) La côte + sorties → (3) sous-titre + groupes → */
+    /* Bloc accroche : (1) valeurs (2) Baie (3) La côte (4) sous-titre — CTAs en dessous */
     .home-landing-tagline-stack {
       margin-top: 1.15rem;
       max-width: 100%;
-      --hero-cta-w: min(15.75rem, 100%);
     }
 
     .home-landing-tagline-stack > .home-landing-region {
@@ -349,48 +348,41 @@
     }
 
     .home-landing-tagline-mid {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 0.85rem 1.75rem;
+      display: block;
     }
 
     .home-landing-tagline-mid .home-landing-title {
       margin: 0;
-      flex: 1 1 auto;
-      min-width: min(100%, 8rem);
       font-size: clamp(1.55rem, 6vw, 3.35rem);
       line-height: 1.06;
     }
 
-    .home-landing-tagline-mid .home-landing-cta-wrap {
-      margin: 0;
-      flex-shrink: 0;
-      width: var(--hero-cta-w, min(15.75rem, 100%));
-      max-width: 100%;
-    }
-
     .home-landing-tagline-bottom {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.85rem 1.75rem;
+      display: block;
       margin-top: 0.9rem;
     }
 
     .home-landing-tagline-bottom .home-landing-subtitle {
       margin: 0;
-      flex: 1 1 auto;
-      min-width: min(100%, 12rem);
     }
 
-    .home-landing-tagline-bottom .home-landing-cta-wrap {
-      margin: 0;
-      flex-shrink: 0;
-      width: var(--hero-cta-w, min(15.75rem, 100%));
+    /* CTAs hero : sous le bloc Baie / La côte / sous-titre */
+    .home-landing-hero-ctas {
+      --hero-cta-w: min(15.75rem, 100%);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      justify-content: center;
+      gap: 0.75rem 1rem;
+      margin-top: 0.95rem;
+      width: 100%;
       max-width: 100%;
+    }
+
+    .home-landing-hero-ctas .btn-primary {
+      flex: 1 1 var(--hero-cta-w);
+      min-width: min(100%, 11.5rem);
+      max-width: var(--hero-cta-w);
     }
 
     .home-hero-arrow {
@@ -400,27 +392,19 @@
     }
 
     @media (max-width: 520px) {
-      .home-landing-tagline-mid {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.85rem;
-      }
-
-      .home-landing-tagline-mid .home-landing-cta-wrap {
-        align-self: flex-end;
-        width: min(var(--hero-cta-w), 100%);
-      }
-
       .home-landing-tagline-bottom {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.85rem;
         margin-top: 1rem;
       }
 
-      .home-landing-tagline-bottom .home-landing-cta-wrap {
-        align-self: flex-end;
-        width: min(var(--hero-cta-w), 100%);
+      .home-landing-hero-ctas {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
+      }
+
+      .home-landing-hero-ctas .btn-primary {
+        max-width: none;
+        width: 100%;
       }
     }
 
@@ -2457,10 +2441,8 @@
       filter: brightness(1.03);
     }
 
-    .home-landing-inner .home-landing-tagline-stack .btn-primary.home-hero-sorties,
-    .home-landing-tagline-mid .btn-primary.home-hero-sorties,
-    .home-landing-inner .home-landing-tagline-stack .btn-primary.home-hero-groupes,
-    .home-landing-tagline-bottom .btn-primary.home-hero-groupes {
+    .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+    .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-sorties {
       box-sizing: border-box;
       display: inline-flex;
       align-items: center;
@@ -2477,11 +2459,11 @@
       border-style: solid;
     }
 
-    .home-landing-tagline-mid .btn-primary.home-hero-sorties {
+    .home-landing-hero-ctas .btn-primary.home-hero-sorties {
       border-color: rgba(249, 215, 28, 0.5);
     }
 
-    .home-landing-tagline-bottom .btn-primary.home-hero-groupes {
+    .home-landing-hero-ctas .btn-primary.home-hero-groupes {
       border-color: rgba(15, 23, 42, 0.22);
     }
 
@@ -3624,26 +3606,24 @@
       </div>
       <p class="home-landing-lead"><span class="home-landing-accent">Sorties en vélo</span> — départ parking du <strong>Kasino</strong> de Saint-Quay.</p>
       <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie : partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
-      <div class="home-landing-tagline-stack">
-        <p class="home-landing-region">Baie du Goëlo</p>
-        <div class="home-landing-tagline-mid">
-          <h1 class="home-landing-title">La côte</h1>
-          <p class="home-landing-cta-wrap">
-            <a href="sorties.html" class="btn-primary home-hero-sorties">Voir les sorties<span class="home-hero-arrow" aria-hidden="true">→</span></a>
-          </p>
-        </div>
-        <div class="home-landing-tagline-bottom">
-          <p class="home-landing-subtitle">À vélo · Saint-Quay-Portrieux</p>
-          <p class="home-landing-cta-wrap">
-            <a href="groupes.html" class="btn-primary home-hero-groupes">Voir les groupes<span class="home-hero-arrow" aria-hidden="true">→</span></a>
-          </p>
-        </div>
-      </div>
       <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
         <li>Pas d’adhésion</li>
         <li>Pas de chronomètre</li>
         <li>Rouler ensemble</li>
       </ul>
+      <div class="home-landing-tagline-stack">
+        <p class="home-landing-region">Baie du Goëlo</p>
+        <div class="home-landing-tagline-mid">
+          <h1 class="home-landing-title">La côte</h1>
+        </div>
+        <div class="home-landing-tagline-bottom">
+          <p class="home-landing-subtitle">À vélo · Saint-Quay-Portrieux</p>
+        </div>
+      </div>
+      <div class="home-landing-hero-ctas">
+        <a href="groupes.html" class="btn-primary home-hero-groupes">Voir les groupes</a>
+        <a href="sorties.html" class="btn-primary home-hero-sorties">Voir les sorties<span class="home-hero-arrow" aria-hidden="true">→</span></a>
+      </div>
     </div>
   </header>
 
