@@ -579,8 +579,37 @@
       }
 
       .sorties-filters-bar {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: nowrap;
         align-items: stretch;
+        gap: 0.45rem;
+        padding: 0.55rem 0.65rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .sorties-filter-field {
+        flex: 1 1 0;
+        min-width: 5.25rem;
+        max-width: none;
+      }
+
+      .sorties-filter-field-label {
+        font-size: 0.6rem;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .sorties-filter-select {
+        width: 100%;
+        max-width: none;
+        font-size: 16px;
+        padding: 0.28rem 1.4rem 0.28rem 0.45rem;
+        background-position: right 0.4rem center;
       }
     }
 
