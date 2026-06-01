@@ -491,6 +491,46 @@
     .sorties-level-dot--is-bleu { background: #2563eb; }
     .sorties-level-dot--is-rouge { background: #dc2626; }
 
+    .sorties-rail-level-label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      line-height: 1.15;
+      margin-top: 0.28rem;
+      text-align: center;
+      max-width: 100%;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      padding: 0 0.12rem;
+      opacity: 0.95;
+    }
+
+    @media (min-width: 561px) {
+      .sorties-rail-level-label {
+        display: none;
+      }
+    }
+
+    .sorties-card-mobile-foot {
+      display: none;
+    }
+
+    .sorties-card-mobile-foot strong {
+      font-weight: 700;
+      color: var(--app-text);
+    }
+
+    .sorties-card--blanc .sorties-card-mobile-foot { color: #4b5563; }
+    .sorties-card--vert .sorties-card-mobile-foot { color: #166534; }
+    .sorties-card--bleu .sorties-card-mobile-foot { color: #1d4ed8; }
+    .sorties-card--rouge .sorties-card-mobile-foot { color: #b91c1c; }
+
+    .sorties-card--blanc .sorties-card-mobile-foot strong { color: #374151; }
+    .sorties-card--vert .sorties-card-mobile-foot strong { color: #14532d; }
+    .sorties-card--bleu .sorties-card-mobile-foot strong { color: #1e3a8a; }
+    .sorties-card--rouge .sorties-card-mobile-foot strong { color: #991b1b; }
+
     /* Rail : pastille niveau sous l’heure (même couleurs, taille un peu plus lisible). */
     .sorties-rail-level-dot.sorties-level-dot {
       margin-top: 0.4rem;
@@ -620,44 +660,125 @@
     }
 
     @media (max-width: 560px) {
-      .sorties-card { flex-wrap: wrap; }
-      .sorties-card-thumb {
-        width: 40%;
-        max-width: 160px;
-        aspect-ratio: 1;
-        align-self: stretch;
-        min-height: 6.5rem;
-      }
-      /* Date / heure à gauche, titre + km + ligne type à droite (même ligne que le rail). */
-      .sorties-card-mid {
-        display: flex;
-        flex-direction: row;
-        flex: 1 1 calc(60% - 0.25rem);
-        min-width: 0;
-        align-items: flex-start;
+      /* Grille 3 colonnes : photo | date/heure/niveau | titre + km + D+ + desc ; puis CTA ; puis ligne pleine largeur. */
+      .sorties-card {
+        display: grid;
+        grid-template-columns: minmax(4.25rem, 26%) minmax(2.65rem, 3.35rem) 1fr;
+        grid-template-rows: auto auto auto;
+        grid-template-areas:
+          "thumb rail body"
+          "aside aside aside"
+          "mfoot mfoot mfoot";
+        align-items: stretch;
         gap: 0;
       }
-      .sorties-card-mid .sorties-card-rail {
-        width: 2.75rem;
-        flex-shrink: 0;
-        min-height: 0;
+
+      .sorties-card-thumb {
+        grid-area: thumb;
+        width: 100%;
+        max-width: none;
+        min-height: 5.25rem;
+        aspect-ratio: 1;
         align-self: stretch;
       }
-      .sorties-card-mid .sorties-card-body {
-        flex: 1 1 0;
+
+      .sorties-card-mid .sorties-card-rail {
+        grid-area: rail;
+        width: 100%;
         min-width: 0;
-        padding: 0.55rem 0.65rem 0.65rem 0.5rem;
+        align-self: stretch;
+        justify-content: flex-start;
+        padding: 0.35rem 0.2rem 0.45rem;
+        border-right: 1px solid var(--app-border);
       }
+
+      .sorties-card-mid .sorties-card-rail .sorties-rail-day {
+        font-size: 1.05rem;
+      }
+
+      .sorties-card-mid .sorties-card-rail .sorties-rail-month {
+        font-size: 0.52rem;
+      }
+
+      .sorties-card-mid .sorties-card-rail .sorties-rail-time {
+        font-size: 0.6rem;
+        margin-top: 0.25rem;
+      }
+
+      .sorties-card-mid .sorties-card-rail .sorties-rail-level-dot.sorties-level-dot {
+        margin-top: 0.3rem;
+        width: 0.52rem;
+        height: 0.52rem;
+      }
+
+      .sorties-card-mid .sorties-card-rail .sorties-rail-level-label {
+        display: -webkit-box;
+        font-size: 0.52rem;
+        margin-top: 0.2rem;
+        line-height: 1.1;
+        -webkit-line-clamp: 3;
+      }
+
+      .sorties-card-mid .sorties-card-body {
+        grid-area: body;
+        flex: initial;
+        min-width: 0;
+        padding: 0.5rem 0.55rem 0.55rem 0.45rem;
+      }
+
+      .sorties-card-mid .sorties-card-title {
+        font-size: 0.95rem;
+        margin: 0 0 0.28rem;
+      }
+
+      .sorties-card-mid .sorties-card-hero-stats {
+        margin-bottom: 0.4rem;
+        gap: 0.35rem 0.55rem;
+      }
+
+      .sorties-card-mid .sorties-hero-km,
+      .sorties-card-mid .sorties-hero-dplus {
+        font-size: 0.88rem;
+      }
+
+      .sorties-card-mid .sorties-card-type-line {
+        margin: 0;
+        font-size: 0.68rem;
+        line-height: 1.35;
+      }
+
+      .sorties-card-mid .sorties-card-details {
+        display: none;
+      }
+
       .sorties-card-aside {
+        grid-area: aside;
         flex-direction: row;
         justify-content: flex-end;
         align-items: center;
         width: 100%;
         border-left: none;
         border-top: 1px solid var(--app-border);
-        min-height: 2.75rem;
+        min-height: 2.6rem;
         min-width: 0;
+        padding: 0.45rem 0.6rem;
       }
+
+      .sorties-card-mobile-foot {
+        grid-area: mfoot;
+        display: block;
+        border-top: 1px solid rgba(15, 35, 50, 0.1);
+        padding: 0.5rem 0.6rem 0.55rem;
+        font-size: 0.68rem;
+        line-height: 1.45;
+        font-weight: 500;
+        color: var(--app-muted);
+      }
+
+      .sorties-card--blanc .sorties-card-mobile-foot { border-top-color: rgba(107, 114, 128, 0.22); }
+      .sorties-card--vert .sorties-card-mobile-foot { border-top-color: rgba(34, 197, 94, 0.22); }
+      .sorties-card--bleu .sorties-card-mobile-foot { border-top-color: rgba(59, 130, 246, 0.22); }
+      .sorties-card--rouge .sorties-card-mobile-foot { border-top-color: rgba(239, 68, 68, 0.22); }
     }
   </style>
   <!-- Recopie les mêmes variables que sur index.html (URL projet + clé anon / publishable). -->

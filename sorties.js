@@ -634,6 +634,16 @@
         const typeLine =
           '<span class="sorties-pill sorties-pill--type' + typeExtra + '">' + escapeHtml(meta.label) + "</span>" +
           (shortDescEsc ? '<span class="sorties-type-desc"> · ' + shortDescEsc + "</span>" : "");
+        const typeLabelEsc = escapeHtml(meta.label);
+        const mobileFoot =
+          '<span class="sorties-card-mobile-foot">' +
+          "<strong>Départ</strong> : " +
+          meet +
+          " · <strong>Allure</strong> : " +
+          paceEsc +
+          " · <strong>Type</strong> : " +
+          typeLabelEsc +
+          "</span>";
         const registered = isUserRegistered(route.id, regState);
         const regBlock = registered
           ? '<span class="btn-je-participe btn-je-participe--done" role="presentation">Inscrit·e ✓</span>'
@@ -652,7 +662,7 @@
           '<div class="sorties-card-mid">' +
           '<div class="sorties-card-rail sorties-card-rail--' +
           railMod +
-          '" aria-hidden="true">' +
+          '">' +
           '<span class="sorties-rail-day">' +
           escapeHtml(d.day || "—") +
           "</span>" +
@@ -663,7 +673,10 @@
           timeDisp +
           '</span><span class="sorties-rail-level-dot sorties-level-dot sorties-level-dot--' +
           tone +
-          '" aria-hidden="true"></span></div>' +
+          '" aria-hidden="true"></span>' +
+          '<span class="sorties-rail-level-label">' +
+          escapeHtml(route.levelLabel || "—") +
+          "</span></div>" +
           '<div class="sorties-card-body sorties-card-body--' +
           railMod +
           '">' +
@@ -700,6 +713,7 @@
           '">' +
           regBlock +
           '<span class="sorties-card-chev" aria-hidden="true">›</span></div>' +
+          mobileFoot +
           "</a></li>";
       });
       html += "</ul>";
