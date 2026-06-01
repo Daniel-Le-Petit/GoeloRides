@@ -273,14 +273,22 @@
     .sorties-card--bleu:hover { border-left-color: #2563eb; }
     .sorties-card--rouge:hover { border-left-color: #dc2626; }
 
+    /* Colonne vignette : image + (mobile) Départ / Allure sous la photo */
+    .sorties-card-thumb-col {
+      flex-shrink: 0;
+      width: min(32%, 180px);
+      align-self: stretch;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
     /* Vignette = hauteur de la carte ; l’image ne impose pas la hauteur (comme sortie.html). */
     .sorties-card-thumb {
       position: relative;
-      width: min(32%, 180px);
-      flex-shrink: 0;
-      align-self: stretch;
-      min-width: 0;
+      flex: 1 1 auto;
       min-height: 0;
+      width: 100%;
       overflow: hidden;
       background: #e4ecf4;
     }
@@ -346,6 +354,28 @@
       object-position: center;
       display: block;
     }
+
+    .sorties-card-photo-meta {
+      display: none;
+    }
+
+    .sorties-photo-meta-line {
+      margin: 0;
+      font-size: 0.62rem;
+      line-height: 1.35;
+      font-weight: 500;
+      color: var(--app-muted);
+    }
+
+    .sorties-photo-meta-line strong {
+      font-weight: 700;
+      color: var(--app-text);
+    }
+
+    .sorties-card--blanc .sorties-photo-meta-line strong { color: #374151; }
+    .sorties-card--vert .sorties-photo-meta-line strong { color: #166534; }
+    .sorties-card--bleu .sorties-photo-meta-line strong { color: #1e40af; }
+    .sorties-card--rouge .sorties-photo-meta-line strong { color: #991b1b; }
 
     .sorties-card-body {
       flex: 1;
@@ -512,25 +542,6 @@
       }
     }
 
-    .sorties-card-mobile-foot {
-      display: none;
-    }
-
-    .sorties-card-mobile-foot strong {
-      font-weight: 700;
-      color: var(--app-text);
-    }
-
-    .sorties-card--blanc .sorties-card-mobile-foot { color: #4b5563; }
-    .sorties-card--vert .sorties-card-mobile-foot { color: #166534; }
-    .sorties-card--bleu .sorties-card-mobile-foot { color: #1d4ed8; }
-    .sorties-card--rouge .sorties-card-mobile-foot { color: #b91c1c; }
-
-    .sorties-card--blanc .sorties-card-mobile-foot strong { color: #374151; }
-    .sorties-card--vert .sorties-card-mobile-foot strong { color: #14532d; }
-    .sorties-card--bleu .sorties-card-mobile-foot strong { color: #1e3a8a; }
-    .sorties-card--rouge .sorties-card-mobile-foot strong { color: #991b1b; }
-
     /* Rail : pastille niveau sous l’heure (même couleurs, taille un peu plus lisible). */
     .sorties-rail-level-dot.sorties-level-dot {
       margin-top: 0.4rem;
@@ -605,9 +616,9 @@
 
     @media (max-width: 1024px) {
       .app-shell { flex-direction: column; }
-      .sorties-card-thumb {
+      .sorties-card-thumb-col {
         width: 100px;
-        align-self: stretch;
+        max-width: 100px;
       }
       .sorties-card-mid .sorties-card-rail {
         width: 2.85rem;
@@ -660,26 +671,47 @@
     }
 
     @media (max-width: 560px) {
-      /* Grille 3 colonnes : photo | date/heure/niveau | titre + km + D+ + desc ; puis CTA ; puis ligne pleine largeur. */
+      /* Grille : colonne photo+Départ/Allure | date/niveau | titre+stats+desc ; puis ligne Je participe. */
       .sorties-card {
         display: grid;
         grid-template-columns: minmax(4.25rem, 26%) minmax(2.65rem, 3.35rem) 1fr;
-        grid-template-rows: auto auto auto;
+        grid-template-rows: auto auto;
         grid-template-areas:
-          "thumb rail body"
-          "aside aside aside"
-          "mfoot mfoot mfoot";
+          "thumbcol rail body"
+          "aside aside aside";
         align-items: stretch;
         gap: 0;
       }
 
-      .sorties-card-thumb {
-        grid-area: thumb;
+      .sorties-card-thumb-col {
+        grid-area: thumbcol;
         width: 100%;
         max-width: none;
-        min-height: 5.25rem;
+        min-width: 0;
+      }
+
+      .sorties-card-thumb-col .sorties-card-thumb {
         aspect-ratio: 1;
-        align-self: stretch;
+        flex: 0 0 auto;
+        min-height: 4.75rem;
+        width: 100%;
+      }
+
+      .sorties-card-photo-meta {
+        display: block;
+        flex-shrink: 0;
+        padding: 0.35rem 0.3rem 0.4rem;
+        border-top: 1px solid rgba(15, 35, 50, 0.08);
+        background: rgba(255, 255, 255, 0.65);
+      }
+
+      .sorties-card--blanc .sorties-card-photo-meta { border-top-color: rgba(107, 114, 128, 0.18); }
+      .sorties-card--vert .sorties-card-photo-meta { border-top-color: rgba(34, 197, 94, 0.2); }
+      .sorties-card--bleu .sorties-card-photo-meta { border-top-color: rgba(59, 130, 246, 0.2); }
+      .sorties-card--rouge .sorties-card-photo-meta { border-top-color: rgba(239, 68, 68, 0.2); }
+
+      .sorties-card-photo-meta .sorties-photo-meta-line + .sorties-photo-meta-line {
+        margin-top: 0.2rem;
       }
 
       .sorties-card-mid .sorties-card-rail {
@@ -754,31 +786,20 @@
       .sorties-card-aside {
         grid-area: aside;
         flex-direction: row;
-        justify-content: flex-end;
+        justify-content: center;
         align-items: center;
+        gap: 0.5rem;
         width: 100%;
         border-left: none;
         border-top: 1px solid var(--app-border);
-        min-height: 2.6rem;
+        min-height: 2.75rem;
         min-width: 0;
-        padding: 0.45rem 0.6rem;
+        padding: 0.5rem 0.65rem;
       }
 
-      .sorties-card-mobile-foot {
-        grid-area: mfoot;
-        display: block;
-        border-top: 1px solid rgba(15, 35, 50, 0.1);
-        padding: 0.5rem 0.6rem 0.55rem;
-        font-size: 0.68rem;
-        line-height: 1.45;
-        font-weight: 500;
-        color: var(--app-muted);
+      .sorties-card-aside .sorties-card-chev {
+        margin-top: 0;
       }
-
-      .sorties-card--blanc .sorties-card-mobile-foot { border-top-color: rgba(107, 114, 128, 0.22); }
-      .sorties-card--vert .sorties-card-mobile-foot { border-top-color: rgba(34, 197, 94, 0.22); }
-      .sorties-card--bleu .sorties-card-mobile-foot { border-top-color: rgba(59, 130, 246, 0.22); }
-      .sorties-card--rouge .sorties-card-mobile-foot { border-top-color: rgba(239, 68, 68, 0.22); }
     }
   </style>
   <!-- Recopie les mêmes variables que sur index.html (URL projet + clé anon / publishable). -->
