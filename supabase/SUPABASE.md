@@ -18,6 +18,12 @@ Si tu avais exécuté une **version antérieure** de ce fichier avec `routes_lis
 
 `supabase/migrations/20250601130100_routes_list_jsonb_signature.sql`
 
+**Sécurité « Nouvelle sortie » (admin + mot de passe)** — à exécuter pour que seuls les comptes administrateurs puissent appeler `route_create` :
+
+`supabase/migrations/20250607120000_route_create_admin_auth.sql`
+
+(Crée `goelo_admin_resolve_login`, restreint `route_create` aux JWT **authenticated** avec `app_metadata.goelo_admin = true`, retire l’exécution **anon** sur `route_create`.)
+
 ## 2. Clé anon côté site
 
 Le site utilise **RPC `SECURITY DEFINER`** : la clé **anon** ne donne pas un accès direct en lecture/écriture sur `signups` (RLS bloque), seulement l’appel aux fonctions `signup_*`.
@@ -69,17 +75,31 @@ La logique carte / inscriptions / « Nouvelle sortie » est dans **`parcours.js`
 
 Si le site est servi depuis un domaine (ex. Render), vérifie **Settings → API → CORS** : ajoute l’URL du site. Pour les tests locaux, ajoute `http://127.0.0.1:8765` (ou le port utilisé).
 
-## 5. Données
+## 5. Administrateurs (« Nouvelle sortie »)
+
+Après la migration **`20250607120000_route_create_admin_auth.sql`** :
+
+1. **Authentication → Users** : crée un utilisateur (e-mail + mot de passe) ou utilise un compte existant.
+2. Ouvre l’utilisateur → **Raw App Meta Data** et ajoute la clé JSON **`goelo_admin`** avec la valeur booléenne **`true`** (ex. `{"goelo_admin": true}` en fusionnant avec l’existant). Sans cela, la connexion réussit mais le site affiche « pas administrateur » et `route_create` renvoie `forbidden`.
+3. **Pseudo** : pour te connecter avec un pseudo au lieu de l’e-mail, insère une ligne dans la table **`goelo_admin_login_aliases`** (SQL Editor), par ex.  
+   `INSERT INTO public.goelo_admin_login_aliases (alias_lower, auth_email) VALUES ('monpseudo', 'admin@exemple.com');`  
+   avec **`auth_email`** exactement l’e-mail du compte Auth (insensible à la casse côté connexion Supabase pour le mot de passe).
+
+La session admin est stockée dans **`sessionStorage`** du navigateur (clé `goelo_admin_auth_v1`) ; bouton **Se déconnecter** dans la modale pour l’effacer.
+
+**E-mail de confirmation** : si le projet exige une confirmation d’e-mail avant première connexion, valide le mail depuis la boîte du compte admin.
+
+## 6. Données
 
 - **Inscriptions web** : table `signups` (désinscription = `canceled_at` renseigné).
 - **Noms sans e-mail** (ex-import `participants.json`) : table `imported_participant_names` ; le fichier JSON reste fusionné côté client si tu le gardes.
 - **E-mail Formsubmit** : inchangé ; les notifications partent toujours si `SIGNUP.formEmail` est rempli.
 
-## 6. Sécurité (à terme)
+## 7. Sécurité (à terme)
 
-La clé **anon** exposée permet d’appeler les RPC (inscription / liste / désinscription). Pour limiter le spam, tu pourras ajouter **Rate limiting** (Edge Function), **CAPTCHA**, ou **clé secrète** dans une Edge Function et retirer l’`EXECUTE` anon sur `signup_register` / `signup_unregister`.
+La clé **anon** exposée permet d’appeler les RPC d’inscription / listes. `route_create` n’est plus exécutable en **anon** après la migration admin. Pour limiter le spam sur les autres RPC, tu pourras ajouter **Rate limiting** (Edge Function), **CAPTCHA**, ou **clé secrète** dans une Edge Function.
 
-## 7. Codes d’erreur affichés aux utilisateurs (support)
+## 8. Codes d’erreur affichés aux utilisateurs (support)
 
 En cas d’échec d’enregistrement (Supabase ou navigateur), une boîte de dialogue peut indiquer un **numéro d’erreur** à transmettre à l’administrateur :
 

@@ -11,7 +11,7 @@
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fredoka:wght@600;700&family=Nunito:wght@700;800;900&family=Outfit:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="app-chrome.css">
   <style>
@@ -26,9 +26,11 @@
       --card-bg: rgba(255, 255, 255, 0.04);
       --font-serif: "Playfair Display", Georgia, serif;
       --font-sans: "DM Sans", system-ui, sans-serif;
-      --font-brand: "Fredoka", "Outfit", system-ui, sans-serif;
+      --font-brand: "Outfit", "DM Sans", system-ui, sans-serif;
       --font-display: "Outfit", "DM Sans", system-ui, sans-serif;
-      --font-logo: "Comfortaa", "Fredoka", "Nunito", system-ui, sans-serif;
+      --font-logo: "Outfit", "DM Sans", system-ui, sans-serif;
+      /* Chapô accueil « Sorties en vélo » */
+      --font-accent-tag: "Lexend", "Outfit", system-ui, sans-serif;
       /* Saint-Quay-Portrieux (drapeau / identité locale) */
       --sq-yellow: #f9d71c;
       --sq-blue: #0055a4;
@@ -51,6 +53,8 @@
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-x: hidden;
+      max-width: 100%;
     }
 
     body {
@@ -61,6 +65,7 @@
       font-weight: 400;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      max-width: 100%;
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
     }
@@ -73,24 +78,39 @@
     .app-shell {
       display: flex;
       min-height: 100dvh;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .app-logo {
       font-family: var(--font-logo);
       font-weight: 700;
       font-size: 1.22rem;
-      letter-spacing: 0.02em;
+      letter-spacing: -0.01em;
       color: var(--app-text);
       text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0;
       padding: 0.35rem 0.5rem 1rem;
       border-bottom: 1px solid rgba(21, 101, 168, 0.2);
       margin-bottom: 0.75rem;
     }
 
-    .app-logo span { color: var(--app-sea); }
+    .app-logo-part--rides { color: var(--app-sea); margin-left: -0.035em; }
+
+    .app-logo--sq .app-logo-part--go {
+      color: var(--sq-yellow);
+      font-weight: 700;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .app-logo--sq .app-logo-part--rides {
+      color: var(--sq-blue);
+      font-weight: 700;
+      text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+    }
 
     .app-nav {
       list-style: none;
@@ -117,15 +137,6 @@
     }
 
     .app-nav-icon { font-size: 1.1rem; width: 1.35rem; text-align: center; }
-
-    .app-sidebar-footer {
-      border-top: 1px solid rgba(21, 101, 168, 0.18);
-      padding-top: 0.85rem;
-      font-size: 0.78rem;
-      color: var(--app-muted);
-    }
-
-    .app-sidebar-footer a { font-weight: 600; color: var(--app-sea); }
 
     .app-main--home {
       flex: 1;
@@ -212,6 +223,39 @@
       padding-left: max(clamp(1.15rem, 4vw, 2.25rem), env(safe-area-inset-left, 0px));
     }
 
+    /* Marque accueil : GoëloRides (sans espace), police moins arrondie */
+    .home-brand {
+      margin: 0 0 1.25rem;
+      font-family: var(--font-logo);
+      font-weight: 700;
+      font-size: clamp(2.35rem, 8.5vw, 4.25rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0;
+      transform: rotate(-1.25deg);
+      transform-origin: 0 50%;
+    }
+
+    .home-brand-go {
+      color: var(--sq-yellow);
+      text-shadow:
+        0 2px 0 rgba(120, 80, 0, 0.35),
+        0 4px 20px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(249, 215, 28, 0.45);
+    }
+
+    .home-brand-rides {
+      color: var(--sq-blue);
+      margin-left: -0.04em;
+      text-shadow:
+        0 0 2px rgba(255, 255, 255, 0.9),
+        0 1px 2px rgba(0, 0, 0, 0.85),
+        0 4px 22px rgba(0, 85, 164, 0.55);
+    }
+
     .home-landing-lead {
       font-size: clamp(1.12rem, 2.6vw, 1.32rem);
       font-weight: 600;
@@ -234,9 +278,10 @@
     }
 
     .home-landing-accent {
+      font-family: var(--font-accent-tag);
+      font-weight: 700;
+      letter-spacing: -0.02em;
       color: var(--gold);
-      font-weight: 800;
-      letter-spacing: 0.01em;
       text-shadow:
         0 1px 3px rgba(0, 0, 0, 0.75),
         0 0 18px rgba(244, 164, 58, 0.35);
@@ -412,11 +457,47 @@
       color: var(--app-text);
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 1024px) {
       .app-shell { flex-direction: column; }
-      .app-logo { border: none; margin: 0; padding: 0.35rem 0.5rem; }
-      .app-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: 1 1 auto; }
-      .app-sidebar-footer { width: 100%; border: none; padding-top: 0.5rem; }
+    }
+
+    @media (max-width: 640px) {
+      .home-landing-inner {
+        justify-content: flex-start;
+        padding-top: max(1rem, env(safe-area-inset-top, 0px));
+        padding-left: max(0.85rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.85rem, env(safe-area-inset-right, 0px));
+      }
+
+      .home-brand {
+        font-size: clamp(1.55rem, 10vw, 2.6rem);
+        transform: rotate(-0.6deg);
+        margin-bottom: 0.85rem;
+      }
+
+      .home-landing-lead {
+        font-size: clamp(0.98rem, 3.8vw, 1.15rem);
+        padding: 0.55rem 0.7rem;
+      }
+
+      .home-landing-body {
+        font-size: 0.95rem;
+        padding: 0.65rem 0.75rem;
+      }
+
+      .home-landing-title {
+        font-size: clamp(1.55rem, 8vw, 2.45rem);
+      }
+
+      .home-landing-visual img {
+        object-position: center 42%;
+      }
+
+      .app-main--home footer {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+      }
     }
 
     img, svg, video { max-width: 100%; height: auto; }
@@ -602,13 +683,6 @@
       gap: 1rem;
       width: 100%;
       margin-bottom: clamp(2rem, 8vw, 3.5rem);
-    }
-
-    /* Logo : structure type LSR + palette Saint-Quay (jaune / bleu / jaune) */
-    .home-brand {
-      position: relative;
-      align-self: flex-start;
-      max-width: min(100%, 20rem);
     }
 
     .home-brand-sr {
@@ -1216,6 +1290,64 @@
       margin: 0;
       font-size: 0.8rem;
       color: var(--app-muted);
+    }
+
+    .new-route-admin-gate {
+      padding: 0.88rem 1rem 1rem;
+      margin: 0 0 0.35rem;
+      border-radius: 10px;
+      border: 1px solid rgba(21, 101, 168, 0.28);
+      background: linear-gradient(165deg, #f3f9ff 0%, #e8f2fa 100%);
+    }
+
+    .new-route-admin-intro {
+      font-size: 0.84rem;
+      color: var(--app-muted);
+      margin: 0 0 0.75rem;
+      line-height: 1.45;
+    }
+
+    .new-route-admin-field {
+      display: block;
+      margin-bottom: 0.6rem;
+    }
+
+    .new-route-admin-field span {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--app-sea);
+      margin-bottom: 0.25rem;
+    }
+
+    .new-route-admin-field input {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+
+    .new-route-admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.65rem;
+    }
+
+    .new-route-admin-error {
+      margin: 0.45rem 0 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #b91c1c;
+    }
+
+    .new-route-modal-body.is-locked {
+      display: none !important;
     }
 
     .new-route-modal-grid {
@@ -3225,7 +3357,7 @@
 
   <div class="app-shell">
     <aside class="app-sidebar">
-      <a class="app-logo" href="index.html">Goëlo<span>Rides</span></a>
+      <a class="app-logo app-logo--sq" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
       <ul class="app-nav">
         <li><a class="is-active" href="index.html"><span class="app-nav-icon" aria-hidden="true">⌂</span> Accueil</a></li>
         <li><a href="sorties.html"><span class="app-nav-icon" aria-hidden="true">≡</span> Sorties</a></li>
@@ -3234,9 +3366,6 @@
         <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer"><span class="app-nav-icon" aria-hidden="true">◎</span> Messages</a></li>
         <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◎</span> Membres</a></li>
       </ul>
-      <div class="app-sidebar-footer">
-        <p><a href="sorties.html">Toutes les sorties</a> · <a href="sorties.html#sorties-list">Liste &amp; détails</a></p>
-      </div>
     </aside>
 
     <main class="app-main app-main--home">
@@ -3253,6 +3382,9 @@
     </div>
     <div class="home-landing-scrim" aria-hidden="true"></div>
     <div class="home-landing-inner">
+      <div class="home-brand">
+        <span class="home-brand-go">Goëlo</span><span class="home-brand-rides">Rides</span>
+      </div>
       <p class="home-landing-lead"><span class="home-landing-accent">Sorties en vélo</span> — départ parking du <strong>Kasino</strong> de Saint-Quay.</p>
       <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie : partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
       <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
@@ -3280,6 +3412,25 @@
         <h2 id="new-route-modal-title" tabindex="-1">Nouvelle sortie</h2>
         <p class="new-route-sub">Parcours guidé en 5 étapes — avance avec <strong>Suivant</strong>, tu peux revenir avec <strong>Précédent</strong>.</p>
       </div>
+      <div class="new-route-admin-gate" id="new-route-admin-gate">
+        <p class="new-route-admin-intro">
+          Accès réservé : connecte-toi avec ton <strong>e-mail</strong> (compte Supabase) ou un <strong>pseudo</strong> enregistré pour l’admin, plus le <strong>mot de passe</strong>. Le compte doit être <strong>administrateur</strong> du site.
+        </p>
+        <label class="new-route-admin-field">
+          <span>E-mail ou pseudo</span>
+          <input type="text" id="new-route-admin-login" name="goelo-admin-login" autocomplete="username" maxlength="120">
+        </label>
+        <label class="new-route-admin-field">
+          <span>Mot de passe</span>
+          <input type="password" id="new-route-admin-password" name="goelo-admin-password" autocomplete="current-password">
+        </label>
+        <p class="new-route-admin-error" id="new-route-admin-error" hidden role="alert"></p>
+        <div class="new-route-admin-actions">
+          <button type="button" class="btn-primary" id="new-route-admin-submit">Se connecter</button>
+          <button type="button" class="btn-app-outline" id="new-route-admin-logout" hidden>Se déconnecter</button>
+        </div>
+      </div>
+      <div id="new-route-modal-body" class="new-route-modal-body is-locked">
       <div class="new-route-modal-grid">
         <aside class="new-route-steps" aria-label="Étapes de création">
           <p class="new-route-steps-title">Étapes</p>
@@ -3415,6 +3566,7 @@
             <div class="new-route-cover-preview" id="new-route-cover-preview" hidden></div>
           </div>
         </aside>
+      </div>
       </div>
     </div>
   </div>

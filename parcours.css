@@ -10,7 +10,7 @@
   --card-bg: rgba(255, 255, 255, 0.04);
   --font-serif: "Playfair Display", Georgia, serif;
   --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-logo: "Nunito", "DM Sans", system-ui, sans-serif;
+  --font-logo: "Outfit", "DM Sans", system-ui, sans-serif;
   --app-sea: #1565a8;
   --app-sea-hover: #0e4d80;
   --app-surface: #ffffff;
@@ -18,6 +18,16 @@
   --app-muted: #5a6b78;
   --app-border: #dce6ee;
   --app-bg: #eef2f6;
+}
+
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
     /* —— Inscription (modale) —— */
@@ -53,7 +63,7 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: min(96vw, 880px);
+      max-width: min(100%, calc(100vw - 2rem), 880px);
       max-height: min(94dvh, 900px);
       overflow-y: auto;
       background: #152028;
@@ -181,6 +191,64 @@
       margin: 0;
       font-size: 0.8rem;
       color: var(--app-muted);
+    }
+
+    .new-route-admin-gate {
+      padding: 0.88rem 1rem 1rem;
+      margin: 0 0 0.35rem;
+      border-radius: 10px;
+      border: 1px solid rgba(21, 101, 168, 0.28);
+      background: linear-gradient(165deg, #f3f9ff 0%, #e8f2fa 100%);
+    }
+
+    .new-route-admin-intro {
+      font-size: 0.84rem;
+      color: var(--app-muted);
+      margin: 0 0 0.75rem;
+      line-height: 1.45;
+    }
+
+    .new-route-admin-field {
+      display: block;
+      margin-bottom: 0.6rem;
+    }
+
+    .new-route-admin-field span {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--app-sea);
+      margin-bottom: 0.25rem;
+    }
+
+    .new-route-admin-field input {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+
+    .new-route-admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.65rem;
+    }
+
+    .new-route-admin-error {
+      margin: 0.45rem 0 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #b91c1c;
+    }
+
+    .new-route-modal-body.is-locked {
+      display: none !important;
     }
 
     .new-route-modal-grid {
@@ -1707,6 +1775,9 @@
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .city-marker {
@@ -1739,6 +1810,9 @@
     #route-map {
       height: 480px;
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
       background: #e8eef2;
     }
 
@@ -2031,6 +2105,7 @@
       #route-map {
         height: min(38dvh, 260px);
         min-height: 180px;
+        max-width: 100%;
       }
 
       .map-options {
@@ -2132,6 +2207,7 @@
       .signup-modal #route-map {
         min-height: 220px;
         height: min(42dvh, 280px);
+        max-width: 100%;
       }
 
       .leaflet-control-zoom a {
@@ -2139,7 +2215,7 @@
         height: 36px !important;
         line-height: 36px !important;
       }
-    }
+
       .route-stats { grid-template-columns: 1fr; }
       .group-meta span::after { display: none; }
       section { padding: 3rem 1rem; }

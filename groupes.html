@@ -8,7 +8,7 @@
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Outfit:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="parcours.css">
   <link rel="stylesheet" href="app-chrome.css">
   <style>
@@ -22,10 +22,10 @@
       --app-border: #dce6ee;
       --sidebar-w: 15.5rem;
       --font-sans: "DM Sans", system-ui, sans-serif;
-      --font-logo: "Comfortaa", "Nunito", "DM Sans", system-ui, sans-serif;
+      --font-logo: "Outfit", "DM Sans", system-ui, sans-serif;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; background: var(--app-bg); }
+    html { scroll-behavior: smooth; background: var(--app-bg); overflow-x: hidden; max-width: 100%; }
     body {
       font-family: var(--font-sans);
       background: var(--app-bg);
@@ -33,24 +33,33 @@
       min-height: 100dvh;
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      max-width: 100%;
     }
     a { color: var(--app-sea); }
-    .app-shell { display: flex; min-height: 100dvh; background: var(--app-bg); }
+    .app-shell {
+      display: flex;
+      min-height: 100dvh;
+      background: var(--app-bg);
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
     .app-logo {
       font-family: var(--font-logo);
       font-weight: 700;
       font-size: 1.22rem;
-      letter-spacing: 0.02em;
+      letter-spacing: -0.01em;
       color: var(--app-text);
       text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0;
       padding: 0.35rem 0.5rem 1rem;
       border-bottom: 1px solid rgba(21, 101, 168, 0.2);
       margin-bottom: 0.75rem;
     }
-    .app-logo span { color: var(--app-sea); }
+    .app-logo-part--rides { color: var(--app-sea); margin-left: -0.035em; }
     .app-nav { list-style: none; flex: 1; }
     .app-nav a {
       display: flex;
@@ -66,15 +75,10 @@
     .app-nav a:hover { background: #f0f4f8; color: var(--app-text); }
     .app-nav a.is-active { background: #e8f2fa; color: var(--app-sea); }
     .app-nav-icon { font-size: 1.1rem; width: 1.35rem; text-align: center; }
-    .app-sidebar-footer {
-      border-top: 1px solid rgba(21, 101, 168, 0.18);
-      padding-top: 0.85rem;
-      font-size: 0.78rem;
-      color: var(--app-muted);
-    }
     .app-main {
       flex: 1;
       min-width: 0;
+      max-width: 100%;
       padding: 1.35rem 1.75rem 2.5rem;
       background: var(--app-bg);
     }
@@ -193,18 +197,19 @@
       color: var(--app-text);
     }
     .groupes-footnote strong { color: var(--app-sea-hover); }
-    @media (max-width: 900px) {
+    @media (max-width: 1024px) {
       .app-shell { flex-direction: column; }
-      .app-logo { border: none; margin: 0; padding: 0.35rem 0.5rem; }
-      .app-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: 1 1 auto; }
-      .app-sidebar-footer { width: 100%; border: none; padding-top: 0.5rem; }
+    }
+    @media (max-width: 640px) {
+      .app-main { padding: 1rem 0.85rem 2rem; }
+      .groupe-card-body { padding: 0.95rem 1rem 1.05rem; }
     }
   </style>
 </head>
 <body>
   <div class="app-shell">
     <aside class="app-sidebar">
-      <a class="app-logo" href="index.html">Goëlo<span>Rides</span></a>
+      <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
       <ul class="app-nav">
         <li><a href="index.html"><span class="app-nav-icon" aria-hidden="true">⌂</span> Accueil</a></li>
         <li><a href="sorties.html"><span class="app-nav-icon" aria-hidden="true">≡</span> Sorties</a></li>
@@ -213,9 +218,6 @@
         <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer"><span class="app-nav-icon" aria-hidden="true">◎</span> Messages</a></li>
         <li><a href="groupes.html"><span class="app-nav-icon" aria-hidden="true">◎</span> Membres</a></li>
       </ul>
-      <div class="app-sidebar-footer">
-        <p><a href="sorties.html">Sorties &amp; inscriptions</a> · <a href="index.html">Accueil</a></p>
-      </div>
     </aside>
 
     <main class="app-main">

@@ -86,7 +86,113 @@
         );
       }
 
-      async function supabaseRpc(fnName, payload) {
+      const GOELO_ADMIN_SESSION_KEY = "goelo_admin_auth_v1";
+
+      function decodeJwtPayload(accessToken) {
+        if (!accessToken || typeof accessToken !== "string") return null;
+        const parts = accessToken.split(".");
+        if (parts.length < 2) return null;
+        try {
+          let b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+          const pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : "";
+          return JSON.parse(atob(b64 + pad));
+        } catch (err) {
+          void err;
+          return null;
+        }
+      }
+
+      function jwtIsGoeloAdmin(accessToken) {
+        const p = decodeJwtPayload(accessToken);
+        if (!p || typeof p !== "object") return false;
+        const am = p.app_metadata;
+        if (!am || typeof am !== "object") return false;
+        const v = am.goelo_admin;
+        return v === true || v === "true" || v === 1 || v === "1";
+      }
+
+      function getAdminSession() {
+        try {
+          const raw = sessionStorage.getItem(GOELO_ADMIN_SESSION_KEY);
+          if (!raw) return null;
+          const o = JSON.parse(raw);
+          if (!o || typeof o !== "object" || !o.access_token) return null;
+          return o;
+        } catch (e) {
+          void e;
+          return null;
+        }
+      }
+
+      function saveAdminSession(tok) {
+        if (!tok || !tok.access_token) return;
+        const sec = typeof tok.expires_in === "number" && tok.expires_in > 0 ? tok.expires_in : 3600;
+        const expMs = Date.now() + sec * 1000;
+        sessionStorage.setItem(
+          GOELO_ADMIN_SESSION_KEY,
+          JSON.stringify({
+            access_token: tok.access_token,
+            refresh_token: tok.refresh_token != null ? String(tok.refresh_token) : "",
+            expires_at_ms: expMs
+          })
+        );
+      }
+
+      function clearAdminSession() {
+        try {
+          sessionStorage.removeItem(GOELO_ADMIN_SESSION_KEY);
+        } catch (e) {
+          void e;
+        }
+      }
+
+      function isAdminSessionUsable() {
+        const s = getAdminSession();
+        if (!s || !s.access_token) return false;
+        const exp = s.expires_at_ms || 0;
+        if (Date.now() >= exp - 8000) return false;
+        return jwtIsGoeloAdmin(s.access_token);
+      }
+
+      async function supabasePasswordGrant(email, password) {
+        const { url, anonKey } = getSupabaseConfig();
+        if (!url || !anonKey) return null;
+        const base = url.replace(/\/?$/, "");
+        let res;
+        try {
+          res = await fetch(base + "/auth/v1/token?grant_type=password", {
+            method: "POST",
+            headers: {
+              apikey: anonKey,
+              Authorization: "Bearer " + anonKey,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email: email, password: password })
+          });
+        } catch (err) {
+          void err;
+          return null;
+        }
+        if (!res.ok) return null;
+        try {
+          return await res.json();
+        } catch (e) {
+          void e;
+          return null;
+        }
+      }
+
+      async function resolveAdminEmailForLogin(loginRaw) {
+        const raw = (loginRaw || "").trim();
+        if (!raw) return null;
+        if (raw.indexOf("@") !== -1) return raw.toLowerCase();
+        const data = await supabaseRpc("goelo_admin_resolve_login", { p_raw: raw });
+        if (data && data.ok === true && data.email) return String(data.email).trim().toLowerCase();
+        return null;
+      }
+
+      async function supabaseRpc(fnName, payload, rpcOpts) {
+        rpcOpts = rpcOpts || {};
         goeloLastRpcFailure = null;
         const { url, anonKey } = getSupabaseConfig();
         if (!url || !anonKey) return null;
@@ -98,13 +204,17 @@
           return null;
         }
         const base = url.replace(/\/?$/, "");
+        const bearer =
+          rpcOpts && rpcOpts.accessToken && String(rpcOpts.accessToken).trim()
+            ? String(rpcOpts.accessToken).trim()
+            : anonKey;
         let res;
         try {
           res = await fetch(base + "/rest/v1/rpc/" + encodeURIComponent(fnName), {
             method: "POST",
             headers: {
               apikey: anonKey,
-              Authorization: "Bearer " + anonKey,
+              Authorization: "Bearer " + bearer,
               "Content-Type": "application/json",
               Prefer: "return=representation"
             },
@@ -982,8 +1092,14 @@
         modal.hidden = false;
         modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
-        const first = document.getElementById("new-route-date");
-        if (first) first.focus();
+        syncNewRouteAdminUi();
+        if (isAdminSessionUsable()) {
+          const first = document.getElementById("new-route-date");
+          if (first) first.focus();
+        } else {
+          const loginEl = document.getElementById("new-route-admin-login");
+          if (loginEl) loginEl.focus();
+        }
       }
 
       function raceTypeLabel(v) {
@@ -1027,6 +1143,28 @@
         return cap(weekday) + " " + d + " " + month + " " + y + " · " + timeLabel;
       }
 
+      function syncNewRouteAdminUi() {
+        const gate = document.getElementById("new-route-admin-gate");
+        const body = document.getElementById("new-route-modal-body");
+        const lo = document.getElementById("new-route-admin-logout");
+        const errEl = document.getElementById("new-route-admin-error");
+        if (!gate || !body) return;
+        if (errEl) {
+          errEl.textContent = "";
+          errEl.hidden = true;
+        }
+        if (isAdminSessionUsable()) {
+          gate.hidden = true;
+          body.classList.remove("is-locked");
+          if (lo) lo.hidden = false;
+        } else {
+          clearAdminSession();
+          gate.hidden = false;
+          body.classList.add("is-locked");
+          if (lo) lo.hidden = true;
+        }
+      }
+
       function setupNewRouteModal() {
         const modal = document.getElementById("new-route-modal");
         const form = document.getElementById("new-route-form");
@@ -1043,6 +1181,80 @@
         const hdrNew = document.getElementById("sorties-header-new-route");
         if (hdrNew) hdrNew.hidden = !isSupabaseEnabled();
         if (!modal || !form) return;
+
+        syncNewRouteAdminUi();
+
+        const admSubmit = document.getElementById("new-route-admin-submit");
+        const admLogout = document.getElementById("new-route-admin-logout");
+        const admLogin = document.getElementById("new-route-admin-login");
+        const admPass = document.getElementById("new-route-admin-password");
+        if (admPass && !admPass.dataset.goeloEnterBound) {
+          admPass.dataset.goeloEnterBound = "1";
+          admPass.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter") {
+              ev.preventDefault();
+              if (admSubmit) admSubmit.click();
+            }
+          });
+        }
+        if (admSubmit && !admSubmit.dataset.goeloBound) {
+          admSubmit.dataset.goeloBound = "1";
+          admSubmit.addEventListener("click", async function () {
+            const errEl = document.getElementById("new-route-admin-error");
+            const login = admLogin && admLogin.value ? admLogin.value.trim() : "";
+            const password = admPass && admPass.value ? admPass.value : "";
+            if (errEl) {
+              errEl.textContent = "";
+              errEl.hidden = true;
+            }
+            if (!login || !password) {
+              if (errEl) {
+                errEl.textContent = "Indique l’e-mail (ou pseudo) et le mot de passe.";
+                errEl.hidden = false;
+              }
+              return;
+            }
+            admSubmit.disabled = true;
+            const email = await resolveAdminEmailForLogin(login);
+            if (!email) {
+              admSubmit.disabled = false;
+              if (errEl) {
+                errEl.textContent = "Identifiant inconnu ou compte non configuré.";
+                errEl.hidden = false;
+              }
+              return;
+            }
+            const tok = await supabasePasswordGrant(email, password);
+            if (!tok || !tok.access_token) {
+              admSubmit.disabled = false;
+              if (errEl) {
+                errEl.textContent = "Mot de passe incorrect ou compte introuvable.";
+                errEl.hidden = false;
+              }
+              return;
+            }
+            if (!jwtIsGoeloAdmin(tok.access_token)) {
+              admSubmit.disabled = false;
+              if (errEl) {
+                errEl.textContent = "Ce compte n’est pas administrateur du site.";
+                errEl.hidden = false;
+              }
+              return;
+            }
+            saveAdminSession(tok);
+            if (admPass) admPass.value = "";
+            admSubmit.disabled = false;
+            syncNewRouteAdminUi();
+          });
+        }
+        if (admLogout && !admLogout.dataset.goeloBound) {
+          admLogout.dataset.goeloBound = "1";
+          admLogout.addEventListener("click", function () {
+            clearAdminSession();
+            syncNewRouteAdminUi();
+            if (admLogin) admLogin.focus();
+          });
+        }
 
         let wizardStep = 1;
         let newRouteProfile = null;
@@ -1456,6 +1668,15 @@
             window.alert("Connecte Supabase (clé anon) pour créer une sortie.");
             return;
           }
+          if (!isAdminSessionUsable()) {
+            window.alert(
+              "Connexion administrateur requise : identifie-toi avec ton e-mail (ou pseudo) et ton mot de passe dans cette fenêtre."
+            );
+            syncNewRouteAdminUi();
+            const loginEl = document.getElementById("new-route-admin-login");
+            if (loginEl) loginEl.focus();
+            return;
+          }
           if (wizardStep !== 5) {
             window.alert("Va jusqu’à l’étape « Confirmation » avec « Suivant », puis valide.");
             setWizardStep(5);
@@ -1519,19 +1740,42 @@
             coverImageDataUrl: newRouteCoverDataUrl || ""
           };
 
-          let data = await supabaseRpc("route_create", {
-            p_track_name: track,
-            p_group_label: group || raceTypeLabel(rt),
-            p_pace_label: pace || "—",
-            p_front_config: frontConfig,
-            p_sort_order: 40
-          });
+          const admTok = getAdminSession();
+          let data = await supabaseRpc(
+            "route_create",
+            {
+              p_track_name: track,
+              p_group_label: group || raceTypeLabel(rt),
+              p_pace_label: pace || "—",
+              p_front_config: frontConfig,
+              p_sort_order: 40
+            },
+            { accessToken: admTok && admTok.access_token ? admTok.access_token : "" }
+          );
           if (Array.isArray(data)) data = data[0];
           if (!data || !data.ok) {
+            const fail = goeloLastRpcFailure;
+            if (fail && fail.httpStatus === 401) {
+              clearAdminSession();
+              syncNewRouteAdminUi();
+              window.alert("Session expirée ou refusée. Reconnecte-toi en administrateur.");
+              return;
+            }
+            if (data && data.error === "forbidden") {
+              window.alert("Ce compte n’a pas le droit de créer une sortie (administrateur requis côté serveur).");
+              clearAdminSession();
+              syncNewRouteAdminUi();
+              return;
+            }
+            if (data && data.error === "auth_required") {
+              window.alert("Authentification requise. Reconnecte-toi en administrateur.");
+              clearAdminSession();
+              syncNewRouteAdminUi();
+              return;
+            }
             if (data && data.error === "limit_reached") {
               window.alert("Nombre maximum de sorties personnalisées atteint. Contacte l’organisation.");
             } else {
-              const fail = goeloLastRpcFailure;
               const code = fail ? fail.code : 40;
               window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
             }
