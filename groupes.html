@@ -215,7 +215,7 @@
 
     <main class="app-main">
       <header class="groupes-header">
-        <h1>Les groupes</h1>
+        <h1>Les groupes <span class="goelorides-mark"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></span></h1>
         <p class="groupes-lead">Choisis ton niveau, rejoins la route</p>
       </header>
 
@@ -314,7 +314,7 @@
                 Pour les jambes solides. Rythme élevé. Si tu te reconnais ici, tu sais ce qui t’attend.
               </p>
               <p class="groupe-parcours">
-                Parcours annoncés sur les <a href="sorties.html">sorties</a> — suis le calendrier.
+                Parcours annoncés sur les <a href="sorties.html">sorties</a> — consulte les dates prévues.
               </p>
             </div>
           </article>
@@ -344,5 +344,10 @@
       </footer>
     </main>
   </div>
+  <script>
+    window.GOELO_SUPABASE_URL = window.GOELO_SUPABASE_URL || "";
+    window.GOELO_SUPABASE_ANON_KEY = window.GOELO_SUPABASE_ANON_KEY || "";
+  </script>
+  <script src="goelo-auth.js" defer></script>
 </body>
 </html>

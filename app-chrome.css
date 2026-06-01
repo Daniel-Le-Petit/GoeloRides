@@ -6,7 +6,15 @@
   --sq-blue: #0055a4;
 }
 
-.app-logo .app-logo-part--go {
+/* « GoëloRides » dans un titre (h1…) sur fond clair — mêmes couleurs que le logo menu */
+.goelorides-mark {
+  font-family: var(--font-logo, "Outfit", system-ui, sans-serif);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.app-logo .app-logo-part--go,
+.goelorides-mark .app-logo-part--go {
   color: var(--sq-yellow);
   font-weight: 700;
   text-shadow:
@@ -16,7 +24,8 @@
 }
 
 /* « Rides » : logo menu (fond clair) — bleu profond + léger relief */
-.app-logo .app-logo-part--rides {
+.app-logo .app-logo-part--rides,
+.goelorides-mark .app-logo-part--rides {
   margin-left: -0.035em;
   color: #063a7a;
   font-weight: 700;
@@ -407,4 +416,337 @@ body {
 
 .sorties-state-msg a {
   font-weight: 700;
+}
+
+/* —— Compte cycliste (goelo-auth.js) —— */
+.goelo-auth-slot {
+  margin-top: auto;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(21, 101, 168, 0.18);
+  flex-shrink: 0;
+}
+
+.goelo-auth-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.48rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 85, 164, 0.22);
+  background: var(--sq-yellow, #f9d71c);
+  color: var(--sq-blue, #0055a4);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 1px 4px rgba(15, 40, 65, 0.12);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.goelo-auth-trigger:hover {
+  background: #ffdf3a;
+  border-color: rgba(0, 85, 164, 0.35);
+  filter: brightness(1.02);
+}
+
+.goelo-auth-trigger:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--sq-yellow, #f9d71c),
+    0 0 0 4px var(--sq-blue, #0055a4);
+}
+
+.goelo-auth-trigger-icon {
+  display: flex;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+.goelo-auth-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goelo-auth-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.goelo-auth-slot--hero {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.goelo-auth-trigger--hero {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  min-height: 3rem;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
+  gap: 0;
+  background: var(--sq-yellow, #f9d71c);
+  border: 2px solid rgba(0, 85, 164, 0.35);
+  color: var(--sq-blue, #0055a4);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
+}
+
+.goelo-auth-trigger--hero:hover {
+  background: #ffdf3a;
+  border-color: rgba(0, 85, 164, 0.5);
+  color: var(--sq-blue, #0055a4);
+  filter: brightness(1.02);
+}
+
+.goelo-auth-trigger--hero:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.85),
+    0 0 0 4px var(--sq-blue, #0055a4),
+    0 2px 14px rgba(0, 0, 0, 0.28);
+}
+
+.goelo-auth-trigger-icon--head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.goelo-auth-head-svg {
+  width: 1.65rem;
+  height: 1.65rem;
+  display: block;
+}
+
+html.goelo-auth-modal-open {
+  overflow: hidden;
+}
+
+.goelo-auth-modal[hidden] {
+  display: none !important;
+}
+
+.goelo-auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top, 0px)) max(0.75rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+}
+
+.goelo-auth-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.goelo-auth-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 22rem;
+  max-height: min(90dvh, 32rem);
+  overflow: auto;
+  padding: 1.35rem 1.25rem 1.25rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  border: 1px solid rgba(21, 101, 168, 0.2);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.35);
+}
+
+.goelo-auth-modal-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--app-text, #15232d);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.goelo-auth-modal-close:hover {
+  background: rgba(15, 23, 42, 0.1);
+}
+
+.goelo-auth-modal-title {
+  margin: 0 2rem 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--app-text, #15232d);
+}
+
+.goelo-auth-modal-lead {
+  margin: 0 0 1rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--app-muted, #5a6b78);
+}
+
+.goelo-auth-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.goelo-auth-tab {
+  flex: 1;
+  padding: 0.42rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(21, 101, 168, 0.22);
+  background: rgba(255, 255, 255, 0.65);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--app-muted, #5a6b78);
+}
+
+.goelo-auth-tab.is-active {
+  background: var(--app-sea, #1565a8);
+  border-color: var(--app-sea, #1565a8);
+  color: #fff;
+}
+
+.goelo-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.goelo-auth-form[hidden] {
+  display: none !important;
+}
+
+.goelo-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--app-text, #15232d);
+}
+
+.goelo-auth-field input {
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(21, 101, 168, 0.25);
+  font-family: inherit;
+  font-size: 0.9rem;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.goelo-auth-field input:focus {
+  outline: 2px solid rgba(21, 101, 168, 0.35);
+  outline-offset: 1px;
+}
+
+.goelo-auth-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--app-muted, #5a6b78);
+  line-height: 1.45;
+}
+
+.goelo-auth-error {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.goelo-auth-submit {
+  margin-top: 0.25rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 85, 164, 0.22);
+  background: var(--sq-yellow, #f9d71c);
+  color: var(--sq-blue, #0055a4);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(15, 40, 65, 0.12);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.goelo-auth-submit:hover {
+  background: #ffdf3a;
+  border-color: rgba(0, 85, 164, 0.35);
+  filter: brightness(1.02);
+}
+
+.goelo-auth-submit:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px var(--sq-blue, #0055a4),
+    0 2px 10px rgba(15, 40, 65, 0.12);
+}
+
+.goelo-auth-submit--ghost {
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--app-text, #15232d);
+  box-shadow: none;
+}
+
+.goelo-auth-submit--ghost:hover {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.goelo-auth-logged-line {
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--app-text, #15232d);
+  word-break: break-word;
+}
+
+@media (max-width: 1024px) {
+  .app-sidebar .goelo-auth-slot {
+    width: 100%;
+    padding-top: 0.45rem;
+    margin-top: 0.15rem;
+    border-top: 1px solid rgba(21, 101, 168, 0.22);
+    position: relative;
+    z-index: 1;
+  }
+
+  .app-sidebar .goelo-auth-trigger {
+    padding: 0.42rem 0.5rem;
+    font-size: clamp(0.68rem, 2.8vw, 0.78rem);
+    border-radius: 12px;
+    min-height: 2.35rem;
+    border-width: 1.5px;
+    border-color: rgba(21, 101, 168, 0.38);
+  }
 }

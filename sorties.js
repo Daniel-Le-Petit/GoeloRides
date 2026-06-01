@@ -850,12 +850,9 @@
       }
     });
 
-    const calBtn = document.getElementById("sorties-cal-btn");
-    if (calBtn) {
-      calBtn.addEventListener("click", function () {
-        window.alert("Calendrier : à brancher plus tard (export .ics ou vue mensuelle).");
-      });
-    }
+    window.addEventListener("goelo-user-session-updated", function () {
+      refreshRegState().then(redraw);
+    });
 
     redraw();
   });

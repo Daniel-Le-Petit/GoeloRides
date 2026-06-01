@@ -52,7 +52,7 @@ La logique carte / inscriptions / « Nouvelle sortie » est dans **`parcours.js`
 
 **Attention :** si l’URL est renseignée mais la clé anon est vide (fichier versionné sans secret), le site affiche un **avertissement dans la console** et enregistre **uniquement en local** — la table `signups` dans Supabase restera vide tant que la clé complète n’est pas collée en local ou au déploiement.
 
-**Déploiement :** envoie aussi **`parcours.js`**, **`sortie.js`**, **`sorties.js`** et **`parcours.css`** avec `index.html`, `sorties.html` et `sortie.html` (même dossier à la racine du site).
+**Déploiement :** envoie aussi **`parcours.js`**, **`sortie.js`**, **`sorties.js`**, **`goelo-auth.js`** et **`parcours.css`** avec `index.html`, `sorties.html`, `sortie.html` et `groupes.html` (même dossier à la racine du site).
 
 **Si tu vois `401` / `Invalid API key` :**
 
@@ -113,3 +113,15 @@ En cas d’échec d’enregistrement (Supabase ou navigateur), une boîte de dia
 | **41** | Échec d’écriture dans **localStorage** du navigateur (quota, mode privé strict, etc.). |
 
 Les scripts concernés : **`parcours.js`**, **`sortie.js`** (et la couche RPC alignée dans **`sorties.js`** pour les lectures).
+
+## 9. Compte cycliste (`goelo-auth.js`)
+
+Toutes les pages avec la barre latérale chargent **`goelo-auth.js`** : un bouton **Se connecter** (icône + libellé) sous le menu ouvre une fenêtre **Connexion** (e-mail + mot de passe) ou **Inscription** (pseudo + e-mail + mot de passe). Les appels passent par l’**API Auth** Supabase (`/auth/v1/signup`, `/auth/v1/token`). Le pseudo est stocké dans **`user_metadata.pseudo`**. La session (jetons + rafraîchissement) est enregistrée dans **`localStorage`** sous la clé **`goelo_user_auth_v1`** ; l’e-mail est aussi recopié dans **`goeloRides_last_email`** pour pré-remplir les formulaires d’inscription aux sorties.
+
+**Dashboard** : **Authentication → Providers → Email** activé ; autoriser les **inscriptions** si le public doit créer un compte. Si la **confirmation e-mail** est obligatoire, l’utilisateur doit valider le lien reçu avant la première connexion (sinon pas de `access_token` à l’inscription). Sinon la connexion peut renvoyer *Invalid login credentials* même avec le bon mot de passe.
+
+**Connexion refusée** : vérifier dans **Authentication → Users** que l’utilisateur existe, que l’e-mail est confirmé (`email_confirmed_at` renseigné), et que le mot de passe est le bon (sinon **Reset password** depuis le dashboard ou flux « Mot de passe oublié » si tu l’actives).
+
+**Fichiers à déployer** : inclure **`goelo-auth.js`** à la racine avec **`app-chrome.css`**. Sur **`groupes.html`**, **`sortie.html`** et **`sorties.html`**, renseigner les mêmes `window.GOELO_SUPABASE_*` que sur l’accueil si tu veux le compte actif partout.
+
+**Note** : la connexion standard Supabase utilise **l’e-mail**, pas le pseudo seul (le pseudo sert au affichage et aux métadonnées). Pour un login « pseudo uniquement », il faudrait une table d’alias dédiée (comme pour les admins).
