@@ -130,10 +130,44 @@
     .groupe-card--bleu { border-left-color: #2563eb; }
     .groupe-card--rouge { border-left-color: #dc2626; }
     .groupe-card h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
       font-size: 1.15rem;
       font-weight: 800;
       letter-spacing: -0.02em;
       margin: 0 0 0.55rem;
+    }
+
+    /* Pastille niveau devant le titre (blanc = rond blanc lisible sur carte claire). */
+    .groupe-card h2::before {
+      content: "";
+      width: 0.72rem;
+      height: 0.72rem;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .groupe-card--blanc h2::before {
+      background: #ffffff;
+      box-shadow:
+        0 0 0 2px #cbd5e1,
+        0 1px 3px rgba(15, 23, 42, 0.12);
+    }
+
+    .groupe-card--vert h2::before {
+      background: #22c55e;
+      box-shadow: 0 0 0 1px rgba(21, 101, 84, 0.25);
+    }
+
+    .groupe-card--bleu h2::before {
+      background: #2563eb;
+      box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.35);
+    }
+
+    .groupe-card--rouge h2::before {
+      background: #dc2626;
+      box-shadow: 0 0 0 1px rgba(127, 29, 29, 0.35);
     }
     .groupe-stats {
       display: flex;

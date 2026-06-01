@@ -636,9 +636,80 @@
     }
 
     @media (max-width: 640px) {
+      /*
+       * Détail sortie (dl / dt / dd) : en 1 colonne dt puis dd = très haut sur téléphone.
+       * On garde 2 colonnes étroites (libellé | valeur) + paddings réduits.
+       */
       .sortie-fact {
-        grid-template-columns: 1fr;
-        gap: 0.2rem;
+        grid-template-columns: minmax(4.75rem, auto) 1fr;
+        gap: 0.2rem 0.55rem;
+        padding: 0.4rem 0.75rem;
+        align-items: start;
+      }
+      .sortie-fact dt {
+        font-size: 0.64rem;
+        line-height: 1.25;
+        padding-top: 0.12rem;
+      }
+      .sortie-fact dd {
+        font-size: 0.84rem;
+        line-height: 1.32;
+      }
+      .sortie-detail-head {
+        padding: 0.75rem 0.85rem 0.65rem;
+      }
+      .sortie-block {
+        padding: 0.75rem 0.85rem 0.85rem;
+      }
+      .sortie-block-title {
+        margin-bottom: 0.4rem;
+        font-size: 0.78rem;
+      }
+      .sortie-prose {
+        font-size: 0.86rem;
+        margin-bottom: 0.5rem;
+      }
+      .sortie-footer-note {
+        padding: 0.65rem 0.85rem 0.85rem;
+        font-size: 0.78rem;
+      }
+      .sortie-map-toolbar {
+        gap: 0.35rem 0.5rem;
+        margin-bottom: 0.35rem;
+      }
+      .sortie-map-options {
+        gap: 0.35rem 0.65rem;
+        font-size: 0.76rem;
+      }
+      .sortie-map-options label {
+        gap: 0.28rem;
+      }
+      .sortie-map-zoom-btns button {
+        width: 1.85rem;
+        height: 1.85rem;
+        font-size: 1.05rem;
+      }
+      .sortie-grade-legend {
+        gap: 0.3rem 0.45rem;
+        padding: 0.3rem 0.45rem;
+        font-size: 0.62rem;
+        margin-bottom: 0.35rem;
+      }
+      .sortie-signup-field {
+        margin-bottom: 0.45rem;
+      }
+      .sortie-signup-label {
+        font-size: 0.72rem;
+        margin-bottom: 0.2rem;
+      }
+      .sortie-signup-field input {
+        padding: 0.4rem 0.5rem;
+        font-size: 16px;
+        min-height: 2.35rem;
+      }
+      .sortie-signup-actions {
+        gap: 0.35rem;
+        margin-top: 0.35rem;
       }
       .app-main { padding: 1rem 0.85rem 2rem; }
     }

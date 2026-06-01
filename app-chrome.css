@@ -24,11 +24,12 @@ body {
 .app-sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: linear-gradient(168deg, #e8f4fc 0%, #d8ecf8 38%, #c9e3f3 100%);
+  /* Bleu mer un peu plus soutenu (moins « lavis » que #e8f4fc). */
+  background: linear-gradient(168deg, #cfe2f2 0%, #b8d4ea 40%, #a3c6e1 100%);
   border-right: 2px solid var(--app-sea);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.65),
-    6px 0 28px rgba(21, 101, 168, 0.14);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38),
+    6px 0 28px rgba(21, 101, 168, 0.18);
   display: flex;
   flex-direction: column;
   padding: 1.1rem 0.85rem 1rem;
@@ -45,8 +46,8 @@ body {
     border-right: none;
     border-bottom: 2px solid var(--app-sea);
     box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.65),
-      0 6px 28px rgba(21, 101, 168, 0.14);
+      inset 0 0 0 1px rgba(255, 255, 255, 0.38),
+      0 6px 28px rgba(21, 101, 168, 0.18);
   }
 
   /* Menu : une ligne de liens défilante (lisible au pouce, sans wrap illisible) */
@@ -87,12 +88,12 @@ body {
     align-items: center;
     font-size: 0.84rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.42);
     touch-action: manipulation;
   }
 
   .app-shell .app-nav a.is-active {
-    background: #e8f2fa;
+    background: #d4e6f2;
     color: var(--app-sea);
   }
 }
