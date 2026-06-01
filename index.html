@@ -312,10 +312,13 @@
       max-width: 38em;
       text-wrap: pretty;
       padding: 0.85rem 1rem;
-      background: rgba(15, 23, 42, 0.5);
+      /* Cadre transparent type vitre sur la photo de fond */
+      background: rgba(15, 23, 42, 0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+      border: none;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75), 0 0 1px rgba(0, 0, 0, 0.85);
     }
 
