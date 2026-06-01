@@ -437,6 +437,8 @@
     } else {
       sidebars.forEach(function (aside) {
         if (aside.querySelector(".goelo-auth-slot")) return;
+        /* Pages listées (ex. sorties, groupes) : pas de bouton « Se connecter » dans la barre. */
+        if (aside.hasAttribute("data-goelo-auth-no-sidebar")) return;
         aside.insertAdjacentHTML("beforeend", btnSlotSidebar);
       });
     }
