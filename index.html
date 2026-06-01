@@ -2414,7 +2414,7 @@
       transform: translateY(-1px);
     }
 
-    /* CTA hero sorties & groupes : texte blanc, fond vitré transparent */
+    /* CTA hero sorties & groupes : texte jaune Saint-Quay, fond vitré */
     .home-landing-inner .btn-primary.home-hero-sorties,
     .home-landing-inner .btn-primary.home-hero-groupes {
       display: inline-flex;
@@ -2423,7 +2423,7 @@
       font-family: "Lato", var(--font-sans);
       font-weight: 700;
       font-size: 1rem;
-      color: #f8fafc;
+      color: var(--sq-yellow);
       background: rgba(15, 23, 42, 0.35);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -2433,15 +2433,18 @@
       box-shadow: 0 2px 16px rgba(0, 0, 0, 0.22);
       text-decoration: none;
       cursor: pointer;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75), 0 0 1px rgba(0, 0, 0, 0.85);
+      text-shadow:
+        0 1px 0 rgba(120, 80, 0, 0.5),
+        0 2px 10px rgba(0, 0, 0, 0.75),
+        0 0 1px rgba(0, 0, 0, 0.9);
       transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
     }
 
     .home-landing-inner .btn-primary.home-hero-sorties:hover,
     .home-landing-inner .btn-primary.home-hero-groupes:hover {
-      color: #ffffff;
+      color: #ffea72;
       background: rgba(30, 41, 59, 0.48);
-      border-color: rgba(186, 230, 253, 0.55);
+      border-color: rgba(249, 215, 28, 0.55);
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.32);
       transform: translateY(-2px);
     }
