@@ -10,6 +10,8 @@
 
   var STORAGE_KEY = "goelo_user_auth_v1";
   var LAST_EMAIL_KEY = "goeloRides_last_email";
+  /** Évite de rappeler GET /auth/v1/user en boucle tant que le jeton est le même. */
+  var lastPseudoUserFetchToken = null;
 
   /** Icône « tête » dessinée (traits simples). */
   var GOELO_AUTH_HEAD_SVG =
@@ -73,6 +75,7 @@
     } catch (e) {
       void e;
     }
+    lastPseudoUserFetchToken = null;
   }
 
   function parseJwtPayload(token) {
@@ -119,6 +122,8 @@
     return String(
       m.pseudo ||
         m.preferred_username ||
+        m.username ||
+        m.user_name ||
         m.nickname ||
         m.name ||
         m.full_name ||
@@ -218,7 +223,8 @@
     if (String(s.pseudo || "").trim()) return;
     var pl = parseJwtPayload(s.access_token);
     if (!pl) return;
-    var p = extractPseudoFromMetadata(pl.user_metadata);
+    var p =
+      extractPseudoFromMetadata(pl.user_metadata) || extractPseudoFromMetadata(pl.app_metadata);
     if (!p) return;
     s.pseudo = p;
     writeSession(s);
@@ -226,6 +232,39 @@
       window.dispatchEvent(new CustomEvent("goelo-user-session-updated"));
     } catch (e) {
       void e;
+    }
+  }
+
+  /** Récupère user_metadata complet (pseudo) quand le JWT seul ne l’expose pas. */
+  async function refreshSessionPseudoFromUserEndpoint() {
+    var s = readSession();
+    if (!s || !s.access_token || String(s.pseudo || "").trim()) return;
+    if (lastPseudoUserFetchToken === s.access_token) return;
+    lastPseudoUserFetchToken = s.access_token;
+    var c = getSupabaseConfig();
+    if (!isConfigured()) return;
+    var base = c.url.replace(/\/?$/, "");
+    try {
+      var res = await fetch(base + "/auth/v1/user", {
+        method: "GET",
+        headers: {
+          apikey: c.anonKey,
+          Authorization: "Bearer " + s.access_token
+        }
+      });
+      if (!res.ok) return;
+      var user = await res.json();
+      var p = pseudoFromSupabaseUser(user);
+      if (!p) return;
+      s.pseudo = p;
+      writeSession(s);
+      try {
+        window.dispatchEvent(new CustomEvent("goelo-user-session-updated"));
+      } catch (e) {
+        void e;
+      }
+    } catch (err) {
+      void err;
     }
   }
 
@@ -424,16 +463,12 @@
     return "Connecté";
   }
 
-  /** Prénom / pseudo pour le message d’accueil (vide si pas de session). */
+  /** Pseudo pour le message d’accueil (jamais la partie locale de l’e-mail). */
   function getConnectedGreetingName() {
     enrichSessionPseudoFromJwt();
     var s = readSession();
     if (!s || !s.access_token) return "";
     if (s.pseudo) return s.pseudo.length > 22 ? s.pseudo.slice(0, 21) + "…" : s.pseudo;
-    if (s.email) {
-      var part = s.email.split("@")[0];
-      return part.length > 22 ? part.slice(0, 21) + "…" : part;
-    }
     return "";
   }
 
@@ -456,6 +491,12 @@
       if (nm) {
         greet.textContent = "Bonjour " + nm;
         greet.hidden = false;
+      } else if (inSession) {
+        greet.textContent = "Bonjour !";
+        greet.hidden = false;
+        void refreshSessionPseudoFromUserEndpoint().then(function () {
+          if (getConnectedGreetingName()) applyAuthTriggerLabel();
+        });
       } else {
         greet.textContent = "";
         greet.hidden = true;
