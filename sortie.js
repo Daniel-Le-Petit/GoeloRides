@@ -4,7 +4,7 @@
   const ROUTES_BUILTIN = [
     {
       id: "falaises",
-      thumbSrc: "assets/groupe-blanc-cyclistes.png",
+      thumbSrc: "assets/groupe-blanc-cyclistes.jpg",
       file: "La Route des Falaises.gpx",
       color: "#e8e8e8",
       casingColor: "#4b5563",
@@ -1471,9 +1471,13 @@
 
     if (heroWrap) {
       const thumb = thumbForRoute(route);
+      const lc = String(route.levelClass || "").toLowerCase();
+      const thumbMod = lc === "level-vert" ? " sortie-hero-thumb--vert" : "";
       heroWrap.innerHTML =
         '<div class="sortie-hero-grid">' +
-        '<div class="sortie-hero-thumb"><img src="' +
+        '<div class="sortie-hero-thumb' +
+        thumbMod +
+        '"><img src="' +
         escapeAttr(thumb) +
         '" alt="" loading="lazy" decoding="async"></div>' +
         '<div class="sortie-hero-table">' +

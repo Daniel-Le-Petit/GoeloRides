@@ -83,7 +83,8 @@
     }
     .groupe-card-visual {
       position: relative;
-      height: clamp(148px, 28vw, 200px);
+      /* Bandeau un peu plus haut : sinon object-fit:cover ne garde qu’une fine lamelle au milieu du corps. */
+      height: clamp(168px, 32vw, 230px);
       background: #e2e8f0;
     }
     .groupe-card-visual img {
@@ -93,6 +94,11 @@
       object-position: center 42%;
       display: block;
     }
+
+    .groupe-card--vert .groupe-card-visual img {
+      object-position: center top;
+    }
+
     .groupe-card-body {
       padding: 1.1rem 1.2rem 1.2rem;
     }
@@ -195,6 +201,17 @@
       color: var(--app-text);
     }
     .groupes-footnote strong { color: var(--app-sea-hover); }
+    .groupes-photo-credit {
+      margin: 0.65rem 0 0;
+      max-width: 44rem;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: var(--app-muted);
+    }
+    .groupes-photo-credit a {
+      color: var(--app-sea);
+      font-weight: 600;
+    }
     @media (max-width: 640px) {
       .app-main { padding: 1rem 0.85rem 2rem; }
       .groupe-card-body { padding: 0.95rem 1rem 1.05rem; }
@@ -223,7 +240,7 @@
         <li>
           <article class="groupe-card groupe-card--blanc" id="groupe-blanc">
             <div class="groupe-card-visual">
-              <img src="assets/groupe-blanc-cyclistes.png" alt="Deux cyclistes sur une promenade en bord de mer, baie et bateaux" width="537" height="421" loading="lazy" decoding="async">
+              <img src="assets/groupe-blanc-cyclistes.jpg" alt="Quatre cyclistes en tenue sur route au bord de la mer, journée ensoleillée" width="336" height="178" loading="lazy" decoding="async">
             </div>
             <div class="groupe-card-body">
               <h2>Groupe Blanc</h2>
@@ -323,6 +340,9 @@
 
       <p class="groupes-footnote">
         <strong>Pas sûr de ton groupe ?</strong> Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.
+      </p>
+      <p class="groupes-photo-credit">
+        Photo « groupe Blanc » : cliché fourni pour le site Goëlo Rides (cyclistes en balade, mer en arrière-plan).
       </p>
 
       <footer class="site-footer">

@@ -9,7 +9,7 @@
   const ROUTES_BUILTIN = [
     {
       id: "falaises",
-      thumbSrc: "assets/groupe-blanc-cyclistes.png",
+      thumbSrc: "assets/groupe-blanc-cyclistes.jpg",
       file: "La Route des Falaises.gpx",
       color: "#e8e8e8",
       casingColor: "#4b5563",
