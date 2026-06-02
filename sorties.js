@@ -94,18 +94,28 @@
     }
   ];
 
-  /** Parcours intégrés à masquer : `window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];` avant ce script (voir SUPABASE.md). */
-  function builtinsVisibleOnSite() {
-    var skip =
+  var serverHiddenBuiltinIds = [];
+
+  function mergeHiddenBuiltinIdsSet() {
+    const hide = {};
+    serverHiddenBuiltinIds.forEach(function (id) {
+      hide[String(id).trim()] = true;
+    });
+    if (
       typeof window !== "undefined" &&
       window.GOELO_SKIP_BUILTIN_IDS &&
       Array.isArray(window.GOELO_SKIP_BUILTIN_IDS)
-        ? window.GOELO_SKIP_BUILTIN_IDS
-        : [];
-    const hide = {};
-    skip.forEach(function (id) {
-      hide[String(id)] = true;
-    });
+    ) {
+      window.GOELO_SKIP_BUILTIN_IDS.forEach(function (id) {
+        hide[String(id).trim()] = true;
+      });
+    }
+    return hide;
+  }
+
+  /** Parcours intégrés affichés (serveur goelo_hidden_builtin_ids + option window). */
+  function builtinsVisibleOnSite() {
+    const hide = mergeHiddenBuiltinIdsSet();
     return ROUTES_BUILTIN.filter(function (r) {
       return !hide[String(r.id)];
     });
@@ -872,6 +882,14 @@
     }
 
     async function loadAllRoutes() {
+      if (isSupabaseEnabled()) {
+        const hid = await supabaseRpc("goelo_hidden_builtin_ids", {});
+        serverHiddenBuiltinIds = Array.isArray(hid)
+          ? hid.map(function (x) { return String(x).trim(); }).filter(Boolean)
+          : [];
+      } else {
+        serverHiddenBuiltinIds = [];
+      }
       const extra = await fetchCustomRoutesFromSupabase();
       const merged = builtinsVisibleOnSite().concat(extra);
       const results = await Promise.all(

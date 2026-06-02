@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
   <meta property="og:title" content="GoëloRides · Sorties vélo à Saint-Quay-Portrieux" />
-  <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du « Kasino » de Saint-Quay. Été 2026." />
+  <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du « Kasino » de Saint-Quay — été 2026." />
   <meta property="og:image" content="https://goelorides.onrender.com/assets/hero-accueil.png" />
   <meta property="og:url" content="https://goelorides.onrender.com" />
   <meta property="og:type" content="website" />
@@ -295,15 +295,19 @@
     .home-landing-lead-icon {
       display: inline-flex;
       flex-shrink: 0;
-      color: var(--sq-blue);
+      align-items: center;
+      justify-content: center;
+      /* Icône lisible sur le fond sombre du chapô (éviter le bleu foncé seul). */
+      color: #f1f5f9;
       filter:
-        drop-shadow(0 0 5px rgba(186, 230, 253, 0.55))
-        drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+        drop-shadow(0 0 1px rgba(15, 23, 42, 0.95))
+        drop-shadow(0 0 6px rgba(186, 230, 253, 0.45))
+        drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75));
     }
 
     .home-landing-lead-icon svg {
-      width: 1.45em;
-      height: 1.45em;
+      width: 1.62em;
+      height: 1.62em;
       display: block;
     }
 
@@ -1879,6 +1883,10 @@
       flex-wrap: wrap;
       gap: 0.5rem;
       justify-content: flex-end;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-wizard-nav button[hidden] {
+      display: none !important;
     }
 
     .new-route-main {
@@ -3913,16 +3921,16 @@
         <span class="home-landing-lead-tail">
           <span class="home-landing-lead-icon" role="img" aria-label="Cycliste au départ">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 26" fill="none" aria-hidden="true">
-              <path stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" d="M5 23V7M5 7l9-2v8.5L5 13" />
-              <path fill="currentColor" d="M6.5 7h2.2v2.2H6.5V7zm2.2 0h2.2v2.2H8.7V7zm2.2 0h2.2v2.2h-2.2V7zm-2.2 2.2h2.2v2.2H8.7V9.2zm2.2 0h2.2v2.2h-2.2V9.2z" opacity="0.45" />
-              <path fill="currentColor" d="M7.2 8.1h1.1v1.1H7.2V8.1zm2.2 0h1.1v1.1H9.4V8.1zm2.2 0h1.1v1.1h-1.1V8.1zm-1.1 2.2h1.1v1.1h-1.1v-1.1z" opacity="0.9" />
-              <circle cx="22.5" cy="8" r="2.2" fill="currentColor" />
-              <path stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" d="M19.5 14l2-3.5h4.5l2 4M16.5 20l3.5-6 3 1 2 5M22.5 14l3 6M27.5 14l2.5 6" />
-              <circle cx="17.5" cy="20.5" r="2.4" stroke="currentColor" stroke-width="1.25" />
-              <circle cx="29.5" cy="20.5" r="2.4" stroke="currentColor" stroke-width="1.25" />
+              <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M5 23V7M5 7l9-2v8.5L5 13" />
+              <path fill="currentColor" d="M6.5 7h2.2v2.2H6.5V7zm2.2 0h2.2v2.2H8.7V7zm2.2 0h2.2v2.2h-2.2V7zm-2.2 2.2h2.2v2.2H8.7V9.2zm2.2 0h2.2v2.2h-2.2V9.2z" opacity="0.5" />
+              <path fill="currentColor" d="M7.2 8.1h1.1v1.1H7.2V8.1zm2.2 0h1.1v1.1H9.4V8.1zm2.2 0h1.1v1.1h-1.1V8.1zm-1.1 2.2h1.1v1.1h-1.1v-1.1z" opacity="0.95" />
+              <circle cx="22.5" cy="8" r="2.35" fill="currentColor" />
+              <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M19.5 14l2-3.5h4.5l2 4M16.5 20l3.5-6 3 1 2 5M22.5 14l3 6M27.5 14l2.5 6" />
+              <circle cx="17.5" cy="20.5" r="2.45" stroke="currentColor" stroke-width="1.5" />
+              <circle cx="29.5" cy="20.5" r="2.45" stroke="currentColor" stroke-width="1.5" />
             </svg>
           </span>
-          <span>Départ parking du <span class="home-kasino-name">«&nbsp;Kasino&nbsp;»</span> de Saint-Quay.</span>
+          <span>Départ parking du <span class="home-kasino-name">«&nbsp;Kasino&nbsp;»</span> de Saint-Quay</span>
         </span>
       </p>
       <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie : partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
@@ -4043,7 +4051,7 @@
         </div>
         </div>
         <div id="new-route-panel-create" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-create" hidden data-tabpanel="create">
-          <p class="signup-hint new-route-create-tab-intro" id="new-route-create-tab-intro" style="margin:0 0 0.65rem;text-align:left;">Formulaire en 5 étapes — <strong>Suivant</strong> / <strong>Précédent</strong>, puis validation.</p>
+          <p class="signup-hint new-route-create-tab-intro" id="new-route-create-tab-intro" style="margin:0 0 0.65rem;text-align:left;">Formulaire en 5 étapes — <strong>Suivant</strong> / <strong>Précédent</strong> ; le bouton <strong>Créer la sortie</strong> n’apparaît qu’à l’étape <strong>Confirmation</strong> (étape 5).</p>
       <div id="new-route-modal-body" class="new-route-modal-body is-locked">
       <div class="new-route-modal-grid">
         <aside class="new-route-steps" aria-label="Étapes de création">
@@ -4272,7 +4280,6 @@
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
     /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
-    window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];
   </script>
   <script src="parcours.js" defer></script>
   <script src="goelo-auth.js" defer></script>

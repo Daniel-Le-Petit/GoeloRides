@@ -42,15 +42,27 @@ Puis exécuter **si tu veux supprimer une sortie personnalisée** depuis le site
 
 (Crée la RPC `route_delete(p_route_id text)` : même garde admin, `is_active = false` sur les routes `route_kind = 'custom'` uniquement.)
 
-**Parcours intégrés (`falaises`, `brehec`, `boucle`)** : ils sont définis dans le JavaScript (`ROUTES_BUILTIN`), pas comme `custom` en base. La liste **« Corriger une sortie »** de la modale n’affiche que les sorties **`route_kind = 'custom'`**, et **`route_delete`** ne peut désactiver que celles-là. Tu ne peux donc pas retirer une sortie intégrée via la même interface. Pour **la masquer sur le site** sans retirer le code du tableau `ROUTES_BUILTIN`, définis **avant** les scripts `sorties.js` / `sortie.js` (et l’accueil qui charge `parcours.js`) :
+Puis exécuter **pour masquer aussi les parcours intégrés** (`falaises`, `brehec`, `boucle`) depuis la même modale **« Gérer les sorties »** / liste **« Corriger une sortie »** :
+
+`supabase/migrations/20250611140000_goelo_hidden_builtins.sql`
+
+- Table **`goelo_site_flags`** (ligne unique `id = 1`, colonne `hidden_builtin_route_ids text[]`).
+- RPC **`goelo_hidden_builtin_ids()`** : renvoie le JSON des ids masqués ; **`GRANT EXECUTE … TO anon`** pour que le site (sans session admin) filtre accueil, liste et fiches.
+- **`route_delete`** est **remplacée** : si `p_route_id` est un des trois ids intégrés, l’id est ajouté au tableau masqué (retour `kind: 'builtin_hidden'`) ; sinon comportement inchangé pour les routes **`custom`** (`is_active = false`, `kind: 'custom_disabled'`).
+
+**Ordre obligatoire** : appliquer **`20250610120000_route_delete.sql`** **avant** **`20250611140000_goelo_hidden_builtins.sql`** (la seconde migration redéfinit `route_delete`).
+
+**Parcours intégrés** : ils restent définis dans le JavaScript (`ROUTES_BUILTIN`). La « suppression » côté admin pour ces ids est un **masquage serveur**, pas une ligne dans `routes`. Sans la migration `20250611140000`, l’appel RPC `goelo_hidden_builtin_ids` renverra 404 : le site ignore alors la liste serveur (tous les intégrés restent visibles sauf filtre local ci‑dessous).
+
+**Option locale (sans base)** : tu peux encore définir **avant** `parcours.js` / `sorties.js` / `sortie.js` :
 
 ```html
 <script>
-  window.GOELO_SKIP_BUILTIN_IDS = ["falaises"]; /* ids possibles : falaises, brehec, boucle */
+  window.GOELO_SKIP_BUILTIN_IDS = ["falaises"]; /* falaises, brehec, boucle */
 </script>
 ```
 
-(Répète la même ligne sur **`index.html`**, **`sorties.html`**, **`sortie.html`** si ces pages doivent toutes refléter le filtre.)
+Ce filtre **s’ajoute** à la liste masquée renvoyée par Supabase (utile en dev ou si la migration n’est pas encore appliquée).
 
 ## 2. Clé anon côté site
 

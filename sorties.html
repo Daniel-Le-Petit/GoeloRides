@@ -940,7 +940,7 @@
         </div>
         </div>
         <div id="new-route-panel-create" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-create" hidden data-tabpanel="create">
-          <p class="signup-hint new-route-create-tab-intro" id="new-route-create-tab-intro" style="margin:0 0 0.65rem;text-align:left;">Formulaire en 5 étapes — <strong>Suivant</strong> / <strong>Précédent</strong>, puis validation.</p>
+          <p class="signup-hint new-route-create-tab-intro" id="new-route-create-tab-intro" style="margin:0 0 0.65rem;text-align:left;">Formulaire en 5 étapes — <strong>Suivant</strong> / <strong>Précédent</strong> ; le bouton <strong>Créer la sortie</strong> n’apparaît qu’à l’étape <strong>Confirmation</strong> (étape 5).</p>
       <div id="new-route-modal-body" class="new-route-modal-body is-locked">
       <div class="new-route-modal-grid">
         <aside class="new-route-steps" aria-label="Étapes de création">
@@ -1169,8 +1169,6 @@
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
     /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
-    /* Parcours intégré masqué sur le site (non supprimable via route_delete). Voir SUPABASE.md §1. */
-    window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];
   </script>
   <script src="sorties.js" defer></script>
   <script src="parcours.js" defer></script>

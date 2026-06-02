@@ -581,6 +581,11 @@ body {
       justify-content: flex-end;
     }
 
+    /* .btn-primary impose display:inline-block : sans !important, [hidden] peut ne plus masquer Précédent / Suivant / Créer. */
+    #new-route-modal.new-route-modal--goelo-app #new-route-wizard-nav button[hidden] {
+      display: none !important;
+    }
+
     .new-route-main {
       padding: 1rem 1.35rem 1.4rem;
     }

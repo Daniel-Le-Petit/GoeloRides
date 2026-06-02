@@ -4,6 +4,8 @@
 :root {
   --sq-yellow: #f9d71c;
   --sq-blue: #0055a4;
+  /* Même largeur de colonne que `.site-footer-inner` (pages détail sortie, etc.) */
+  --site-content-col-max: 36rem;
 }
 
 /* « GoëloRides » dans un titre (h1…) sur fond clair — mêmes couleurs que le logo menu */
@@ -269,7 +271,7 @@ body {
 }
 
 .site-footer-inner {
-  max-width: 36rem;
+  max-width: var(--site-content-col-max, 36rem);
   margin: 0 auto;
   padding: 1.65rem max(1.15rem, env(safe-area-inset-left, 0px)) 2.1rem max(1.15rem, env(safe-area-inset-right, 0px));
   padding-bottom: max(2.1rem, env(safe-area-inset-bottom, 0px));

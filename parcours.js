@@ -325,6 +325,16 @@
         }
       }
 
+      async function fetchHiddenBuiltinIdsFromSupabase() {
+        if (!isSupabaseEnabled()) return [];
+        const raw = await supabaseRpc("goelo_hidden_builtin_ids", {});
+        if (raw == null) return [];
+        if (Array.isArray(raw)) {
+          return raw.map(function (x) { return String(x).trim(); }).filter(Boolean);
+        }
+        return [];
+      }
+
       async function refreshSupabaseNames() {
         if (!isSupabaseEnabled()) return;
         const data = await supabaseRpc("signup_list_all_names", {});
@@ -442,21 +452,36 @@
         }
       ];
 
-      /** Parcours intégrés à masquer : `window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];` avant parcours (voir SUPABASE.md). */
-      function builtinsVisibleOnSite() {
-        var skip =
+      var serverHiddenBuiltinIds = [];
+
+      function mergeHiddenBuiltinIdsSet() {
+        const hide = {};
+        serverHiddenBuiltinIds.forEach(function (id) {
+          hide[String(id).trim()] = true;
+        });
+        if (
           typeof window !== "undefined" &&
           window.GOELO_SKIP_BUILTIN_IDS &&
           Array.isArray(window.GOELO_SKIP_BUILTIN_IDS)
-            ? window.GOELO_SKIP_BUILTIN_IDS
-            : [];
-        const hide = {};
-        skip.forEach(function (id) {
-          hide[String(id)] = true;
-        });
+        ) {
+          window.GOELO_SKIP_BUILTIN_IDS.forEach(function (id) {
+            hide[String(id).trim()] = true;
+          });
+        }
+        return hide;
+      }
+
+      /** Parcours intégrés affichés sur le site (hors liste serveur + option window.GOELO_SKIP_BUILTIN_IDS). */
+      function builtinsVisibleOnSite() {
+        const hide = mergeHiddenBuiltinIdsSet();
         return ROUTES_BUILTIN.filter(function (r) {
           return !hide[String(r.id)];
         });
+      }
+
+      function routeVisibleOnPublicSite(route) {
+        if (!route || !route.id) return false;
+        return !mergeHiddenBuiltinIdsSet()[String(route.id)];
       }
 
       function dbRowToRoute(row) {
@@ -1224,6 +1249,11 @@
         form.reset();
         const timeIn = document.getElementById("new-route-time");
         if (timeIn) timeIn.value = "08:30";
+        /* Après reset(), certains navigateurs réappliquent l’état initial des boutons du formulaire :
+           on resynchronise l’assistant (ex. masquer « Créer la sortie » hors étape 5). */
+        if (typeof modal.__goeloSetWizardStep === "function") {
+          modal.__goeloSetWizardStep(1);
+        }
         modal.hidden = false;
         modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
@@ -1296,6 +1326,13 @@
           panel.hidden = !on;
         });
         if (t === "create") {
+          if (typeof modal.__goeloSetWizardStep === "function") {
+            const s =
+              typeof modal.__goeloWizardStep === "number" && modal.__goeloWizardStep >= 1 && modal.__goeloWizardStep <= 5
+                ? modal.__goeloWizardStep
+                : 1;
+            modal.__goeloSetWizardStep(s);
+          }
           setTimeout(function () {
             if (newRoutePreviewMapInst && typeof newRoutePreviewMapInst.invalidateSize === "function") {
               try {
@@ -1575,6 +1612,16 @@
           opt0.value = "";
           opt0.textContent = "— Nouvelle sortie —";
           sel.appendChild(opt0);
+          const hide = mergeHiddenBuiltinIdsSet();
+          ROUTES_BUILTIN.forEach(function (r) {
+            if (!r || !r.id) return;
+            const o = document.createElement("option");
+            o.value = r.id;
+            const masked = !!hide[String(r.id)];
+            o.textContent =
+              (r.track || r.id) + " · " + r.id + (masked ? " (masquée)" : "") + " — parcours intégré";
+            sel.appendChild(o);
+          });
           loadedRoutesCache.forEach(function (r) {
             if (!r || r.routeKind !== "custom" || !r.id) return;
             const o = document.createElement("option");
@@ -1758,6 +1805,7 @@
           if (prevBtn) prevBtn.hidden = wizardStep <= 1;
           if (nextBtn) nextBtn.hidden = wizardStep >= 5;
           if (submitBtn) submitBtn.hidden = wizardStep < 5;
+          modal.__goeloWizardStep = wizardStep;
           if (wizardStep === 5) fillRecap();
           setTimeout(function () {
             if (newRoutePreviewMapInst && typeof newRoutePreviewMapInst.invalidateSize === "function") {
@@ -1955,13 +2003,16 @@
             });
             const label = route && route.track ? String(route.track) : id;
             const safe = label.replace(/"/g, "″");
-            if (
-              !window.confirm(
-                "Supprimer la sortie « " +
-                  safe +
-                  " » ?\n\nElle disparaîtra du site (désactivation en base). Les inscriptions existantes restent enregistrées mais la sortie ne sera plus proposée."
-              )
-            ) {
+            const builtinIds = { falaises: true, brehec: true, boucle: true };
+            const isBuiltin = !!builtinIds[id];
+            const confirmMsg = isBuiltin
+              ? "Masquer la sortie « " +
+                safe +
+                " » sur le site ?\n\nC’est un parcours intégré : il sera retiré des listes publiques (réglage en base). Les inscriptions déjà enregistrées restent en base ; pour le réafficher il faudra retirer son id de la table goelo_site_flags côté Supabase."
+              : "Supprimer la sortie « " +
+                safe +
+                " » ?\n\nElle disparaîtra du site (désactivation en base). Les inscriptions existantes restent enregistrées mais la sortie ne sera plus proposée.";
+            if (!window.confirm(confirmMsg)) {
               return;
             }
             editDeleteBtn.disabled = true;
@@ -2005,7 +2056,11 @@
               );
               return;
             }
-            window.alert("Sortie supprimée. La page va se recharger.");
+            window.alert(
+              data && data.kind === "builtin_hidden"
+                ? "Parcours intégré masqué sur le site. La page va se recharger."
+                : "Sortie supprimée. La page va se recharger."
+            );
             window.location.reload();
           });
         }
@@ -2330,7 +2385,7 @@
       function updateRoutePickerLayout() {
         const picker = document.getElementById("route-picker");
         const scrollWrap = document.getElementById("route-choices-scroll");
-        const n = loadedRoutesCache.length;
+        const n = loadedRoutesCache.filter(routeVisibleOnPublicSite).length;
 
         if (picker) {
           picker.classList.toggle("route-choices--many", n > 2);
@@ -2988,7 +3043,8 @@
         }
 
         const extraFromDb = await fetchCustomRoutesFromSupabase();
-        const routesToLoad = builtinsVisibleOnSite().concat(extraFromDb);
+        serverHiddenBuiltinIds = await fetchHiddenBuiltinIdsFromSupabase();
+        const routesToLoad = ROUTES_BUILTIN.concat(extraFromDb);
 
         const results = await Promise.all(
           routesToLoad.map(async function (cfg) {
@@ -3013,6 +3069,7 @@
         setupNewRouteModal();
 
         loadedRoutesCache.forEach(function (route) {
+          if (!routeVisibleOnPublicSite(route)) return;
           bindRouteUi(route);
         });
 
@@ -3029,13 +3086,13 @@
           });
         }
 
-        syncRouteDistances(loadedRoutesCache);
+        syncRouteDistances(loadedRoutesCache.filter(routeVisibleOnPublicSite));
         updateRoutePickerLayout();
         await refreshJoinButtons();
 
         if (mapLoading) mapLoading.classList.add("is-hidden");
 
-        if (loadedRoutesCache.length === 0) {
+        if (!loadedRoutesCache.some(routeVisibleOnPublicSite)) {
           if (mapAlert) mapAlert.classList.add("is-visible");
           return;
         }
@@ -3054,7 +3111,7 @@
         var openRouteId = openParams.get("openRoute");
         if (openRouteId && loadedRoutesCache.length) {
           var routeToOpen = loadedRoutesCache.find(function (r) {
-            return String(r.id) === String(openRouteId);
+            return String(r.id) === String(openRouteId) && routeVisibleOnPublicSite(r);
           });
           if (routeToOpen) {
             var mapSec = document.getElementById("map-section");
