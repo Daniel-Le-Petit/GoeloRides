@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
   <meta property="og:title" content="GoëloRides · Sorties vélo à Saint-Quay-Portrieux" />
-  <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du Kasino. Été 2026." />
+  <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du « Kasino » de Saint-Quay. Été 2026." />
   <meta property="og:image" content="https://goelorides.onrender.com/assets/hero-accueil.png" />
   <meta property="og:url" content="https://goelorides.onrender.com" />
   <meta property="og:type" content="website" />
@@ -279,6 +279,35 @@
     }
 
     .home-landing-lead strong {
+      font-weight: 800;
+      color: #bae6fd;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    }
+
+    .home-landing-lead-tail {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.45rem;
+      vertical-align: middle;
+    }
+
+    .home-landing-lead-icon {
+      display: inline-flex;
+      flex-shrink: 0;
+      color: var(--sq-blue);
+      filter:
+        drop-shadow(0 0 5px rgba(186, 230, 253, 0.55))
+        drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+    }
+
+    .home-landing-lead-icon svg {
+      width: 1.45em;
+      height: 1.45em;
+      display: block;
+    }
+
+    .home-kasino-name {
       font-weight: 800;
       color: #bae6fd;
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
@@ -3879,7 +3908,23 @@
         </div>
         <div class="goelo-auth-home-slot" data-goelo-auth-home></div>
       </div>
-      <p class="home-landing-lead"><span class="home-landing-accent">Sorties en vélo</span> — départ parking du <strong>Kasino</strong> de Saint-Quay.</p>
+      <p class="home-landing-lead">
+        <span class="home-landing-accent">Sorties en vélo</span>
+        <span class="home-landing-lead-tail">
+          <span class="home-landing-lead-icon" role="img" aria-label="Cycliste au départ">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 26" fill="none" aria-hidden="true">
+              <path stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" d="M5 23V7M5 7l9-2v8.5L5 13" />
+              <path fill="currentColor" d="M6.5 7h2.2v2.2H6.5V7zm2.2 0h2.2v2.2H8.7V7zm2.2 0h2.2v2.2h-2.2V7zm-2.2 2.2h2.2v2.2H8.7V9.2zm2.2 0h2.2v2.2h-2.2V9.2z" opacity="0.45" />
+              <path fill="currentColor" d="M7.2 8.1h1.1v1.1H7.2V8.1zm2.2 0h1.1v1.1H9.4V8.1zm2.2 0h1.1v1.1h-1.1V8.1zm-1.1 2.2h1.1v1.1h-1.1v-1.1z" opacity="0.9" />
+              <circle cx="22.5" cy="8" r="2.2" fill="currentColor" />
+              <path stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" d="M19.5 14l2-3.5h4.5l2 4M16.5 20l3.5-6 3 1 2 5M22.5 14l3 6M27.5 14l2.5 6" />
+              <circle cx="17.5" cy="20.5" r="2.4" stroke="currentColor" stroke-width="1.25" />
+              <circle cx="29.5" cy="20.5" r="2.4" stroke="currentColor" stroke-width="1.25" />
+            </svg>
+          </span>
+          <span>Départ parking du <span class="home-kasino-name">«&nbsp;Kasino&nbsp;»</span> de Saint-Quay.</span>
+        </span>
+      </p>
       <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie : partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
       <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
         <li>Pas d’adhésion</li>
@@ -3914,7 +3959,7 @@
       </div>
       <div class="site-footer-contact">
         <a class="site-footer-pill site-footer-pill--ig" href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span class="site-footer-pill-icon" aria-hidden="true">📸</span> @goelo.rides</a>
-        <a class="site-footer-pill site-footer-pill--mail" href="mailto:goelo.rides@gmail.com"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
+        <a class="site-footer-pill site-footer-pill--mail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
       </div>
       <p class="site-footer-note">Initiative locale et indépendante · Pas d'adhésion · Pas de fédération</p>
     </div>
@@ -4213,7 +4258,7 @@
         <ul class="participants-list is-hidden" id="modal-participants-list"></ul>
         <p class="participants-empty" id="modal-participants-empty">Personne pour l’instant — sois le ou la première !</p>
       </div>
-      <a class="signup-mailto-link" id="signup-modal-mailto" href="mailto:goelo.rides@gmail.com">Je m’inscris par e-mail à goelo.rides@gmail.com</a>
+      <a class="signup-mailto-link" id="signup-modal-mailto" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer">Je m’inscris par e-mail à goelo.rides@gmail.com</a>
       <p class="signup-hint">Gratuit · sans engagement · tu peux annuler jusqu’à la veille.</p>
       <p class="signup-alt">Tu préfères Instagram ? <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a></p>
     </div>

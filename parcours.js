@@ -853,7 +853,11 @@
           const body = encodeURIComponent(
             "Pseudo :\nE-mail :\nParcours : " + route.track + "\nDate : " + route.depart.dateLabel
           );
-          mailto.href = "mailto:goelo.rides@gmail.com?subject=" + subject + "&body=" + body;
+          mailto.href =
+            "https://mail.google.com/mail/?view=cm&fs=1&to=goelo.rides@gmail.com&su=" +
+            subject +
+            "&body=" +
+            body;
         }
 
         renderParticipantsInModal(route.id);
