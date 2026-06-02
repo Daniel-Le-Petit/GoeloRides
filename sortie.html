@@ -107,18 +107,20 @@
       color: var(--app-muted);
       font-size: 0.95rem;
     }
-    /* Hauteur de la ligne = carte ; la photo remplit la même hauteur (l’image ne impose plus la hauteur). */
+    /* Même hauteur minimale photo | encart (toutes les sorties) ; la grille étire au-delà si le texte est long. */
     .sortie-hero-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
       gap: 1.25rem;
       align-items: stretch;
       margin: 1.25rem 0 1.5rem;
+      --sortie-hero-min-h: clamp(15.75rem, 30vw, 22rem);
     }
     .sortie-hero-thumb {
       position: relative;
       min-width: 0;
-      min-height: 0;
+      min-height: var(--sortie-hero-min-h);
+      align-self: stretch;
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid var(--app-border);
@@ -140,8 +142,18 @@
     }
     .sortie-hero-table {
       min-width: 0;
+      min-height: var(--sortie-hero-min-h);
+      display: flex;
+      flex-direction: column;
     }
-    .sortie-hero-table .ride-event-card { width: 100%; max-width: 100%; }
+    .sortie-hero-table .ride-event-card {
+      width: 100%;
+      max-width: 100%;
+      flex: 1 1 auto;
+      min-height: var(--sortie-hero-min-h);
+      height: 100%;
+      margin-bottom: 0;
+    }
     .sortie-map-section {
       max-width: 52rem;
       margin: 0 0 1.5rem;
@@ -590,8 +602,16 @@
       }
       .sortie-hero-thumb {
         position: relative;
+        min-height: 0;
         aspect-ratio: 16 / 9;
         max-height: min(52vh, 22rem);
+      }
+      .sortie-hero-table {
+        min-height: 0;
+      }
+      .sortie-hero-table .ride-event-card {
+        min-height: 0;
+        height: auto;
       }
       .sortie-hero-thumb img {
         position: absolute;
@@ -686,11 +706,12 @@
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
     /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];
   </script>
 </head>
 <body>
   <div class="app-shell">
-    <aside class="app-sidebar" aria-label="Navigation principale">
+    <aside class="app-sidebar" aria-label="Navigation principale" data-goelo-auth-no-sidebar>
       <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
       <ul class="app-nav">
         <li><a href="index.html">Accueil</a></li>

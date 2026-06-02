@@ -97,6 +97,54 @@
     }
   }
 
+  /** Métadonnées profil Auth (objet ou chaîne JSON). */
+  function normalizeUserMetadata(raw) {
+    if (raw == null) return {};
+    if (typeof raw === "object" && !Array.isArray(raw)) return raw;
+    if (typeof raw === "string") {
+      try {
+        var o = JSON.parse(raw);
+        return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+      } catch (e) {
+        void e;
+        return {};
+      }
+    }
+    return {};
+  }
+
+  /** Pseudo / prénom affichable depuis user_metadata (Supabase + variantes). */
+  function extractPseudoFromMetadata(um) {
+    var m = normalizeUserMetadata(um);
+    return String(
+      m.pseudo ||
+        m.preferred_username ||
+        m.nickname ||
+        m.name ||
+        m.full_name ||
+        m.display_name ||
+        m.given_name ||
+        ""
+    ).trim();
+  }
+
+  function pseudoFromSupabaseUser(user) {
+    if (!user || typeof user !== "object") return "";
+    var um = normalizeUserMetadata(user.user_metadata);
+    var raw = normalizeUserMetadata(user.raw_user_meta_data);
+    var p = extractPseudoFromMetadata(um) || extractPseudoFromMetadata(raw);
+    if (p) return p;
+    var ids = user.identities;
+    if (!Array.isArray(ids)) return "";
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      if (!id || typeof id !== "object") continue;
+      var idd = extractPseudoFromMetadata(id.identity_data);
+      if (idd) return idd;
+    }
+    return "";
+  }
+
   /**
    * GoTrue renvoie soit des jetons à la racine, soit { user, session: { access_token, ... } }.
    */
@@ -126,15 +174,13 @@
     var pseudo = "";
     if (norm.user && typeof norm.user === "object") {
       email = String(norm.user.email || "").trim().toLowerCase();
-      var um = norm.user.user_metadata || norm.user.raw_user_meta_data || {};
-      pseudo = String(um.pseudo || um.name || "").trim();
+      pseudo = pseudoFromSupabaseUser(norm.user);
     }
     if (!email) {
       var pl = parseJwtPayload(norm.access_token);
       if (pl) {
         email = String(pl.email || "").trim().toLowerCase();
-        var um2 = pl.user_metadata || {};
-        pseudo = pseudo || String(um2.pseudo || um2.name || "").trim();
+        pseudo = pseudo || extractPseudoFromMetadata(pl.user_metadata);
       }
     }
     if (!email) email = String(prev.email || "").trim().toLowerCase();
@@ -163,6 +209,24 @@
       void e;
     }
     return true;
+  }
+
+  /** Complète la session stockée si le JWT contient un pseudo absent du cache (anciennes sessions). */
+  function enrichSessionPseudoFromJwt() {
+    var s = readSession();
+    if (!s || !s.access_token) return;
+    if (String(s.pseudo || "").trim()) return;
+    var pl = parseJwtPayload(s.access_token);
+    if (!pl) return;
+    var p = extractPseudoFromMetadata(pl.user_metadata);
+    if (!p) return;
+    s.pseudo = p;
+    writeSession(s);
+    try {
+      window.dispatchEvent(new CustomEvent("goelo-user-session-updated"));
+    } catch (e) {
+      void e;
+    }
   }
 
   /** Messages GoTrue / Supabase en français + pistes utiles. */
@@ -349,6 +413,7 @@
   }
 
   function getDisplayLabel() {
+    enrichSessionPseudoFromJwt();
     var s = readSession();
     if (!s || !s.access_token) return "Se connecter";
     if (s.pseudo) return s.pseudo.length > 14 ? s.pseudo.slice(0, 13) + "…" : s.pseudo;
@@ -361,6 +426,7 @@
 
   /** Prénom / pseudo pour le message d’accueil (vide si pas de session). */
   function getConnectedGreetingName() {
+    enrichSessionPseudoFromJwt();
     var s = readSession();
     if (!s || !s.access_token) return "";
     if (s.pseudo) return s.pseudo.length > 22 ? s.pseudo.slice(0, 21) + "…" : s.pseudo;
@@ -372,6 +438,7 @@
   }
 
   function applyAuthTriggerLabel() {
+    enrichSessionPseudoFromJwt();
     var btn = document.getElementById("goelo-auth-open-btn");
     if (!btn) return;
     var text = getDisplayLabel();
@@ -387,7 +454,7 @@
     if (greet) {
       var nm = getConnectedGreetingName();
       if (nm) {
-        greet.textContent = "Bonjour (" + nm + ")";
+        greet.textContent = "Bonjour " + nm;
         greet.hidden = false;
       } else {
         greet.textContent = "";
@@ -513,6 +580,7 @@
     }
 
     function showLoggedState() {
+      enrichSessionPseudoFromJwt();
       var s = readSession();
       var has = !!(s && s.access_token);
       if (has) {

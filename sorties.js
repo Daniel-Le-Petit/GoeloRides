@@ -94,6 +94,23 @@
     }
   ];
 
+  /** Parcours intégrés à masquer : `window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];` avant ce script (voir SUPABASE.md). */
+  function builtinsVisibleOnSite() {
+    var skip =
+      typeof window !== "undefined" &&
+      window.GOELO_SKIP_BUILTIN_IDS &&
+      Array.isArray(window.GOELO_SKIP_BUILTIN_IDS)
+        ? window.GOELO_SKIP_BUILTIN_IDS
+        : [];
+    const hide = {};
+    skip.forEach(function (id) {
+      hide[String(id)] = true;
+    });
+    return ROUTES_BUILTIN.filter(function (r) {
+      return !hide[String(r.id)];
+    });
+  }
+
   const DEFAULT_MEET_PLACE = "Devant le Kasino";
   const LOCAL_SIGNUPS_KEY = "goeloRides_inscriptions_v1";
 
@@ -114,6 +131,65 @@
     décembre: 12,
     decembre: 12
   };
+
+  const FR_MONTH_NAMES_UPPER = [
+    "",
+    "JANVIER",
+    "FÉVRIER",
+    "MARS",
+    "AVRIL",
+    "MAI",
+    "JUIN",
+    "JUILLET",
+    "AOÛT",
+    "SEPTEMBRE",
+    "OCTOBRE",
+    "NOVEMBRE",
+    "DÉCEMBRE"
+  ];
+
+  function normalizeMonthWordForDisplay(monthWord) {
+    const lower = String(monthWord || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const idx = FR_MONTHS[lower];
+    if (!idx) return String(monthWord || "").trim().toUpperCase();
+    return FR_MONTH_NAMES_UPPER[idx] || String(monthWord || "").trim().toUpperCase();
+  }
+
+  /** Ex. « 7 juillet 2026 · 8h30 » ou « 1er juillet 2026 » */
+  function parseFrenchDateLabelParts(label) {
+    const raw = String(label || "").trim();
+    if (!raw) return null;
+    const rx = /(\d{1,2})(?:er)?\s+([a-zéèêëàâùûôîïçA-ZÉÈÊËÀÂÙÛÔÎÏÇ]+)\s+(\d{4})/;
+    const m = raw.match(rx);
+    if (!m) return null;
+    const day = String(parseInt(m[1], 10));
+    const year = String(parseInt(m[3], 10));
+    const month = normalizeMonthWordForDisplay(m[2]);
+    if (!month) return null;
+    return { day: day, month: month, year: year };
+  }
+
+  function enrichDepartObject(depart, dateLabelFallback) {
+    const d =
+      depart && typeof depart === "object"
+        ? Object.assign({}, depart)
+        : { day: "", month: "", year: "", weekday: "", dateLabel: "" };
+    const label = String(d.dateLabel || dateLabelFallback || "").trim();
+    if (!d.dateLabel && label) d.dateLabel = label;
+    const hasDay = String(d.day || "").trim() !== "";
+    const hasMonth = String(d.month || "").trim() !== "";
+    if (hasDay && hasMonth) return d;
+    const p = parseFrenchDateLabelParts(label);
+    if (!p) return d;
+    if (!hasDay) d.day = p.day;
+    if (!hasMonth) d.month = p.month;
+    if (!String(d.year || "").trim()) d.year = p.year;
+    return d;
+  }
 
   function normalizeApiKey(raw) {
     let k = raw == null ? "" : String(raw).trim().replace(/\s/g, "");
@@ -205,15 +281,18 @@
       levelLabel: fc.levelLabel || (row.group_label || "—"),
       vibe: fc.vibe || "",
       shortDesc: fc.shortDesc || "",
-      depart: fc.depart && typeof fc.depart === "object"
-        ? fc.depart
-        : {
-            day: "",
-            month: "",
-            year: "2026",
-            weekday: "",
-            dateLabel: String(fc.dateLabel || row.track_name || "")
-          },
+      depart: enrichDepartObject(
+        fc.depart && typeof fc.depart === "object"
+          ? fc.depart
+          : {
+              day: "",
+              month: "",
+              year: "2026",
+              weekday: "",
+              dateLabel: String(fc.dateLabel || row.track_name || "")
+            },
+        String(fc.dateLabel || "").trim()
+      ),
       meetPlace:
         typeof fc.meetPlace === "string" && fc.meetPlace.trim()
           ? fc.meetPlace.trim()
@@ -457,7 +536,7 @@
       if (m) return String(d.year) + "-" + String(m).padStart(2, "0");
     }
     const label = String(d.dateLabel || "");
-    const rx = /(\d{1,2})\s+([a-zéèêëàâùûôîïçA-ZÉÈÊËÀÂÙÛÔÎÏÇ]+)\s+(\d{4})/;
+    const rx = /(\d{1,2})(?:er)?\s+([a-zéèêëàâùûôîïçA-ZÉÈÊËÀÂÙÛÔÎÏÇ]+)\s+(\d{4})/;
     const m = label.match(rx);
     if (m) {
       const mo = FR_MONTHS[m[2].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")];
@@ -563,7 +642,7 @@
   }
 
   function sortTsFromRoute(route) {
-    const d = route.depart || {};
+    const d = enrichDepartObject(route.depart || {}, "");
     const y = parseInt(String(d.year || "2099").trim(), 10) || 2099;
     let monthNum = 1;
     if (d.month) {
@@ -645,8 +724,6 @@
         const typeExtra = meta.label === "Gravel" ? " is-gravel" : meta.label === "VTT" ? " is-vtt" : "";
         const d = route.depart || {};
         const timeDisp = escapeHtml(departTimeDisplay(route));
-        const meet = escapeHtml(route.meetPlace || DEFAULT_MEET_PLACE);
-        const paceEsc = escapeHtml(route.pace || "—");
         const shortDescEsc = route.shortDesc ? escapeHtml(route.shortDesc) : "";
         const registered = isUserRegistered(route.id, regState);
         const titleRow =
@@ -661,14 +738,6 @@
         const typeLine =
           '<span class="sorties-pill sorties-pill--type' + typeExtra + '">' + escapeHtml(meta.label) + "</span>" +
           (shortDescEsc ? '<span class="sorties-type-desc"> · ' + shortDescEsc + "</span>" : "");
-        const mobileMeta =
-          '<div class="sorties-card-mobile-meta">' +
-          '<p class="sorties-photo-meta-line"><strong>Départ</strong> : ' +
-          meet +
-          "</p>" +
-          '<p class="sorties-photo-meta-line"><strong>Allure</strong> : ' +
-          paceEsc +
-          "</p></div>";
         const voirBlock =
           '<span class="sorties-card-voir" role="presentation">' +
           '<svg class="sorties-card-voir-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
@@ -722,12 +791,6 @@
           typeLine +
           "</p>" +
           '<div class="sorties-card-details">' +
-          '<p class="sorties-card-line"><strong>Départ</strong> · ' +
-          meet +
-          "</p>" +
-          '<p class="sorties-card-line"><strong>Allure</strong> · ' +
-          paceEsc +
-          "</p>" +
           '<p class="sorties-card-levelrow">' +
           '<span class="sorties-level-dot sorties-level-dot--' +
           tone +
@@ -735,7 +798,6 @@
           '<span class="sorties-level-text">· ' +
           escapeHtml(route.levelLabel || "—") +
           "</span></p></div></div></div>" +
-          mobileMeta +
           '<div class="sorties-card-aside sorties-card-aside--' +
           railMod +
           '">' +
@@ -811,7 +873,7 @@
 
     async function loadAllRoutes() {
       const extra = await fetchCustomRoutesFromSupabase();
-      const merged = ROUTES_BUILTIN.concat(extra);
+      const merged = builtinsVisibleOnSite().concat(extra);
       const results = await Promise.all(
         merged.map(async function (cfg) {
           const profile = await loadRouteProfile(cfg);

@@ -233,7 +233,7 @@
     .sorties-card--bleu:hover { border-left-color: #2563eb; }
     .sorties-card--rouge:hover { border-left-color: #dc2626; }
 
-    /* Colonne vignette (image seule ; Départ/Allure en pleine largeur sur mobile). */
+    /* Colonne vignette (image seule). */
     .sorties-card-thumb-col {
       flex-shrink: 0;
       width: min(32%, 180px);
@@ -315,40 +315,9 @@
       display: block;
     }
 
+    .sorties-card--vert .sorties-card-thumb img {
       object-position: center top;
     }
-
-    .sorties-card-mobile-meta {
-      display: none;
-    }
-
-    .sorties-card--blanc .sorties-card-mobile-meta { color: #4b5563; }
-    .sorties-card--vert .sorties-card-mobile-meta { color: #166534; }
-    .sorties-card--bleu .sorties-card-mobile-meta { color: #1d4ed8; }
-    .sorties-card--rouge .sorties-card-mobile-meta { color: #b91c1c; }
-
-    .sorties-card--blanc .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #374151; }
-    .sorties-card--vert .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #14532d; }
-    .sorties-card--bleu .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #1e3a8a; }
-    .sorties-card--rouge .sorties-card-mobile-meta .sorties-photo-meta-line strong { color: #991b1b; }
-
-    .sorties-photo-meta-line {
-      margin: 0;
-      font-size: 0.62rem;
-      line-height: 1.35;
-      font-weight: 500;
-      color: var(--app-muted);
-    }
-
-    .sorties-photo-meta-line strong {
-      font-weight: 700;
-      color: var(--app-text);
-    }
-
-    .sorties-card--blanc .sorties-photo-meta-line strong { color: #374151; }
-    .sorties-card--vert .sorties-photo-meta-line strong { color: #166534; }
-    .sorties-card--bleu .sorties-photo-meta-line strong { color: #1e40af; }
-    .sorties-card--rouge .sorties-photo-meta-line strong { color: #991b1b; }
 
     .sorties-card-body {
       flex: 1;
@@ -690,14 +659,13 @@
     }
 
     @media (max-width: 560px) {
-      /* Ligne 1 : 3 colonnes | ligne 2 : Départ/Allure pleine largeur | ligne 3 : Voir */
+      /* Ligne 1 : vignette + rail + corps | ligne 2 : Voir */
       .sorties-card {
         display: grid;
         grid-template-columns: minmax(4.25rem, 26%) minmax(2.65rem, 3.35rem) 1fr;
-        grid-template-rows: auto auto auto;
+        grid-template-rows: auto auto;
         grid-template-areas:
           "thumbcol rail body"
-          "meta meta meta"
           "aside aside aside";
         align-items: stretch;
         gap: 0;
@@ -715,30 +683,6 @@
         flex: 0 0 auto;
         min-height: 4.75rem;
         width: 100%;
-      }
-
-      .sorties-card-mobile-meta {
-        display: block;
-        grid-area: meta;
-        grid-column: 1 / -1;
-        padding: 0.45rem 0.6rem 0.5rem;
-        border-top: 1px solid rgba(15, 35, 50, 0.1);
-        background: rgba(255, 255, 255, 0.72);
-        font-size: 0.68rem;
-        line-height: 1.4;
-      }
-
-      .sorties-card--blanc .sorties-card-mobile-meta { border-top-color: rgba(107, 114, 128, 0.22); }
-      .sorties-card--vert .sorties-card-mobile-meta { border-top-color: rgba(34, 197, 94, 0.22); }
-      .sorties-card--bleu .sorties-card-mobile-meta { border-top-color: rgba(59, 130, 246, 0.22); }
-      .sorties-card--rouge .sorties-card-mobile-meta { border-top-color: rgba(239, 68, 68, 0.22); }
-
-      .sorties-card-mobile-meta .sorties-photo-meta-line + .sorties-photo-meta-line {
-        margin-top: 0.2rem;
-      }
-
-      .sorties-card-mobile-meta .sorties-photo-meta-line {
-        font-size: inherit;
       }
 
       .sorties-card-mid .sorties-card-rail {
@@ -1225,6 +1169,8 @@
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
     /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    /* Parcours intégré masqué sur le site (non supprimable via route_delete). Voir SUPABASE.md §1. */
+    window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];
   </script>
   <script src="sorties.js" defer></script>
   <script src="parcours.js" defer></script>

@@ -42,6 +42,16 @@ Puis exécuter **si tu veux supprimer une sortie personnalisée** depuis le site
 
 (Crée la RPC `route_delete(p_route_id text)` : même garde admin, `is_active = false` sur les routes `route_kind = 'custom'` uniquement.)
 
+**Parcours intégrés (`falaises`, `brehec`, `boucle`)** : ils sont définis dans le JavaScript (`ROUTES_BUILTIN`), pas comme `custom` en base. La liste **« Corriger une sortie »** de la modale n’affiche que les sorties **`route_kind = 'custom'`**, et **`route_delete`** ne peut désactiver que celles-là. Tu ne peux donc pas retirer une sortie intégrée via la même interface. Pour **la masquer sur le site** sans retirer le code du tableau `ROUTES_BUILTIN`, définis **avant** les scripts `sorties.js` / `sortie.js` (et l’accueil qui charge `parcours.js`) :
+
+```html
+<script>
+  window.GOELO_SKIP_BUILTIN_IDS = ["falaises"]; /* ids possibles : falaises, brehec, boucle */
+</script>
+```
+
+(Répète la même ligne sur **`index.html`**, **`sorties.html`**, **`sortie.html`** si ces pages doivent toutes refléter le filtre.)
+
 ## 2. Clé anon côté site
 
 Le site utilise **RPC `SECURITY DEFINER`** : la clé **anon** ne donne pas un accès direct en lecture/écriture sur `signups` (RLS bloque), seulement l’appel aux fonctions `signup_*`.

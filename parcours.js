@@ -442,6 +442,23 @@
         }
       ];
 
+      /** Parcours intégrés à masquer : `window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];` avant parcours (voir SUPABASE.md). */
+      function builtinsVisibleOnSite() {
+        var skip =
+          typeof window !== "undefined" &&
+          window.GOELO_SKIP_BUILTIN_IDS &&
+          Array.isArray(window.GOELO_SKIP_BUILTIN_IDS)
+            ? window.GOELO_SKIP_BUILTIN_IDS
+            : [];
+        const hide = {};
+        skip.forEach(function (id) {
+          hide[String(id)] = true;
+        });
+        return ROUTES_BUILTIN.filter(function (r) {
+          return !hide[String(r.id)];
+        });
+      }
+
       function dbRowToRoute(row) {
         const fc = row && row.front_config && typeof row.front_config === "object" ? row.front_config : {};
         const so = row.sort_order;
@@ -2971,7 +2988,7 @@
         }
 
         const extraFromDb = await fetchCustomRoutesFromSupabase();
-        const routesToLoad = ROUTES_BUILTIN.concat(extraFromDb);
+        const routesToLoad = builtinsVisibleOnSite().concat(extraFromDb);
 
         const results = await Promise.all(
           routesToLoad.map(async function (cfg) {

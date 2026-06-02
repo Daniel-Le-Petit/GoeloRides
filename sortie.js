@@ -89,6 +89,23 @@
     }
   ];
 
+  /** Parcours intégrés à masquer : `window.GOELO_SKIP_BUILTIN_IDS = ["falaises"];` avant ce script (voir SUPABASE.md). */
+  function builtinsVisibleOnSite() {
+    var skip =
+      typeof window !== "undefined" &&
+      window.GOELO_SKIP_BUILTIN_IDS &&
+      Array.isArray(window.GOELO_SKIP_BUILTIN_IDS)
+        ? window.GOELO_SKIP_BUILTIN_IDS
+        : [];
+    const hide = {};
+    skip.forEach(function (id) {
+      hide[String(id)] = true;
+    });
+    return ROUTES_BUILTIN.filter(function (r) {
+      return !hide[String(r.id)];
+    });
+  }
+
   const DEFAULT_MEET_PLACE = "Devant le Kasino";
   const LOCAL_SIGNUPS_KEY = "goeloRides_inscriptions_v1";
 
@@ -109,6 +126,65 @@
     décembre: 12,
     decembre: 12
   };
+
+  const FR_MONTH_NAMES_UPPER = [
+    "",
+    "JANVIER",
+    "FÉVRIER",
+    "MARS",
+    "AVRIL",
+    "MAI",
+    "JUIN",
+    "JUILLET",
+    "AOÛT",
+    "SEPTEMBRE",
+    "OCTOBRE",
+    "NOVEMBRE",
+    "DÉCEMBRE"
+  ];
+
+  function normalizeMonthWordForDisplay(monthWord) {
+    const lower = String(monthWord || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const idx = FR_MONTHS[lower];
+    if (!idx) return String(monthWord || "").trim().toUpperCase();
+    return FR_MONTH_NAMES_UPPER[idx] || String(monthWord || "").trim().toUpperCase();
+  }
+
+  /** Ex. « 7 juillet 2026 · 8h30 » ou « 1er juillet 2026 » */
+  function parseFrenchDateLabelParts(label) {
+    const raw = String(label || "").trim();
+    if (!raw) return null;
+    const rx = /(\d{1,2})(?:er)?\s+([a-zéèêëàâùûôîïçA-ZÉÈÊËÀÂÙÛÔÎÏÇ]+)\s+(\d{4})/;
+    const m = raw.match(rx);
+    if (!m) return null;
+    const day = String(parseInt(m[1], 10));
+    const year = String(parseInt(m[3], 10));
+    const month = normalizeMonthWordForDisplay(m[2]);
+    if (!month) return null;
+    return { day: day, month: month, year: year };
+  }
+
+  function enrichDepartObject(depart, dateLabelFallback) {
+    const d =
+      depart && typeof depart === "object"
+        ? Object.assign({}, depart)
+        : { day: "", month: "", year: "", weekday: "", dateLabel: "" };
+    const label = String(d.dateLabel || dateLabelFallback || "").trim();
+    if (!d.dateLabel && label) d.dateLabel = label;
+    const hasDay = String(d.day || "").trim() !== "";
+    const hasMonth = String(d.month || "").trim() !== "";
+    if (hasDay && hasMonth) return d;
+    const p = parseFrenchDateLabelParts(label);
+    if (!p) return d;
+    if (!hasDay) d.day = p.day;
+    if (!hasMonth) d.month = p.month;
+    if (!String(d.year || "").trim()) d.year = p.year;
+    return d;
+  }
 
   function normalizeApiKey(raw) {
     let k = raw == null ? "" : String(raw).trim().replace(/\s/g, "");
@@ -218,15 +294,18 @@
       levelLabel: fc.levelLabel || (row.group_label || "—"),
       vibe: fc.vibe || "",
       shortDesc: fc.shortDesc || "",
-      depart: fc.depart && typeof fc.depart === "object"
-        ? fc.depart
-        : {
-            day: "",
-            month: "",
-            year: "2026",
-            weekday: "",
-            dateLabel: String(fc.dateLabel || row.track_name || "")
-          },
+      depart: enrichDepartObject(
+        fc.depart && typeof fc.depart === "object"
+          ? fc.depart
+          : {
+              day: "",
+              month: "",
+              year: "2026",
+              weekday: "",
+              dateLabel: String(fc.dateLabel || row.track_name || "")
+            },
+        String(fc.dateLabel || "").trim()
+      ),
       meetPlace:
         typeof fc.meetPlace === "string" && fc.meetPlace.trim()
           ? fc.meetPlace.trim()
@@ -452,7 +531,7 @@
       if (m) return String(d.year) + "-" + String(m).padStart(2, "0");
     }
     const label = String(d.dateLabel || "");
-    const rx = /(\d{1,2})\s+([a-zéèêëàâùûôîïçA-ZÉÈÊËÀÂÙÛÔÎÏÇ]+)\s+(\d{4})/;
+    const rx = /(\d{1,2})(?:er)?\s+([a-zéèêëàâùûôîïçA-ZÉÈÊËÀÂÙÛÔÎÏÇ]+)\s+(\d{4})/;
     const m = label.match(rx);
     if (m) {
       const mo = FR_MONTHS[m[2].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")];
@@ -1097,6 +1176,80 @@
     return group;
   }
 
+  /** lat/lon exploitables pour la carte (accepte lng, latitude…). */
+  function citiesWithMapCoordinates(cities) {
+    const out = [];
+    if (!Array.isArray(cities)) return out;
+    for (let i = 0; i < cities.length; i++) {
+      const c = cities[i];
+      if (!c || typeof c !== "object") continue;
+      const lat = Number(c.lat != null ? c.lat : c.latitude);
+      const lon = Number(
+        c.lon != null ? c.lon : c.lng != null ? c.lng : c.longitude != null ? c.longitude : NaN
+      );
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      const name = (c.name != null && String(c.name).trim()) || "Point";
+      out.push({
+        name: name,
+        lat: lat,
+        lon: lon,
+        start: !!c.start
+      });
+    }
+    if (out.length && !out.some(function (x) {
+      return x.start;
+    })) {
+      out[0].start = true;
+    }
+    return out;
+  }
+
+  /** Repères le long de la trace si aucune ville géocodée en base. */
+  function inferCitiesFromTrack(points, maxMarkers) {
+    const n = points.length;
+    if (n < 2) return [];
+    const cap = Math.max(2, Math.min(maxMarkers || 5, n));
+    const indices = [];
+    for (let k = 0; k < cap; k++) {
+      indices.push(Math.round((k / Math.max(1, cap - 1)) * (n - 1)));
+    }
+    const seen = {};
+    const uniq = [];
+    indices.forEach(function (idx) {
+      if (seen[idx]) return;
+      seen[idx] = true;
+      uniq.push(idx);
+    });
+    return uniq.map(function (idx, i) {
+      const pt = points[idx];
+      const isFirst = i === 0;
+      const isLast = i === uniq.length - 1;
+      let name;
+      if (isFirst) name = "Départ";
+      else if (isLast) name = "Arrivée";
+      else name = "Sur le parcours (~" + Math.round((idx / Math.max(1, n - 1)) * 100) + " %)";
+      return { name: name, lat: pt.lat, lon: pt.lon, start: isFirst };
+    });
+  }
+
+  function ensureCitiesForMap(route) {
+    const fromCfg = citiesWithMapCoordinates(route.cities);
+    const pts = route.profile && route.profile.points;
+    const km = route.profile && route.profile.totalKm;
+    const canInfer = !!(pts && pts.length >= 2);
+    const longRoute =
+      typeof km === "number" && !Number.isNaN(km) && km >= 8;
+
+    /* Sans villes en base, dbRowToRoute met une seule ville par défaut (SQ) : pour un long
+       parcours, on préfère des repères le long de la trace plutôt qu’un seul point. */
+    if (canInfer && longRoute && fromCfg.length < 2) {
+      return inferCitiesFromTrack(pts, 5);
+    }
+    if (fromCfg.length) return fromCfg;
+    if (canInfer) return inferCitiesFromTrack(pts, 5);
+    return [{ name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }];
+  }
+
   function sortieCityMarkerIcon(city) {
     return L.divIcon({
       className: "sortie-city-marker",
@@ -1126,7 +1279,10 @@
   function sortieAddCityMarkers(map, cities) {
     const group = L.layerGroup();
     cities.forEach(function (city) {
-      const marker = L.marker([city.lat, city.lon], { icon: sortieCityMarkerIcon(city) });
+      const lat = Number(city.lat);
+      const lon = Number(city.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+      const marker = L.marker([lat, lon], { icon: sortieCityMarkerIcon(city) });
       marker.bindPopup(
         "<strong>" + escapeHtml(city.name) + "</strong>" + (city.start ? "<br>Départ" : "")
       );
@@ -1447,7 +1603,7 @@
     const wantedId = decodeURIComponent(rawId.trim());
 
     const extra = await fetchCustomRoutesFromSupabase();
-    const merged = ROUTES_BUILTIN.concat(extra);
+    const merged = builtinsVisibleOnSite().concat(extra);
     const cfg = merged.find(function (r) {
       return String(r.id) === String(wantedId);
     });
@@ -1465,6 +1621,7 @@
     }
 
     const route = Object.assign({}, cfg, { profile: profile });
+    route.cities = ensureCitiesForMap(route);
     if (errEl) errEl.hidden = true;
     if (contentEl) contentEl.hidden = false;
     if (titleEl) titleEl.textContent = route.track;
