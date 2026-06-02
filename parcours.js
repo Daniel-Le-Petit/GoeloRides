@@ -69,11 +69,19 @@
       /** Dernier échec transport / HTTP pour message utilisateur (codes 36–39). Réinitialisé à chaque appel RPC. */
       let goeloLastRpcFailure = null;
 
-      function goeloFormatDbFailureAlert(code, httpStatus) {
+      function goeloFormatDbFailureAlert(code, httpStatus, fnName) {
         if (code === 41) {
           return (
             "Impossible d’enregistrer dans la mémoire de ce navigateur (quota plein, navigation privée ou blocage).\n\n" +
             "Erreur 41 — contacter l’administrateur ou réessaie après avoir libéré de l’espace."
+          );
+        }
+        if (code === 37 && httpStatus === 404 && fnName === "route_delete") {
+          return (
+            "La suppression n’est pas encore activée sur ton projet Supabase : la fonction RPC « route_delete » est introuvable (HTTP 404).\n\n" +
+            "Dans le dashboard Supabase → SQL Editor, ouvre et exécute le fichier :\n" +
+            "supabase/migrations/20250610120000_route_delete.sql\n\n" +
+            "Ensuite réessaie la suppression."
           );
         }
         var ref = "Erreur " + code;
@@ -185,6 +193,11 @@
             (body && (body.error_description || body.msg || body.message)) ||
             (body && body.error ? String(body.error) : "") ||
             "HTTP " + res.status;
+          try {
+            console.warn("Goëlo admin login Auth:", res.status, body && typeof body === "object" ? body : body);
+          } catch (e) {
+            void e;
+          }
           return { ok: false, message: String(msg).trim() || "Connexion refusée." };
         }
         if (!body.access_token) {
@@ -196,6 +209,39 @@
           refresh_token: body.refresh_token != null ? String(body.refresh_token) : "",
           expires_in: body.expires_in
         };
+      }
+
+      /** Messages GoTrue pour la modale admin « Gérer les sorties » (grant_type=password). */
+      function humanizeAdminPasswordGrantError(rawMsg) {
+        const s = String(rawMsg || "").trim();
+        const low = s.toLowerCase();
+        if (
+          low.includes("email not confirmed") ||
+          low.includes("email_not_confirmed") ||
+          low.includes("not confirmed") ||
+          (/confirm|vérifi/.test(s) && /email|mail|address|adresse/i.test(s))
+        ) {
+          return (
+            "E-mail non confirmé (ou confirmation requise) : ouvre le lien reçu à l’inscription, vérifie les spams, puis réessaie."
+          );
+        }
+        if (
+          low.includes("invalid login credentials") ||
+          low === "invalid_grant" ||
+          low.includes("invalid credentials")
+        ) {
+          const base =
+            "Supabase refuse la connexion. Vérifie dans ce projet (même URL que le site) : Authentication → Users — " +
+            "l’e-mail existe, le mot de passe est celui du compte Auth, et l’e-mail est confirmé. " +
+            "Si la confirmation est obligatoire, un compte non confirmé renvoie souvent la même erreur qu’un mauvais mot de passe. " +
+            "Copie-colle l’e-mail **tel qu’il apparaît** dans la liste Users (Gmail : avec ou sans point, ce n’est pas la même chaîne pour Supabase).";
+          if (s && s !== "invalid_grant" && s.length < 200) {
+            return base + " Détail API : " + s + ".";
+          }
+          return base;
+        }
+        if (s.length > 0 && s.length < 220) return s;
+        return "E-mail ou mot de passe incorrect.";
       }
 
       /**
@@ -398,6 +444,7 @@
 
       function dbRowToRoute(row) {
         const fc = row && row.front_config && typeof row.front_config === "object" ? row.front_config : {};
+        const so = row.sort_order;
         return {
           id: row.id,
           file: String(fc.file || "").trim(),
@@ -413,6 +460,9 @@
           levelLabel: fc.levelLabel || (row.group_label || "—"),
           vibe: fc.vibe || "",
           shortDesc: fc.shortDesc || "",
+          rideDateIso: typeof fc.rideDateIso === "string" ? fc.rideDateIso : "",
+          rideTime: typeof fc.rideTime === "string" ? fc.rideTime : "",
+          sortOrder: typeof so === "number" && Number.isFinite(so) ? so : 40,
           depart: fc.depart && typeof fc.depart === "object"
             ? fc.depart
             : {
@@ -425,14 +475,31 @@
           cities: Array.isArray(fc.cities) && fc.cities.length ? fc.cities : [
             { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }
           ],
-          routeKind: row.route_kind || "custom"
+          routeKind: row.route_kind || row.routeKind || "custom"
         };
+      }
+
+      /** PostgREST renvoie souvent un tableau ; certaines configs renvoient une chaîne JSON ou un wrapper. */
+      function normalizeRoutesListRows(data) {
+        if (data == null) return [];
+        if (Array.isArray(data)) return data;
+        if (typeof data === "string") {
+          try {
+            const p = JSON.parse(data);
+            return Array.isArray(p) ? p : [];
+          } catch (err) {
+            void err;
+            return [];
+          }
+        }
+        if (typeof data === "object" && Array.isArray(data.routes)) return data.routes;
+        return [];
       }
 
       async function fetchCustomRoutesFromSupabase() {
         if (!isSupabaseEnabled()) return [];
-        const rows = await supabaseRpc("routes_list", { p_filter: {} });
-        if (!Array.isArray(rows)) return [];
+        const raw = await supabaseRpc("routes_list", { p_filter: {} });
+        const rows = normalizeRoutesListRows(raw);
         const builtIds = {};
         ROUTES_BUILTIN.forEach(function (r) {
           builtIds[r.id] = true;
@@ -440,10 +507,33 @@
         const out = [];
         rows.forEach(function (row) {
           if (!row || !row.id || builtIds[row.id]) return;
-          if (row.route_kind !== "custom") return;
+          const rk = row.route_kind != null ? row.route_kind : row.routeKind;
+          if (rk !== "custom") return;
           out.push(dbRowToRoute(row));
         });
         return out;
+      }
+
+      /** Alimente loadedRoutesCache avec les sorties custom (pour la liste « Corriger une sortie »). */
+      async function hydrateCustomRoutesForToolbarEdit() {
+        if (!isSupabaseEnabled() || !document.getElementById("new-route-edit-select")) return;
+        const customs = await fetchCustomRoutesFromSupabase();
+        if (!customs.length) return;
+        const results = await Promise.all(
+          customs.map(async function (cfg) {
+            const profile = await loadRouteProfile(cfg);
+            if (!profile) return null;
+            return Object.assign({}, cfg, { profile: profile });
+          })
+        );
+        results.forEach(function (r) {
+          if (!r) return;
+          const idx = loadedRoutesCache.findIndex(function (x) {
+            return x.id === r.id;
+          });
+          if (idx >= 0) loadedRoutesCache[idx] = r;
+          else loadedRoutesCache.push(r);
+        });
       }
 
       function formatKm(km) {
@@ -1101,7 +1191,7 @@
         document.body.style.overflow = "";
       }
 
-      function openNewRouteModal() {
+      async function openNewRouteModal() {
         const modal = document.getElementById("new-route-modal");
         const form = document.getElementById("new-route-form");
         if (!modal || !form) return;
@@ -1116,14 +1206,13 @@
         modal.hidden = false;
         modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
+        setNewRouteModalTab("access");
         syncNewRouteAdminUi();
-        if (isAdminSessionUsable()) {
-          const first = document.getElementById("new-route-date");
-          if (first) first.focus();
-        } else {
-          const loginEl = document.getElementById("new-route-admin-login");
-          if (loginEl) loginEl.focus();
+        if (isSupabaseEnabled()) {
+          await hydrateCustomRoutesForToolbarEdit();
         }
+        refreshEditRouteSelect();
+        focusFirstInNewRouteActivePanel();
       }
 
       function raceTypeLabel(v) {
@@ -1167,11 +1256,63 @@
         return cap(weekday) + " " + d + " " + month + " " + y + " · " + timeLabel;
       }
 
+      function setNewRouteModalTab(tab) {
+        const modal = document.getElementById("new-route-modal");
+        if (!modal) return;
+        const tabBtns = modal.querySelectorAll("[data-new-route-tab]");
+        if (!tabBtns.length) return;
+        const t = tab === "edit" || tab === "create" ? tab : "access";
+        tabBtns.forEach(function (btn) {
+          const id = btn.getAttribute("data-new-route-tab");
+          const on = id === t;
+          btn.classList.toggle("is-active", on);
+          btn.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        modal.querySelectorAll("[data-tabpanel]").forEach(function (panel) {
+          const id = panel.getAttribute("data-tabpanel");
+          const on = id === t;
+          panel.classList.toggle("is-active", on);
+          panel.hidden = !on;
+        });
+        if (t === "create") {
+          setTimeout(function () {
+            if (newRoutePreviewMapInst && typeof newRoutePreviewMapInst.invalidateSize === "function") {
+              try {
+                newRoutePreviewMapInst.invalidateSize(false);
+              } catch (err) {
+                void err;
+              }
+            }
+          }, 120);
+        }
+      }
+
+      function focusFirstInNewRouteActivePanel() {
+        const modal = document.getElementById("new-route-modal");
+        if (!modal) return;
+        const panel = modal.querySelector(".new-route-tabpanel.is-active");
+        if (!panel || panel.hidden) return;
+        const cand =
+          panel.querySelector(
+            "input:not([type=\"hidden\"]):not([disabled]), select:not([disabled]), textarea:not([disabled])"
+          ) || panel.querySelector("button:not([disabled])");
+        if (cand && typeof cand.focus === "function") {
+          try {
+            cand.focus();
+          } catch (err) {
+            void err;
+          }
+        }
+      }
+
       function syncNewRouteAdminUi() {
         const gate = document.getElementById("new-route-admin-gate");
+        const toolbar = document.getElementById("new-route-admin-toolbar");
         const body = document.getElementById("new-route-modal-body");
-        const lo = document.getElementById("new-route-admin-logout");
         const errEl = document.getElementById("new-route-admin-error");
+        const tabEdit = document.getElementById("new-route-tab-edit");
+        const tabCreate = document.getElementById("new-route-tab-create");
+        const disTitle = "Identifie-toi dans l’onglet « Accès Team Rider »";
         if (!gate || !body) return;
         if (errEl) {
           errEl.textContent = "";
@@ -1179,13 +1320,30 @@
         }
         if (isAdminSessionUsable()) {
           gate.hidden = true;
+          if (toolbar) toolbar.hidden = false;
           body.classList.remove("is-locked");
-          if (lo) lo.hidden = false;
+          if (tabEdit) {
+            tabEdit.disabled = false;
+            tabEdit.removeAttribute("title");
+          }
+          if (tabCreate) {
+            tabCreate.disabled = false;
+            tabCreate.removeAttribute("title");
+          }
         } else {
           clearAdminSession();
           gate.hidden = false;
+          if (toolbar) toolbar.hidden = true;
           body.classList.add("is-locked");
-          if (lo) lo.hidden = true;
+          if (tabEdit) {
+            tabEdit.disabled = true;
+            tabEdit.setAttribute("title", disTitle);
+          }
+          if (tabCreate) {
+            tabCreate.disabled = true;
+            tabCreate.setAttribute("title", disTitle);
+          }
+          setNewRouteModalTab("access");
         }
       }
 
@@ -1208,8 +1366,18 @@
 
         syncNewRouteAdminUi();
 
+        modal.querySelectorAll("[data-new-route-tab]").forEach(function (tabBtn) {
+          if (tabBtn.dataset.goeloTabBound) return;
+          tabBtn.dataset.goeloTabBound = "1";
+          tabBtn.addEventListener("click", function () {
+            if (tabBtn.disabled) return;
+            const t = tabBtn.getAttribute("data-new-route-tab");
+            if (t) setNewRouteModalTab(t);
+          });
+        });
+
         const admSubmit = document.getElementById("new-route-admin-submit");
-        const admLogout = document.getElementById("new-route-admin-logout");
+        const admLogout = document.getElementById("new-route-admin-logout-toolbar");
         const admLogin = document.getElementById("new-route-admin-login");
         const admPass = document.getElementById("new-route-admin-password");
         if (admPass && !admPass.dataset.goeloEnterBound) {
@@ -1263,17 +1431,12 @@
               if (errEl) {
                 let userMsg = "E-mail ou mot de passe incorrect.";
                 if (grant === null) {
-                  userMsg = "Supabase non configuré (URL / clé vide) ou erreur inattendue.";
+                  userMsg =
+                    "Cette page n’a pas les variables Supabase (URL ou clé anon vide). " +
+                    "Ouvre la console (F12) et vérifie window.GOELO_SUPABASE_URL — si vide, recharge sans cache (Ctrl+F5) " +
+                    "ou assure-toi que le bloc <script> avec GOELO_SUPABASE_* est bien juste avant parcours.js (comme sur index.html).";
                 } else if (grant.message) {
-                  const rawMsg = String(grant.message);
-                  if (/confirm|confirmed|verify|vérifi|email.*not.*confirm/i.test(rawMsg)) {
-                    userMsg =
-                      "E-mail non confirmé : ouvre le lien reçu dans ta boîte, puis réessaie.";
-                  } else if (/Invalid login|invalid_grant|Invalid credentials|wrong password/i.test(rawMsg)) {
-                    userMsg = "E-mail ou mot de passe incorrect.";
-                  } else if (rawMsg.length < 220) {
-                    userMsg = rawMsg;
-                  }
+                  userMsg = humanizeAdminPasswordGrantError(grant.message);
                 }
                 errEl.textContent = userMsg;
                 errEl.hidden = false;
@@ -1284,7 +1447,7 @@
               admSubmit.disabled = false;
               if (errEl) {
                 errEl.textContent =
-                  "Connexion OK, mais ce compte n’a pas le rôle admin : dans Supabase → Authentication → ton utilisateur → Raw App Meta Data, ajoute \"goelo_admin\": true (voir supabase/SUPABASE.md §5).";
+                  "Connexion OK, mais ce compte n’a pas le droit créateur (goelo_admin). Un admin peut t’ajouter via la section « Team Riders » dans cette modale (après migration 20250608120000), ou voir le bootstrap SQL dans supabase/SUPABASE.md §5.";
                 errEl.hidden = false;
               }
               return;
@@ -1293,14 +1456,79 @@
             if (admPass) admPass.value = "";
             admSubmit.disabled = false;
             syncNewRouteAdminUi();
+            focusFirstInNewRouteActivePanel();
+            void (async function () {
+              await hydrateCustomRoutesForToolbarEdit();
+              refreshEditRouteSelect();
+            })();
           });
         }
-        if (admLogout && !admLogout.dataset.goeloBound) {
-          admLogout.dataset.goeloBound = "1";
-          admLogout.addEventListener("click", function () {
+        function bindAdminLogout(btn) {
+          if (!btn || btn.dataset.goeloBound) return;
+          btn.dataset.goeloBound = "1";
+          btn.addEventListener("click", function () {
             clearAdminSession();
             syncNewRouteAdminUi();
-            if (admLogin) admLogin.focus();
+            focusFirstInNewRouteActivePanel();
+          });
+        }
+        bindAdminLogout(admLogout);
+
+        const teamSubmit = document.getElementById("new-route-team-submit");
+        const teamEmail = document.getElementById("new-route-team-email");
+        const teamGrant = document.getElementById("new-route-team-grant");
+        const teamMsg = document.getElementById("new-route-team-msg");
+        if (teamSubmit && !teamSubmit.dataset.goeloBound) {
+          teamSubmit.dataset.goeloBound = "1";
+          teamSubmit.addEventListener("click", async function () {
+            if (!isAdminSessionUsable()) return;
+            const em = teamEmail && teamEmail.value ? teamEmail.value.trim().toLowerCase() : "";
+            if (teamMsg) {
+              teamMsg.textContent = "";
+              teamMsg.hidden = true;
+              teamMsg.classList.remove("is-ok");
+            }
+            if (!em || em.indexOf("@") < 1) {
+              if (teamMsg) {
+                teamMsg.textContent =
+                  "Indique un e-mail valide (compte déjà présent dans Authentication → Users).";
+                teamMsg.hidden = false;
+              }
+              return;
+            }
+            const sess = getAdminSession();
+            if (!sess || !sess.access_token) return;
+            teamSubmit.disabled = true;
+            const grantFlag = !!(teamGrant && teamGrant.checked);
+            const data = await supabaseRpc(
+              "goelo_admin_set_team_rider",
+              { p_target_email: em, p_goelo_admin: grantFlag },
+              { accessToken: sess.access_token }
+            );
+            teamSubmit.disabled = false;
+            if (!teamMsg) return;
+            teamMsg.hidden = false;
+            if (data && data.ok === true) {
+              teamMsg.classList.add("is-ok");
+              teamMsg.textContent = grantFlag
+                ? "Droit créateur activé pour " + em + ". La personne doit se déconnecter puis se reconnecter ici pour rafraîchir son jeton."
+                : "Droit créateur retiré pour " + em + ".";
+              if (teamEmail) teamEmail.value = "";
+            } else if (data && data.error === "user_not_found") {
+              teamMsg.textContent = "Aucun utilisateur Auth avec cet e-mail dans ce projet.";
+            } else if (data && data.error === "forbidden") {
+              teamMsg.textContent = "Action refusée : reconnecte-toi (session admin expirée ou sans droit).";
+            } else if (data && data.error === "invalid_email") {
+              teamMsg.textContent = "E-mail invalide.";
+            } else if (data && data.error === "auth_required") {
+              teamMsg.textContent = "Session admin absente : reconnecte-toi.";
+            } else if (data == null) {
+              teamMsg.textContent =
+                "Erreur réseau ou RPC. Vérifie que la migration 20250608120000_goelo_admin_set_team_rider.sql est appliquée sur ce projet.";
+            } else {
+              teamMsg.textContent =
+                data && data.error ? "Refus : " + String(data.error) + "." : "Demande refusée.";
+            }
           });
         }
 
@@ -1308,6 +1536,147 @@
         let newRouteProfile = null;
         let newRouteGpxName = "";
         let newRouteCoverDataUrl = null;
+        let newRouteEditId = null;
+        let newRouteEditSortOrder = 40;
+
+        function setNewRouteModalTitle(isEdit) {
+          const h2 = document.getElementById("new-route-modal-title");
+          if (!h2) return;
+          h2.textContent = isEdit ? "Modifier la sortie" : "Gérer les sorties";
+        }
+
+        function refreshEditRouteSelect() {
+          const sel = document.getElementById("new-route-edit-select");
+          if (!sel) return;
+          const cur = sel.value;
+          sel.innerHTML = "";
+          const opt0 = document.createElement("option");
+          opt0.value = "";
+          opt0.textContent = "— Nouvelle sortie —";
+          sel.appendChild(opt0);
+          loadedRoutesCache.forEach(function (r) {
+            if (!r || r.routeKind !== "custom" || !r.id) return;
+            const o = document.createElement("option");
+            o.value = r.id;
+            o.textContent = (r.track || r.id) + " · " + r.id;
+            sel.appendChild(o);
+          });
+          if (cur && Array.prototype.some.call(sel.options, function (op) { return op.value === cur; })) {
+            sel.value = cur;
+          } else {
+            sel.value = "";
+          }
+          const hint = document.getElementById("new-route-edit-empty-hint");
+          if (hint) hint.hidden = sel.options.length > 1;
+        }
+
+        function commitProfileUi(prof, filename, skipAutoTitle) {
+          newRouteProfile = prof;
+          newRouteGpxName = filename || "trace.gpx";
+          const gl = document.getElementById("new-route-gpx-label");
+          if (gl) gl.textContent = newRouteGpxName;
+          const stats = document.getElementById("new-route-stats");
+          const sk = document.getElementById("new-route-stat-km");
+          const sd = document.getElementById("new-route-stat-dplus");
+          const sg = document.getElementById("new-route-suggest-diff");
+          if (sk) sk.textContent = formatKm(prof.totalKm);
+          if (sd) {
+            sd.textContent =
+              prof.elevGainM != null && prof.elevGainM > 5
+                ? "+" + prof.elevGainM + " m"
+                : "— (élévation absente dans le GPX)";
+          }
+          const band = inferDifficultyBand(prof.totalKm, prof.elevGainM);
+          if (sg) sg.textContent = band.levelLabel;
+          if (stats) stats.hidden = false;
+          const levelRadios = form.querySelectorAll('input[name="new-route-level"]');
+          if (!skipAutoTitle) {
+            levelRadios.forEach(function (radio) {
+              radio.checked = radio.value === band.levelClass;
+            });
+          }
+          const rt = (form.querySelector('input[name="new-route-race"]:checked') || {}).value || "route";
+          const titleIn = document.getElementById("new-route-track");
+          if (titleIn && !skipAutoTitle && !titleIn.value.trim()) {
+            titleIn.value =
+              raceTypeLabel(rt) +
+              " · " +
+              formatKm(prof.totalKm) +
+              (prof.elevGainM != null && prof.elevGainM > 5 ? " · +" + Math.round(prof.elevGainM) + " m · " : " · ") +
+              band.levelLabel;
+            titleIn.setAttribute("data-title-auto", "1");
+          }
+          drawNewRoutePreview(prof);
+        }
+
+        function applyRouteIntoWizard(route) {
+          if (!route || !route.profile || !route.profile.points || route.profile.points.length < 2) {
+            window.alert("Impossible de charger cette sortie (trace absente ou trop courte).");
+            return;
+          }
+          newRouteEditId = route.id;
+          newRouteEditSortOrder =
+            typeof route.sortOrder === "number" && Number.isFinite(route.sortOrder) ? route.sortOrder : 40;
+          const prof = {
+            points: route.profile.points.map(function (p) {
+              return { lat: p.lat, lon: p.lon, ele: p.ele };
+            }),
+            totalKm: route.profile.totalKm,
+            elevGainM: route.profile.elevGainM
+          };
+          commitProfileUi(prof, route.file || "trace.gpx", true);
+          const titleIn = document.getElementById("new-route-track");
+          if (titleIn) {
+            titleIn.value = route.track || "";
+            titleIn.removeAttribute("data-title-auto");
+          }
+          const gEl = document.getElementById("new-route-group");
+          if (gEl) gEl.value = route.name || "";
+          const pEl = document.getElementById("new-route-pace");
+          if (pEl) pEl.value = route.pace && route.pace !== "—" ? route.pace : "";
+          const dEl = document.getElementById("new-route-desc");
+          if (dEl) dEl.value = route.shortDesc || "";
+          const dateIn = document.getElementById("new-route-date");
+          const timeIn = document.getElementById("new-route-time");
+          if (dateIn) {
+            dateIn.value =
+              route.rideDateIso && /^\d{4}-\d{2}-\d{2}$/.test(route.rideDateIso)
+                ? route.rideDateIso
+                : "";
+          }
+          if (timeIn) {
+            timeIn.value =
+              route.rideTime && /^\d{2}:\d{2}$/.test(route.rideTime) ? route.rideTime : "08:30";
+          }
+          const rt = route.raceType || "route";
+          form.querySelectorAll('input[name="new-route-race"]').forEach(function (radio) {
+            radio.checked = radio.value === rt;
+          });
+          const lv = route.levelClass || "level-vert";
+          form.querySelectorAll('input[name="new-route-level"]').forEach(function (radio) {
+            radio.checked = radio.value === lv;
+          });
+          newRouteCoverDataUrl = route.coverImageDataUrl || null;
+          if (coverPreview) {
+            coverPreview.innerHTML = "";
+            if (newRouteCoverDataUrl) {
+              const im = document.createElement("img");
+              im.alt = "Aperçu couverture";
+              im.src = newRouteCoverDataUrl;
+              coverPreview.appendChild(im);
+              coverPreview.hidden = false;
+            } else {
+              coverPreview.hidden = true;
+            }
+          }
+          setNewRouteModalTitle(true);
+          setWizardStep(1);
+          setNewRouteModalTab("create");
+          requestAnimationFrame(function () {
+            const d = document.getElementById("new-route-date");
+            if (d) d.focus();
+          });
+        }
 
         function fillRecap() {
           const recap = document.getElementById("new-route-recap");
@@ -1383,6 +1752,11 @@
         modal.__goeloSetWizardStep = setWizardStep;
 
         function resetDraft() {
+          newRouteEditId = null;
+          newRouteEditSortOrder = 40;
+          setNewRouteModalTitle(false);
+          const sel = document.getElementById("new-route-edit-select");
+          if (sel) sel.value = "";
           newRouteProfile = null;
           newRouteGpxName = "";
           newRouteCoverDataUrl = null;
@@ -1440,40 +1814,7 @@
             window.alert("GPX invalide ou trace trop courte.");
             return;
           }
-          newRouteProfile = prof;
-          newRouteGpxName = filename || "trace.gpx";
-          const gl = document.getElementById("new-route-gpx-label");
-          if (gl) gl.textContent = newRouteGpxName;
-          const stats = document.getElementById("new-route-stats");
-          const sk = document.getElementById("new-route-stat-km");
-          const sd = document.getElementById("new-route-stat-dplus");
-          const sg = document.getElementById("new-route-suggest-diff");
-          if (sk) sk.textContent = formatKm(prof.totalKm);
-          if (sd) {
-            sd.textContent =
-              prof.elevGainM != null && prof.elevGainM > 5
-                ? "+" + prof.elevGainM + " m"
-                : "— (élévation absente dans le GPX)";
-          }
-          const band = inferDifficultyBand(prof.totalKm, prof.elevGainM);
-          if (sg) sg.textContent = band.levelLabel;
-          if (stats) stats.hidden = false;
-          const levelRadios = form.querySelectorAll('input[name="new-route-level"]');
-          levelRadios.forEach(function (radio) {
-            radio.checked = radio.value === band.levelClass;
-          });
-          const rt = (form.querySelector('input[name="new-route-race"]:checked') || {}).value || "route";
-          const titleIn = document.getElementById("new-route-track");
-          if (titleIn && !titleIn.value.trim()) {
-            titleIn.value =
-              raceTypeLabel(rt) +
-              " · " +
-              formatKm(prof.totalKm) +
-              (prof.elevGainM != null && prof.elevGainM > 5 ? " · +" + Math.round(prof.elevGainM) + " m · " : " · ") +
-              band.levelLabel;
-            titleIn.setAttribute("data-title-auto", "1");
-          }
-          drawNewRoutePreview(prof);
+          commitProfileUi(prof, filename || "trace.gpx", false);
           closeGpxUploadPop();
         }
 
@@ -1533,13 +1874,118 @@
 
         if (btn) {
           btn.addEventListener("click", function () {
-            openNewRouteModal();
+            void openNewRouteModal();
           });
         }
 
         if (hdrNew) {
           hdrNew.addEventListener("click", function () {
-            openNewRouteModal();
+            void openNewRouteModal();
+          });
+        }
+
+        const editLoadBtn = document.getElementById("new-route-edit-load");
+        if (editLoadBtn && !editLoadBtn.dataset.goeloBound) {
+          editLoadBtn.dataset.goeloBound = "1";
+          editLoadBtn.addEventListener("click", function () {
+            const sel = document.getElementById("new-route-edit-select");
+            const id = sel && sel.value ? sel.value.trim() : "";
+            if (!id) {
+              if (typeof modal.__goeloResetNewRouteDraft === "function") {
+                modal.__goeloResetNewRouteDraft();
+              }
+              form.reset();
+              const timeIn = document.getElementById("new-route-time");
+              if (timeIn) timeIn.value = "08:30";
+              return;
+            }
+            const route = loadedRoutesCache.find(function (r) {
+              return r.id === id;
+            });
+            if (!route) {
+              window.alert("Sortie introuvable. Recharge la page si tu viens d’en créer une.");
+              return;
+            }
+            applyRouteIntoWizard(route);
+          });
+        }
+
+        const editDeleteBtn = document.getElementById("new-route-edit-delete");
+        if (editDeleteBtn && !editDeleteBtn.dataset.goeloBound) {
+          editDeleteBtn.dataset.goeloBound = "1";
+          editDeleteBtn.addEventListener("click", async function () {
+            if (!isSupabaseEnabled()) {
+              window.alert("Connecte Supabase (clé anon) pour supprimer une sortie.");
+              return;
+            }
+            if (!isAdminSessionUsable()) {
+              window.alert("Connexion administrateur requise.");
+              syncNewRouteAdminUi();
+              return;
+            }
+            const sel = document.getElementById("new-route-edit-select");
+            const id = sel && sel.value ? sel.value.trim() : "";
+            if (!id) {
+              window.alert("Choisis d’abord une sortie dans la liste.");
+              return;
+            }
+            const route = loadedRoutesCache.find(function (r) {
+              return r.id === id;
+            });
+            const label = route && route.track ? String(route.track) : id;
+            const safe = label.replace(/"/g, "″");
+            if (
+              !window.confirm(
+                "Supprimer la sortie « " +
+                  safe +
+                  " » ?\n\nElle disparaîtra du site (désactivation en base). Les inscriptions existantes restent enregistrées mais la sortie ne sera plus proposée."
+              )
+            ) {
+              return;
+            }
+            editDeleteBtn.disabled = true;
+            const admTok = getAdminSession();
+            let data = await supabaseRpc(
+              "route_delete",
+              { p_route_id: id },
+              { accessToken: admTok && admTok.access_token ? admTok.access_token : "" }
+            );
+            if (Array.isArray(data)) data = data[0];
+            editDeleteBtn.disabled = false;
+            if (!data || !data.ok) {
+              const fail = goeloLastRpcFailure;
+              if (fail && fail.httpStatus === 401) {
+                clearAdminSession();
+                syncNewRouteAdminUi();
+                window.alert("Session expirée ou refusée. Reconnecte-toi en administrateur.");
+                return;
+              }
+              if (data && data.error === "forbidden") {
+                window.alert("Ce compte n’a pas le droit de supprimer une sortie.");
+                clearAdminSession();
+                syncNewRouteAdminUi();
+                return;
+              }
+              if (data && data.error === "auth_required") {
+                window.alert("Authentification requise. Reconnecte-toi en administrateur.");
+                clearAdminSession();
+                syncNewRouteAdminUi();
+                return;
+              }
+              if (data && data.error === "not_found_or_fixed") {
+                window.alert(
+                  "Impossible de supprimer cette sortie (introuvable, déjà retirée, ou migration route_delete non appliquée sur Supabase)."
+                );
+                return;
+              }
+              const code = fail ? fail.code : 40;
+              window.alert(
+                goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName)
+              );
+              return;
+            }
+            window.alert("Sortie supprimée. La page va se recharger.");
+            window.location.reload();
           });
         }
 
@@ -1785,21 +2231,33 @@
             levelClass: levelClass,
             levelLabel: levelLabel,
             vibe: raceTypeLabel(rt),
-            coverImageDataUrl: newRouteCoverDataUrl || ""
+            coverImageDataUrl: newRouteCoverDataUrl || "",
+            rideDateIso: dateStr,
+            rideTime: timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : "08:30"
           };
 
           const admTok = getAdminSession();
-          let data = await supabaseRpc(
-            "route_create",
-            {
-              p_track_name: track,
-              p_group_label: group || raceTypeLabel(rt),
-              p_pace_label: pace || "—",
-              p_front_config: frontConfig,
-              p_sort_order: 40
-            },
-            { accessToken: admTok && admTok.access_token ? admTok.access_token : "" }
-          );
+          const rpcPayload = {
+            p_track_name: track,
+            p_group_label: group || raceTypeLabel(rt),
+            p_pace_label: pace || "—",
+            p_front_config: frontConfig,
+            p_sort_order: newRouteEditId ? newRouteEditSortOrder : 40
+          };
+          let data;
+          if (newRouteEditId) {
+            data = await supabaseRpc(
+              "route_update",
+              Object.assign({ p_route_id: newRouteEditId }, rpcPayload),
+              { accessToken: admTok && admTok.access_token ? admTok.access_token : "" }
+            );
+          } else {
+            data = await supabaseRpc(
+              "route_create",
+              rpcPayload,
+              { accessToken: admTok && admTok.access_token ? admTok.access_token : "" }
+            );
+          }
           if (Array.isArray(data)) data = data[0];
           if (!data || !data.ok) {
             const fail = goeloLastRpcFailure;
@@ -1823,16 +2281,27 @@
             }
             if (data && data.error === "limit_reached") {
               window.alert("Nombre maximum de sorties personnalisées atteint. Contacte l’organisation.");
+            } else if (data && data.error === "not_found_or_fixed") {
+              window.alert(
+                "Impossible de modifier cette sortie (introuvable, parcours figé, ou migration route_update non appliquée)."
+              );
             } else {
               const code = fail ? fail.code : 40;
               window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
             }
             return;
           }
+          const wasEdit = !!newRouteEditId;
           closeNewRouteModal();
-          window.alert("Sortie créée. La page va se recharger pour afficher le nouveau parcours.");
+          window.alert(
+            wasEdit
+              ? "Sortie mise à jour. La page va se recharger."
+              : "Sortie créée. La page va se recharger pour afficher le nouveau parcours."
+          );
           window.location.reload();
         });
+
+        refreshEditRouteSelect();
       }
 
       let activeRouteRef = null;

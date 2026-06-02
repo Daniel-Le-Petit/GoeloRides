@@ -519,6 +519,10 @@ body {
 }
 
 .goelo-auth-slot--hero {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
   margin-top: 0;
   padding-top: 0;
   border-top: none;

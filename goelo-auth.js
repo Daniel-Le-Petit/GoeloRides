@@ -359,6 +359,18 @@
     return "Connecté";
   }
 
+  /** Prénom / pseudo pour le message d’accueil (vide si pas de session). */
+  function getConnectedGreetingName() {
+    var s = readSession();
+    if (!s || !s.access_token) return "";
+    if (s.pseudo) return s.pseudo.length > 22 ? s.pseudo.slice(0, 21) + "…" : s.pseudo;
+    if (s.email) {
+      var part = s.email.split("@")[0];
+      return part.length > 22 ? part.slice(0, 21) + "…" : part;
+    }
+    return "";
+  }
+
   function applyAuthTriggerLabel() {
     var btn = document.getElementById("goelo-auth-open-btn");
     if (!btn) return;
@@ -371,6 +383,17 @@
       "aria-label",
       inSession ? "Compte " + text + " — ouvrir le menu" : "Se connecter ou créer un compte"
     );
+    var greet = document.getElementById("goelo-auth-home-greeting");
+    if (greet) {
+      var nm = getConnectedGreetingName();
+      if (nm) {
+        greet.textContent = "Bonjour (" + nm + ")";
+        greet.hidden = false;
+      } else {
+        greet.textContent = "";
+        greet.hidden = true;
+      }
+    }
   }
 
   function mountUi() {
@@ -423,6 +446,7 @@
 
     var btnSlotHome =
       '<div class="goelo-auth-slot goelo-auth-slot--hero">' +
+      '  <span id="goelo-auth-home-greeting" class="goelo-auth-home-greeting" hidden aria-live="polite"></span>' +
       '  <button type="button" class="goelo-auth-trigger goelo-auth-trigger--hero" id="goelo-auth-open-btn" aria-haspopup="dialog" aria-controls="goelo-auth-dialog">' +
       '    <span class="goelo-auth-trigger-icon goelo-auth-trigger-icon--head" aria-hidden="true">' +
       GOELO_AUTH_HEAD_SVG +

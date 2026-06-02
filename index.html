@@ -210,6 +210,20 @@
       align-self: center;
     }
 
+    .goelo-auth-home-greeting {
+      font-size: clamp(0.72rem, 2.2vw, 0.9rem);
+      font-weight: 600;
+      color: #f1f5f9;
+      text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.75),
+        0 0 1px rgba(0, 0, 0, 0.9);
+      max-width: min(42vw, 16rem);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
     /* Marque accueil : GoëloRides (sans espace), police moins arrondie */
     .home-brand {
       margin: 0;
@@ -1385,6 +1399,67 @@
       color: var(--app-muted);
     }
 
+    #new-route-modal.new-route-modal--goelo-app .new-route-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0.55rem 1.45rem 0.6rem;
+      border-bottom: 1px solid var(--app-border);
+      background: linear-gradient(180deg, #fafcfd 0%, #f4f8fb 100%);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab {
+      flex: 1 1 auto;
+      min-width: min(100%, 9.25rem);
+      margin: 0;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.76rem;
+      font-weight: 700;
+      font-family: inherit;
+      color: var(--app-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      line-height: 1.25;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab:hover:not(:disabled) {
+      color: var(--app-sea);
+      background: rgba(21, 101, 168, 0.07);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab.is-active {
+      color: var(--app-text);
+      background: #fff;
+      border-color: rgba(21, 101, 168, 0.28);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tabpanels {
+      padding: 0;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tabpanel {
+      padding: 0.75rem 1.45rem 1rem;
+    }
+
+    #new-route-panel-edit .new-route-edit-pick {
+      margin-top: 0.35rem;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    #new-route-panel-create > .new-route-modal-body {
+      margin-top: 0;
+    }
+
     .new-route-admin-gate {
       padding: 0.88rem 1rem 1rem;
       margin: 0 0 0.35rem;
@@ -1437,6 +1512,99 @@
       font-size: 0.82rem;
       font-weight: 600;
       color: #b91c1c;
+    }
+
+    .new-route-admin-toolbar {
+      padding: 0.75rem 1rem 0.85rem;
+      margin: 0 0 0.5rem;
+      border-radius: 10px;
+      border: 1px solid rgba(21, 101, 168, 0.22);
+      background: #f8fbfe;
+      text-align: left;
+    }
+
+    .new-route-admin-toolbar-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .new-route-team-rider-details {
+      margin-top: 0.35rem;
+      font-size: 0.84rem;
+      color: var(--app-muted);
+    }
+
+    .new-route-team-rider-details summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--app-sea);
+    }
+
+    .new-route-team-rider-details .new-route-admin-field {
+      margin-top: 0.55rem;
+    }
+
+    .new-route-team-grant-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      margin: 0.5rem 0;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .new-route-team-grant-row input[type="checkbox"] {
+      margin-top: 0.15rem;
+    }
+
+    .new-route-team-msg {
+      margin-top: 0.45rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #b91c1c;
+    }
+
+    .new-route-team-msg.is-ok {
+      color: #15803d;
+    }
+
+    .new-route-admin-toolbar-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--app-sea);
+    }
+
+    .new-route-edit-pick {
+      margin-top: 0.75rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid rgba(21, 101, 168, 0.18);
+    }
+
+    .new-route-edit-pick-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: flex-end;
+      margin-top: 0.45rem;
+    }
+
+    .new-route-edit-pick-row .btn-primary {
+      flex-shrink: 0;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-edit-delete {
+      flex-shrink: 0;
+      border-color: rgba(185, 28, 28, 0.42);
+      color: #991b1b;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-edit-delete:hover:not(:disabled) {
+      background: rgba(185, 28, 28, 0.09);
+      border-color: rgba(153, 27, 27, 0.55);
     }
 
     .new-route-modal-body.is-locked {
@@ -1533,6 +1701,22 @@
       #new-route-modal.new-route-modal--goelo-app .new-route-sub {
         font-size: 0.76rem;
         line-height: 1.35;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-tabs {
+        padding: 0.5rem 1rem 0.5rem;
+        gap: 0.3rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-tab {
+        min-width: 0;
+        flex: 1 1 calc(50% - 0.2rem);
+        font-size: 0.72rem;
+        padding: 0.4rem 0.45rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-tabpanel {
+        padding: 0.65rem 1rem 0.85rem;
       }
     }
 
@@ -3663,13 +3847,20 @@
     <div class="signup-modal-dialog new-route-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="new-route-modal-title">
       <button type="button" class="signup-modal-close" data-close-new-route aria-label="Fermer">×</button>
       <div class="new-route-modal-head">
-        <h2 id="new-route-modal-title" tabindex="-1">Nouvelle sortie</h2>
-        <p class="new-route-sub">Parcours guidé en 5 étapes — avance avec <strong>Suivant</strong>, tu peux revenir avec <strong>Précédent</strong>.</p>
+        <h2 id="new-route-modal-title" tabindex="-1">Gérer les sorties</h2>
+        <p class="new-route-sub" id="new-route-modal-sub">Accès Team Rider, correction ou création d’une sortie personnalisée.</p>
       </div>
+      <div class="new-route-tabs" role="tablist" aria-label="Sections administrateur">
+        <button type="button" role="tab" class="new-route-tab is-active" id="new-route-tab-access" aria-selected="true" aria-controls="new-route-panel-access" data-new-route-tab="access">Accès Team Rider</button>
+        <button type="button" role="tab" class="new-route-tab" id="new-route-tab-edit" aria-selected="false" aria-controls="new-route-panel-edit" data-new-route-tab="edit" disabled title="Identifie-toi dans l’onglet « Accès Team Rider »">Modifier une sortie</button>
+        <button type="button" role="tab" class="new-route-tab" id="new-route-tab-create" aria-selected="false" aria-controls="new-route-panel-create" data-new-route-tab="create" disabled title="Identifie-toi dans l’onglet « Accès Team Rider »">Créer une nouvelle sortie</button>
+      </div>
+      <div class="new-route-tabpanels">
+        <div id="new-route-panel-access" class="new-route-tabpanel is-active" role="tabpanel" aria-labelledby="new-route-tab-access" data-tabpanel="access">
       <div class="new-route-admin-gate" id="new-route-admin-gate">
         <p class="new-route-admin-intro">
-          Accès réservé : <strong>e-mail du compte Supabase</strong> (recommandé) ou <strong>pseudo</strong> déjà enregistré dans la table <code>goelo_admin_login_aliases</code>, plus le <strong>mot de passe</strong> du compte.
-          Dans Supabase → <strong>Authentication → utilisateur → Raw App Meta Data</strong>, il faut <code>&quot;goelo_admin&quot;: true</code> pour pouvoir créer une sortie (voir <code>supabase/SUPABASE.md</code> §5).
+          Accès réservé : <strong>e-mail du compte Supabase</strong> (recommandé) ou <strong>pseudo</strong> dans <code>goelo_admin_login_aliases</code>, plus le <strong>mot de passe</strong> du compte.
+          Le rôle créateur (<code>goelo_admin</code> dans les métadonnées app — voir <code>supabase/SUPABASE.md</code> §5). Les onglets <strong>Modifier une sortie</strong> et <strong>Créer une nouvelle sortie</strong> s’activent après connexion. Migration Team Riders : <code>20250608120000_goelo_admin_set_team_rider.sql</code>.
         </p>
         <label class="new-route-admin-field">
           <span>E-mail ou pseudo</span>
@@ -3682,9 +3873,51 @@
         <p class="new-route-admin-error" id="new-route-admin-error" hidden role="alert"></p>
         <div class="new-route-admin-actions">
           <button type="button" class="btn-primary" id="new-route-admin-submit">Se connecter</button>
-          <button type="button" class="btn-app-outline" id="new-route-admin-logout" hidden>Se déconnecter</button>
         </div>
       </div>
+      <div class="new-route-admin-toolbar" id="new-route-admin-toolbar" hidden>
+        <div class="new-route-admin-toolbar-top">
+          <span class="new-route-admin-toolbar-label">Session admin</span>
+          <button type="button" class="btn-app-outline" id="new-route-admin-logout-toolbar">Se déconnecter</button>
+        </div>
+        <details class="new-route-team-rider-details">
+          <summary>Team Riders — donner ou retirer le droit de créer une sortie</summary>
+          <p class="signup-hint" style="margin-top:0.5rem;text-align:left;">
+            L’e-mail doit correspondre à un utilisateur déjà créé dans <strong>Authentication → Users</strong>. Coche pour donner le droit, décoche pour le retirer, puis <strong>Appliquer</strong>. La personne doit se reconnecter ici pour que son jeton soit à jour.
+          </p>
+          <label class="new-route-admin-field">
+            <span>E-mail du compte</span>
+            <input type="email" id="new-route-team-email" autocomplete="email" maxlength="120" placeholder="cycliste@exemple.com">
+          </label>
+          <label class="new-route-team-grant-row">
+            <input type="checkbox" id="new-route-team-grant" checked>
+            <span>Donner le droit créateur (<code>goelo_admin</code>)</span>
+          </label>
+          <button type="button" class="btn-primary" id="new-route-team-submit">Appliquer</button>
+          <p class="new-route-team-msg" id="new-route-team-msg" hidden role="status"></p>
+        </details>
+      </div>
+        </div>
+        <div id="new-route-panel-edit" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-edit" hidden data-tabpanel="edit">
+          <p class="signup-hint" style="margin:0 0 0.75rem;text-align:left;">
+            Choisis une sortie <strong>personnalisée</strong>, puis <strong>Charger</strong>. Le formulaire s’ouvre dans l’onglet <strong>Créer une nouvelle sortie</strong> pour corriger et valider à l’étape 5.
+          </p>
+        <div class="new-route-edit-pick" id="new-route-edit-pick">
+          <div class="new-route-edit-pick-row">
+            <label class="new-route-admin-field" style="flex:1;min-width:0;margin-bottom:0">
+              <span>Sortie à modifier</span>
+              <select id="new-route-edit-select" aria-label="Choisir une sortie à modifier"></select>
+            </label>
+            <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
+            <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+          </div>
+          <p class="signup-hint new-route-edit-empty-hint" id="new-route-edit-empty-hint" hidden style="margin-top:0.45rem;text-align:left;">
+            Aucune sortie personnalisée pour l’instant : crée-en une avec l’onglet <strong>Créer une nouvelle sortie</strong>, valide, puis rouvre cette fenêtre — la liste se met à jour automatiquement.
+          </p>
+        </div>
+        </div>
+        <div id="new-route-panel-create" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-create" hidden data-tabpanel="create">
+          <p class="signup-hint new-route-create-tab-intro" id="new-route-create-tab-intro" style="margin:0 0 0.65rem;text-align:left;">Formulaire en 5 étapes — <strong>Suivant</strong> / <strong>Précédent</strong>, puis validation.</p>
       <div id="new-route-modal-body" class="new-route-modal-body is-locked">
       <div class="new-route-modal-grid">
         <aside class="new-route-steps" aria-label="Étapes de création">
@@ -3823,6 +4056,8 @@
         </aside>
       </div>
       </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3906,10 +4141,11 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
+  <!-- Supabase : URL projet + clé anon / publishable (identique sorties.html / sortie.html). -->
   <script>
-  window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
-  /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
-  window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
+    /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
+    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
   </script>
   <script src="parcours.js" defer></script>
   <script src="goelo-auth.js" defer></script>

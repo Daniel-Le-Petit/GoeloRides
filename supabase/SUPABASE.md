@@ -8,7 +8,7 @@ Dans le dashboard Supabase : **SQL Editor** → coller et exécuter le fichier :
 
 (Création des tables `routes`, `signups`, `imported_participant_names`, RLS, et des fonctions RPC.)
 
-Puis exécuter **également** (sorties dynamiques + bouton « Nouvelle sortie ») :
+Puis exécuter **également** (sorties dynamiques + bouton « Gérer les sorties ») :
 
 `supabase/migrations/20250601120000_route_create_dynamic.sql`
 
@@ -18,11 +18,29 @@ Si tu avais exécuté une **version antérieure** de ce fichier avec `routes_lis
 
 `supabase/migrations/20250601130100_routes_list_jsonb_signature.sql`
 
-**Sécurité « Nouvelle sortie » (admin + mot de passe)** — à exécuter pour que seuls les comptes administrateurs puissent appeler `route_create` :
+**Sécurité modale admin (admin + mot de passe)** — à exécuter pour que seuls les comptes administrateurs puissent appeler `route_create` :
 
 `supabase/migrations/20250607120000_route_create_admin_auth.sql`
 
 (Crée `goelo_admin_resolve_login`, restreint `route_create` aux JWT **authenticated** avec `app_metadata.goelo_admin = true`, retire l’exécution **anon** sur `route_create`.)
+
+Puis exécuter **également** (promotion Team Rider depuis le site, sans clé service dans le navigateur) :
+
+`supabase/migrations/20250608120000_goelo_admin_set_team_rider.sql`
+
+(Crée la RPC `goelo_admin_set_team_rider` : seul un JWT déjà `goelo_admin` peut mettre à jour `auth.users.raw_app_meta_data` pour un autre compte identifié par e-mail.)
+
+Puis exécuter **si tu veux modifier une sortie déjà créée** depuis le site (sans recréer une ligne) :
+
+`supabase/migrations/20250609120000_route_update.sql`
+
+(Crée la RPC `route_update` : même garde admin que `route_create`, uniquement sur les routes `route_kind = 'custom'`.)
+
+Puis exécuter **si tu veux supprimer une sortie personnalisée** depuis le site (désactivation, elle disparaît des listes) :
+
+`supabase/migrations/20250610120000_route_delete.sql`
+
+(Crée la RPC `route_delete(p_route_id text)` : même garde admin, `is_active = false` sur les routes `route_kind = 'custom'` uniquement.)
 
 ## 2. Clé anon côté site
 
@@ -48,7 +66,7 @@ Récupère :
 
 Si ces deux variables sont vides, le site continue d’utiliser **localStorage** (`goeloRides_inscriptions_v1`) comme avant.
 
-La logique carte / inscriptions / « Nouvelle sortie » est dans **`parcours.js`** (chargé par `index.html` et `sorties.html`). Les deux pages doivent donc exposer les **mêmes** `window.GOELO_SUPABASE_*` si tu utilises Supabase.
+La logique carte / inscriptions / modale **Gérer les sorties** est dans **`parcours.js`** (chargé par `index.html` et `sorties.html`). Les deux pages doivent donc exposer les **mêmes** `window.GOELO_SUPABASE_*` si tu utilises Supabase.
 
 **Attention :** si l’URL est renseignée mais la clé anon est vide (fichier versionné sans secret), le site affiche un **avertissement dans la console** et enregistre **uniquement en local** — la table `signups` dans Supabase restera vide tant que la clé complète n’est pas collée en local ou au déploiement.
 
@@ -75,19 +93,40 @@ La logique carte / inscriptions / « Nouvelle sortie » est dans **`parcours.js`
 
 Si le site est servi depuis un domaine (ex. Render), vérifie **Settings → API → CORS** : ajoute l’URL du site. Pour les tests locaux, ajoute `http://127.0.0.1:8765` (ou le port utilisé).
 
-## 5. Administrateurs (« Nouvelle sortie »)
+## 5. Administrateurs (« Gérer les sorties »)
 
-Après la migration **`20250607120000_route_create_admin_auth.sql`** :
+Après les migrations **`20250607120000_route_create_admin_auth.sql`** et **`20250608120000_goelo_admin_set_team_rider.sql`** :
 
-1. **Authentication → Users** : crée un utilisateur (e-mail + mot de passe) ou utilise un compte existant.
-2. Ouvre l’utilisateur → **Raw App Meta Data** et ajoute la clé JSON **`goelo_admin`** avec la valeur booléenne **`true`** (ex. `{"goelo_admin": true}` en fusionnant avec l’existant). Sans cela, la connexion réussit mais le site affiche « pas administrateur » et `route_create` renvoie `forbidden`.
-3. **Pseudo** : pour te connecter avec un pseudo au lieu de l’e-mail, insère une ligne dans la table **`goelo_admin_login_aliases`** (SQL Editor), par ex.  
-   `INSERT INTO public.goelo_admin_login_aliases (alias_lower, auth_email) VALUES ('monpseudo', 'admin@exemple.com');`  
-   avec **`auth_email`** exactement l’e-mail du compte Auth (insensible à la casse côté connexion Supabase pour le mot de passe).
+### Premier compte avec droit créateur (bootstrap)
 
-La session admin est stockée dans **`sessionStorage`** du navigateur (clé `goelo_admin_auth_v1`) ; bouton **Se déconnecter** dans la modale pour l’effacer.
+Il faut **au moins un** utilisateur Auth avec `goelo_admin: true` dans **`raw_app_meta_data`** (équivalent **App Meta Data**). Si le dashboard ne permet pas d’éditer le JSON, utilise **SQL Editor** une fois pour ton e-mail :
 
-**E-mail de confirmation** : si le projet exige une confirmation d’e-mail avant première connexion, valide le mail depuis la boîte du compte admin.
+```sql
+UPDATE auth.users
+SET raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || jsonb_build_object('goelo_admin', true)
+WHERE lower(email) = lower('admin@exemple.com');
+```
+
+### Ensuite : depuis le site (Team Riders)
+
+1. Connecte-toi dans la modale **Gérer les sorties** avec ce compte admin (e-mail + mot de passe).
+2. Ouvre la section **Team Riders** (sous « Session admin »), saisis l’e-mail d’un utilisateur **déjà** présent dans **Authentication → Users**, coche ou décoche **Donner le droit créateur**, puis **Appliquer**.
+3. La personne doit **se déconnecter puis se reconnecter** dans la même modale pour recevoir un JWT à jour (sinon l’ancien jeton ne contient pas encore `goelo_admin`).
+
+**Sécurité :** la clé **anon** du site ne suffit pas à modifier `auth.users` : seule la RPC `SECURITY DEFINER` le fait, et elle vérifie que l’appelant a déjà `goelo_admin` dans **son** JWT. On ne met **jamais** la clé **service_role** dans le HTML.
+
+### Autres points
+
+- **Authentication → Users** : crée les comptes (e-mail + mot de passe) avant de les promouvoir.
+- **Pseudo** : pour se connecter avec un pseudo au lieu de l’e-mail, insère une ligne dans **`goelo_admin_login_aliases`** (SQL Editor), par ex.  
+  `INSERT INTO public.goelo_admin_login_aliases (alias_lower, auth_email) VALUES ('monpseudo', 'admin@exemple.com');`  
+  avec **`auth_email`** exactement l’e-mail du compte Auth.
+
+- **« E-mail ou mot de passe incorrect »** : l’API Supabase renvoie souvent la même erreur pour *mauvais mot de passe*, *compte absent sur ce projet*, ou *e-mail pas encore confirmé*. Vérifie **`email_confirmed_at`**, et réinitialise le mot de passe si besoin.
+
+La session admin est stockée dans **`sessionStorage`** (clé `goelo_admin_auth_v1`) ; **Se déconnecter** dans la barre « Session admin » de la modale.
+
+**E-mail de confirmation** : si le projet exige une confirmation d’e-mail avant première connexion, valide le mail depuis la boîte du compte concerné.
 
 ## 6. Données
 

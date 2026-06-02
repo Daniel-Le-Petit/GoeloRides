@@ -357,6 +357,37 @@
       background: linear-gradient(165deg, rgba(254, 226, 226, 0.45) 0%, #fff 40%, #fff 100%);
     }
 
+    .sorties-card-title-row {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem 0.75rem;
+      margin: 0 0 0.35rem;
+      min-width: 0;
+    }
+    .sorties-card-title-row .sorties-card-title {
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sorties-card-inscrit-badge {
+      flex-shrink: 0;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      padding: 0.28rem 0.52rem;
+      border-radius: 8px;
+      background: #dcfce7;
+      color: #14532d;
+      border: 1px solid #86efac;
+      line-height: 1.2;
+      white-space: nowrap;
+      margin-top: 0.06rem;
+    }
+
     .sorties-card-title {
       font-size: 1.14rem;
       font-weight: 800;
@@ -545,12 +576,32 @@
     .sorties-card-aside--bleu { background: linear-gradient(180deg, rgba(239, 246, 255, 0.95) 0%, #fff 100%); }
     .sorties-card-aside--rouge { background: linear-gradient(180deg, rgba(254, 242, 242, 0.9) 0%, #fff 100%); }
 
-    .sorties-card-aside .btn-je-participe {
+    .sorties-card-voir {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
       font-size: 0.72rem;
+      font-weight: 800;
       padding: 0.38rem 0.62rem;
-      cursor: inherit;
+      border-radius: 10px;
+      border: 1px solid rgba(21, 101, 168, 0.35);
+      background: var(--app-sea);
+      color: #fff;
       max-width: 100%;
       text-align: center;
+      line-height: 1.15;
+      cursor: inherit;
+      pointer-events: none;
+    }
+    .sorties-card-voir-icon {
+      width: 1.05em;
+      height: 1.05em;
+      display: block;
+      flex-shrink: 0;
+    }
+    .sorties-card-voir-text {
+      white-space: nowrap;
     }
 
     .sorties-card-chev {
@@ -623,7 +674,7 @@
     }
 
     @media (max-width: 560px) {
-      /* Ligne 1 : 3 colonnes | ligne 2 : Départ/Allure pleine largeur | ligne 3 : Je participe */
+      /* Ligne 1 : 3 colonnes | ligne 2 : Départ/Allure pleine largeur | ligne 3 : Voir */
       .sorties-card {
         display: grid;
         grid-template-columns: minmax(4.25rem, 26%) minmax(2.65rem, 3.35rem) 1fr;
@@ -723,6 +774,19 @@
         margin: 0 0 0.28rem;
       }
 
+      .sorties-card-mid .sorties-card-title-row {
+        margin-bottom: 0.28rem;
+      }
+
+      .sorties-card-mid .sorties-card-title-row .sorties-card-title {
+        margin: 0;
+      }
+
+      .sorties-card-mid .sorties-card-inscrit-badge {
+        font-size: 0.58rem;
+        padding: 0.22rem 0.42rem;
+      }
+
       .sorties-card-mid .sorties-card-hero-stats {
         margin-bottom: 0.4rem;
         gap: 0.35rem 0.55rem;
@@ -762,11 +826,6 @@
       }
     }
   </style>
-  <!-- Recopie les mêmes variables que sur index.html (URL projet + clé anon / publishable). -->
-  <script>
-    window.GOELO_SUPABASE_URL = "";
-    window.GOELO_SUPABASE_ANON_KEY = "";
-  </script>
 </head>
 <body>
   <div class="app-shell">
@@ -786,7 +845,7 @@
         <div class="sorties-header-actions">
           <button type="button" class="btn-sea" id="sorties-header-new-route">
             <svg class="btn-sea__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.5 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.74 1.69.99l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-            Nouvelle sortie
+            Gérer les sorties
           </button>
         </div>
       </header>
@@ -850,13 +909,20 @@
     <div class="signup-modal-dialog new-route-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="new-route-modal-title">
       <button type="button" class="signup-modal-close" data-close-new-route aria-label="Fermer">×</button>
       <div class="new-route-modal-head">
-        <h2 id="new-route-modal-title" tabindex="-1">Nouvelle sortie</h2>
-        <p class="new-route-sub">Parcours guidé en 5 étapes — avance avec <strong>Suivant</strong>, tu peux revenir avec <strong>Précédent</strong>.</p>
+        <h2 id="new-route-modal-title" tabindex="-1">Gérer les sorties</h2>
+        <p class="new-route-sub" id="new-route-modal-sub">Accès Team Rider, correction ou création d’une sortie personnalisée.</p>
       </div>
+      <div class="new-route-tabs" role="tablist" aria-label="Sections administrateur">
+        <button type="button" role="tab" class="new-route-tab is-active" id="new-route-tab-access" aria-selected="true" aria-controls="new-route-panel-access" data-new-route-tab="access">Accès Team Rider</button>
+        <button type="button" role="tab" class="new-route-tab" id="new-route-tab-edit" aria-selected="false" aria-controls="new-route-panel-edit" data-new-route-tab="edit" disabled title="Identifie-toi dans l’onglet « Accès Team Rider »">Modifier une sortie</button>
+        <button type="button" role="tab" class="new-route-tab" id="new-route-tab-create" aria-selected="false" aria-controls="new-route-panel-create" data-new-route-tab="create" disabled title="Identifie-toi dans l’onglet « Accès Team Rider »">Créer une nouvelle sortie</button>
+      </div>
+      <div class="new-route-tabpanels">
+        <div id="new-route-panel-access" class="new-route-tabpanel is-active" role="tabpanel" aria-labelledby="new-route-tab-access" data-tabpanel="access">
       <div class="new-route-admin-gate" id="new-route-admin-gate">
         <p class="new-route-admin-intro">
-          Accès réservé : <strong>e-mail du compte Supabase</strong> (recommandé) ou <strong>pseudo</strong> déjà enregistré dans la table <code>goelo_admin_login_aliases</code>, plus le <strong>mot de passe</strong> du compte.
-          Dans Supabase → <strong>Authentication → utilisateur → Raw App Meta Data</strong>, il faut <code>&quot;goelo_admin&quot;: true</code> pour pouvoir créer une sortie (voir <code>supabase/SUPABASE.md</code> §5).
+          Accès réservé : <strong>e-mail du compte Supabase</strong> (recommandé) ou <strong>pseudo</strong> dans <code>goelo_admin_login_aliases</code>, plus le <strong>mot de passe</strong> du compte.
+          Le rôle créateur (<code>goelo_admin</code>) est requis — voir <code>supabase/SUPABASE.md</code> §5. Les onglets <strong>Modifier une sortie</strong> et <strong>Créer une nouvelle sortie</strong> s’activent après connexion.
         </p>
         <label class="new-route-admin-field">
           <span>E-mail ou pseudo</span>
@@ -869,9 +935,51 @@
         <p class="new-route-admin-error" id="new-route-admin-error" hidden role="alert"></p>
         <div class="new-route-admin-actions">
           <button type="button" class="btn-primary" id="new-route-admin-submit">Se connecter</button>
-          <button type="button" class="btn-app-outline" id="new-route-admin-logout" hidden>Se déconnecter</button>
         </div>
       </div>
+      <div class="new-route-admin-toolbar" id="new-route-admin-toolbar" hidden>
+        <div class="new-route-admin-toolbar-top">
+          <span class="new-route-admin-toolbar-label">Session admin</span>
+          <button type="button" class="btn-app-outline" id="new-route-admin-logout-toolbar">Se déconnecter</button>
+        </div>
+        <details class="new-route-team-rider-details">
+          <summary>Team Riders — donner ou retirer le droit de créer une sortie</summary>
+          <p class="signup-hint" style="margin-top:0.5rem;text-align:left;">
+            L’e-mail doit correspondre à un utilisateur déjà créé dans <strong>Authentication → Users</strong>. Coche pour donner le droit, décoche pour le retirer, puis <strong>Appliquer</strong>. La personne doit se reconnecter ici pour que son jeton soit à jour.
+          </p>
+          <label class="new-route-admin-field">
+            <span>E-mail du compte</span>
+            <input type="email" id="new-route-team-email" autocomplete="email" maxlength="120" placeholder="cycliste@exemple.com">
+          </label>
+          <label class="new-route-team-grant-row">
+            <input type="checkbox" id="new-route-team-grant" checked>
+            <span>Donner le droit créateur (<code>goelo_admin</code>)</span>
+          </label>
+          <button type="button" class="btn-primary" id="new-route-team-submit">Appliquer</button>
+          <p class="new-route-team-msg" id="new-route-team-msg" hidden role="status"></p>
+        </details>
+      </div>
+        </div>
+        <div id="new-route-panel-edit" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-edit" hidden data-tabpanel="edit">
+          <p class="signup-hint" style="margin:0 0 0.75rem;text-align:left;">
+            Choisis une sortie <strong>personnalisée</strong>, puis <strong>Charger</strong>. Le formulaire s’ouvre dans l’onglet <strong>Créer une nouvelle sortie</strong> pour corriger et valider à l’étape 5.
+          </p>
+        <div class="new-route-edit-pick" id="new-route-edit-pick">
+          <div class="new-route-edit-pick-row">
+            <label class="new-route-admin-field" style="flex:1;min-width:0;margin-bottom:0">
+              <span>Sortie à modifier</span>
+              <select id="new-route-edit-select" aria-label="Choisir une sortie à modifier"></select>
+            </label>
+            <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
+            <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+          </div>
+          <p class="signup-hint new-route-edit-empty-hint" id="new-route-edit-empty-hint" hidden style="margin-top:0.45rem;text-align:left;">
+            Aucune sortie personnalisée pour l’instant : crée-en une avec l’onglet <strong>Créer une nouvelle sortie</strong>, valide, puis rouvre cette fenêtre — la liste se met à jour automatiquement.
+          </p>
+        </div>
+        </div>
+        <div id="new-route-panel-create" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-create" hidden data-tabpanel="create">
+          <p class="signup-hint new-route-create-tab-intro" id="new-route-create-tab-intro" style="margin:0 0 0.65rem;text-align:left;">Formulaire en 5 étapes — <strong>Suivant</strong> / <strong>Précédent</strong>, puis validation.</p>
       <div id="new-route-modal-body" class="new-route-modal-body is-locked">
       <div class="new-route-modal-grid">
         <aside class="new-route-steps" aria-label="Étapes de création">
@@ -976,7 +1084,7 @@
                 <strong>Étape 4 — Participants</strong>
               </p>
               <p class="new-route-panel-hint">
-                Après création, les inscriptions se font ici sur la page Sorties : bouton <strong>« Je participe ! »</strong> sur la carte du parcours.
+                Après création, les inscriptions se font ici sur la page Sorties : bouton <strong>« Voir »</strong> sur chaque carte (œil + libellé), puis fiche sortie.
               </p>
             </div>
 
@@ -1009,6 +1117,8 @@
           </div>
         </aside>
       </div>
+      </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1093,6 +1203,12 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
+  <!-- Supabase : même bloc que index.html, immédiatement avant parcours.js -->
+  <script>
+    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
+    /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
+    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+  </script>
   <script src="sorties.js" defer></script>
   <script src="parcours.js" defer></script>
   <script src="goelo-auth.js" defer></script>

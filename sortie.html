@@ -60,11 +60,34 @@
       text-decoration: none;
     }
     .sortie-back a:hover { text-decoration: underline; }
-    .sortie-header h1 {
+    .sortie-title-row {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0.55rem;
+      margin-bottom: 0.35rem;
+      min-width: 0;
+    }
+    .sortie-title-row .sortie-title-h1 {
       font-size: clamp(1.35rem, 2.8vw, 1.75rem);
       font-weight: 800;
       letter-spacing: -0.03em;
-      margin-bottom: 0.35rem;
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      line-height: 1.15;
+    }
+    .sortie-inscrit-badge {
+      flex-shrink: 0;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      padding: 0.32rem 0.6rem;
+      border-radius: 8px;
+      background: #dcfce7;
+      color: #14532d;
+      border: 1px solid #86efac;
+      line-height: 1.2;
     }
     .sortie-reg-line {
       font-size: 0.86rem;
@@ -418,14 +441,26 @@
       flex: 1;
       min-width: 0;
     }
-    .sortie-hero-inscrit-row {
-      display: inline-flex;
-      flex-wrap: nowrap;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 0.5rem;
-      flex: 1;
-      min-width: 0;
+    .btn-sortie-inscrire {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 0.42rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(21, 101, 168, 0.35);
+      background: var(--app-sea);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(21, 101, 168, 0.25);
+      flex-shrink: 0;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .btn-sortie-inscrire:hover {
+      background: var(--app-sea-hover);
+    }
+    .btn-sortie-inscrire:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(21, 101, 168, 0.35);
     }
     .btn-sortie-ghost {
       font-family: inherit;
@@ -642,9 +677,11 @@
       .app-main { padding: 1rem 0.85rem 2rem; }
     }
   </style>
+  <!-- Mêmes variables Supabase que index.html / sorties.html -->
   <script>
-    window.GOELO_SUPABASE_URL = "";
-    window.GOELO_SUPABASE_ANON_KEY = "";
+    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
+    /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
+    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
   </script>
 </head>
 <body>
@@ -662,7 +699,10 @@
     <main class="app-main">
       <p class="sortie-back"><a href="sorties.html">← Toutes les sorties</a></p>
       <header class="sortie-header">
-        <h1 id="sortie-title">Sortie</h1>
+        <div class="sortie-title-row">
+          <h1 id="sortie-title" class="sortie-title-h1">Sortie</h1>
+          <span id="sortie-inscrit-badge" class="sortie-inscrit-badge" hidden role="status">Inscrit·e</span>
+        </div>
         <p id="sortie-reg-line" class="sortie-reg-line" hidden></p>
         <p id="sortie-signup-count" class="sortie-signup-count" hidden></p>
       </header>

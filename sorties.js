@@ -221,14 +221,30 @@
       cities: Array.isArray(fc.cities) && fc.cities.length
         ? fc.cities
         : [{ name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }],
-      routeKind: row.route_kind || "custom"
+      routeKind: row.route_kind || row.routeKind || "custom"
     };
+  }
+
+  function normalizeRoutesListRows(data) {
+    if (data == null) return [];
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        const p = JSON.parse(data);
+        return Array.isArray(p) ? p : [];
+      } catch (err) {
+        void err;
+        return [];
+      }
+    }
+    if (typeof data === "object" && Array.isArray(data.routes)) return data.routes;
+    return [];
   }
 
   async function fetchCustomRoutesFromSupabase() {
     if (!isSupabaseEnabled()) return [];
-    const rows = await supabaseRpc("routes_list", { p_filter: {} });
-    if (!Array.isArray(rows)) return [];
+    const raw = await supabaseRpc("routes_list", { p_filter: {} });
+    const rows = normalizeRoutesListRows(raw);
     const builtIds = {};
     ROUTES_BUILTIN.forEach(function (r) {
       builtIds[r.id] = true;
@@ -236,7 +252,8 @@
     const out = [];
     rows.forEach(function (row) {
       if (!row || !row.id || builtIds[row.id]) return;
-      if (row.route_kind !== "custom") return;
+      const rk = row.route_kind != null ? row.route_kind : row.routeKind;
+      if (rk !== "custom") return;
       out.push(dbRowToRoute(row));
     });
     return out;
@@ -631,6 +648,16 @@
         const meet = escapeHtml(route.meetPlace || DEFAULT_MEET_PLACE);
         const paceEsc = escapeHtml(route.pace || "—");
         const shortDescEsc = route.shortDesc ? escapeHtml(route.shortDesc) : "";
+        const registered = isUserRegistered(route.id, regState);
+        const titleRow =
+          '<div class="sorties-card-title-row">' +
+          '<h3 class="sorties-card-title">' +
+          escapeHtml(route.track) +
+          "</h3>" +
+          (registered
+            ? '<span class="sorties-card-inscrit-badge" role="status">Inscrit·e</span>'
+            : "") +
+          "</div>";
         const typeLine =
           '<span class="sorties-pill sorties-pill--type' + typeExtra + '">' + escapeHtml(meta.label) + "</span>" +
           (shortDescEsc ? '<span class="sorties-type-desc"> · ' + shortDescEsc + "</span>" : "");
@@ -642,10 +669,13 @@
           '<p class="sorties-photo-meta-line"><strong>Allure</strong> : ' +
           paceEsc +
           "</p></div>";
-        const registered = isUserRegistered(route.id, regState);
-        const regBlock = registered
-          ? '<span class="btn-je-participe btn-je-participe--done" role="presentation">Inscrit·e ✓</span>'
-          : '<span class="btn-je-participe" role="presentation">Je participe !</span>';
+        const voirBlock =
+          '<span class="sorties-card-voir" role="presentation">' +
+          '<svg class="sorties-card-voir-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+          '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>' +
+          '<circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="3"/>' +
+          "</svg>" +
+          '<span class="sorties-card-voir-text">Voir</span></span>';
         const sortieHref = "sortie.html?id=" + encodeURIComponent(String(route.id));
         html +=
           '<li>' +
@@ -679,9 +709,7 @@
           '<div class="sorties-card-body sorties-card-body--' +
           railMod +
           '">' +
-          '<h3 class="sorties-card-title">' +
-          escapeHtml(route.track) +
-          "</h3>" +
+          titleRow +
           '<div class="sorties-card-hero-stats" aria-label="Distance et dénivelé">' +
           '<span class="sorties-hero-km">' +
           escapeHtml(km) +
@@ -711,7 +739,7 @@
           '<div class="sorties-card-aside sorties-card-aside--' +
           railMod +
           '">' +
-          regBlock +
+          voirBlock +
           '<span class="sorties-card-chev" aria-hidden="true">›</span></div>' +
           "</a></li>";
       });
