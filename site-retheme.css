@@ -60,6 +60,12 @@ html.site-retheme {
   --sq-blue: #0055a4;
   --sq-yellow: #f9d71c;
   --sq-yellow-hover: #e8cd18;
+  /* Marges page : une seule « couche » horizontale (évite double padding main + .sorties-main-pad, etc.) */
+  --site-edge: clamp(1rem, 4vw, 1.65rem);
+  --site-edge-l: max(var(--site-edge), env(safe-area-inset-left, 0px));
+  --site-edge-r: max(var(--site-edge), env(safe-area-inset-right, 0px));
+  --site-top-clear: max(3.2rem, calc(env(safe-area-inset-top, 0px) + 2.35rem));
+  --site-bottom-safe: max(1.5rem, env(safe-area-inset-bottom, 0px));
 }
 
 html.site-retheme body {
@@ -317,7 +323,7 @@ html.site-retheme .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-h
 /* —— Footer (nouveau markup .footer-*) —— */
 html.site-retheme .site-footer {
   background: rgba(10, 25, 32, 0.95);
-  padding: 3rem 6vw 2.5rem;
+  padding: 3rem var(--site-edge-l) max(2.5rem, env(safe-area-inset-bottom, 0px)) var(--site-edge-r);
   text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   margin-top: auto;
@@ -370,8 +376,8 @@ html.site-retheme .footer-legal {
 /* —— Lien retour (sorties / sortie) —— */
 html.site-retheme .back-link {
   position: fixed;
-  top: 1.4rem;
-  left: 1.6rem;
+  top: max(0.55rem, env(safe-area-inset-top, 0px));
+  left: max(0.55rem, env(safe-area-inset-left, 0px));
   z-index: 200;
   font-size: 0.8rem;
   font-weight: 500;
@@ -400,8 +406,8 @@ html.site-retheme .sortie-back {
 html.site-retheme .sorties-auth-top,
 html.site-retheme .sortie-auth-top {
   position: fixed;
-  top: 1.2rem;
-  right: 1.2rem;
+  top: max(0.5rem, env(safe-area-inset-top, 0px));
+  right: max(0.5rem, env(safe-area-inset-right, 0px));
   z-index: 200;
 }
 
@@ -439,7 +445,7 @@ html.site-retheme .home-landing-inner {
   position: relative;
   z-index: 2;
   max-width: 52rem;
-  padding: 0 1.5rem 6vh 1.5rem;
+  padding: 0 var(--site-edge-l) 6vh var(--site-edge-r);
   align-self: flex-start;
   text-align: left;
 }
@@ -581,7 +587,7 @@ html.site-retheme .home-landing-lead {
 
 /* Section groupes + CTA accueil */
 html.site-retheme #groupes {
-  padding: 3rem 1.25rem 3.5rem;
+  padding: 3rem var(--site-edge-l) 3.5rem var(--site-edge-r);
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -660,7 +666,7 @@ html.site-retheme .groupes-grid-note {
 }
 
 html.site-retheme .home-cta-sorties {
-  padding: 3rem 1.25rem 1rem;
+  padding: 3rem var(--site-edge-l) 1rem var(--site-edge-r);
   margin-bottom: 2.25rem;
 }
 
@@ -706,11 +712,16 @@ html.site-retheme .groupe-stats .groupe-stat-val {
 }
 
 html.site-retheme .app-main:not(.app-main--home) {
-  padding-top: 4.25rem;
+  padding-top: var(--site-top-clear);
+  padding-left: var(--site-edge-l);
+  padding-right: var(--site-edge-r);
+  box-sizing: border-box;
 }
 
 html.site-retheme .app-main--sortie {
-  padding: 4.25rem 0 2.5rem;
+  padding: var(--site-top-clear) 0 var(--site-bottom-safe);
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* —— Sorties —— */
@@ -721,7 +732,7 @@ html.site-retheme .sorties-hero-mini {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 4rem 1.25rem 2rem;
+  padding: clamp(2.25rem, 7vw, 3.75rem) 0 clamp(1.35rem, 4vw, 2rem);
   background: linear-gradient(rgba(15, 35, 45, 0.65), rgba(15, 35, 45, 0.65)),
     url("assets/hero-accueil.png") center / cover no-repeat;
   color: #fff;
@@ -739,7 +750,8 @@ html.site-retheme .sorties-month-title {
 }
 
 html.site-retheme .sorties-main-pad {
-  padding: 1.25rem 1.25rem 2.5rem;
+  /* Gouttière horizontale : .app-main (évite cumul avec padding du main) */
+  padding: 1.25rem 0 2.5rem;
   max-width: 960px;
   margin: 0 auto;
 }
@@ -750,7 +762,7 @@ html.site-retheme .sorties-filters-bar {
   gap: 1rem;
   align-items: flex-end;
   justify-content: flex-start;
-  padding: 1.2rem 1.25rem;
+  padding: 1.1rem 0;
   margin-bottom: 1.25rem;
   position: relative;
   color-scheme: dark;
@@ -1221,7 +1233,7 @@ html.site-retheme .sortie-map-inner .leaflet-container.strava-map-tiles {
 
 /* —— Sortie fiche —— */
 html.site-retheme .sortie-page-pad {
-  padding: 4.5rem 1.25rem 2.5rem;
+  padding: clamp(1.35rem, 3.5vw, 2.75rem) var(--site-edge-l) var(--site-bottom-safe) var(--site-edge-r);
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -1292,7 +1304,7 @@ html.site-retheme .sortie-hero-retheme-inner {
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 1.5rem 1.25rem 1.75rem;
+  padding: 1.35rem var(--site-edge-l) 1.6rem var(--site-edge-r);
   max-width: 52rem;
 }
 
@@ -1542,4 +1554,131 @@ html.site-retheme .sortie-map-heading,
 html.site-retheme .sortie-participants-title {
   font-family: var(--font-serif);
   color: rgba(255, 255, 255, 0.95);
+}
+
+/* ========== Mobile / tablette : marges cohérentes, hero lisible ========== */
+@media (max-width: 768px) {
+  html.site-retheme {
+    --site-edge: clamp(0.88rem, 4.5vw, 1.35rem);
+  }
+
+  html.site-retheme .home-landing-inner {
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+    text-align: center;
+    padding-bottom: max(5vh, calc(env(safe-area-inset-bottom, 0px) + 0.65rem));
+  }
+
+  html.site-retheme .home-brand-bar {
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  html.site-retheme .home-landing-body {
+    padding: 0.95rem max(0.75rem, env(safe-area-inset-left, 0px)) 1.05rem max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  html.site-retheme .home-landing-values {
+    justify-content: center;
+  }
+
+  html.site-retheme .home-landing-hero-ctas {
+    justify-content: center;
+  }
+
+  html.site-retheme .home-scroll-hint {
+    right: max(0.65rem, env(safe-area-inset-right, 0px));
+    bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  html.site-retheme .groupes-retheme-grid {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+
+  html.site-retheme .sortie-retheme-grid {
+    gap: 1rem;
+  }
+
+  html.site-retheme .home-cta-sorties-card {
+    padding: 1.4rem 1rem 1.55rem;
+  }
+
+  html.site-retheme #new-route-modal.signup-modal {
+    padding: 0.6rem max(0.4rem, env(safe-area-inset-left, 0px)) 0.75rem max(0.4rem, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  html.site-retheme #new-route-modal .signup-modal-dialog,
+  html.site-retheme #new-route-modal .new-route-modal-dialog {
+    width: calc(100vw - max(1.25rem, calc(env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px) + 0.75rem))) !important;
+    max-width: min(96vw, 1040px) !important;
+    padding: 1.2rem max(0.85rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-bottom, 0px)) max(0.85rem, env(safe-area-inset-right, 0px)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Une seule couche de gouttière : annule le padding horizontal des pages (inline) */
+  html.site-retheme main.app-main:not(.app-main--home):not(.app-main--sortie) {
+    padding-top: var(--site-top-clear) !important;
+    padding-bottom: max(1.35rem, env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: max(0.88rem, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(0.88rem, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  html.site-retheme .sorties-main-pad {
+    padding-top: 0.6rem;
+    padding-bottom: 1.65rem;
+  }
+
+  html.site-retheme .sorties-hero-mini {
+    min-height: 18vh;
+  }
+
+  html.site-retheme .sorties-filters-bar {
+    gap: 0.6rem;
+    margin-bottom: 0.95rem;
+  }
+
+  html.site-retheme #groupes {
+    padding-top: 2.15rem;
+    padding-bottom: 2.35rem;
+  }
+
+  html.site-retheme .home-cta-sorties {
+    padding-top: 2.1rem;
+    margin-bottom: 1.35rem;
+  }
+
+  html.site-retheme .sortie-hero-retheme {
+    margin-bottom: 1rem;
+  }
+
+  html.site-retheme .sortie-hero-retheme-inner {
+    min-height: min(42vh, 22rem);
+  }
+
+  html.site-retheme .groupes-grid-note {
+    margin-top: 1.35rem;
+    padding: 0.85rem 0;
+  }
+}
+
+@media (max-width: 400px) {
+  html.site-retheme .home-landing-hero-ctas {
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 22rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  html.site-retheme .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+  html.site-retheme .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+    flex: 1 1 auto;
+    min-width: min(100%, 9.5rem);
+    justify-content: center;
+  }
 }
