@@ -518,7 +518,7 @@
     if (greet) {
       var nm = getConnectedGreetingName();
       if (nm) {
-        greet.textContent = "Bonjour " + nm;
+        greet.textContent = "Bonjour ! " + nm;
         greet.hidden = false;
       } else if (inSession) {
         greet.textContent = "Bonjour !";
