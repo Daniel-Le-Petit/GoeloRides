@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="site-retheme">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="parcours.css">
   <link rel="stylesheet" href="app-chrome.css">
+  <link rel="stylesheet" href="site-retheme.css">
   <style>
     :root {
       --app-sea: #1565a8;
@@ -788,28 +789,15 @@
   </style>
 </head>
 <body>
+  <a href="index.html" class="back-link">← GoëloRides</a>
+  <div class="sorties-auth-top"><div data-goelo-auth-home></div></div>
   <div class="app-shell">
-    <aside class="app-sidebar" aria-label="Navigation principale" data-goelo-auth-no-sidebar>
-      <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
-      <ul class="app-nav">
-        <li><a href="index.html">Accueil</a></li>
-        <li><a class="is-active" href="sorties.html">Sorties</a></li>
-        <li><a href="groupes.html">Groupes</a></li>
-        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">Instagram↗</a></li>
-      </ul>
-    </aside>
-
     <main class="app-main">
-      <header class="sorties-header">
-        <h1>Les sorties <span class="goelorides-mark"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></span></h1>
-        <div class="sorties-header-actions">
-          <button type="button" class="btn-sea" id="sorties-header-new-route">
-            <svg class="btn-sea__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.5 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.74 1.69.99l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-            Gérer les sorties
-          </button>
-        </div>
-      </header>
-
+      <div class="sorties-hero-mini">
+        <h1>Les sorties GoëloRides</h1>
+        <p>Départ parking du Kasino · Saint-Quay-Portrieux</p>
+      </div>
+      <div class="sorties-main-pad">
       <div class="sorties-filters-bar" id="sorties-filters-bar" aria-label="Filtres des sorties">
         <div class="sorties-filter-field">
           <select id="sorties-filter-type" class="sorties-filter-select" aria-label="Type de sortie">
@@ -838,29 +826,31 @@
             <option value="passee">Passée</option>
           </select>
         </div>
+        <button type="button" class="btn-sea" id="sorties-header-new-route">
+            <svg class="btn-sea__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.5 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.74 1.69.99l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+            Gérer les sorties
+          </button>
       </div>
 
       <div id="sorties-list" aria-live="polite">
         <p class="sorties-empty" id="sorties-loading-msg">Chargement des sorties…</p>
       </div>
+      </div>
 
       <footer class="site-footer">
-        <div class="site-footer-inner">
-          <div class="site-footer-brand">
-            <span class="site-footer-name">GoëloRides</span>
-            <span class="site-footer-season">Été 2026</span>
-          </div>
-          <div class="site-footer-loc">
-            <span class="site-footer-loc-icon" aria-hidden="true">📍</span>
-            <span class="site-footer-loc-text">Départ · <strong>Parking du Kasino</strong>, Saint-Quay-Portrieux <span class="site-footer-cp">(22410)</span></span>
-          </div>
-          <div class="site-footer-contact">
-            <a class="site-footer-pill site-footer-pill--ig" href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span class="site-footer-pill-icon" aria-hidden="true">📸</span> @goelo.rides</a>
-            <a class="site-footer-pill site-footer-pill--mail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
-          </div>
-          <p class="site-footer-note">Initiative locale et indépendante · Pas d'adhésion · Pas de fédération</p>
-        </div>
-      </footer>
+    <p class="footer-logo">GoëloRides</p>
+    <p class="footer-loc">Saint-Quay-Portrieux · Côtes-d'Armor · 22410</p>
+    <div class="footer-links">
+      <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">📸 @goelo.rides</a>
+      <a href="mailto:goelo.rides@gmail.com">✉ goelo.rides@gmail.com</a>
+      <a href="sorties.html">Sorties</a>
+      <a href="index.html">Accueil</a>
+    </div>
+    <p class="footer-legal">
+      Initiative locale et indépendante · Pas d'adhésion · Pas de fédération<br>
+      Été 2026 · GoëloRides
+    </p>
+  </footer>
     </main>
   </div>
 
@@ -927,12 +917,14 @@
           </p>
         <div class="new-route-edit-pick" id="new-route-edit-pick">
           <div class="new-route-edit-pick-row">
-            <label class="new-route-admin-field" style="flex:1;min-width:0;margin-bottom:0">
+            <label class="new-route-admin-field new-route-edit-pick-field">
               <span>Sortie à modifier</span>
               <select id="new-route-edit-select" aria-label="Choisir une sortie à modifier"></select>
             </label>
-            <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
-            <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+            <div class="new-route-edit-pick-actions">
+              <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
+              <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+            </div>
           </div>
           <p class="signup-hint new-route-edit-empty-hint" id="new-route-edit-empty-hint" hidden style="margin-top:0.45rem;text-align:left;">
             Aucune sortie personnalisée pour l’instant : crée-en une avec l’onglet <strong>Créer une nouvelle sortie</strong>, valide, puis rouvre cette fenêtre — la liste se met à jour automatiquement.

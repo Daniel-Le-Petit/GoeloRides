@@ -303,6 +303,12 @@
       levelLabel: fc.levelLabel || (row.group_label || "—"),
       vibe: fc.vibe || "",
       shortDesc: fc.shortDesc || "",
+      rideLeader:
+        typeof fc.rideLeader === "string" && fc.rideLeader.trim()
+          ? fc.rideLeader.trim()
+          : typeof fc.ride_leader === "string" && fc.ride_leader.trim()
+            ? fc.ride_leader.trim()
+            : "",
       depart: enrichDepartObject(
         fc.depart && typeof fc.depart === "object"
           ? fc.depart
@@ -611,64 +617,58 @@
     return m2 ? m2[1] : SHARED.time;
   }
 
-  function routeSkinClass(route) {
-    if (route.id === "falaises") return "is-route-falaises";
-    if (route.id === "brehec") return "is-route-brehec";
-    if (route.id === "boucle") return "is-route-boucle";
-    return "is-custom-route";
+  function levelSlugForHero(levelClass) {
+    const lc = String(levelClass || "").toLowerCase();
+    if (lc === "level-blanc") return "blanc";
+    if (lc === "level-vert") return "vert";
+    if (lc === "level-bleu") return "bleu";
+    if (lc === "level-rouge") return "rouge";
+    return "bleu";
   }
 
-  const BIKE_SVG =
-    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-    '<path fill="#1f2937" d="M5 20.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm14 0a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z' +
-    'M6.8 15h10.4l1.2-3.5H8.3L6.8 15zm2.5-5.2L10 8h3.2l.5 1.8h-4.4z"/></svg>';
-
-  function buildHeroTable(route) {
+  /** Héros fiche sortie (image + overlay + CTA #sortie-hero-actions inchangé pour le JS). */
+  function buildSortieHero(route) {
+    const thumb = thumbForRoute(route);
+    const slug = levelSlugForHero(route.levelClass);
     const d = route.depart || {};
+    const dateLine = (d && d.dateLabel) || "—";
     const timeInTable = departTimeDisplay(route);
     const kmTxt = route.profile ? formatKm(route.profile.totalKm) : "—";
+    let dplus = "—";
+    if (route.profile && route.profile.elevGainM != null && route.profile.elevGainM > 5) {
+      dplus = String(Math.round(route.profile.elevGainM)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " m D+";
+    }
     return (
-      '<table class="ride-event-card ride-event-card--choice ' +
-      routeSkinClass(route) +
+      '<div class="sortie-hero-retheme">' +
+      '<div class="sortie-hero-retheme-bg" style="background-image:url(' +
+      escapeAttr(thumb) +
+      ')"></div>' +
+      '<div class="sortie-hero-retheme-scrim" aria-hidden="true"></div>' +
+      '<div class="sortie-hero-retheme-inner">' +
+      '<span class="sortie-hero-badge sortie-hero-badge--' +
+      slug +
       '">' +
-      "<tbody>" +
-      '<tr><td class="ride-td-left"><span class="ride-day">' +
-      escapeHtml(d.day || "—") +
-      "</span></td>" +
-      '<td class="ride-td-right"><div class="ride-km-row ride-km-row--sortie">' +
-      '<p class="ride-km">' +
-      kmTxt +
-      "</p>" +
-      '<div id="sortie-hero-actions" class="sortie-hero-actions"></div>' +
-      "</div></td></tr>" +
-      '<tr><td class="ride-td-left"><span class="ride-month">' +
-      escapeHtml(d.month || "") +
-      "</span></td>" +
-      '<td class="ride-td-right"><h4 class="ride-course">' +
-      escapeHtml(route.track) +
-      "</h4></td></tr>" +
-      '<tr><td class="ride-td-left"><span class="ride-time">' +
-      escapeHtml(timeInTable) +
-      "</span></td>" +
-      '<td class="ride-td-right"><p class="ride-group">' +
-      escapeHtml(route.name) +
-      "</p></td></tr>" +
-      '<tr><td class="ride-td-left ride-td-bike" rowspan="2">' +
-      '<p class="ride-meet-place">' +
-      escapeHtml(route.meetPlace || DEFAULT_MEET_PLACE) +
-      "</p>" +
-      '<div class="ride-aside-bike">' +
-      BIKE_SVG +
-      "</div></td>" +
-      '<td class="ride-td-right"><p class="ride-pace-level">' +
-      escapeHtml(route.pace || "—") +
-      " · " +
       escapeHtml(route.levelLabel || "—") +
-      "</p></td></tr>" +
-      '<tr><td class="ride-td-right"><p class="ride-desc">' +
-      escapeHtml(route.shortDesc || "") +
-      "</p></td></tr>" +
-      "</tbody></table>"
+      "</span>" +
+      '<h1 class="sortie-hero-h1">' +
+      escapeHtml(route.track) +
+      "</h1>" +
+      '<div class="sortie-hero-meta-pills" role="group" aria-label="Date, horaire et parcours">' +
+      "<span>" +
+      escapeHtml(dateLine) +
+      "</span>" +
+      "<span>" +
+      escapeHtml(timeInTable) +
+      "</span>" +
+      "<span>" +
+      escapeHtml(kmTxt) +
+      "</span>" +
+      "<span>" +
+      escapeHtml(dplus) +
+      "</span>" +
+      "</div>" +
+      '<div id="sortie-hero-actions" class="sortie-hero-actions"></div>' +
+      "</div></div>"
     );
   }
 
@@ -1013,7 +1013,15 @@
     if (snap.rpcFailed) {
       emptyEl.hidden = false;
       emptyEl.textContent = "Liste des participant·e·s indisponible pour le moment.";
+      var thFail = document.getElementById("sortie-participants-title");
+      if (thFail) thFail.textContent = "Participant·e·s";
       return;
+    }
+    var titleHeading = document.getElementById("sortie-participants-title");
+    if (titleHeading) {
+      var n = snap.names.length;
+      titleHeading.textContent =
+        n === 0 ? "Participant·e·s" : n === 1 ? "1 participe" : n + " participent";
     }
     snap.names.forEach(function (name) {
       var li = document.createElement("li");
@@ -1644,19 +1652,12 @@
     if (titleEl) titleEl.textContent = route.track;
 
     if (heroWrap) {
-      const thumb = thumbForRoute(route);
-      const lc = String(route.levelClass || "").toLowerCase();
-      const thumbMod = lc === "level-vert" ? " sortie-hero-thumb--vert" : "";
-      heroWrap.innerHTML =
-        '<div class="sortie-hero-grid">' +
-        '<div class="sortie-hero-thumb' +
-        thumbMod +
-        '"><img src="' +
-        escapeAttr(thumb) +
-        '" alt="" loading="lazy" decoding="async"></div>' +
-        '<div class="sortie-hero-table">' +
-        buildHeroTable(route) +
-        "</div></div>";
+      heroWrap.innerHTML = buildSortieHero(route);
+    }
+
+    const rideLeaderEl = document.getElementById("sortie-ride-leader");
+    if (rideLeaderEl) {
+      rideLeaderEl.textContent = route.rideLeader ? route.rideLeader : "—";
     }
 
     if (courseEl) {

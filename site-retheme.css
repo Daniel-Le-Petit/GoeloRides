@@ -1,0 +1,1545 @@
+/**
+ * GoëloRides — refonte visuelle (HTML + CSS uniquement).
+ * Activé avec <html class="site-retheme">. Ne renomme pas les id/classes métier.
+ */
+
+@keyframes site-retheme-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes site-retheme-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes site-retheme-slowzoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes site-retheme-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+html.site-retheme {
+  --ocean: #1a3a4a;
+  --teal: #2e7d8a;
+  --sand: #f5ede0;
+  --warm: #e8d5b7;
+  --white: #ffffff;
+  --text: #1c2b30;
+  --muted: #5a7280;
+  --blanc: #f0f0f0;
+  --vert: #4caf79;
+  --bleu: #3a7fc1;
+  --rouge: #d94f3d;
+  --site-card: rgba(255, 255, 255, 0.93);
+  --site-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  --site-overlay: rgba(15, 35, 45, 0.62);
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  /* Drapeau / charte locale (aligné index.html) */
+  --sq-blue: #0055a4;
+  --sq-yellow: #f9d71c;
+  --sq-yellow-hover: #e8cd18;
+}
+
+html.site-retheme body {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background-color: #0f1f28;
+  background-image: url("assets/hero-accueil.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100dvh;
+}
+
+@media (max-width: 768px) {
+  html.site-retheme body {
+    background-attachment: scroll;
+  }
+}
+
+html.site-retheme .app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: transparent;
+}
+
+/* Sidebar masquée (pas de <nav> dans le projet : navigation = aside) */
+html.site-retheme .app-sidebar {
+  display: none !important;
+}
+
+html.site-retheme .app-main,
+html.site-retheme .app-main--home {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+/* —— Cartes flottantes —— */
+html.site-retheme .site-card-float {
+  background: var(--site-card);
+  border-radius: 1.2rem;
+  box-shadow: var(--site-card-shadow);
+  animation: site-retheme-fadein 0.7s ease both;
+}
+
+/* Sorties (liste + fiche) : vitré comme .groupe-card — pas de panneau blanc */
+html.site-retheme .sorties-filters-bar,
+html.site-retheme .sorties-card,
+html.site-retheme .sortie-signup-panel,
+html.site-retheme .sortie-participants,
+html.site-retheme .sortie-map-section .sortie-map-inner,
+html.site-retheme .sortie-course,
+html.site-retheme .sortie-organizer-card {
+  background: rgba(15, 35, 45, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.2rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.92);
+  animation: site-retheme-fadein 0.7s ease both;
+}
+
+html.site-retheme .sorties-filters-bar {
+  animation-delay: 0.08s;
+}
+
+html.site-retheme .sorties-card {
+  animation-delay: 0.06s;
+}
+
+/* Cartes « groupe » : vitré sombre sur le fond photo (pas de carte blanche) */
+html.site-retheme .groupe-card {
+  background: rgba(15, 35, 45, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-left-width: 5px;
+  border-radius: 1.2rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.92);
+  animation: site-retheme-fadein 0.7s ease both;
+}
+
+html.site-retheme .groupe-card--blanc {
+  border-left-color: #cbd5e1;
+}
+
+html.site-retheme .groupe-card--vert {
+  border-left-color: var(--vert);
+}
+
+html.site-retheme .groupe-card--bleu {
+  border-left-color: var(--bleu);
+}
+
+html.site-retheme .groupe-card--rouge {
+  border-left-color: var(--rouge);
+}
+
+html.site-retheme .groupe-card-body,
+html.site-retheme .groupe-desc,
+html.site-retheme .groupe-parcours {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+html.site-retheme .groupe-card h2 {
+  color: #fff;
+}
+
+html.site-retheme .groupe-stats {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+html.site-retheme .groupe-stats .groupe-stat-val {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--warm);
+}
+
+html.site-retheme .groupe-pill {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+html.site-retheme .groupe-card .groupe-parcours a {
+  color: var(--sand);
+  font-weight: 600;
+}
+
+html.site-retheme .groupe-card .groupe-parcours a:hover {
+  color: var(--warm);
+}
+
+html.site-retheme .groupes-header h1,
+html.site-retheme .groupes-header .goelorides-mark {
+  color: #fff;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.45);
+}
+
+html.site-retheme .groupes-lead {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+html.site-retheme .groupes-footnote {
+  background: rgba(15, 35, 45, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+html.site-retheme .groupes-footnote strong {
+  color: var(--warm);
+}
+
+html.site-retheme .groupes-photo-credit {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+html.site-retheme .groupes-photo-credit a {
+  color: var(--sand);
+}
+
+/* —— Boutons refonte —— */
+html.site-retheme .btn-primary:not(.home-hero-groupes),
+html.site-retheme .btn-sea,
+html.site-retheme .btn-je-participe,
+html.site-retheme #new-route-admin-submit,
+html.site-retheme #new-route-team-submit,
+html.site-retheme #new-route-edit-load {
+  padding: 0.85rem 2rem;
+  border-radius: 999px;
+  background: var(--sand) !important;
+  color: var(--ocean) !important;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border: none !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+html.site-retheme .btn-primary:not(.home-hero-groupes):hover,
+html.site-retheme .btn-sea:hover,
+html.site-retheme .btn-je-participe:hover,
+html.site-retheme #new-route-admin-submit:hover,
+html.site-retheme #new-route-team-submit:hover,
+html.site-retheme #new-route-edit-load:hover {
+  background: var(--warm) !important;
+  transform: translateY(-2px);
+}
+
+html.site-retheme .btn-ghost,
+html.site-retheme .btn-app-outline,
+html.site-retheme .btn-sortie-ghost,
+html.site-retheme .new-route-tab:not(.is-active) {
+  border-radius: 999px;
+}
+
+html.site-retheme a.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  background: transparent;
+  box-shadow: none;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+html.site-retheme a.btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+/* Accueil hero : CTAs = même cadre vitré transparent que le chapô */
+html.site-retheme .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+html.site-retheme .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-sorties,
+html.site-retheme .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+  background: rgba(15, 23, 42, 0.28) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 14px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
+html.site-retheme .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes:hover,
+html.site-retheme .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-sorties:hover,
+html.site-retheme .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties:hover {
+  background: rgba(15, 23, 42, 0.42) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.32) !important;
+}
+
+/* —— Footer (nouveau markup .footer-*) —— */
+html.site-retheme .site-footer {
+  background: rgba(10, 25, 32, 0.95);
+  padding: 3rem 6vw 2.5rem;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+}
+
+html.site-retheme .site-footer .site-footer-inner {
+  display: none;
+}
+
+html.site-retheme .footer-logo {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  color: var(--sand);
+  margin-bottom: 0.4rem;
+}
+
+html.site-retheme .footer-loc {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  margin-bottom: 1.4rem;
+}
+
+html.site-retheme .footer-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.6rem;
+  margin-bottom: 1.6rem;
+}
+
+html.site-retheme .footer-links a {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+html.site-retheme .footer-links a:hover {
+  color: var(--sand);
+}
+
+html.site-retheme .footer-legal {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.2);
+  line-height: 1.8;
+}
+
+/* —— Lien retour (sorties / sortie) —— */
+html.site-retheme .back-link {
+  position: fixed;
+  top: 1.4rem;
+  left: 1.6rem;
+  z-index: 200;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(15, 35, 45, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+html.site-retheme .back-link:hover {
+  color: var(--sand);
+  background: rgba(15, 35, 45, 0.8);
+}
+
+html.site-retheme .sortie-back {
+  display: none;
+}
+
+/* Slot auth en haut à droite (pages sans sidebar) */
+html.site-retheme .sorties-auth-top,
+html.site-retheme .sortie-auth-top {
+  position: fixed;
+  top: 1.2rem;
+  right: 1.2rem;
+  z-index: 200;
+}
+
+html.site-retheme .sorties-auth-top .goelo-auth-trigger,
+html.site-retheme .sortie-auth-top .goelo-auth-trigger {
+  background: rgba(15, 35, 45, 0.55);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* —— Accueil hero —— */
+html.site-retheme .home-landing {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+html.site-retheme .home-landing-visual img {
+  animation: site-retheme-slowzoom 20s ease-in-out infinite alternate;
+  transform-origin: center center;
+}
+
+html.site-retheme .home-landing-scrim {
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 35, 45, 0.15) 0%,
+    rgba(15, 35, 45, 0.1) 40%,
+    rgba(15, 35, 45, 0.72) 100%
+  ) !important;
+}
+
+html.site-retheme .home-landing-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 52rem;
+  padding: 0 1.5rem 6vh 1.5rem;
+  align-self: flex-start;
+  text-align: left;
+}
+
+html.site-retheme .home-brand-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+html.site-retheme .home-brand-bar .goelo-auth-home-slot {
+  flex-shrink: 0;
+}
+
+html.site-retheme .home-brand {
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 9vw, 6.5rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.05;
+}
+
+html.site-retheme .home-brand-rides {
+  font-style: italic;
+  color: var(--sq-blue);
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 2px 14px rgba(0, 0, 0, 0.35);
+}
+
+html.site-retheme .home-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 0.5rem;
+}
+
+html.site-retheme .home-landing-body {
+  font-family: "Lato", var(--font-sans);
+  font-weight: 400;
+  color: #fff;
+  max-width: min(100%, 42rem);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  /* Renforce le cadre transparent sur la refonte */
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.22);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
+html.site-retheme .home-landing-values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 0;
+  margin: 1rem 0 1.1rem;
+  list-style: none;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+html.site-retheme .home-landing-values li {
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  font-size: clamp(0.86rem, 2vw, 0.92rem);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+html.site-retheme .home-landing-values li:not(:last-child)::after {
+  content: "·";
+  display: inline;
+  margin: 0 0.5rem;
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 700;
+}
+
+html.site-retheme .home-landing-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+html.site-retheme .home-scroll-hint {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  animation: site-retheme-bounce 2.2s ease-in-out infinite;
+}
+
+html.site-retheme .home-scroll-hint span {
+  font-size: 1.1rem;
+}
+
+/* Masquer l’ancien empilement tagline si présent */
+html.site-retheme .home-landing-tagline-stack {
+  display: none;
+}
+
+html.site-retheme .home-landing-lead {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding-left: 0;
+}
+
+/* Section groupes + CTA accueil */
+html.site-retheme #groupes {
+  padding: 3rem 1.25rem 3.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+html.site-retheme .groupes-retheme-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: site-retheme-fadein 0.7s ease 0.1s both;
+}
+
+html.site-retheme .groupes-retheme-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+
+html.site-retheme .groupes-retheme-header h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: #fff;
+  margin: 0.35rem 0;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+}
+
+html.site-retheme .groupes-retheme-sub {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 300;
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.45);
+}
+
+html.site-retheme .groupes-retheme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.4rem;
+}
+
+html.site-retheme .groupes-retheme-grid .groupe-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+html.site-retheme .groupes-retheme-grid .groupe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.38);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+html.site-retheme .groupe-card-visual {
+  height: 170px;
+}
+
+html.site-retheme .groupe-card-visual img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+html.site-retheme .groupe-card-body h2 {
+  font-family: var(--font-serif);
+}
+
+html.site-retheme .groupes-grid-note {
+  text-align: center;
+  margin-top: 1.75rem;
+  padding: 1rem 1.25rem;
+  max-width: 44rem;
+  margin-left: auto;
+  margin-right: auto;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.55);
+  animation: site-retheme-fadein 0.7s ease 0.35s both;
+}
+
+html.site-retheme .home-cta-sorties {
+  padding: 3rem 1.25rem 1rem;
+  margin-bottom: 2.25rem;
+}
+
+html.site-retheme .home-cta-sorties-card {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 2rem 1.75rem;
+  text-align: center;
+  background: rgba(15, 35, 45, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.2rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.9);
+  animation: site-retheme-fadein 0.7s ease 0.15s both;
+}
+
+html.site-retheme .home-cta-sorties-card h2 {
+  font-family: var(--font-serif);
+  color: #fff;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  margin: 0.35rem 0 0.75rem;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.45);
+}
+
+html.site-retheme .home-cta-sorties-card .groupes-retheme-eyebrow {
+  color: rgba(255, 255, 255, 0.68);
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
+}
+
+html.site-retheme .home-cta-sorties-card > p:not(.groupes-retheme-eyebrow) {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 300;
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
+}
+
+html.site-retheme .groupe-stats .groupe-stat-val {
+  font-family: var(--font-serif);
+  font-weight: 600;
+}
+
+html.site-retheme .app-main:not(.app-main--home) {
+  padding-top: 4.25rem;
+}
+
+html.site-retheme .app-main--sortie {
+  padding: 4.25rem 0 2.5rem;
+}
+
+/* —— Sorties —— */
+html.site-retheme .sorties-hero-mini {
+  min-height: 28vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 1.25rem 2rem;
+  background: linear-gradient(rgba(15, 35, 45, 0.65), rgba(15, 35, 45, 0.65)),
+    url("assets/hero-accueil.png") center / cover no-repeat;
+  color: #fff;
+}
+
+html.site-retheme .sorties-hero-mini h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+}
+
+html.site-retheme .sorties-month-title {
+  color: rgba(255, 255, 255, 0.55);
+  border-bottom: none;
+}
+
+html.site-retheme .sorties-main-pad {
+  padding: 1.25rem 1.25rem 2.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+html.site-retheme .sorties-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 1.2rem 1.25rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+  color-scheme: dark;
+}
+
+html.site-retheme .sorties-filter-field {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+html.site-retheme .sorties-filter-select {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  padding: 0.55rem 1rem;
+  font-family: var(--font-sans);
+  background-color: rgba(22, 45, 58, 0.92) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='M1.5 2L7 7l5.5-5' stroke='%23f1f5f9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  color: #f8fafc !important;
+  color-scheme: dark;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+html.site-retheme .sorties-filter-select:hover {
+  background-color: rgba(30, 58, 74, 0.98) !important;
+  border-color: rgba(255, 255, 255, 0.48) !important;
+}
+
+html.site-retheme .sorties-filter-select:focus {
+  outline: none;
+  border-color: rgba(186, 230, 253, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.22) !important;
+}
+
+html.site-retheme .sorties-filter-select option {
+  background-color: #152f3d;
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+html.site-retheme .sorties-header {
+  display: none;
+}
+
+html.site-retheme #sorties-header-new-route {
+  margin-left: auto;
+  align-self: flex-end;
+  padding: 0.45rem 1rem !important;
+  font-size: 0.78rem !important;
+  min-height: 0 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  font-weight: 500 !important;
+  gap: 0.35rem !important;
+}
+
+html.site-retheme #sorties-header-new-route:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  transform: none;
+}
+
+html.site-retheme #sorties-header-new-route .btn-sea__icon {
+  width: 1em;
+  height: 1em;
+  opacity: 0.85;
+}
+
+html.site-retheme .sorties-card {
+  margin-bottom: 1rem;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border-left-width: 5px;
+  border-left-style: solid;
+  border-left-color: rgba(255, 255, 255, 0.25);
+}
+
+html.site-retheme .sorties-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.2);
+}
+
+html.site-retheme .sorties-card-thumb {
+  height: 160px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+html.site-retheme .sorties-card-title {
+  font-family: var(--font-serif);
+}
+
+html.site-retheme .sorties-empty {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-serif);
+  font-style: italic;
+  padding: 2.5rem 1rem;
+}
+
+html.site-retheme #sorties-loading-msg {
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 2rem 1rem;
+}
+
+html.site-retheme #sorties-loading-msg::before {
+  content: "";
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  animation: site-retheme-spin 0.75s linear infinite;
+}
+
+/* —— Sorties : intérieur des cartes (fonds blancs sorties.html) + fiche —— */
+html.site-retheme .sorties-card-body--blanc,
+html.site-retheme .sorties-card-body--vert,
+html.site-retheme .sorties-card-body--bleu,
+html.site-retheme .sorties-card-body--rouge {
+  background: transparent !important;
+}
+
+html.site-retheme .sorties-card-rail {
+  border-right-color: rgba(255, 255, 255, 0.18);
+}
+
+html.site-retheme .sorties-card-rail--blanc,
+html.site-retheme .sorties-card-rail--vert,
+html.site-retheme .sorties-card-rail--bleu,
+html.site-retheme .sorties-card-rail--rouge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+html.site-retheme .sorties-card-rail .sorties-rail-day,
+html.site-retheme .sorties-card-rail .sorties-rail-month,
+html.site-retheme .sorties-card-rail .sorties-rail-time {
+  color: inherit;
+}
+
+html.site-retheme .sorties-card .sorties-card-title,
+html.site-retheme .sorties-card-body--blanc .sorties-card-title,
+html.site-retheme .sorties-card-body--vert .sorties-card-title,
+html.site-retheme .sorties-card-body--bleu .sorties-card-title,
+html.site-retheme .sorties-card-body--rouge .sorties-card-title {
+  color: #fff !important;
+}
+
+html.site-retheme .sorties-card .sorties-card-type-line,
+html.site-retheme .sorties-card .sorties-type-desc {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+html.site-retheme .sorties-card .sorties-hero-km,
+html.site-retheme .sorties-card .sorties-hero-dplus {
+  color: var(--warm) !important;
+}
+
+html.site-retheme .sorties-card .sorties-hero-sep {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+html.site-retheme .sorties-card .sorties-card-inscrit-badge {
+  background: rgba(74, 222, 128, 0.2) !important;
+  color: #bbf7d0 !important;
+  border-color: rgba(134, 239, 172, 0.45) !important;
+}
+
+/* Niveaux / pastilles : plus lisibles sur cartes vitrées */
+html.site-retheme .sorties-card .sorties-card-levelrow,
+html.site-retheme .sorties-card-body--blanc .sorties-card-levelrow,
+html.site-retheme .sorties-card-body--vert .sorties-card-levelrow,
+html.site-retheme .sorties-card-body--bleu .sorties-card-levelrow,
+html.site-retheme .sorties-card-body--rouge .sorties-card-levelrow {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+html.site-retheme .sorties-card .sorties-level-text {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+html.site-retheme .sorties-level-dot--is-blanc {
+  background: #e5e7eb !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
+}
+
+html.site-retheme .sorties-level-dot--is-vert {
+  background: #4ade80 !important;
+  box-shadow: 0 0 0 2px rgba(187, 247, 208, 0.55);
+}
+
+html.site-retheme .sorties-level-dot--is-bleu {
+  background: #60a5fa !important;
+  box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.55);
+}
+
+html.site-retheme .sorties-level-dot--is-rouge {
+  background: #fb7185 !important;
+  box-shadow: 0 0 0 2px rgba(254, 202, 202, 0.55);
+}
+
+html.site-retheme .sorties-rail-level-label {
+  color: #fff !important;
+  opacity: 1 !important;
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+html.site-retheme .sorties-rail-level-dot.sorties-level-dot {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+html.site-retheme .sorties-card .sorties-card-line {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+html.site-retheme .sorties-card .sorties-card-line strong {
+  color: #fff !important;
+}
+
+html.site-retheme .sorties-pill--level.is-blanc {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+html.site-retheme .sorties-pill--level.is-vert {
+  background: rgba(74, 222, 128, 0.28) !important;
+  color: #ecfdf5 !important;
+  border: 1px solid rgba(134, 239, 172, 0.55);
+}
+
+html.site-retheme .sorties-pill--level.is-bleu {
+  background: rgba(96, 165, 250, 0.28) !important;
+  color: #eff6ff !important;
+  border: 1px solid rgba(147, 197, 253, 0.55);
+}
+
+html.site-retheme .sorties-pill--level.is-rouge {
+  background: rgba(251, 113, 133, 0.28) !important;
+  color: #fff1f2 !important;
+  border: 1px solid rgba(254, 202, 202, 0.55);
+}
+
+html.site-retheme .sorties-pill--type.is-gravel {
+  background: rgba(235, 228, 217, 0.22) !important;
+  color: #fde68a !important;
+  border: 1px solid rgba(253, 230, 138, 0.35);
+}
+
+html.site-retheme .sorties-pill--type.is-vtt {
+  background: rgba(226, 235, 228, 0.2) !important;
+  color: #bbf7d0 !important;
+  border: 1px solid rgba(167, 243, 208, 0.35);
+}
+
+html.site-retheme .sorties-card-aside {
+  background: transparent !important;
+  border-left-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html.site-retheme .sorties-card-aside--blanc,
+html.site-retheme .sorties-card-aside--vert,
+html.site-retheme .sorties-card-aside--bleu,
+html.site-retheme .sorties-card-aside--rouge {
+  background: transparent !important;
+}
+
+/* « Voir le parcours » : même style vitré que « Voir les sorties » (hero accueil) */
+html.site-retheme .sorties-card-voir {
+  font-family: "Lato", var(--font-sans) !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  background: rgba(15, 23, 42, 0.28) !important;
+  backdrop-filter: blur(18px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 14px !important;
+  color: #fff !important;
+  padding: 0.48rem 0.78rem !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.22);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+html.site-retheme .sorties-card:hover .sorties-card-voir {
+  background: rgba(15, 23, 42, 0.42) !important;
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 36px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+}
+
+html.site-retheme .sorties-card-voir-text {
+  color: #fff !important;
+}
+
+html.site-retheme .sorties-card-voir-icon {
+  color: inherit !important;
+}
+
+html.site-retheme .sorties-card-chev {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+@media (max-width: 560px) {
+  html.site-retheme .sorties-card-aside {
+    border-top-color: rgba(255, 255, 255, 0.14) !important;
+  }
+}
+
+html.site-retheme .app-main--sortie .ride-event-card {
+  background: rgba(15, 35, 45, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+html.site-retheme .app-main--sortie .sortie-hero-thumb {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+html.site-retheme .app-main--sortie .ride-event-card td {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+html.site-retheme .app-main--sortie .ride-td-left {
+  background: rgba(0, 0, 0, 0.22);
+  border-right-color: rgba(255, 255, 255, 0.15);
+}
+
+html.site-retheme .app-main--sortie .ride-td-right {
+  background: transparent;
+}
+
+html.site-retheme .app-main--sortie .ride-aside-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+html.site-retheme .app-main--sortie .ride-day {
+  color: var(--warm);
+}
+
+html.site-retheme .app-main--sortie .ride-month,
+html.site-retheme .app-main--sortie .ride-time {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+html.site-retheme .app-main--sortie .ride-aside-bike {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+html.site-retheme .app-main--sortie .ride-course {
+  color: #fff;
+}
+
+html.site-retheme .app-main--sortie .ride-group {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+html.site-retheme .app-main--sortie .ride-pace-level {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+html.site-retheme .sortie-course .sortie-detail-head {
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+
+html.site-retheme .sortie-course .sortie-detail-h {
+  color: #fff;
+}
+
+html.site-retheme .sortie-course .sortie-fact {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+html.site-retheme .sortie-course .sortie-fact dt {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+html.site-retheme .sortie-course .sortie-fact dd {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+html.site-retheme .sortie-course .sortie-block {
+  background: rgba(255, 255, 255, 0.04);
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+html.site-retheme .sortie-course .sortie-block-title {
+  color: var(--sand);
+}
+
+html.site-retheme .sortie-course .sortie-prose,
+html.site-retheme .sortie-course .sortie-list {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+html.site-retheme .sortie-course .sortie-footer-note {
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.65);
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+html.site-retheme .sortie-course .sortie-warn {
+  background: rgba(251, 146, 60, 0.14) !important;
+  border-color: rgba(251, 191, 36, 0.4) !important;
+  color: #ffedd5 !important;
+}
+
+html.site-retheme .sortie-map-heading,
+html.site-retheme .sortie-map-type-line {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.site-retheme .sortie-map-options {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+html.site-retheme .sortie-map-zoom-btns button {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #fff !important;
+}
+
+html.site-retheme .sortie-grade-legend {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+html.site-retheme .sortie-cities-heading {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+html.site-retheme .sortie-city-chip {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(125, 211, 252, 0.45) !important;
+  color: #bae6fd !important;
+}
+
+html.site-retheme .sortie-city-chip.is-start {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  color: #fde68a !important;
+}
+
+html.site-retheme .sortie-map-inner .leaflet-container.strava-map-tiles {
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* —— Sortie fiche —— */
+html.site-retheme .sortie-page-pad {
+  padding: 4.5rem 1.25rem 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+html.site-retheme .sortie-header {
+  display: none;
+}
+
+html.site-retheme .sortie-retheme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  html.site-retheme .sortie-retheme-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+html.site-retheme .sortie-organizer-card {
+  padding: 1rem 1.15rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+html.site-retheme .sortie-organizer-card a {
+  color: var(--sand);
+}
+
+html.site-retheme .sortie-organizer-card p {
+  margin: 0.35rem 0;
+}
+
+/* —— Sortie : héros plein bandeau —— */
+html.site-retheme .sortie-hero-retheme {
+  position: relative;
+  min-height: 40vh;
+  border-radius: 0;
+  overflow: hidden;
+  margin: 0 0 1.25rem;
+  isolation: isolate;
+}
+
+html.site-retheme .sortie-hero-retheme-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+html.site-retheme .sortie-hero-retheme-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.6);
+  z-index: 1;
+}
+
+html.site-retheme .sortie-hero-retheme-inner {
+  position: relative;
+  z-index: 2;
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 1.5rem 1.25rem 1.75rem;
+  max-width: 52rem;
+}
+
+html.site-retheme .sortie-hero-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  margin-bottom: 0.65rem;
+}
+
+html.site-retheme .sortie-hero-badge--blanc {
+  background: rgba(240, 240, 240, 0.95);
+  color: var(--ocean);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+html.site-retheme .sortie-hero-badge--vert {
+  background: rgba(76, 175, 121, 0.95);
+  color: #fff;
+}
+
+html.site-retheme .sortie-hero-badge--bleu {
+  background: rgba(58, 127, 193, 0.95);
+  color: #fff;
+}
+
+html.site-retheme .sortie-hero-badge--rouge {
+  background: rgba(217, 79, 61, 0.95);
+  color: #fff;
+}
+
+html.site-retheme .sortie-hero-h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+}
+
+html.site-retheme .sortie-hero-meta-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+html.site-retheme .sortie-hero-meta-pills span {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.32rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(4px);
+}
+
+html.site-retheme .sortie-hero-retheme .sortie-hero-actions {
+  margin-top: 0.25rem;
+}
+
+html.site-retheme .sorties-card.sorties-card--blanc {
+  border-left-color: #cbd5e1;
+}
+
+html.site-retheme .sorties-card.sorties-card--vert {
+  border-left-color: var(--vert);
+}
+
+html.site-retheme .sorties-card.sorties-card--bleu {
+  border-left-color: var(--bleu);
+}
+
+html.site-retheme .sorties-card.sorties-card--rouge {
+  border-left-color: var(--rouge);
+}
+
+html.site-retheme .sorties-card:hover.sorties-card--blanc,
+html.site-retheme .sorties-card:hover.sorties-card--vert,
+html.site-retheme .sorties-card:hover.sorties-card--bleu,
+html.site-retheme .sorties-card:hover.sorties-card--rouge {
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+}
+
+html.site-retheme .sortie-signup-heading {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  color: #fff;
+  margin: 0 0 0.35rem;
+}
+
+html.site-retheme .sortie-signup-note,
+html.site-retheme .sortie-signup-alt {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.68);
+  margin-top: 0.75rem;
+  line-height: 1.5;
+}
+
+html.site-retheme .sortie-signup-intro {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+html.site-retheme .sortie-signup-intro strong {
+  font-family: var(--font-serif);
+  color: var(--warm);
+}
+
+html.site-retheme .sortie-signup-label {
+  color: rgba(255, 255, 255, 0.62) !important;
+}
+
+html.site-retheme .sortie-signup-field input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #fff !important;
+}
+
+html.site-retheme .sortie-signup-field input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+html.site-retheme .sortie-participants-title {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.site-retheme .sortie-participants-item {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.site-retheme .sortie-participants-empty {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* —— Modale Gérer les sorties (ids conservés) —— */
+html.site-retheme #new-route-modal.signup-modal {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(10, 25, 32, 0.8) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+html.site-retheme #new-route-modal .signup-modal-dialog,
+html.site-retheme #new-route-modal .new-route-modal-dialog {
+  background: var(--white) !important;
+  border-radius: 1.4rem !important;
+  padding: 2.4rem 1.75rem max(2rem, env(safe-area-inset-bottom, 0px)) !important;
+  /* Largeur suffisante pour la grille étapes + formulaire + aperçu carte (évite coupure Suivant / chevauchement) */
+  max-width: min(96vw, 1040px) !important;
+  width: calc(100% - 2rem) !important;
+  max-height: min(92dvh, 920px) !important;
+  overflow-y: auto !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35) !important;
+  animation: site-retheme-fadein 0.35s ease both;
+  position: relative;
+}
+
+html.site-retheme #new-route-modal #new-route-modal-title {
+  font-family: var(--font-serif) !important;
+  color: var(--ocean) !important;
+  font-size: 1.5rem !important;
+}
+
+html.site-retheme #new-route-modal .new-route-sub {
+  color: var(--muted) !important;
+}
+
+html.site-retheme #new-route-modal .new-route-tabs {
+  border-bottom: 1px solid #e8eef2 !important;
+  gap: 0.4rem !important;
+}
+
+html.site-retheme #new-route-modal .new-route-tab {
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  font-family: var(--font-sans) !important;
+}
+
+html.site-retheme #new-route-modal .new-route-tab.is-active {
+  color: var(--ocean) !important;
+  background: #f0f5f8 !important;
+}
+
+html.site-retheme #new-route-modal .signup-modal-form input,
+html.site-retheme #new-route-modal input[type="text"],
+html.site-retheme #new-route-modal input[type="email"],
+html.site-retheme #new-route-modal input[type="password"],
+html.site-retheme #new-route-modal input[type="date"],
+html.site-retheme #new-route-modal input[type="time"],
+html.site-retheme #new-route-modal select {
+  border-radius: 0.7rem !important;
+  border: 1px solid #d0dde5 !important;
+  font-family: var(--font-sans) !important;
+}
+
+html.site-retheme #new-route-modal .signup-modal-close {
+  color: var(--muted) !important;
+}
+
+html.site-retheme #new-route-modal .new-route-steps li {
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+html.site-retheme #new-route-modal .new-route-steps li.is-active {
+  color: var(--ocean);
+  font-weight: 700;
+}
+
+/* Modale « Gérer les sorties » : moins de blanc sur les encarts admin */
+html.site-retheme #new-route-modal .new-route-admin-gate {
+  background: linear-gradient(
+    165deg,
+    rgba(26, 58, 74, 0.16) 0%,
+    rgba(15, 35, 45, 0.1) 50%,
+    rgba(26, 58, 74, 0.14) 100%
+  ) !important;
+  border-color: rgba(26, 58, 74, 0.24) !important;
+  box-shadow: none;
+}
+
+html.site-retheme #new-route-modal .new-route-admin-toolbar {
+  background: rgba(26, 58, 74, 0.1) !important;
+  border-color: rgba(26, 58, 74, 0.2) !important;
+}
+
+html.site-retheme #new-route-modal .new-route-tab:disabled {
+  background: rgba(26, 58, 74, 0.08) !important;
+}
+
+html.site-retheme #new-route-modal .new-route-edit-pick {
+  border-top-color: rgba(26, 58, 74, 0.22);
+}
+
+/* Typo titres sections sortie */
+html.site-retheme .sortie-map-heading,
+html.site-retheme .sortie-participants-title {
+  font-family: var(--font-serif);
+  color: rgba(255, 255, 255, 0.95);
+}

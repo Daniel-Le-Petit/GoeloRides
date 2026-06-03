@@ -10,8 +10,16 @@
 
   var STORAGE_KEY = "goelo_user_auth_v1";
   var LAST_EMAIL_KEY = "goeloRides_last_email";
-  /** Évite de rappeler GET /auth/v1/user en boucle tant que le jeton est le même. */
-  var lastPseudoUserFetchToken = null;
+  /**
+   * GET /auth/v1/user : une tentative par jeton (succès ou échec HTTP),
+   * sans bloquer définitivement si la 1ʳᵉ requête a échoué (réseau / 401).
+   */
+  var pseudoUserFetch = { inFlight: false, completedForToken: null };
+
+  function resetPseudoUserFetchState() {
+    pseudoUserFetch.inFlight = false;
+    pseudoUserFetch.completedForToken = null;
+  }
 
   /** Icône « tête » dessinée (traits simples). */
   var GOELO_AUTH_HEAD_SVG =
@@ -75,7 +83,7 @@
     } catch (e) {
       void e;
     }
-    lastPseudoUserFetchToken = null;
+    resetPseudoUserFetchState();
   }
 
   function parseJwtPayload(token) {
@@ -133,7 +141,15 @@
     ).trim();
   }
 
+  /** Réponse Auth plate ou enveloppée `{ user: … }`. */
+  function unwrapAuthUser(payload) {
+    if (!payload || typeof payload !== "object") return null;
+    if (payload.user && typeof payload.user === "object") return payload.user;
+    return payload;
+  }
+
   function pseudoFromSupabaseUser(user) {
+    user = unwrapAuthUser(user);
     if (!user || typeof user !== "object") return "";
     var um = normalizeUserMetadata(user.user_metadata);
     var raw = normalizeUserMetadata(user.raw_user_meta_data);
@@ -213,6 +229,10 @@
     } catch (e) {
       void e;
     }
+    /* Pseudo souvent absent du corps de session juste après login ; complément via GET /user. */
+    if (!String(pseudo || "").trim()) {
+      void refreshSessionPseudoFromUserEndpoint();
+    }
     return true;
   }
 
@@ -235,27 +255,33 @@
     }
   }
 
-  /** Récupère user_metadata complet (pseudo) quand le JWT seul ne l’expose pas. */
+  /** Récupère user_metadata complet (pseudo) quand le JWT / la session locale ne l’ont pas. */
   async function refreshSessionPseudoFromUserEndpoint() {
     var s = readSession();
     if (!s || !s.access_token || String(s.pseudo || "").trim()) return;
-    if (lastPseudoUserFetchToken === s.access_token) return;
-    lastPseudoUserFetchToken = s.access_token;
+    if (pseudoUserFetch.completedForToken === s.access_token) return;
+    if (pseudoUserFetch.inFlight) return;
     var c = getSupabaseConfig();
     if (!isConfigured()) return;
-    var base = c.url.replace(/\/?$/, "");
+
+    var token = s.access_token;
+    pseudoUserFetch.inFlight = true;
     try {
-      var res = await fetch(base + "/auth/v1/user", {
+      var res = await fetch(c.url.replace(/\/?$/, "") + "/auth/v1/user", {
         method: "GET",
         headers: {
           apikey: c.anonKey,
-          Authorization: "Bearer " + s.access_token
+          Authorization: "Bearer " + token,
+          Accept: "application/json"
         }
       });
       if (!res.ok) return;
-      var user = await res.json();
+      var body = await res.json();
+      var user = unwrapAuthUser(body);
       var p = pseudoFromSupabaseUser(user);
       if (!p) return;
+      s = readSession();
+      if (!s || s.access_token !== token) return;
       s.pseudo = p;
       writeSession(s);
       try {
@@ -265,6 +291,9 @@
       }
     } catch (err) {
       void err;
+    } finally {
+      pseudoUserFetch.inFlight = false;
+      pseudoUserFetch.completedForToken = token;
     }
   }
 

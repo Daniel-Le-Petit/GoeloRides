@@ -754,7 +754,7 @@
           '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>' +
           '<circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="3"/>' +
           "</svg>" +
-          '<span class="sorties-card-voir-text">Voir</span></span>';
+          '<span class="sorties-card-voir-text">Voir le parcours →</span></span>';
         const sortieHref = "sortie.html?id=" + encodeURIComponent(String(route.id));
         html +=
           '<li>' +
@@ -820,7 +820,7 @@
 
     if (!keys.length) {
       html =
-        '<div class="sorties-state-msg" role="status"><p>Aucune sortie pour ce filtre.</p></div>';
+        '<p class="sorties-empty" role="status">Aucune sortie pour ce filtre.</p>';
     }
     host.innerHTML = html;
   }
@@ -840,11 +840,7 @@
 
     function showTotalEmpty() {
       listEl.innerHTML =
-        '<div class="sorties-state-msg" role="status">' +
-        "<p>Aucune sortie programmée pour l'instant.</p>" +
-        "<p>Reviens bientôt ou suis-nous sur Instagram → " +
-        instaAT +
-        "</p></div>";
+        '<p class="sorties-empty" role="status">Pas encore de sorties programmées — reviens bientôt.</p>';
     }
 
     function showNetworkOrTimeout() {

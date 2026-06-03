@@ -155,6 +155,7 @@ La session admin est stockée dans **`sessionStorage`** (clé `goelo_admin_auth_
 - **Inscriptions web** : table `signups` (désinscription = `canceled_at` renseigné).
 - **Noms sans e-mail** (ex-import `participants.json`) : table `imported_participant_names` ; le fichier JSON reste fusionné côté client si tu le gardes.
 - **E-mail Formsubmit** : inchangé ; les notifications partent toujours si `SIGNUP.formEmail` est rempli.
+- **Fiche sortie — capitaine** : dans le JSON `front_config` d’une route (`routes`), le champ optionnel `"rideLeader": "Prénom Nom"` (ou `"ride_leader"`) alimente la ligne « Capitaine de course » sur `sortie.html`.
 
 ## 7. Sécurité (à terme)
 
@@ -177,7 +178,7 @@ Les scripts concernés : **`parcours.js`**, **`sortie.js`** (et la couche RPC al
 
 ## 9. Compte cycliste (`goelo-auth.js`)
 
-Toutes les pages avec la barre latérale chargent **`goelo-auth.js`** : un bouton **Se connecter** (icône + libellé) sous le menu ouvre une fenêtre **Connexion** (e-mail + mot de passe) ou **Inscription** (pseudo + e-mail + mot de passe). Les appels passent par l’**API Auth** Supabase (`/auth/v1/signup`, `/auth/v1/token`). Le pseudo est stocké dans **`user_metadata.pseudo`**. La session (jetons + rafraîchissement) est enregistrée dans **`localStorage`** sous la clé **`goelo_user_auth_v1`** ; l’e-mail est aussi recopié dans **`goeloRides_last_email`** pour pré-remplir les formulaires d’inscription aux sorties.
+Toutes les pages qui chargent **`goelo-auth.js`** avec un emplacement **`[data-goelo-auth-home]`** (accueil, sorties, sortie, groupes) affichent le bouton **Se connecter** dans ce slot ; la barre latérale n’est plus utilisée sur la refonte visuelle.
 
 **Dashboard** : **Authentication → Providers → Email** activé ; autoriser les **inscriptions** si le public doit créer un compte. Si la **confirmation e-mail** est obligatoire, l’utilisateur doit valider le lien reçu avant la première connexion (sinon pas de `access_token` à l’inscription). Sinon la connexion peut renvoyer *Invalid login credentials* même avec le bon mot de passe.
 

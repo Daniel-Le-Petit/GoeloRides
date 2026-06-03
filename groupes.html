@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="site-retheme">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -19,6 +19,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Outfit:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="parcours.css">
   <link rel="stylesheet" href="app-chrome.css">
+  <link rel="stylesheet" href="site-retheme.css">
   <style>
     :root {
       --app-sea: #1565a8;
@@ -219,17 +220,9 @@
   </style>
 </head>
 <body>
+  <a href="index.html" class="back-link">← Accueil</a>
+  <div class="sorties-auth-top"><div data-goelo-auth-home></div></div>
   <div class="app-shell">
-    <aside class="app-sidebar" aria-label="Navigation principale" data-goelo-auth-no-sidebar>
-      <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
-      <ul class="app-nav">
-        <li><a href="index.html">Accueil</a></li>
-        <li><a href="sorties.html">Sorties</a></li>
-        <li><a class="is-active" href="groupes.html">Groupes</a></li>
-        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">Instagram↗</a></li>
-      </ul>
-    </aside>
-
     <main class="app-main">
       <header class="groupes-header">
         <h1>Les groupes <span class="goelorides-mark"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></span></h1>
@@ -346,21 +339,18 @@
       </p>
 
       <footer class="site-footer">
-        <div class="site-footer-inner">
-          <div class="site-footer-brand">
-            <span class="site-footer-name">GoëloRides</span>
-            <span class="site-footer-season">Été 2026</span>
-          </div>
-          <div class="site-footer-loc">
-            <span class="site-footer-loc-icon" aria-hidden="true">📍</span>
-            <span class="site-footer-loc-text">Départ · <strong>Parking du Kasino</strong>, Saint-Quay-Portrieux <span class="site-footer-cp">(22410)</span></span>
-          </div>
-          <div class="site-footer-contact">
-            <a class="site-footer-pill site-footer-pill--ig" href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span class="site-footer-pill-icon" aria-hidden="true">📸</span> @goelo.rides</a>
-            <a class="site-footer-pill site-footer-pill--mail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
-          </div>
-          <p class="site-footer-note">Initiative locale et indépendante · Pas d'adhésion · Pas de fédération</p>
+        <p class="footer-logo">GoëloRides</p>
+        <p class="footer-loc">Saint-Quay-Portrieux · Côtes-d'Armor · 22410</p>
+        <div class="footer-links">
+          <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">📸 @goelo.rides</a>
+          <a href="mailto:goelo.rides@gmail.com">✉ goelo.rides@gmail.com</a>
+          <a href="sorties.html">Sorties</a>
+          <a href="index.html">Accueil</a>
         </div>
+        <p class="footer-legal">
+          Initiative locale et indépendante · Pas d'adhésion · Pas de fédération<br>
+          Été 2026 · GoëloRides
+        </p>
       </footer>
     </main>
   </div>

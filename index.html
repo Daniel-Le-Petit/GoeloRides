@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="site-retheme">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -20,6 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lato:wght@400;700&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="app-chrome.css">
+  <link rel="stylesheet" href="site-retheme.css">
   <style>
     :root {
       --ocean: #0d1820;
@@ -251,16 +252,15 @@
         0 0 28px rgba(249, 215, 28, 0.45);
     }
 
-    /* « Rides » sur la photo : bleu clair + halo sombre pour se détacher mer / ciel */
+    /* « Rides » : bleu Saint-Quay (#0055a4) */
     .home-brand-rides {
       margin-left: -0.04em;
-      color: #c8e7ff;
+      color: var(--sq-blue);
       font-weight: 700;
       text-shadow:
-        0 1px 2px rgba(0, 12, 40, 0.92),
-        0 2px 0 rgba(0, 25, 70, 0.55),
-        0 0 3px rgba(0, 0, 0, 0.45),
-        0 4px 20px rgba(0, 0, 0, 0.35);
+        0 0 1px rgba(255, 255, 255, 0.45),
+        0 1px 2px rgba(0, 0, 0, 0.55),
+        0 2px 14px rgba(0, 0, 0, 0.35);
     }
 
     .home-landing-lead {
@@ -330,59 +330,64 @@
     }
 
     .home-landing-body {
-      font-size: clamp(1rem, 2.1vw, 1.0625rem);
-      color: rgba(248, 250, 252, 0.96);
+      font-family: "Lato", var(--font-sans);
+      font-size: clamp(0.95rem, 2vw, 1.05rem);
+      font-weight: 400;
+      color: #fff;
       line-height: 1.75;
-      margin: 0 0 1.5rem;
-      max-width: 38em;
+      margin: 0 auto 1.5rem;
+      max-width: min(100%, 42rem);
+      text-align: center;
       text-wrap: pretty;
-      padding: 0.85rem 1rem;
-      /* Cadre transparent type vitre sur la photo de fond */
-      background: rgba(15, 23, 42, 0.18);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 12px;
-      border: none;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75), 0 0 1px rgba(0, 0, 0, 0.85);
+      padding: 1.35rem 1.75rem;
+      /* Cadre vitré transparent : le fond photo reste visible */
+      background: rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(18px) saturate(1.15);
+      -webkit-backdrop-filter: blur(18px) saturate(1.15);
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 8px 32px rgba(0, 0, 0, 0.22);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
     }
 
+    /* Accroches = infos, pas des boutons : ligne discrète + points médians */
     .home-landing-values {
       list-style: none;
       display: flex;
       flex-wrap: wrap;
-      align-items: stretch;
+      align-items: baseline;
+      justify-content: flex-start;
       gap: 0;
-      margin: 0.85rem 0 0;
-      padding: 0.5rem 0.35rem;
-      border-radius: 12px;
-      background: rgba(15, 23, 42, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      margin: 1rem 0 0;
+      padding: 0;
+      background: none;
+      border: none;
+      box-shadow: none;
     }
 
     .home-landing-values li {
-      flex: 1 1 8rem;
+      flex: 0 0 auto;
       min-width: 0;
-      text-align: center;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #f1f5f9;
-      padding: 0.5rem 0.45rem;
+      text-align: left;
+      font-size: clamp(0.88rem, 2vw, 0.95rem);
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      color: rgba(248, 250, 252, 0.9);
+      padding: 0;
       position: relative;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     }
 
     .home-landing-values li:not(:last-child)::after {
-      content: "";
-      position: absolute;
-      right: 0;
-      top: 18%;
-      bottom: 18%;
-      width: 1px;
-      background: rgba(255, 255, 255, 0.22);
+      content: "·";
+      display: inline;
+      margin: 0 0.5rem;
+      color: rgba(255, 255, 255, 0.38);
+      font-weight: 700;
+      text-shadow: none;
     }
 
     .home-landing-region {
@@ -520,8 +525,8 @@
       background: #f8fafc;
     }
 
-    /* Sections accueil sur fond clair */
-    .app-main--home section {
+    /* Sections accueil sur fond clair (sauf #groupes : texte sur fond photo immersif) */
+    .app-main--home section:not(#groupes):not(.home-cta-sorties) {
       background: var(--app-bg);
       color: var(--app-text);
     }
@@ -563,48 +568,30 @@
       }
 
       .home-landing-body {
-        font-size: 0.95rem;
-        padding: 0.65rem 0.75rem;
+        font-size: 0.9rem;
+        padding: 1.1rem 1.15rem;
       }
 
-      /* Trois accroches : une ligne compacte (scroll si besoin), plus de bloc 3 lignes. */
+      /* Accroches : même logique infos + points (retour à la ligne si besoin) */
       .home-landing-values {
         flex-direction: row;
-        flex-wrap: nowrap;
-        align-items: center;
+        flex-wrap: wrap;
+        align-items: baseline;
         justify-content: flex-start;
-        gap: 0.35rem;
-        margin: 0.65rem 0 0;
-        padding: 0.28rem 0.4rem;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-
-      .home-landing-values::-webkit-scrollbar {
-        display: none;
+        gap: 0;
+        margin: 0.75rem 0 0;
+        padding: 0;
+        overflow: visible;
       }
 
       .home-landing-values li {
-        flex: 0 0 auto;
-        min-width: 0;
-        text-align: center;
-        padding: 0.24rem 0.5rem;
-        font-size: 0.68rem;
-        letter-spacing: 0.03em;
-        line-height: 1.2;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.1);
-        white-space: nowrap;
-      }
-
-      .home-landing-values li:not(:last-child) {
-        border-bottom: none;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        white-space: normal;
       }
 
       .home-landing-values li:not(:last-child)::after {
-        display: none;
+        display: inline;
       }
 
       .home-landing-tagline-mid .home-landing-title {
@@ -619,7 +606,7 @@
       }
 
       .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
-      .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-sorties {
+      .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
         font-size: clamp(0.68rem, 3.4vw, 0.82rem);
         padding: 0.48rem 0.5rem;
         min-height: 2.5rem;
@@ -1639,13 +1626,32 @@
 
     .new-route-edit-pick-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: flex-end;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.65rem;
       margin-top: 0.45rem;
     }
 
-    .new-route-edit-pick-row .btn-primary {
+    .new-route-edit-pick-field {
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 0;
+    }
+
+    .new-route-edit-pick-field select {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .new-route-edit-pick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .new-route-edit-pick-actions .btn-primary,
+    .new-route-edit-pick-actions .new-route-edit-delete {
       flex-shrink: 0;
     }
 
@@ -1875,6 +1881,9 @@
       margin-top: 1.1rem;
       padding-top: 1.1rem;
       border-top: 1px solid var(--app-border);
+      position: relative;
+      z-index: 2;
+      background: var(--app-surface);
     }
 
     .new-route-wizard-nav-main {
@@ -1890,6 +1899,7 @@
     }
 
     .new-route-main {
+      min-width: 0;
       padding: 1rem 1.35rem 1.4rem;
     }
 
@@ -2183,6 +2193,9 @@
     }
 
     #new-route-preview-map {
+      position: relative;
+      z-index: 0;
+      isolation: isolate;
       height: 200px;
       border-radius: 8px;
       overflow: hidden;
@@ -2715,43 +2728,47 @@
       transform: translateY(-1px);
     }
 
-    /* CTA hero sorties & groupes : texte jaune Saint-Quay, fond vitré */
+    /* CTA hero : même cadre vitré transparent que .home-landing-body */
     .home-landing-inner .btn-primary.home-hero-sorties,
-    .home-landing-inner .btn-primary.home-hero-groupes {
+    .home-landing-inner .btn-primary.home-hero-groupes,
+    .home-landing-inner a.btn-ghost.home-hero-sorties {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-family: "Lato", var(--font-sans);
-      font-weight: 700;
+      font-weight: 600;
       font-size: 1rem;
-      color: var(--sq-yellow);
-      background: rgba(15, 23, 42, 0.35);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      color: #fff;
+      background: rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(18px) saturate(1.15);
+      -webkit-backdrop-filter: blur(18px) saturate(1.15);
       padding: 0.95rem 1.85rem;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.22);
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 8px 32px rgba(0, 0, 0, 0.22);
       text-decoration: none;
       cursor: pointer;
-      text-shadow:
-        0 1px 0 rgba(120, 80, 0, 0.5),
-        0 2px 10px rgba(0, 0, 0, 0.75),
-        0 0 1px rgba(0, 0, 0, 0.9);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
       transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
     }
 
     .home-landing-inner .btn-primary.home-hero-sorties:hover,
-    .home-landing-inner .btn-primary.home-hero-groupes:hover {
-      color: #ffea72;
-      background: rgba(30, 41, 59, 0.48);
-      border-color: rgba(249, 215, 28, 0.55);
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.32);
+    .home-landing-inner .btn-primary.home-hero-groupes:hover,
+    .home-landing-inner a.btn-ghost.home-hero-sorties:hover {
+      color: #fff;
+      background: rgba(15, 23, 42, 0.42);
+      border-color: rgba(255, 255, 255, 0.32);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 10px 36px rgba(0, 0, 0, 0.28);
       transform: translateY(-2px);
     }
 
     .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
-    .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-sorties {
+    .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-sorties,
+    .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
       box-sizing: border-box;
       display: inline-flex;
       align-items: center;
@@ -2766,14 +2783,16 @@
       font-weight: 700;
       line-height: 1.2;
       white-space: nowrap;
-      border-radius: 12px;
+      border-radius: 14px;
       border-width: 1px;
       border-style: solid;
+      border-color: rgba(255, 255, 255, 0.22);
     }
 
     .home-landing-hero-ctas .btn-primary.home-hero-sorties,
-    .home-landing-hero-ctas .btn-primary.home-hero-groupes {
-      border-color: rgba(255, 255, 255, 0.35);
+    .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+    .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+      border-color: rgba(255, 255, 255, 0.22);
     }
 
     /* —— Sections —— */
@@ -3886,16 +3905,6 @@
 <body>
 
   <div class="app-shell">
-    <aside class="app-sidebar" aria-label="Navigation principale">
-      <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
-      <ul class="app-nav">
-        <li><a class="is-active" href="index.html">Accueil</a></li>
-        <li><a href="sorties.html">Sorties</a></li>
-        <li><a href="groupes.html">Groupes</a></li>
-        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">Instagram↗</a></li>
-      </ul>
-    </aside>
-
     <main class="app-main app-main--home">
   <header class="home-landing" id="accueil">
     <div class="home-landing-visual">
@@ -3910,67 +3919,135 @@
     </div>
     <div class="home-landing-scrim" aria-hidden="true"></div>
     <div class="home-landing-inner">
+      <p class="home-eyebrow">Saint-Quay-Portrieux · Côte du Goëlo · Été 2026</p>
       <div class="home-brand-bar">
         <div class="home-brand">
           <span class="home-brand-go">Goëlo</span><span class="home-brand-rides">Rides</span>
         </div>
         <div class="goelo-auth-home-slot" data-goelo-auth-home></div>
       </div>
-      <p class="home-landing-lead">
-        <span class="home-landing-accent">Sorties en vélo</span>
-        <span class="home-landing-lead-tail">
-          <span class="home-landing-lead-icon" role="img" aria-label="Cycliste au départ">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 26" fill="none" aria-hidden="true">
-              <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M5 23V7M5 7l9-2v8.5L5 13" />
-              <path fill="currentColor" d="M6.5 7h2.2v2.2H6.5V7zm2.2 0h2.2v2.2H8.7V7zm2.2 0h2.2v2.2h-2.2V7zm-2.2 2.2h2.2v2.2H8.7V9.2zm2.2 0h2.2v2.2h-2.2V9.2z" opacity="0.5" />
-              <path fill="currentColor" d="M7.2 8.1h1.1v1.1H7.2V8.1zm2.2 0h1.1v1.1H9.4V8.1zm2.2 0h1.1v1.1h-1.1V8.1zm-1.1 2.2h1.1v1.1h-1.1v-1.1z" opacity="0.95" />
-              <circle cx="22.5" cy="8" r="2.35" fill="currentColor" />
-              <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M19.5 14l2-3.5h4.5l2 4M16.5 20l3.5-6 3 1 2 5M22.5 14l3 6M27.5 14l2.5 6" />
-              <circle cx="17.5" cy="20.5" r="2.45" stroke="currentColor" stroke-width="1.5" />
-              <circle cx="29.5" cy="20.5" r="2.45" stroke="currentColor" stroke-width="1.5" />
-            </svg>
-          </span>
-          <span>Départ parking du <span class="home-kasino-name">«&nbsp;Kasino&nbsp;»</span> de Saint-Quay</span>
-        </span>
-      </p>
-      <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie : partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
+      <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie&nbsp;: partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
       <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
         <li>Pas d’adhésion</li>
         <li>Pas de chronomètre</li>
         <li>Rouler ensemble</li>
       </ul>
-      <div class="home-landing-tagline-stack">
-        <p class="home-landing-region">Baie du Goëlo</p>
-        <div class="home-landing-tagline-mid">
-          <h1 class="home-landing-title">La côte</h1>
-        </div>
-        <div class="home-landing-tagline-bottom">
-          <p class="home-landing-subtitle">À vélo · Saint-Quay-Portrieux</p>
-        </div>
-      </div>
       <div class="home-landing-hero-ctas">
-        <a href="groupes.html" class="btn-primary home-hero-groupes">Voir les groupes<span class="home-hero-arrow" aria-hidden="true">→</span></a>
-        <a href="sorties.html" class="btn-primary home-hero-sorties">Voir les sorties<span class="home-hero-arrow" aria-hidden="true">→</span></a>
+        <a href="#groupes" class="btn-primary home-hero-groupes">Voir les groupes <span class="home-hero-arrow" aria-hidden="true">↓</span></a>
+        <a href="sorties.html" class="btn-ghost home-hero-sorties">Voir les sorties <span class="home-hero-arrow" aria-hidden="true">→</span></a>
       </div>
     </div>
+    <div class="home-scroll-hint" aria-hidden="true"><span>↓</span>Défiler</div>
   </header>
 
-  <footer class="site-footer">
-    <div class="site-footer-inner">
-      <div class="site-footer-brand">
-        <span class="site-footer-name">GoëloRides</span>
-        <span class="site-footer-season">Été 2026</span>
-      </div>
-      <div class="site-footer-loc">
-        <span class="site-footer-loc-icon" aria-hidden="true">📍</span>
-        <span class="site-footer-loc-text">Départ · <strong>Parking du Kasino</strong>, Saint-Quay-Portrieux <span class="site-footer-cp">(22410)</span></span>
-      </div>
-      <div class="site-footer-contact">
-        <a class="site-footer-pill site-footer-pill--ig" href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span class="site-footer-pill-icon" aria-hidden="true">📸</span> @goelo.rides</a>
-        <a class="site-footer-pill site-footer-pill--mail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
-      </div>
-      <p class="site-footer-note">Initiative locale et indépendante · Pas d'adhésion · Pas de fédération</p>
+  <section id="groupes" aria-labelledby="groupes-heading">
+    <div class="groupes-retheme-header">
+      <p class="groupes-retheme-eyebrow">4 niveaux · 1 philosophie</p>
+      <h2 id="groupes-heading">Choisis ton groupe</h2>
+      <p class="groupes-retheme-sub">Roule à ton rythme — on s’adapte à toi.</p>
     </div>
+    <div class="groupes-retheme-grid">
+      <article class="groupe-card groupe-card--blanc" id="groupe-blanc">
+        <div class="groupe-card-visual">
+          <img src="assets/groupe-blanc-cyclistes.jpg" alt="Quatre cyclistes en tenue sur route au bord de la mer, journée ensoleillée" width="336" height="178" loading="lazy" decoding="async">
+        </div>
+        <div class="groupe-card-body">
+          <h2>Groupe Blanc</h2>
+          <p class="groupe-stats">
+            <span>Allure</span> <span class="groupe-stat-val">15–18 km/h</span>
+            <span>Distance type</span> <span class="groupe-stat-val">42,6 km</span>
+            <span>Niveau</span> <span class="groupe-stat-val">Découverte</span>
+          </p>
+          <div class="groupe-pills">
+            <span class="groupe-pill">Famille</span>
+            <span class="groupe-pill">Vacanciers</span>
+          </div>
+          <p class="groupe-desc">Tu reprends le vélo ou tu veux juste profiter du paysage. On roule tranquille, on s’arrête, on profite.</p>
+          <p class="groupe-parcours">Parcours · <a href="sorties.html">Voir les sorties</a> (niveau Blanc)</p>
+        </div>
+      </article>
+      <article class="groupe-card groupe-card--vert" id="groupe-vert">
+        <div class="groupe-card-visual">
+          <img src="assets/groupe-vert-cyclistes.png" alt="Peloton de cyclistes en passage dans un village" width="707" height="433" loading="lazy" decoding="async">
+        </div>
+        <div class="groupe-card-body">
+          <h2>Groupe Vert</h2>
+          <p class="groupe-stats">
+            <span>Allure</span> <span class="groupe-stat-val">18–22 km/h</span>
+            <span>Distance type</span> <span class="groupe-stat-val">66,0 km</span>
+            <span>Niveau</span> <span class="groupe-stat-val">Intermédiaire</span>
+          </p>
+          <div class="groupe-pills">
+            <span class="groupe-pill">Convivial</span>
+            <span class="groupe-pill">Sans dropped</span>
+          </div>
+          <p class="groupe-desc">Tu roules régulièrement mais l’ambiance compte autant que la performance. On attend tout le monde.</p>
+          <p class="groupe-parcours">Parcours · <a href="sortie.html?id=brehec">Vers Bréhec</a></p>
+        </div>
+      </article>
+      <article class="groupe-card groupe-card--bleu" id="groupe-bleu">
+        <div class="groupe-card-visual">
+          <img src="assets/groupe-bleu-cyclistes.png" alt="Peloton sur la route, rythme soutenu" width="1024" height="581" loading="lazy" decoding="async">
+        </div>
+        <div class="groupe-card-body">
+          <h2>Groupe Bleu</h2>
+          <p class="groupe-stats">
+            <span>Allure</span> <span class="groupe-stat-val">22–26 km/h</span>
+            <span>Distance type</span> <span class="groupe-stat-val">84,5 km</span>
+            <span>Niveau</span> <span class="groupe-stat-val">Confirmé</span>
+          </p>
+          <div class="groupe-pills">
+            <span class="groupe-pill">Rouleur</span>
+            <span class="groupe-pill">Relais</span>
+          </div>
+          <p class="groupe-desc">Tu maîtrises le peloton, tu fais des relais. Parcours structuré avec un bon groupe.</p>
+          <p class="groupe-parcours">Parcours · <a href="sortie.html?id=boucle">La Grande Boucle du Goëlo</a></p>
+        </div>
+      </article>
+      <article class="groupe-card groupe-card--rouge" id="groupe-rouge">
+        <div class="groupe-card-visual">
+          <img src="assets/groupe-rouge-cyclistes.png" alt="Peloton de cyclistes sur route humide, allure course" width="859" height="548" loading="lazy" decoding="async">
+        </div>
+        <div class="groupe-card-body">
+          <h2>Groupe Rouge</h2>
+          <p class="groupe-stats">
+            <span>Allure</span> <span class="groupe-stat-val">26+ km/h</span>
+            <span>Distance type</span> <span class="groupe-stat-val">110+ km</span>
+            <span>Niveau</span> <span class="groupe-stat-val">Expert</span>
+          </p>
+          <div class="groupe-pills">
+            <span class="groupe-pill">Compétiteur</span>
+          </div>
+          <p class="groupe-desc">Pour les jambes solides. Rythme élevé. Si tu te reconnais ici, tu sais ce qui t’attend.</p>
+          <p class="groupe-parcours">Parcours annoncés sur les <a href="sorties.html">sorties</a> — consulte les dates prévues.</p>
+        </div>
+      </article>
+    </div>
+    <p class="groupes-grid-note">Pas sûr de ton groupe ? Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.</p>
+  </section>
+
+  <section class="home-cta-sorties" aria-labelledby="cta-sorties-title">
+    <div class="home-cta-sorties-card">
+      <p class="groupes-retheme-eyebrow">Calendrier été 2026</p>
+      <h2 id="cta-sorties-title">Prêt à rouler ?</h2>
+      <p>Consulte les sorties programmées, filtre par niveau ou par type de parcours, et inscris-toi en deux clics.</p>
+      <a class="btn-primary" href="sorties.html">Voir toutes les sorties <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p class="footer-logo">GoëloRides</p>
+    <p class="footer-loc">Saint-Quay-Portrieux · Côtes-d'Armor · 22410</p>
+    <div class="footer-links">
+      <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">📸 @goelo.rides</a>
+      <a href="mailto:goelo.rides@gmail.com">✉ goelo.rides@gmail.com</a>
+      <a href="sorties.html">Sorties</a>
+      <a href="index.html">Accueil</a>
+    </div>
+    <p class="footer-legal">
+      Initiative locale et indépendante · Pas d'adhésion · Pas de fédération<br>
+      Été 2026 · GoëloRides
+    </p>
   </footer>
     </main>
   </div>
@@ -4038,12 +4115,14 @@
           </p>
         <div class="new-route-edit-pick" id="new-route-edit-pick">
           <div class="new-route-edit-pick-row">
-            <label class="new-route-admin-field" style="flex:1;min-width:0;margin-bottom:0">
+            <label class="new-route-admin-field new-route-edit-pick-field">
               <span>Sortie à modifier</span>
               <select id="new-route-edit-select" aria-label="Choisir une sortie à modifier"></select>
             </label>
-            <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
-            <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+            <div class="new-route-edit-pick-actions">
+              <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
+              <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+            </div>
           </div>
           <p class="signup-hint new-route-edit-empty-hint" id="new-route-edit-empty-hint" hidden style="margin-top:0.45rem;text-align:left;">
             Aucune sortie personnalisée pour l’instant : crée-en une avec l’onglet <strong>Créer une nouvelle sortie</strong>, valide, puis rouvre cette fenêtre — la liste se met à jour automatiquement.

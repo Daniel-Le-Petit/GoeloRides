@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="site-retheme">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="parcours.css">
   <link rel="stylesheet" href="app-chrome.css">
+  <link rel="stylesheet" href="site-retheme.css">
   <style>
     :root {
       --app-sea: #1565a8;
@@ -709,19 +710,10 @@
   </script>
 </head>
 <body>
+  <a href="sorties.html" class="back-link">← Toutes les sorties</a>
+  <div class="sortie-auth-top"><div data-goelo-auth-home></div></div>
   <div class="app-shell">
-    <aside class="app-sidebar" aria-label="Navigation principale" data-goelo-auth-no-sidebar>
-      <a class="app-logo" href="index.html"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></a>
-      <ul class="app-nav">
-        <li><a href="index.html">Accueil</a></li>
-        <li><a class="is-active" href="sorties.html">Sorties</a></li>
-        <li><a href="groupes.html">Groupes</a></li>
-        <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">Instagram↗</a></li>
-      </ul>
-    </aside>
-
-    <main class="app-main">
-      <p class="sortie-back"><a href="sorties.html">← Toutes les sorties</a></p>
+    <main class="app-main app-main--sortie">
       <header class="sortie-header">
         <div class="sortie-title-row">
           <h1 id="sortie-title" class="sortie-title-h1">Sortie</h1>
@@ -735,81 +727,98 @@
 
       <div id="sortie-content" hidden>
         <div id="sortie-hero-wrap"></div>
-        <div id="sortie-signup-panel" class="sortie-signup-panel" hidden>
-          <p class="sortie-signup-intro">Inscription à cette sortie — renseigne tes infos (enregistrées comme sur la page Sorties).</p>
-          <form id="sortie-signup-form" class="sortie-signup-form" novalidate>
-            <label class="sortie-signup-field">
-              <span class="sortie-signup-label">Pseudo ou prénom</span>
-              <input type="text" id="sortie-signup-pseudo" name="pseudo" required maxlength="40" autocomplete="nickname">
-            </label>
-            <label class="sortie-signup-field">
-              <span class="sortie-signup-label">E-mail</span>
-              <input type="email" id="sortie-signup-email" name="email" required maxlength="120" autocomplete="email">
-            </label>
-            <div class="sortie-signup-actions">
-              <button type="submit" class="btn-je-participe btn-je-participe--confirm">Valider mon inscription</button>
-              <button type="button" class="btn-sortie-ghost" id="sortie-signup-cancel">Annuler</button>
+        <div class="sortie-page-pad">
+          <div class="sortie-retheme-grid">
+            <div class="sortie-retheme-col sortie-retheme-col--map">
+              <section id="sortie-map-section" class="sortie-map-section" aria-label="Carte du parcours" hidden>
+                <h2 class="sortie-map-heading">Le parcours</h2>
+                <p class="sortie-map-type-line" id="sortie-map-type-line"></p>
+                <div class="sortie-map-toolbar">
+                  <div class="sortie-map-options">
+                    <label>
+                      <input type="checkbox" id="sortie-opt-cities" checked>
+                      Villes traversées
+                    </label>
+                    <label>
+                      <input type="checkbox" id="sortie-opt-grade-colors" checked>
+                      Couleurs selon la pente (rouge = montée raide)
+                    </label>
+                  </div>
+                  <div class="sortie-map-zoom-btns" aria-label="Zoom carte">
+                    <button type="button" id="sortie-zoom-in" title="Zoom avant">+</button>
+                    <button type="button" id="sortie-zoom-out" title="Zoom arrière">−</button>
+                  </div>
+                </div>
+                <p class="sortie-grade-legend" id="sortie-grade-legend" hidden>
+                  <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#64748b"></span> Plat</span>
+                  <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#ca8a04"></span> Montée légère</span>
+                  <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#ea580c"></span> Modérée</span>
+                  <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#dc2626"></span> Raide</span>
+                  <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#2563eb"></span> Descente</span>
+                </p>
+                <p class="sortie-cities-heading" id="sortie-cities-heading">Villes traversées</p>
+                <div class="sortie-cities-list" id="sortie-cities-list" aria-label="Villes sur le parcours"></div>
+                <div class="sortie-map-inner strava-map-block">
+                  <div id="sortie-map" class="sortie-map" role="application" aria-label="Carte du parcours"></div>
+                </div>
+              </section>
+              <div id="sortie-course" class="sortie-course"></div>
             </div>
-          </form>
+            <div class="sortie-retheme-col sortie-retheme-col--aside">
+              <div class="sortie-organizer-card" aria-label="Encadrement et organisation">
+                <p><strong>Capitaine de course</strong><br><span id="sortie-ride-leader">—</span></p>
+                <p><strong>Personnes mineures</strong><br>Interdites ⛔️</p>
+                <p><strong>Organisé par</strong><br>GoëloRides</p>
+              </div>
+              <div id="sortie-signup-panel" class="sortie-signup-panel" hidden>
+                <h3 class="sortie-signup-heading">Je participe !</h3>
+                <p class="sortie-signup-intro">Inscription à cette sortie — renseigne tes infos (enregistrées comme sur la page Sorties).</p>
+                <form id="sortie-signup-form" class="sortie-signup-form" novalidate>
+                  <label class="sortie-signup-field">
+                    <span class="sortie-signup-label">Pseudo ou prénom</span>
+                    <input type="text" id="sortie-signup-pseudo" name="pseudo" required maxlength="40" autocomplete="nickname">
+                  </label>
+                  <label class="sortie-signup-field">
+                    <span class="sortie-signup-label">E-mail</span>
+                    <input type="email" id="sortie-signup-email" name="email" required maxlength="120" autocomplete="email">
+                  </label>
+                  <div class="sortie-signup-actions">
+                    <button type="submit" class="btn-je-participe btn-je-participe--confirm">Valider mon inscription</button>
+                    <button type="button" class="btn-sortie-ghost" id="sortie-signup-cancel">Annuler</button>
+                  </div>
+                </form>
+                <p class="sortie-signup-note">Gratuit · sans engagement · annulable jusqu’à la veille</p>
+                <p class="sortie-signup-alt">
+                  Tu préfères autrement ? Écris-nous sur
+                  <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">Instagram @goelo.rides</a>
+                  ou par <a href="mailto:goelo.rides@gmail.com">e-mail</a>.
+                </p>
+              </div>
+              <section id="sortie-participants-section" class="sortie-participants" aria-labelledby="sortie-participants-title" hidden>
+                <h2 id="sortie-participants-title" class="sortie-participants-title">Participant·e·s</h2>
+                <ul id="sortie-participants-list" class="sortie-participants-list"></ul>
+                <p id="sortie-participants-empty" class="sortie-participants-empty" hidden>
+                  Personne pour l’instant — sois le ou la première !
+                </p>
+              </section>
+            </div>
+          </div>
         </div>
-        <section id="sortie-participants-section" class="sortie-participants" aria-labelledby="sortie-participants-title" hidden>
-          <h2 id="sortie-participants-title" class="sortie-participants-title">Participant·e·s</h2>
-          <ul id="sortie-participants-list" class="sortie-participants-list"></ul>
-          <p id="sortie-participants-empty" class="sortie-participants-empty" hidden>
-            Personne pour l’instant — sois le ou la première !
-          </p>
-        </section>
-        <section id="sortie-map-section" class="sortie-map-section" aria-label="Carte du parcours" hidden>
-          <h2 class="sortie-map-heading">Carte du parcours</h2>
-          <p class="sortie-map-type-line" id="sortie-map-type-line"></p>
-          <div class="sortie-map-toolbar">
-            <div class="sortie-map-options">
-              <label>
-                <input type="checkbox" id="sortie-opt-cities" checked>
-                Villes traversées
-              </label>
-              <label>
-                <input type="checkbox" id="sortie-opt-grade-colors" checked>
-                Couleurs selon la pente (rouge = montée raide)
-              </label>
-            </div>
-            <div class="sortie-map-zoom-btns" aria-label="Zoom carte">
-              <button type="button" id="sortie-zoom-in" title="Zoom avant">+</button>
-              <button type="button" id="sortie-zoom-out" title="Zoom arrière">−</button>
-            </div>
-          </div>
-          <p class="sortie-grade-legend" id="sortie-grade-legend" hidden>
-            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#64748b"></span> Plat</span>
-            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#ca8a04"></span> Montée légère</span>
-            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#ea580c"></span> Modérée</span>
-            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#dc2626"></span> Raide</span>
-            <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#2563eb"></span> Descente</span>
-          </p>
-          <p class="sortie-cities-heading" id="sortie-cities-heading">Villes traversées</p>
-          <div class="sortie-cities-list" id="sortie-cities-list" aria-label="Villes sur le parcours"></div>
-          <div class="sortie-map-inner strava-map-block">
-            <div id="sortie-map" class="sortie-map" role="application" aria-label="Carte du parcours"></div>
-          </div>
-        </section>
-        <div id="sortie-course" class="sortie-course"></div>
       </div>
 
       <footer class="site-footer">
-        <div class="site-footer-inner">
-          <div class="site-footer-brand">
-            <span class="site-footer-name">GoëloRides</span>
-            <span class="site-footer-season">Été 2026</span>
-          </div>
-          <div class="site-footer-loc">
-            <span class="site-footer-loc-icon" aria-hidden="true">📍</span>
-            <span class="site-footer-loc-text">Départ · <strong>Parking du Kasino</strong>, Saint-Quay-Portrieux <span class="site-footer-cp">(22410)</span></span>
-          </div>
-          <div class="site-footer-contact">
-            <a class="site-footer-pill site-footer-pill--ig" href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span class="site-footer-pill-icon" aria-hidden="true">📸</span> @goelo.rides</a>
-            <a class="site-footer-pill site-footer-pill--mail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer"><span class="site-footer-pill-icon" aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
-          </div>
-          <p class="site-footer-note">Initiative locale et indépendante · Pas d'adhésion · Pas de fédération</p>
+        <p class="footer-logo">GoëloRides</p>
+        <p class="footer-loc">Saint-Quay-Portrieux · Côtes-d'Armor · 22410</p>
+        <div class="footer-links">
+          <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">📸 @goelo.rides</a>
+          <a href="mailto:goelo.rides@gmail.com">✉ goelo.rides@gmail.com</a>
+          <a href="sorties.html">Sorties</a>
+          <a href="index.html">Accueil</a>
         </div>
+        <p class="footer-legal">
+          Initiative locale et indépendante · Pas d'adhésion · Pas de fédération<br>
+          Été 2026 · GoëloRides
+        </p>
       </footer>
     </main>
   </div>

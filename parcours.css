@@ -403,13 +403,32 @@ body {
 
     .new-route-edit-pick-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: flex-end;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.65rem;
       margin-top: 0.45rem;
     }
 
-    .new-route-edit-pick-row .btn-primary {
+    .new-route-edit-pick-field {
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 0;
+    }
+
+    .new-route-edit-pick-field select {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .new-route-edit-pick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .new-route-edit-pick-actions .btn-primary,
+    .new-route-edit-pick-actions .new-route-edit-delete {
       flex-shrink: 0;
     }
 
@@ -571,6 +590,9 @@ body {
       margin-top: 1.1rem;
       padding-top: 1.1rem;
       border-top: 1px solid var(--app-border);
+      position: relative;
+      z-index: 2;
+      background: var(--app-surface);
     }
 
     .new-route-wizard-nav-main {
@@ -587,6 +609,7 @@ body {
     }
 
     .new-route-main {
+      min-width: 0;
       padding: 1rem 1.35rem 1.4rem;
     }
 
@@ -880,6 +903,9 @@ body {
     }
 
     #new-route-preview-map {
+      position: relative;
+      z-index: 0;
+      isolation: isolate;
       height: 200px;
       border-radius: 8px;
       overflow: hidden;
