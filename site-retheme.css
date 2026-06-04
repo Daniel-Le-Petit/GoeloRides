@@ -271,7 +271,7 @@ html.site-retheme .groupe-level-pill {
   text-transform: uppercase;
   padding: 0.28rem 0.65rem;
   border-radius: 999px;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.55rem;
 }
 
 html.site-retheme .groupe-level-pill--blanc {
@@ -303,19 +303,19 @@ html.site-retheme .groupe-card .groupe-profile-line {
   font-size: 0.8rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.72);
-  margin: 0 0 0.65rem;
-  line-height: 1.45;
+  margin: 0 0 0.95rem;
+  line-height: 1.55;
 }
 
 html.site-retheme .groupe-stats-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.2rem;
-  margin: 0.8rem 0 1rem;
-  padding: 0.8rem;
+  gap: 1.35rem 1.5rem;
+  margin: 0.35rem 0 1.15rem;
+  padding: 1rem 1.1rem;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 0.6rem;
+  border-radius: 0.75rem;
 }
 
 html.site-retheme .groupe-stat {
@@ -329,7 +329,7 @@ html.site-retheme .groupe-card .stat-val {
   font-weight: 700;
   color: var(--warm);
   display: block;
-  line-height: 1.15;
+  line-height: 1.22;
 }
 
 html.site-retheme .groupe-card .stat-label {
@@ -339,15 +339,42 @@ html.site-retheme .groupe-card .stat-label {
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.58);
   display: block;
-  margin-top: 0.2rem;
+  margin-top: 0.35rem;
 }
 
 html.site-retheme #groupes .groupe-desc,
 html.site-retheme ul.groupes-list .groupe-desc {
   font-weight: 300;
-  font-size: 0.88rem;
+  font-size: 0.93rem;
+  line-height: 1.72;
+  margin-bottom: 1.05rem;
+}
+
+/* Corps de carte « niveau » : plus d’air (accueil + page groupes) */
+html.site-retheme #groupes .groupe-card-body,
+html.site-retheme ul.groupes-list .groupe-card-body {
+  padding: 1.4rem 1.45rem 1.55rem;
+}
+
+html.site-retheme #groupes .groupe-card-body > h2,
+html.site-retheme ul.groupes-list .groupe-card-body > h2 {
+  margin-top: 0;
+  margin-bottom: 0.7rem;
+}
+
+html.site-retheme #groupes .groupe-pills,
+html.site-retheme ul.groupes-list .groupe-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.6rem;
+  margin-bottom: 1rem;
+}
+
+html.site-retheme #groupes .groupe-parcours,
+html.site-retheme ul.groupes-list .groupe-parcours {
+  margin-top: 0.15rem;
+  padding-top: 1.05rem;
   line-height: 1.55;
-  margin-bottom: 0.75rem;
 }
 
 /* Fiche sortie : bandeau parcours immersif + cartes claires */
@@ -2114,6 +2141,16 @@ html.site-retheme .sortie-participants-title {
   html.site-retheme .groupes-retheme-grid {
     grid-template-columns: 1fr;
     gap: 1.1rem;
+  }
+
+  html.site-retheme #groupes .groupe-card-body,
+  html.site-retheme ul.groupes-list .groupe-card-body {
+    padding: 1.2rem 1.2rem 1.4rem;
+  }
+
+  html.site-retheme .groupe-stats-grid {
+    gap: 1rem 1.2rem;
+    padding: 0.95rem 1rem;
   }
 
   html.site-retheme .sortie-retheme-grid {

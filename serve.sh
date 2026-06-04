@@ -6,6 +6,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 PORT="${PORT:-8765}"
-echo "GoëloRides — http://127.0.0.1:${PORT}/"
+echo "GoëloRides — ouvre EXACTEMENT cette URL (avec le port ${PORT}) :"
+echo "  http://127.0.0.1:${PORT}/"
+echo "Sans « :${PORT} », Chrome affiche souvent ERR_CONNECTION_REFUSED."
 echo "Arrêt : Ctrl+C"
 exec python3 -m http.server "$PORT" --bind 127.0.0.1
