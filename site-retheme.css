@@ -725,35 +725,35 @@ html.site-retheme .home-landing-inner {
   position: relative;
   z-index: 2;
   max-width: 52rem;
+  width: 100%;
   /* Air sous les CTA : occupe confortablement le bas du viewport */
   padding-top: max(clamp(1rem, 3.2vh, 2.35rem), env(safe-area-inset-top, 0px));
   padding-right: var(--site-edge-r);
   padding-bottom: max(3.25rem, min(22vh, 9rem), calc(env(safe-area-inset-bottom, 0px) + 2.5rem));
   padding-left: var(--site-edge-l);
-  align-self: flex-start;
-  text-align: left;
+  align-self: center;
+  text-align: center;
 }
 
-html.site-retheme .home-brand-bar {
+html.site-retheme .home-landing-topbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem 1rem;
   width: 100%;
   max-width: 100%;
   margin-bottom: 1rem;
 }
 
-html.site-retheme .home-brand-bar .goelo-auth-home-slot {
+html.site-retheme .home-landing-topbar .goelo-auth-home-slot {
   flex-shrink: 0;
 }
 
-html.site-retheme .home-brand {
+html.site-retheme .home-brand.home-brand--hero {
   font-family: var(--font-serif);
-  font-size: clamp(3rem, 9vw, 6.5rem);
+  font-size: clamp(2.75rem, 8.5vw, 5rem);
   font-weight: 700;
-  color: #fff;
   line-height: 1.05;
 }
 
@@ -764,15 +764,6 @@ html.site-retheme .home-brand-rides {
     0 0 1px rgba(255, 255, 255, 0.45),
     0 1px 2px rgba(0, 0, 0, 0.5),
     0 2px 14px rgba(0, 0, 0, 0.35);
-}
-
-html.site-retheme .home-eyebrow {
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
-  /* ~1–2 lignes avant le titre GoëloRides */
-  margin-bottom: clamp(1.05rem, 3.2vh, 2.1rem);
 }
 
 html.site-retheme .goelo-auth-slot--hero .goelo-auth-home-greeting {
@@ -786,10 +777,10 @@ html.site-retheme .home-landing-message {
   font-family: "Lato", var(--font-sans);
   font-weight: 400;
   color: #fff;
-  max-width: min(100%, 38rem);
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  text-align: left;
+  text-align: center;
   /* Renforce le cadre transparent sur la refonte */
   background: rgba(15, 23, 42, 0.32);
   backdrop-filter: blur(20px) saturate(1.2);
@@ -839,12 +830,55 @@ html.site-retheme .home-landing-values li:not(:last-child)::after {
   font-weight: 700;
 }
 
+html.site-retheme .home-landing-values--pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  align-items: stretch;
+  gap: 0.45rem 0.55rem;
+  max-width: 22rem;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html.site-retheme .home-landing-values--pills li {
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.42rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 11.5rem;
+}
+
+html.site-retheme .home-landing-values--pills li:nth-child(3) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  max-width: 11.5rem;
+}
+
+html.site-retheme .home-landing-values--pills li:not(:last-child)::after {
+  display: none;
+}
+
 html.site-retheme .home-landing-hero-ctas {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
   gap: 0.75rem;
   margin-top: clamp(1.15rem, 3.2vh, 2.15rem);
   margin-bottom: 0.35rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 html.site-retheme .home-scroll-hint {
@@ -2045,11 +2079,14 @@ html.site-retheme .sortie-participants-title {
     padding-bottom: max(3rem, min(20vh, 7.5rem), calc(env(safe-area-inset-bottom, 0px) + 2rem));
   }
 
-  html.site-retheme .home-brand-bar {
-    justify-content: center;
+  html.site-retheme .home-landing-topbar {
     flex-direction: column;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.5rem;
+  }
+
+  html.site-retheme .home-landing-topbar-actions {
+    justify-content: center;
   }
 
   html.site-retheme .goelo-auth-slot--hero .goelo-auth-home-greeting {
@@ -2061,7 +2098,7 @@ html.site-retheme .sortie-participants-title {
     padding: 0.95rem max(0.75rem, env(safe-area-inset-left, 0px)) 1.05rem max(0.75rem, env(safe-area-inset-right, 0px));
   }
 
-  html.site-retheme .home-landing-values {
+  html.site-retheme .home-landing-values:not(.home-landing-values--pills) {
     justify-content: center;
   }
 

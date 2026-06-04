@@ -588,7 +588,7 @@
       '    <span class="goelo-auth-trigger-icon goelo-auth-trigger-icon--head" aria-hidden="true">' +
       GOELO_AUTH_HEAD_SVG +
       "</span>" +
-      '    <span class="goelo-auth-sr-only">Se connecter ou créer un compte</span>' +
+      '    <span class="goelo-auth-trigger-label goelo-auth-trigger-label--hero" id="goelo-auth-trigger-label">Connexion</span>' +
       "  </button>" +
       "</div>";
 

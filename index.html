@@ -138,12 +138,13 @@
       inset: 0;
       z-index: 1;
       pointer-events: none;
+      /* Voile type crépuscule : texte lisible tout en gardant la photo mer visible */
       background: linear-gradient(
         165deg,
-        rgba(6, 14, 26, 0.78) 0%,
-        rgba(6, 14, 26, 0.42) 38%,
-        rgba(6, 14, 26, 0.28) 52%,
-        rgba(6, 14, 26, 0.72) 100%
+        rgba(4, 10, 22, 0.82) 0%,
+        rgba(6, 18, 32, 0.5) 36%,
+        rgba(8, 22, 36, 0.32) 52%,
+        rgba(4, 12, 24, 0.78) 100%
       );
     }
 
@@ -179,33 +180,197 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      max-width: 46rem;
+      justify-content: flex-end;
+      align-items: center;
+      text-align: center;
+      max-width: 56rem;
       width: 100%;
       margin: 0 auto;
-      padding-top: max(clamp(1.5rem, 4vw, 2.75rem), env(safe-area-inset-top, 0px));
+      padding-top: max(clamp(1.25rem, 4vw, 2.5rem), env(safe-area-inset-top, 0px));
       padding-right: max(clamp(1.15rem, 4vw, 2.25rem), env(safe-area-inset-right, 0px));
-      padding-bottom: max(clamp(2rem, 6vh, 3.5rem), env(safe-area-inset-bottom, 0px));
+      padding-bottom: max(clamp(2.25rem, 8vh, 4rem), env(safe-area-inset-bottom, 0px));
       padding-left: max(clamp(1.15rem, 4vw, 2.25rem), env(safe-area-inset-left, 0px));
     }
 
-    /* Ligne marque + connexion (icône tête à droite de GoëloRides) */
-    .home-brand-bar {
+    .home-landing-topbar {
       display: flex;
-      flex-direction: row;
+      flex-wrap: wrap;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem 1rem;
+      justify-content: center;
+      gap: 0.55rem 1rem;
       width: 100%;
-      max-width: 100%;
-      margin: 0 0 1.25rem;
-      flex-wrap: nowrap;
+      max-width: min(100%, 40rem);
+      margin: 0 auto 1.35rem;
+      padding: 0.65rem 1.1rem;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.62);
+      backdrop-filter: blur(14px) saturate(1.1);
+      -webkit-backdrop-filter: blur(14px) saturate(1.1);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
     }
 
-    .home-brand-bar .home-brand {
+    .home-landing-topbar-loc {
       margin: 0;
-      flex: 1 1 auto;
-      min-width: 0;
+      flex: 1 1 100%;
+      font-size: clamp(0.72rem, 2vw, 0.8rem);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #f8fafc;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.9),
+        0 0 1px rgba(0, 0, 0, 1);
+    }
+
+    .home-landing-topbar-dot {
+      opacity: 0.65;
+      margin: 0 0.12em;
+    }
+
+    .home-landing-topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem 0.85rem;
+    }
+
+    .home-landing-topbar-season {
+      font-size: clamp(0.72rem, 2vw, 0.8rem);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #fff0a8;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.75),
+        0 0 20px rgba(249, 215, 28, 0.45);
+    }
+
+    .home-landing-topbar .goelo-auth-home-slot {
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem 0.6rem;
+    }
+
+    .home-landing-topbar .goelo-auth-home-greeting {
+      flex: 1 1 100%;
+      order: -1;
+      max-width: 100%;
+      white-space: normal;
+      text-align: center;
+      font-size: clamp(0.78rem, 2.2vw, 0.9rem);
+      font-weight: 700;
+      color: #fff;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.85),
+        0 0 1px rgba(0, 0, 0, 1);
+    }
+
+    /* Bandeau illustratif : cyclistes + ligne de paysage (lisible d’un coup d’œil) */
+    .home-landing-bike-motif {
+      width: min(100%, 26rem);
+      margin: 0 auto 0.75rem;
+      color: rgba(248, 250, 252, 0.92);
+      filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
+    }
+
+    .home-landing-bike-motif svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .home-landing-bike-motif .home-landing-bike-horizon {
+      stroke: rgba(255, 255, 255, 0.38);
+    }
+
+    .home-landing-bike-motif .home-landing-bike-horizon-accent {
+      stroke: rgba(249, 215, 28, 0.28);
+    }
+
+    @media (max-width: 640px) {
+      .home-landing-bike-motif {
+        width: min(100%, 22rem);
+        margin-bottom: 0.65rem;
+      }
+    }
+
+    .home-landing-brand-wrap {
+      text-align: center;
+      width: 100%;
+      margin: 0 0 1.65rem;
+    }
+
+    .home-brand--hero {
+      transform: none;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .home-brand-line {
+      width: min(5.5rem, 28vw);
+      height: 2px;
+      margin: 0.95rem auto 0;
+      border-radius: 2px;
+      background: linear-gradient(90deg, transparent, var(--sq-yellow) 15%, var(--sq-yellow) 85%, transparent);
+      box-shadow: 0 0 16px rgba(249, 215, 28, 0.35);
+    }
+
+    .home-landing-hero-stage {
+      max-width: 38rem;
+      width: 100%;
+      margin: 0 auto 0.25rem;
+      text-align: center;
+    }
+
+    .home-landing-kicker {
+      margin: 0 auto 0.85rem;
+      max-width: 36rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--sq-yellow);
+      text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(249, 215, 28, 0.18);
+    }
+
+    .home-landing-display {
+      margin: 0 auto 1rem;
+      font-family: var(--font-serif);
+      font-weight: 500;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+
+    .home-landing-display-l1 {
+      display: block;
+      font-size: clamp(2rem, 5.8vw, 3.35rem);
+      font-weight: 600;
+      font-style: normal;
+      color: #fff;
+      text-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.55),
+        0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-landing-display-l2 {
+      display: block;
+      margin-top: 0.12em;
+      font-size: clamp(2rem, 5.8vw, 3.35rem);
+      font-weight: 600;
+      font-style: italic;
+      color: var(--sq-blue);
+      text-shadow:
+        0 0 1px rgba(255, 255, 255, 0.35),
+        0 2px 6px rgba(0, 0, 0, 0.5),
+        0 0 28px rgba(0, 85, 164, 0.35);
     }
 
     .goelo-auth-home-slot {
@@ -227,6 +392,11 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       line-height: 1.2;
+    }
+
+    .home-landing-topbar .goelo-auth-home-greeting:not([hidden]) {
+      overflow: visible;
+      text-overflow: unset;
     }
 
     /* Marque accueil : GoëloRides (sans espace), police moins arrondie */
@@ -332,10 +502,10 @@
 
     .home-landing-message {
       font-family: "Lato", var(--font-sans);
-      margin: 0 auto 1.5rem;
-      max-width: min(100%, 38rem);
-      text-align: left;
-      padding: clamp(1.25rem, 3.2vw, 1.85rem) clamp(1.2rem, 3.5vw, 2rem);
+      margin: 0 auto 1.25rem;
+      max-width: 100%;
+      text-align: center;
+      padding: clamp(1.1rem, 2.8vw, 1.55rem) clamp(1.05rem, 3vw, 1.65rem);
       background: rgba(15, 23, 42, 0.32);
       backdrop-filter: blur(20px) saturate(1.2);
       -webkit-backdrop-filter: blur(20px) saturate(1.2);
@@ -344,18 +514,6 @@
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.14),
         0 12px 40px rgba(0, 0, 0, 0.28);
-    }
-
-    .home-landing-body-lead {
-      font-size: clamp(1.22rem, 3.6vw, 1.58rem);
-      font-weight: 800;
-      letter-spacing: -0.035em;
-      line-height: 1.22;
-      color: #fff;
-      margin: 0 0 0.9rem;
-      text-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.7),
-        0 0 24px rgba(15, 23, 42, 0.5);
     }
 
     .home-landing-body-text {
@@ -385,7 +543,9 @@
     .home-landing-philosophy-line {
       display: block;
       margin-top: 0.5rem;
-      font-weight: 600;
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-style: italic;
       letter-spacing: -0.015em;
       line-height: 1.55;
       color: #fef3c7;
@@ -430,6 +590,76 @@
       color: rgba(255, 255, 255, 0.38);
       font-weight: 700;
       text-shadow: none;
+    }
+
+    .home-landing-values--pills {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      justify-items: center;
+      align-items: stretch;
+      gap: 0.45rem 0.55rem;
+      margin: 1.15rem auto 0;
+      max-width: 22rem;
+      width: 100%;
+    }
+
+    .home-landing-values--pills li {
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: rgba(248, 250, 252, 0.95);
+      padding: 0.42rem 0.75rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: rgba(15, 23, 42, 0.38);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 11.5rem;
+      text-align: center;
+    }
+
+    .home-landing-values--pills li:nth-child(3) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      max-width: 11.5rem;
+    }
+
+    .home-landing-values--pills li:not(:last-child)::after {
+      display: none;
+    }
+
+    .home-scroll-hint {
+      position: absolute;
+      right: max(1rem, env(safe-area-inset-right, 0px));
+      bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.45rem;
+      pointer-events: none;
+    }
+
+    .home-scroll-hint-track {
+      display: block;
+      width: 1px;
+      height: 2.25rem;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.45));
+      border-radius: 1px;
+    }
+
+    .home-scroll-hint-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.42);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-orientation: mixed;
     }
 
     .home-landing-region {
@@ -588,20 +818,25 @@
 
     @media (max-width: 640px) {
       .home-landing-inner {
-        justify-content: flex-start;
+        justify-content: flex-end;
         padding-top: max(1rem, env(safe-area-inset-top, 0px));
         padding-left: max(0.85rem, env(safe-area-inset-left, 0px));
         padding-right: max(0.85rem, env(safe-area-inset-right, 0px));
       }
 
-      .home-brand-bar {
-        margin-bottom: 0.85rem;
+      .home-landing-topbar {
+        margin-bottom: 1rem;
       }
 
-      .home-brand {
-        font-size: clamp(1.55rem, 10vw, 2.6rem);
-        transform: rotate(-0.6deg);
+      .home-brand.home-brand--hero {
+        font-size: clamp(2.1rem, 11vw, 3.2rem);
+        transform: none;
         margin-bottom: 0;
+      }
+
+      .home-landing-display-l1,
+      .home-landing-display-l2 {
+        font-size: clamp(1.55rem, 7.5vw, 2.45rem);
       }
 
       .home-landing-lead {
@@ -611,11 +846,6 @@
 
       .home-landing-message {
         padding: 1.05rem 1.1rem;
-      }
-
-      .home-landing-body-lead {
-        font-size: clamp(1.05rem, 4.2vw, 1.35rem);
-        margin-bottom: 0.75rem;
       }
 
       .home-landing-body-text {
@@ -628,8 +858,7 @@
         padding-top: 0.9rem;
       }
 
-      /* Accroches : même logique infos + points (retour à la ligne si besoin) */
-      .home-landing-values {
+      .home-landing-values:not(.home-landing-values--pills) {
         flex-direction: row;
         flex-wrap: wrap;
         align-items: baseline;
@@ -640,7 +869,11 @@
         overflow: visible;
       }
 
-      .home-landing-values li {
+      .home-landing-values--pills {
+        margin-top: 0.85rem;
+      }
+
+      .home-landing-values:not(.home-landing-values--pills) li {
         font-size: 0.82rem;
         line-height: 1.45;
         white-space: normal;
@@ -2784,9 +3017,45 @@
       transform: translateY(-1px);
     }
 
-    /* CTA hero : même cadre vitré transparent que .home-landing-message */
-    .home-landing-inner .btn-primary.home-hero-sorties,
-    .home-landing-inner .btn-primary.home-hero-groupes,
+    /* CTA hero : « Voir les groupes » plein jaune Saint-Quay ; « Sorties » vitré */
+    .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+    .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    .home-landing-inner .btn-primary.home-hero-groupes {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Lato", var(--font-sans);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--sq-yellow-ink);
+      background: var(--sq-yellow);
+      border: 1px solid rgba(0, 85, 164, 0.35);
+      padding: 0.95rem 1.85rem;
+      border-radius: 14px;
+      box-shadow:
+        0 2px 0 rgba(180, 140, 0, 0.25),
+        0 8px 28px rgba(0, 0, 0, 0.3);
+      text-decoration: none;
+      cursor: pointer;
+      text-shadow: none;
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    }
+
+    .home-landing-inner .btn-primary.home-hero-groupes:hover {
+      color: var(--sq-yellow-ink);
+      background: var(--sq-yellow-hover);
+      border-color: rgba(0, 85, 164, 0.5);
+      transform: translateY(-2px);
+      box-shadow:
+        0 2px 0 rgba(160, 120, 0, 0.3),
+        0 12px 36px rgba(0, 0, 0, 0.32);
+    }
+
     .home-landing-inner a.btn-ghost.home-hero-sorties {
       display: inline-flex;
       align-items: center;
@@ -2810,8 +3079,6 @@
       transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
     }
 
-    .home-landing-inner .btn-primary.home-hero-sorties:hover,
-    .home-landing-inner .btn-primary.home-hero-groupes:hover,
     .home-landing-inner a.btn-ghost.home-hero-sorties:hover {
       color: #fff;
       background: rgba(15, 23, 42, 0.42);
@@ -2823,7 +3090,6 @@
     }
 
     .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
-    .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-sorties,
     .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
       box-sizing: border-box;
       display: inline-flex;
@@ -2845,10 +3111,12 @@
       border-color: rgba(255, 255, 255, 0.22);
     }
 
-    .home-landing-hero-ctas .btn-primary.home-hero-sorties,
-    .home-landing-hero-ctas .btn-primary.home-hero-groupes,
     .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
       border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .home-landing-hero-ctas .btn-primary.home-hero-groupes {
+      border-color: rgba(0, 85, 164, 0.35);
     }
 
     /* —— Sections —— */
@@ -3978,32 +4246,80 @@
     <div class="home-landing-scrim" aria-hidden="true"></div>
     <div class="home-landing-inner">
       <h1 class="visually-hidden">GoëloRides — Sorties vélo à Saint-Quay-Portrieux</h1>
-      <p class="home-eyebrow">Saint-Quay-Portrieux · Côte du Goëlo · Été 2026</p>
-      <div class="home-brand-bar">
-        <div class="home-brand">
+      <div class="home-landing-topbar">
+        <p class="home-landing-topbar-loc">Saint-Quay-Portrieux <span class="home-landing-topbar-dot" aria-hidden="true">·</span> Côte du Goëlo</p>
+        <div class="home-landing-topbar-actions">
+          <span class="home-landing-topbar-season">Été 2026</span>
+          <div class="goelo-auth-home-slot" data-goelo-auth-home></div>
+        </div>
+      </div>
+      <div class="home-landing-bike-motif" role="img" aria-label="Illustration : cyclistes en groupe sur la côte">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 56" fill="none" aria-hidden="true">
+          <path
+            class="home-landing-bike-horizon"
+            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S384 34 420 40"
+            stroke-width="2.2"
+            stroke-linecap="round" />
+          <path
+            class="home-landing-bike-horizon-accent"
+            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S384 34 420 40"
+            stroke-width="1"
+            stroke-linecap="round"
+            transform="translate(0 1.5)" />
+          <g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M38 33 L26 33 M38 29 L28 29 M38 25 L30 25" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="50" cy="43" r="5.5" fill="none" />
+            <circle cx="66" cy="43" r="5.5" fill="none" />
+            <path d="M50 43 L55 29 L62 33 L66 43 M55 29 L58 23 M58 23 L61 21" fill="none" />
+          </g>
+          <g stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M168 26 L154 26 M168 22 L156 22 M168 18 L158 18" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="182" cy="36" r="6" fill="none" />
+            <circle cx="200" cy="36" r="6" fill="none" />
+            <path d="M182 36 L188 20 L196 25 L200 36 M188 20 L191 13 M191 13 L194 11" fill="none" />
+          </g>
+          <g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M302 33 L290 33 M302 29 L292 29 M302 25 L294 25" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="314" cy="43" r="5.5" fill="none" />
+            <circle cx="330" cy="43" r="5.5" fill="none" />
+            <path d="M314 43 L319 29 L326 33 L330 43 M319 29 L322 23 M322 23 L325 21" fill="none" />
+          </g>
+        </svg>
+      </div>
+      <div class="home-landing-brand-wrap">
+        <div class="home-brand home-brand--hero" lang="fr">
           <span class="home-brand-go">Goëlo</span><span class="home-brand-rides">Rides</span>
         </div>
-        <div class="goelo-auth-home-slot" data-goelo-auth-home></div>
+        <div class="home-brand-line" aria-hidden="true"></div>
       </div>
-      <div class="home-landing-message" role="region" aria-labelledby="home-landing-lead">
-        <p class="home-landing-body-lead" id="home-landing-lead">Tu es de passage ou du coin ?</p>
-        <p class="home-landing-body-text">Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme.</p>
-        <p class="home-landing-body-text home-landing-body-philosophy">
-          Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie&nbsp;:
-          <span class="home-landing-philosophy-line">partager la route, découvrir la côte, la campagne et créer des liens forts.</span>
-        </p>
+      <div class="home-landing-hero-stage">
+        <p class="home-landing-kicker" id="home-landing-lead">Tu es de passage ou du coin ?</p>
+        <h2 class="home-landing-display">
+          <span class="home-landing-display-l1">Rejoins un groupe</span>
+          <span class="home-landing-display-l2">à ton rythme</span>
+        </h2>
+        <div class="home-landing-message" role="region" aria-labelledby="home-landing-lead">
+          <p class="home-landing-body-text">Le point de rencontre de ceux qui aiment rouler sans pression — débutant·e, amateur·e ou confirmé·e.</p>
+          <p class="home-landing-body-text home-landing-body-philosophy">
+            Notre philosophie reste la même&nbsp;:
+            <span class="home-landing-philosophy-line">Partager la route, découvrir la côte, la campagne et créer des liens forts.</span>
+          </p>
+        </div>
+        <ul class="home-landing-values home-landing-values--pills" aria-label="L’esprit Goëlo Rides">
+          <li>Pas d’adhésion</li>
+          <li>Pas de chronomètre</li>
+          <li>Rouler ensemble</li>
+        </ul>
       </div>
-      <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
-        <li>Pas d’adhésion</li>
-        <li>Pas de chronomètre</li>
-        <li>Rouler ensemble</li>
-      </ul>
       <div class="home-landing-hero-ctas">
         <a href="#groupes" class="btn-primary home-hero-groupes">Voir les groupes <span class="home-hero-arrow" aria-hidden="true">↓</span></a>
         <a href="sorties.html" class="btn-ghost home-hero-sorties">Voir les sorties <span class="home-hero-arrow" aria-hidden="true">→</span></a>
       </div>
     </div>
-    <div class="home-scroll-hint" aria-hidden="true"><span>↓</span>Défiler</div>
+    <div class="home-scroll-hint" aria-hidden="true">
+      <span class="home-scroll-hint-track"></span>
+      <span class="home-scroll-hint-label">Défiler</span>
+    </div>
   </header>
 
   <section id="groupes" aria-labelledby="groupes-heading">
