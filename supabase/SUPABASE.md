@@ -187,3 +187,7 @@ Toutes les pages qui chargent **`goelo-auth.js`** avec un emplacement **`[data-g
 **Fichiers à déployer** : inclure **`goelo-auth.js`** à la racine avec **`app-chrome.css`**. Sur **`groupes.html`**, **`sortie.html`** et **`sorties.html`**, renseigner les mêmes `window.GOELO_SUPABASE_*` que sur l’accueil si tu veux le compte actif partout.
 
 **Note** : la connexion standard Supabase utilise **l’e-mail**, pas le pseudo seul (le pseudo sert au affichage et aux métadonnées). Pour un login « pseudo uniquement », il faudrait une table d’alias dédiée (comme pour les admins).
+
+## 10. Sauvegardes Postgres → Cloudflare R2
+
+Guide pas à pas (bucket privé, GitHub Actions gratuit, scripts dump / restore) : **`supabase/BACKUP-R2.md`**.
