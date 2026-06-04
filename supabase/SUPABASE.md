@@ -155,7 +155,7 @@ La session admin est stockée dans **`sessionStorage`** (clé `goelo_admin_auth_
 - **Inscriptions web** : table `signups` (désinscription = `canceled_at` renseigné).
 - **Noms sans e-mail** (ex-import `participants.json`) : table `imported_participant_names` ; le fichier JSON reste fusionné côté client si tu le gardes.
 - **E-mail FormSubmit** : si `SIGNUP.formEmail` / `FORM_NOTIFY_EMAIL` est rempli, une copie de l’inscription part vers ta boîte. Le code envoie aussi `_autoresponse` et `_replyto` **en français** pour le cycliste — **limite FormSubmit** : `_autoresponse` n’est **pas** appliqué quand l’envoi se fait en **AJAX** (`fetch`) ou quand **`_captcha` est désactivé** (notre cas pour rester fluide). Tant que ces deux points restent, l’e-mail automatique reçu par l’utilisateur peut rester le modèle anglais de FormSubmit. Pour une confirmation 100 % en français, il faudrait un autre canal (ex. Edge Function + fournisseur mail) ou un envoi formulaire HTML classique avec reCAPTCHA activé.
-- **Fiche sortie — capitaine** : dans le JSON `front_config` d’une route (`routes`), le champ optionnel `"rideLeader": "Prénom Nom"` (ou `"ride_leader"`) alimente la ligne « Capitaine de course » sur `sortie.html`.
+- **Fiche sortie — capitaine** : dans le JSON `front_config` d’une route (`routes`), le champ optionnel `"rideLeader": "Prénom Nom"` (ou `"ride_leader"`) alimente la ligne « Capitaine · Team Rider » sur `sortie.html`. À la création ou modification d’une sortie (assistant Team Rider, étape **Détails**), le champ **Capitaine de sortie — Team Rider** remplit ce même champ.
 
 ## 7. Sécurité (à terme)
 

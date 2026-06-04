@@ -330,27 +330,68 @@
         0 0 28px rgba(249, 215, 28, 0.45);
     }
 
-    .home-landing-body {
+    .home-landing-message {
       font-family: "Lato", var(--font-sans);
-      font-size: clamp(0.95rem, 2vw, 1.05rem);
-      font-weight: 400;
-      color: #fff;
-      line-height: 1.75;
       margin: 0 auto 1.5rem;
-      max-width: min(100%, 42rem);
-      text-align: center;
-      text-wrap: pretty;
-      padding: 1.35rem 1.75rem;
-      /* Cadre vitré transparent : le fond photo reste visible */
-      background: rgba(15, 23, 42, 0.28);
-      backdrop-filter: blur(18px) saturate(1.15);
-      -webkit-backdrop-filter: blur(18px) saturate(1.15);
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
+      max-width: min(100%, 38rem);
+      text-align: left;
+      padding: clamp(1.25rem, 3.2vw, 1.85rem) clamp(1.2rem, 3.5vw, 2rem);
+      background: rgba(15, 23, 42, 0.32);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 8px 32px rgba(0, 0, 0, 0.22);
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 12px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .home-landing-body-lead {
+      font-size: clamp(1.22rem, 3.6vw, 1.58rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.22;
+      color: #fff;
+      margin: 0 0 0.9rem;
+      text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.7),
+        0 0 24px rgba(15, 23, 42, 0.5);
+    }
+
+    .home-landing-body-text {
+      font-size: clamp(0.96rem, 2.15vw, 1.08rem);
+      font-weight: 400;
+      line-height: 1.72;
+      color: rgba(248, 250, 252, 0.96);
+      margin: 0 0 0.85rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+      text-wrap: pretty;
+    }
+
+    .home-landing-body-text:last-child {
+      margin-bottom: 0;
+    }
+
+    .home-landing-body-philosophy {
+      margin-top: 0.15rem;
+      margin-bottom: 0;
+      padding-top: 1.05rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: clamp(0.93rem, 2vw, 1.03rem);
+      line-height: 1.68;
+      color: rgba(226, 232, 240, 0.98);
+    }
+
+    .home-landing-philosophy-line {
+      display: block;
+      margin-top: 0.5rem;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      line-height: 1.55;
+      color: #fef3c7;
+      text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.65),
+        0 0 20px rgba(250, 204, 21, 0.12);
     }
 
     /* Accroches = infos, pas des boutons : ligne discrète + points médians */
@@ -568,9 +609,23 @@
         padding: 0.55rem 0.7rem;
       }
 
-      .home-landing-body {
+      .home-landing-message {
+        padding: 1.05rem 1.1rem;
+      }
+
+      .home-landing-body-lead {
+        font-size: clamp(1.05rem, 4.2vw, 1.35rem);
+        margin-bottom: 0.75rem;
+      }
+
+      .home-landing-body-text {
+        font-size: 0.92rem;
+        line-height: 1.68;
+      }
+
+      .home-landing-body-philosophy {
         font-size: 0.9rem;
-        padding: 1.1rem 1.15rem;
+        padding-top: 0.9rem;
       }
 
       /* Accroches : même logique infos + points (retour à la ligne si besoin) */
@@ -2729,7 +2784,7 @@
       transform: translateY(-1px);
     }
 
-    /* CTA hero : même cadre vitré transparent que .home-landing-body */
+    /* CTA hero : même cadre vitré transparent que .home-landing-message */
     .home-landing-inner .btn-primary.home-hero-sorties,
     .home-landing-inner .btn-primary.home-hero-groupes,
     .home-landing-inner a.btn-ghost.home-hero-sorties {
@@ -3930,7 +3985,14 @@
         </div>
         <div class="goelo-auth-home-slot" data-goelo-auth-home></div>
       </div>
-      <p class="home-landing-body">Tu es de passage ou du coin ? Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme. Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie&nbsp;: partager la route, découvrir la côte, la campagne et créer des liens forts.</p>
+      <div class="home-landing-message" role="region" aria-labelledby="home-landing-lead">
+        <p class="home-landing-body-lead" id="home-landing-lead">Tu es de passage ou du coin ?</p>
+        <p class="home-landing-body-text">Rejoins un groupe à ton rythme, le point de rencontre de tous les passionnés de cyclisme.</p>
+        <p class="home-landing-body-text home-landing-body-philosophy">
+          Que tu sois débutant, amateur ou confirmé, nous avons la même philosophie&nbsp;:
+          <span class="home-landing-philosophy-line">partager la route, découvrir la côte, la campagne et créer des liens forts.</span>
+        </p>
+      </div>
       <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
         <li>Pas d’adhésion</li>
         <li>Pas de chronomètre</li>
@@ -4238,7 +4300,7 @@
 
             <div class="new-route-panel" id="new-route-panel-3" data-wizard-step="3" hidden>
               <p class="signup-hint new-route-panel-intro">
-                <strong>Étape 3 — Détails</strong> · Titre affiché, groupe, allure, niveau piste, description.
+                <strong>Étape 3 — Détails</strong> · Titre affiché, groupe, allure, capitaine (Team Rider), niveau piste, description.
               </p>
               <label>
                 <span class="new-route-field-label">Titre affiché</span>
@@ -4251,6 +4313,10 @@
               <label>
                 <span class="new-route-field-label">Allure cible (optionnel)</span>
                 <input type="text" id="new-route-pace" placeholder="Ex. 20–24 km/h" maxlength="80" autocomplete="off">
+              </label>
+              <label>
+                <span class="new-route-field-label">Capitaine de sortie — Team Rider (optionnel)</span>
+                <input type="text" id="new-route-ride-leader" placeholder="Ex. Marie D." maxlength="80" autocomplete="name">
               </label>
               <span class="new-route-field-label" id="label-diff">Niveau difficulté (piste)</span>
               <div class="new-route-difficulty">

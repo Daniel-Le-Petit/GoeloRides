@@ -523,6 +523,12 @@
           levelLabel: fc.levelLabel || (row.group_label || "—"),
           vibe: fc.vibe || "",
           shortDesc: fc.shortDesc || "",
+          rideLeader:
+            typeof fc.rideLeader === "string" && fc.rideLeader.trim()
+              ? fc.rideLeader.trim()
+              : typeof fc.ride_leader === "string" && fc.ride_leader.trim()
+                ? fc.ride_leader.trim()
+                : "",
           rideDateIso: typeof fc.rideDateIso === "string" ? fc.rideDateIso : "",
           rideTime: typeof fc.rideTime === "string" ? fc.rideTime : "",
           sortOrder: typeof so === "number" && Number.isFinite(so) ? so : 40,
@@ -645,6 +651,9 @@
           " · " +
           escapeHtml(route.pace) +
           "</p>" +
+          (route.rideLeader && String(route.rideLeader).trim()
+            ? "<p><strong>Capitaine · Team Rider</strong> · " + escapeHtml(String(route.rideLeader).trim()) + "</p>"
+            : "") +
           "<p><strong>Date</strong> · " +
           escapeHtml(route.depart.dateLabel) +
           "</p>" +
@@ -680,9 +689,11 @@
           "</ul>" +
           "<p class=\"course-sub\">Consignes de sécurité</p>" +
           "<ul>" +
+          "<li>Participation réservée aux <strong>personnes majeures</strong> ; les <strong>mineur·e·s</strong> ne peuvent pas prendre part à la sortie.</li>" +
           "<li>Sur routes larges, roulez en <strong>file à deux</strong> au maximum ; en file indienne sur les portions étroites.</li>" +
+          "<li><strong>Dépassements par la gauche</strong> uniquement ; annonce clairement ton intention avant de passer.</li>" +
           "<li>Signale les obstacles (poteaux, nids-de-poule, dos-d’âne…).</li>" +
-          "<li>Garde ta ligne et signale clairement tout dépassement.</li>" +
+          "<li>Garde ta ligne et signale tout changement de position utile au groupe.</li>" +
           "</ul>" +
           "<p class=\"course-sub\">Matériel</p>" +
           "<ul>" +
@@ -693,7 +704,8 @@
           "<li>Prévois l’équipement adapté à la météo (couche chaude, coupe-vent, protection pluie…).</li>" +
           "</ul>" +
           "<p class=\"course-sub\">Inscription</p>" +
-          "<p><strong>Goëlo Rides</strong> : pas de cotisation annuelle. L’inscription sur cette page ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. " +
+          "<p><strong>Phase de lancement — cadre et assurance</strong> : Goëlo Rides n’a pas encore de <strong>structure associative</strong> ni d’<strong>assurance collective</strong> pour encadrer les sorties. Elles se déroulent dans un cadre <strong>informel</strong> : chaque participant·e reste <strong>responsable</strong> de sa personne, de son matériel et des risques liés à la route. <strong>Dès qu’une association sera créée</strong> (statuts, éventuelle adhésion et assurance), nous mettrons à jour les fiches sorties et la page <a href=\"infos-pratiques.html\">Infos pratiques</a> pour que tout soit <strong>clair et à jour</strong>.</p>" +
+          "<p><strong>Pas de cotisation annuelle</strong> pour l’instant. L’inscription sur cette page ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. " +
           "Préviens-nous si tu ne peux finalement pas venir.</p>" +
           "<p class=\"signup-modal-course-footer\">" +
           "Bonne sortie · Goëlo Rides · " +
@@ -1727,6 +1739,8 @@
           if (gEl) gEl.value = route.name || "";
           const pEl = document.getElementById("new-route-pace");
           if (pEl) pEl.value = route.pace && route.pace !== "—" ? route.pace : "";
+          const rlEl = document.getElementById("new-route-ride-leader");
+          if (rlEl) rlEl.value = route.rideLeader && String(route.rideLeader).trim() ? String(route.rideLeader).trim() : "";
           const dEl = document.getElementById("new-route-desc");
           if (dEl) dEl.value = route.shortDesc || "";
           const dateIn = document.getElementById("new-route-date");
@@ -1801,6 +1815,8 @@
           const grp = grpEl ? grpEl.value.trim() : "";
           const pace = paceEl ? paceEl.value.trim() : "";
           const desc = descEl ? descEl.value.trim() : "";
+          const rideEl = document.getElementById("new-route-ride-leader");
+          const rl = rideEl ? rideEl.value.trim() : "";
           recap.innerHTML =
             "<ul class=\"new-route-recap-list\">" +
             "<li><strong>Titre</strong> · " + escapeHtml(track) + "</li>" +
@@ -1811,6 +1827,7 @@
             "<li><strong>Distance / D+</strong> · " + escapeHtml(km) + " · " + escapeHtml(dpl) + "</li>" +
             (grp ? "<li><strong>Groupe</strong> · " + escapeHtml(grp) + "</li>" : "") +
             (pace ? "<li><strong>Allure</strong> · " + escapeHtml(pace) + "</li>" : "") +
+            (rl ? "<li><strong>Capitaine · Team Rider</strong> · " + escapeHtml(rl) + "</li>" : "") +
             (desc ? "<li><strong>Description</strong> · " + escapeHtml(desc) + "</li>" : "") +
             "</ul>";
         }
@@ -2280,6 +2297,10 @@
           const track = document.getElementById("new-route-track").value.trim();
           const group = document.getElementById("new-route-group").value.trim();
           const pace = document.getElementById("new-route-pace").value.trim();
+          const rideLeaderStr = (function () {
+            const el = document.getElementById("new-route-ride-leader");
+            return el ? el.value.trim() : "";
+          })();
           const desc = document.getElementById("new-route-desc").value.trim();
           const dateStr = document.getElementById("new-route-date").value;
           const timeStr = document.getElementById("new-route-time").value;
@@ -2334,7 +2355,8 @@
             vibe: raceTypeLabel(rt),
             coverImageDataUrl: newRouteCoverDataUrl || "",
             rideDateIso: dateStr,
-            rideTime: timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : "08:30"
+            rideTime: timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : "08:30",
+            rideLeader: rideLeaderStr
           };
 
           const admTok = getAdminSession();

@@ -747,6 +747,9 @@
       " · " +
       escapeHtml(route.pace || "—") +
       "</dd></div>" +
+      '<div class="sortie-fact"><dt>Capitaine · Team Rider</dt><dd>' +
+      escapeHtml(route.rideLeader && String(route.rideLeader).trim() ? String(route.rideLeader).trim() : "—") +
+      "</dd></div>" +
       '<div class="sortie-fact"><dt>Date</dt><dd>' +
       escapeHtml((route.depart && route.depart.dateLabel) || "—") +
       "</dd></div>" +
@@ -793,9 +796,11 @@
       '<section class="sortie-block">' +
       '<h3 class="sortie-block-title">Consignes de sécurité</h3>' +
       "<ul class=\"sortie-list\">" +
+      "<li>Participation réservée aux <strong>personnes majeures</strong> ; les <strong>mineur·e·s</strong> ne peuvent pas prendre part à la sortie.</li>" +
       "<li>Sur routes larges, roulez en <strong>file à deux</strong> au maximum ; en file indienne sur les portions étroites.</li>" +
+      "<li><strong>Dépassements par la gauche</strong> uniquement ; annonce clairement ton intention avant de passer.</li>" +
       "<li>Signale les obstacles (poteaux, nids-de-poule, dos-d’âne…).</li>" +
-      "<li>Garde ta ligne et signale clairement tout dépassement.</li>" +
+      "<li>Garde ta ligne et signale tout changement de position utile au groupe.</li>" +
       "</ul></section>" +
 
       '<section class="sortie-block">' +
@@ -810,7 +815,8 @@
 
       '<section class="sortie-block">' +
       '<h3 class="sortie-block-title">Inscription</h3>' +
-      '<p class="sortie-prose"><strong>Goëlo Rides</strong> : pas de cotisation annuelle. L’inscription sur la page Sorties, ici avec « Je participe ! », ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. Préviens-nous si tu ne peux finalement pas venir.</p></section>' +
+      '<p class="sortie-prose"><strong>Phase de lancement — cadre et assurance</strong> : Goëlo Rides n’a pas encore de <strong>structure associative</strong> ni d’<strong>assurance collective</strong> pour encadrer les sorties. Elles se déroulent dans un cadre <strong>informel</strong> : chaque participant·e reste <strong>responsable</strong> de sa personne, de son matériel et des risques liés à la route. <strong>Dès qu’une association sera créée</strong> (statuts, éventuelle adhésion et assurance), nous mettrons à jour cette fiche et la page <a href="infos-pratiques.html">Infos pratiques</a> pour que tout soit <strong>clair et à jour</strong>.</p>' +
+      '<p class="sortie-prose"><strong>Pas de cotisation annuelle</strong> pour l’instant. L’inscription sur la page Sorties, ici avec « Je participe ! », ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. Préviens-nous si tu ne peux finalement pas venir.</p></section>' +
 
       '<p class="sortie-footer-note">Bonne sortie · Goëlo Rides · ' +
       escapeHtml(SHARED.region) +
@@ -1269,12 +1275,11 @@
     const pts = route.profile && route.profile.points;
     const km = route.profile && route.profile.totalKm;
     const canInfer = !!(pts && pts.length >= 2);
-    const longRoute =
-      typeof km === "number" && !Number.isNaN(km) && km >= 8;
 
-    /* Sans villes en base, dbRowToRoute met une seule ville par défaut (SQ) : pour un long
-       parcours, on préfère des repères le long de la trace plutôt qu’un seul point. */
-    if (canInfer && longRoute && fromCfg.length < 2) {
+    /* Repères le long de la trace uniquement si aucune ville exploitable en base.
+       (Avant : dès qu’il y avait moins de 2 points, on écrasait une liste de communes
+       partiellement géocodée — d’où « Départ / Sur le parcours (~x %) » à la place des noms.) */
+    if (canInfer && fromCfg.length === 0) {
       return inferCitiesFromTrack(pts, 5);
     }
     if (fromCfg.length) return fromCfg;

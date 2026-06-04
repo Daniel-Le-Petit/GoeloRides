@@ -291,6 +291,12 @@
       levelLabel: fc.levelLabel || (row.group_label || "—"),
       vibe: fc.vibe || "",
       shortDesc: fc.shortDesc || "",
+      rideLeader:
+        typeof fc.rideLeader === "string" && fc.rideLeader.trim()
+          ? fc.rideLeader.trim()
+          : typeof fc.ride_leader === "string" && fc.ride_leader.trim()
+            ? fc.ride_leader.trim()
+            : "",
       depart: enrichDepartObject(
         fc.depart && typeof fc.depart === "object"
           ? fc.depart
