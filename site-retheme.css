@@ -84,6 +84,12 @@ html.site-retheme body {
   html.site-retheme body {
     background-attachment: scroll;
   }
+
+  html.site-retheme #groupes,
+  html.site-retheme section.home-cta-sorties,
+  html.site-retheme .sortie-parcours-immersif {
+    background-attachment: scroll;
+  }
 }
 
 html.site-retheme .app-shell {
@@ -205,6 +211,283 @@ html.site-retheme .groupe-card .groupe-parcours a {
 
 html.site-retheme .groupe-card .groupe-parcours a:hover {
   color: var(--warm);
+}
+
+/* Cartes groupe fond clair + stats (accueil #groupes + page groupes) */
+html.site-retheme #groupes .groupe-card,
+html.site-retheme ul.groupes-list .groupe-card {
+  background: rgba(255, 255, 255, 0.93) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-left-width: 5px !important;
+  border-radius: 1.2rem !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18) !important;
+  color: var(--text) !important;
+}
+
+html.site-retheme #groupes .groupes-retheme-grid .groupe-card:hover,
+html.site-retheme ul.groupes-list .groupe-card:hover {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22) !important;
+}
+
+html.site-retheme #groupes .groupe-card-body,
+html.site-retheme #groupes .groupe-desc,
+html.site-retheme #groupes .groupe-parcours,
+html.site-retheme ul.groupes-list .groupe-card-body,
+html.site-retheme ul.groupes-list .groupe-desc,
+html.site-retheme ul.groupes-list .groupe-parcours {
+  color: var(--text) !important;
+}
+
+html.site-retheme #groupes .groupe-card h2,
+html.site-retheme ul.groupes-list .groupe-card h2 {
+  color: var(--ocean) !important;
+  font-size: 1.35rem !important;
+  font-weight: 600;
+  margin: 0.35rem 0 0.25rem;
+}
+
+html.site-retheme #groupes .groupe-card .groupe-parcours a,
+html.site-retheme ul.groupes-list .groupe-card .groupe-parcours a {
+  color: var(--bleu) !important;
+}
+
+html.site-retheme #groupes .groupe-pill,
+html.site-retheme ul.groupes-list .groupe-pill {
+  background: #eef2f6 !important;
+  color: var(--text) !important;
+  border: 1px solid var(--app-border, #dce6ee) !important;
+}
+
+html.site-retheme .groupe-level-pill {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  margin-bottom: 0.35rem;
+}
+
+html.site-retheme .groupe-level-pill--blanc {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+html.site-retheme .groupe-level-pill--vert {
+  background: rgba(76, 175, 121, 0.2);
+  color: #14532d;
+  border: 1px solid rgba(76, 175, 121, 0.55);
+}
+
+html.site-retheme .groupe-level-pill--bleu {
+  background: rgba(58, 127, 193, 0.18);
+  color: #1e3a5f;
+  border: 1px solid rgba(58, 127, 193, 0.45);
+}
+
+html.site-retheme .groupe-level-pill--rouge {
+  background: rgba(217, 79, 61, 0.15);
+  color: #7f1d1d;
+  border: 1px solid rgba(217, 79, 61, 0.45);
+}
+
+html.site-retheme .groupe-profile-line {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin: 0 0 0.65rem;
+  line-height: 1.45;
+}
+
+html.site-retheme .groupe-stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin: 0.8rem 0 1rem;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.6rem;
+}
+
+html.site-retheme #groupes .groupe-stats-grid,
+html.site-retheme ul.groupes-list .groupe-stats-grid {
+  background: rgba(15, 35, 45, 0.06);
+}
+
+html.site-retheme .groupe-stat {
+  flex: 1 1 4.5rem;
+  min-width: 0;
+}
+
+html.site-retheme .groupe-card .stat-val {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ocean);
+  display: block;
+  line-height: 1.15;
+}
+
+html.site-retheme .groupe-card .stat-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-top: 0.2rem;
+}
+
+html.site-retheme #groupes .groupe-desc,
+html.site-retheme ul.groupes-list .groupe-desc {
+  font-weight: 300;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin-bottom: 0.75rem;
+}
+
+/* Fiche sortie : bandeau parcours immersif + cartes claires */
+html.site-retheme .sortie-parcours-immersif {
+  position: relative;
+  isolation: isolate;
+  margin-top: 0.5rem;
+  padding: 2rem var(--site-edge-l) 2.5rem var(--site-edge-r);
+  background-color: #0f1f28;
+  background-image: url("assets/hero-accueil.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  border-radius: 0;
+}
+
+html.site-retheme .sortie-parcours-immersif::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.62);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html.site-retheme .sortie-parcours-immersif > .sortie-retheme-grid {
+  position: relative;
+  z-index: 1;
+}
+
+html.site-retheme .sortie-parcours-immersif .sortie-map-heading,
+html.site-retheme .sortie-parcours-immersif .sortie-participants-title {
+  font-family: var(--font-serif);
+  color: #fff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+  margin-bottom: 0.5rem;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-map-section {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.site-retheme .sortie-parcours-immersif .card-parcours,
+html.site-retheme .sortie-parcours-immersif #sortie-course.card-detail,
+html.site-retheme .sortie-parcours-immersif #sortie-signup-panel.card-inscription {
+  background: rgba(255, 255, 255, 0.93) !important;
+  color: var(--text) !important;
+  border-radius: 1.2rem !important;
+  padding: 1.6rem !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18) !important;
+  margin-bottom: 1.4rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif .card-parcours {
+  margin-top: 0.35rem;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course.card-detail {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-detail-h {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ocean) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-block-title,
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-prose,
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-list,
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-fact dd {
+  color: var(--text) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-fact dt {
+  color: var(--muted) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-detail-head {
+  background: rgba(15, 35, 45, 0.06) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-fact {
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-block {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-signup-panel .sortie-signup-heading {
+  color: var(--ocean) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-signup-panel .sortie-signup-intro,
+html.site-retheme .sortie-parcours-immersif #sortie-signup-panel .sortie-signup-note,
+html.site-retheme .sortie-parcours-immersif #sortie-signup-panel .sortie-signup-alt {
+  color: var(--muted) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-signup-panel .sortie-signup-label {
+  color: var(--muted) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-signup-panel .sortie-signup-field input {
+  background: #fff !important;
+  border-color: var(--app-border, #dce6ee) !important;
+  color: var(--text) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif .sortie-map-type-line,
+html.site-retheme .sortie-parcours-immersif .sortie-map-options,
+html.site-retheme .sortie-parcours-immersif .sortie-cities-heading {
+  color: var(--text) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif .sortie-map-inner {
+  background: #e8eef4 !important;
+  border-radius: 0.5rem;
+}
+
+html.site-retheme .sortie-parcours-immersif .sortie-map-inner .leaflet-container.strava-map-tiles {
+  background: #dfe8f0 !important;
+}
+
+/* Hero sortie : masquer la 2e pill (heure en doublon si déjà dans la date) */
+html.site-retheme .sortie-hero-meta-pills > span:nth-child(2) {
+  display: none !important;
 }
 
 html.site-retheme .groupes-header h1,
@@ -600,11 +883,32 @@ html.site-retheme .home-landing-lead {
   padding-left: 0;
 }
 
-/* Section groupes + CTA accueil */
+/* Section groupes + CTA accueil — fond photo immersif + overlay */
 html.site-retheme #groupes {
+  position: relative;
+  isolation: isolate;
   padding: 3rem var(--site-edge-l) 3.5rem var(--site-edge-r);
   max-width: 1100px;
   margin: 0 auto;
+  background-color: #0f1f28;
+  background-image: url("assets/hero-accueil.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+html.site-retheme #groupes::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.62);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html.site-retheme #groupes > * {
+  position: relative;
+  z-index: 1;
 }
 
 html.site-retheme .groupes-retheme-header {
@@ -680,9 +984,30 @@ html.site-retheme .groupes-grid-note {
   animation: site-retheme-fadein 0.7s ease 0.35s both;
 }
 
-html.site-retheme .home-cta-sorties {
+html.site-retheme section.home-cta-sorties {
+  position: relative;
+  isolation: isolate;
   padding: 3rem var(--site-edge-l) 1rem var(--site-edge-r);
   margin-bottom: 2.25rem;
+  background-color: #0f1f28;
+  background-image: url("assets/hero-accueil.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+html.site-retheme section.home-cta-sorties::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.62);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html.site-retheme section.home-cta-sorties > * {
+  position: relative;
+  z-index: 1;
 }
 
 html.site-retheme .home-cta-sorties-card {
@@ -1701,4 +2026,158 @@ html.site-retheme .sortie-participants-title {
     min-width: min(100%, 9.5rem);
     justify-content: center;
   }
+}
+
+/* —— Accessibilité (prompt Mistral / WCAG) —— */
+html.site-retheme .skip-link {
+  position: absolute;
+  left: max(0.5rem, env(safe-area-inset-left, 0px));
+  top: -100px;
+  z-index: 500;
+  padding: 0.55rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--ocean);
+  border-radius: 0.5rem;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  transition: top 0.15s ease;
+}
+
+html.site-retheme .skip-link:focus {
+  top: max(0.5rem, env(safe-area-inset-top, 0px));
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+html.site-retheme .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* —— Accueil : aperçu calendrier (statique) —— */
+html.site-retheme .home-calendrier-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem var(--site-edge-l) 2.75rem var(--site-edge-r);
+}
+
+html.site-retheme .home-calendrier-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+html.site-retheme .home-calendrier-header h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.55rem, 3.8vw, 2.15rem);
+  color: var(--text);
+  margin: 0.35rem 0 0.5rem;
+}
+
+html.site-retheme .home-calendrier-lead {
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 40rem;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+html.site-retheme .home-calendrier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+html.site-retheme .home-calendrier-card {
+  background: var(--app-surface, #fff);
+  border: 1px solid var(--app-border, #dce6ee);
+  border-radius: 1rem;
+  padding: 1.35rem 1.25rem;
+  box-shadow: 0 4px 18px rgba(15, 30, 45, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+html.site-retheme .home-calendrier-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(15, 30, 45, 0.12);
+}
+
+html.site-retheme .home-calendrier-card h3 {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  color: var(--ocean);
+  margin: 0 0 0.65rem;
+}
+
+html.site-retheme .home-calendrier-meta {
+  font-size: 0.86rem;
+  color: var(--muted);
+  margin: 0 0 0.35rem;
+}
+
+html.site-retheme .home-calendrier-card .btn-details {
+  display: inline-block;
+  margin-top: 0.85rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--app-sea, #1565a8);
+  text-decoration: none;
+}
+
+html.site-retheme .home-calendrier-card .btn-details:hover {
+  text-decoration: underline;
+}
+
+html.site-retheme .home-calendrier-foot {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* —— Page Infos pratiques —— */
+html.site-retheme .infos-pratiques-wrap {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.5rem var(--site-edge-l) 2.5rem var(--site-edge-r);
+}
+
+html.site-retheme .infos-pratiques-wrap h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+html.site-retheme .infos-pratiques-wrap h2 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  margin: 1.75rem 0 0.75rem;
+  color: var(--ocean);
+}
+
+html.site-retheme .infos-pratiques-wrap p,
+html.site-retheme .infos-pratiques-wrap li {
+  color: var(--text);
+  line-height: 1.6;
+}
+
+html.site-retheme .infos-pratiques-wrap ul {
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+}
+
+html.site-retheme .infos-pratiques-wrap address {
+  font-style: normal;
+  margin: 0.75rem 0;
+  padding: 1rem 1.1rem;
+  background: rgba(21, 101, 168, 0.06);
+  border: 1px solid rgba(21, 101, 168, 0.18);
+  border-radius: 0.65rem;
 }

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Détail d’une sortie GoëloRides : parcours, carte, inscription. Départ parking du Kasino à Saint-Quay-Portrieux.">
   <meta name="theme-color" content="#eef2f6">
   <title>Sortie · Goëlo Rides</title>
   <meta property="og:title" content="Sortie · GoëloRides" />
@@ -710,10 +711,11 @@
   </script>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
   <a href="sorties.html" class="back-link">← Toutes les sorties</a>
   <div class="sortie-auth-top"><div data-goelo-auth-home></div></div>
   <div class="app-shell">
-    <main class="app-main app-main--sortie">
+    <main class="app-main app-main--sortie" id="main-content" role="main">
       <header class="sortie-header">
         <div class="sortie-title-row">
           <h1 id="sortie-title" class="sortie-title-h1">Sortie</h1>
@@ -728,10 +730,12 @@
       <div id="sortie-content" hidden>
         <div id="sortie-hero-wrap"></div>
         <div class="sortie-page-pad">
+          <div class="sortie-parcours-immersif">
           <div class="sortie-retheme-grid">
             <div class="sortie-retheme-col sortie-retheme-col--map">
               <section id="sortie-map-section" class="sortie-map-section" aria-label="Carte du parcours" hidden>
                 <h2 class="sortie-map-heading">Le parcours</h2>
+                <div class="card-parcours">
                 <p class="sortie-map-type-line" id="sortie-map-type-line"></p>
                 <div class="sortie-map-toolbar">
                   <div class="sortie-map-options">
@@ -761,8 +765,9 @@
                 <div class="sortie-map-inner strava-map-block">
                   <div id="sortie-map" class="sortie-map" role="application" aria-label="Carte du parcours"></div>
                 </div>
+                </div>
               </section>
-              <div id="sortie-course" class="sortie-course"></div>
+              <div id="sortie-course" class="sortie-course card-detail"></div>
             </div>
             <div class="sortie-retheme-col sortie-retheme-col--aside">
               <div class="sortie-organizer-card" aria-label="Encadrement et organisation">
@@ -770,7 +775,7 @@
                 <p><strong>Personnes mineures</strong><br>Interdites ⛔️</p>
                 <p><strong>Organisé par</strong><br>GoëloRides</p>
               </div>
-              <div id="sortie-signup-panel" class="sortie-signup-panel" hidden>
+              <div id="sortie-signup-panel" class="sortie-signup-panel card-inscription" hidden>
                 <h3 class="sortie-signup-heading">Je participe !</h3>
                 <p class="sortie-signup-intro">Inscription à cette sortie — renseigne tes infos (enregistrées comme sur la page Sorties).</p>
                 <form id="sortie-signup-form" class="sortie-signup-form" novalidate>
@@ -803,16 +808,18 @@
               </section>
             </div>
           </div>
+          </div>
         </div>
       </div>
 
-      <footer class="site-footer">
+      <footer class="site-footer" role="contentinfo">
         <p class="footer-logo">GoëloRides</p>
         <p class="footer-loc">Saint-Quay-Portrieux · Côtes-d'Armor · 22410</p>
         <div class="footer-links">
-          <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">📸 @goelo.rides</a>
-          <a href="mailto:goelo.rides@gmail.com">✉ goelo.rides@gmail.com</a>
+          <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span aria-hidden="true">📸</span> @goelo.rides</a>
+          <a href="mailto:goelo.rides@gmail.com"><span aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
           <a href="sorties.html">Sorties</a>
+          <a href="infos-pratiques.html">Infos pratiques</a>
           <a href="index.html">Accueil</a>
         </div>
         <p class="footer-legal">
