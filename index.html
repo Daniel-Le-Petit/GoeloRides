@@ -527,7 +527,7 @@
     }
 
     /* Sections accueil sur fond clair (sauf #groupes : texte sur fond photo immersif) */
-    .app-main--home section:not(#groupes):not(.home-cta-sorties):not(#calendrier-apercu) {
+    .app-main--home section:not(#groupes):not(.home-cta-sorties) {
       background: var(--app-bg);
       color: var(--app-text);
     }
@@ -4074,39 +4074,6 @@
     <p class="groupes-grid-note">Pas sûr de ton groupe ? Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.</p>
   </section>
 
-  <section class="home-calendrier-section" id="calendrier-apercu" aria-labelledby="calendrier-heading">
-    <div class="home-calendrier-header">
-      <p class="groupes-retheme-eyebrow">Été 2026</p>
-      <h2 id="calendrier-heading">Prochaines sorties</h2>
-      <p class="home-calendrier-lead">Quelques dates à retenir — le détail (inscription, parcours) est sur la page Sorties.</p>
-    </div>
-    <div class="home-calendrier-grid">
-      <article class="home-calendrier-card" aria-labelledby="cal-card-boucle">
-        <h3 id="cal-card-boucle">La Grande Boucle du Goëlo</h3>
-        <p class="home-calendrier-meta"><strong>Date :</strong> à confirmer sur le calendrier</p>
-        <p class="home-calendrier-meta"><strong>Niveau :</strong> <span class="home-cal-niveau home-cal-niveau--bleu" title="Groupe Bleu"></span> Bleu</p>
-        <p class="home-calendrier-meta"><strong>Distance :</strong> 84,5 km</p>
-        <a class="btn-details" href="sortie.html?id=boucle">Voir la fiche sortie</a>
-      </article>
-      <article class="home-calendrier-card" aria-labelledby="cal-card-brehec">
-        <h3 id="cal-card-brehec">Vers Bréhec</h3>
-        <p class="home-calendrier-meta"><strong>Date :</strong> à confirmer sur le calendrier</p>
-        <p class="home-calendrier-meta"><strong>Niveau :</strong> <span class="home-cal-niveau home-cal-niveau--vert" title="Groupe Vert"></span> Vert</p>
-        <p class="home-calendrier-meta"><strong>Distance :</strong> 66 km</p>
-        <a class="btn-details" href="sortie.html?id=brehec">Voir la fiche sortie</a>
-      </article>
-      <article class="home-calendrier-card" aria-labelledby="cal-card-toutes">
-        <h3 id="cal-card-toutes">Toutes les sorties</h3>
-        <p class="home-calendrier-meta">Filtre par niveau, type ou inscription.</p>
-        <p class="home-calendrier-meta">Mise à jour au fil de l’été.</p>
-        <a class="btn-details" href="sorties.html">Ouvrir le calendrier complet</a>
-      </article>
-    </div>
-    <p class="home-calendrier-foot">
-      <a href="infos-pratiques.html">Infos pratiques</a> · départ parking du Kasino
-    </p>
-  </section>
-
   <section class="home-cta-sorties" aria-labelledby="cta-sorties-title">
     <div class="home-cta-sorties-card">
       <p class="groupes-retheme-eyebrow">Calendrier été 2026</p>
@@ -4329,6 +4296,10 @@
               <div id="new-route-recap" class="new-route-recap" aria-live="polite"></div>
             </div>
 
+            <p class="new-route-wizard-flow-hint" aria-hidden="true">
+              <strong>Étapes 1 → 5 :</strong> d’abord <strong>Suivant</strong>, puis <strong>Précédent</strong> si besoin.
+              <strong>Créer la sortie</strong> n’apparaît qu’à la dernière étape.
+            </p>
             <div class="new-route-wizard-nav" id="new-route-wizard-nav">
               <button type="button" class="btn-app-outline" id="new-route-prev" hidden>Précédent</button>
               <div class="new-route-wizard-nav-main">

@@ -86,7 +86,6 @@ html.site-retheme body {
   }
 
   html.site-retheme #groupes,
-  html.site-retheme #calendrier-apercu.home-calendrier-section,
   html.site-retheme section.home-cta-sorties,
   html.site-retheme .sortie-parcours-immersif {
     background-attachment: scroll;
@@ -152,6 +151,7 @@ html.site-retheme .sorties-card {
 
 /* Cartes « groupe » : vitré sombre sur le fond photo (pas de carte blanche) */
 html.site-retheme .groupe-card {
+  overflow: hidden;
   background: rgba(15, 35, 45, 0.48);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -161,6 +161,7 @@ html.site-retheme .groupe-card {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
   color: rgba(255, 255, 255, 0.92);
   animation: site-retheme-fadein 0.7s ease both;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease;
 }
 
 html.site-retheme .groupe-card--blanc {
@@ -193,12 +194,6 @@ html.site-retheme .groupe-stats {
   color: rgba(255, 255, 255, 0.62);
 }
 
-html.site-retheme .groupe-stats .groupe-stat-val {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  color: var(--warm);
-}
-
 html.site-retheme .groupe-pill {
   background: rgba(255, 255, 255, 0.12) !important;
   color: rgba(255, 255, 255, 0.92) !important;
@@ -212,54 +207,6 @@ html.site-retheme .groupe-card .groupe-parcours a {
 
 html.site-retheme .groupe-card .groupe-parcours a:hover {
   color: var(--warm);
-}
-
-/* Cartes groupe fond clair + stats (accueil #groupes + page groupes) */
-html.site-retheme #groupes .groupe-card,
-html.site-retheme ul.groupes-list .groupe-card {
-  background: rgba(255, 255, 255, 0.93) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-left-width: 5px !important;
-  border-radius: 1.2rem !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18) !important;
-  color: var(--text) !important;
-}
-
-html.site-retheme #groupes .groupes-retheme-grid .groupe-card:hover,
-html.site-retheme ul.groupes-list .groupe-card:hover {
-  border-color: rgba(0, 0, 0, 0.12) !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22) !important;
-}
-
-html.site-retheme #groupes .groupe-card-body,
-html.site-retheme #groupes .groupe-desc,
-html.site-retheme #groupes .groupe-parcours,
-html.site-retheme ul.groupes-list .groupe-card-body,
-html.site-retheme ul.groupes-list .groupe-desc,
-html.site-retheme ul.groupes-list .groupe-parcours {
-  color: var(--text) !important;
-}
-
-html.site-retheme #groupes .groupe-card h2,
-html.site-retheme ul.groupes-list .groupe-card h2 {
-  color: var(--ocean) !important;
-  font-size: 1.35rem !important;
-  font-weight: 600;
-  margin: 0.35rem 0 0.25rem;
-}
-
-html.site-retheme #groupes .groupe-card .groupe-parcours a,
-html.site-retheme ul.groupes-list .groupe-card .groupe-parcours a {
-  color: var(--bleu) !important;
-}
-
-html.site-retheme #groupes .groupe-pill,
-html.site-retheme ul.groupes-list .groupe-pill {
-  background: #eef2f6 !important;
-  color: var(--text) !important;
-  border: 1px solid var(--app-border, #dce6ee) !important;
 }
 
 /* Pastille de niveau devant le titre « Groupe … » (accueil + page groupes) */
@@ -328,34 +275,34 @@ html.site-retheme .groupe-level-pill {
 }
 
 html.site-retheme .groupe-level-pill--blanc {
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 html.site-retheme .groupe-level-pill--vert {
-  background: rgba(76, 175, 121, 0.2);
-  color: #14532d;
-  border: 1px solid rgba(76, 175, 121, 0.55);
+  background: rgba(34, 197, 94, 0.22);
+  color: #bbf7d0;
+  border: 1px solid rgba(74, 222, 128, 0.45);
 }
 
 html.site-retheme .groupe-level-pill--bleu {
-  background: rgba(58, 127, 193, 0.18);
-  color: #1e3a5f;
-  border: 1px solid rgba(58, 127, 193, 0.45);
+  background: rgba(58, 127, 193, 0.28);
+  color: #dbeafe;
+  border: 1px solid rgba(147, 197, 253, 0.45);
 }
 
 html.site-retheme .groupe-level-pill--rouge {
-  background: rgba(217, 79, 61, 0.15);
-  color: #7f1d1d;
-  border: 1px solid rgba(217, 79, 61, 0.45);
+  background: rgba(217, 79, 61, 0.22);
+  color: #fecaca;
+  border: 1px solid rgba(252, 165, 165, 0.45);
 }
 
-html.site-retheme .groupe-profile-line {
+html.site-retheme .groupe-card .groupe-profile-line {
   font-family: var(--font-sans);
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.72);
   margin: 0 0 0.65rem;
   line-height: 1.45;
 }
@@ -366,14 +313,9 @@ html.site-retheme .groupe-stats-grid {
   gap: 1.2rem;
   margin: 0.8rem 0 1rem;
   padding: 0.8rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 0.6rem;
-}
-
-html.site-retheme #groupes .groupe-stats-grid,
-html.site-retheme ul.groupes-list .groupe-stats-grid {
-  background: rgba(15, 35, 45, 0.06);
 }
 
 html.site-retheme .groupe-stat {
@@ -385,7 +327,7 @@ html.site-retheme .groupe-card .stat-val {
   font-family: var(--font-serif);
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--ocean);
+  color: var(--warm);
   display: block;
   line-height: 1.15;
 }
@@ -395,7 +337,7 @@ html.site-retheme .groupe-card .stat-label {
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.58);
   display: block;
   margin-top: 0.2rem;
 }
@@ -966,70 +908,6 @@ html.site-retheme #groupes > * {
   z-index: 1;
 }
 
-/* Prochaines sorties (accueil) : même fond immersif que #groupes */
-html.site-retheme #calendrier-apercu.home-calendrier-section {
-  position: relative;
-  isolation: isolate;
-  padding: 3rem var(--site-edge-l) 3.5rem var(--site-edge-r);
-  max-width: 1100px;
-  margin: 0 auto;
-  background-color: #0f1f28;
-  background-image: url("assets/hero-accueil.png");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-html.site-retheme #calendrier-apercu.home-calendrier-section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 35, 45, 0.62);
-  pointer-events: none;
-  z-index: 0;
-}
-
-html.site-retheme #calendrier-apercu.home-calendrier-section > * {
-  position: relative;
-  z-index: 1;
-}
-
-html.site-retheme #calendrier-apercu .groupes-retheme-eyebrow {
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
-}
-
-html.site-retheme #calendrier-apercu .home-calendrier-header h2 {
-  font-family: var(--font-serif);
-  font-size: clamp(1.55rem, 3.8vw, 2.15rem);
-  color: #fff;
-  margin: 0.35rem 0 0.5rem;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
-}
-
-html.site-retheme #calendrier-apercu .home-calendrier-lead {
-  color: rgba(255, 255, 255, 0.78);
-  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.45);
-}
-
-html.site-retheme #calendrier-apercu .home-calendrier-foot,
-html.site-retheme #calendrier-apercu .home-calendrier-foot a {
-  color: rgba(255, 255, 255, 0.88);
-}
-
-html.site-retheme #calendrier-apercu .home-calendrier-foot a {
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 0.12em;
-}
-
-html.site-retheme #calendrier-apercu .home-calendrier-foot a:hover {
-  color: var(--sand);
-}
-
 html.site-retheme .groupes-retheme-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -1064,24 +942,44 @@ html.site-retheme .groupes-retheme-grid {
   gap: 1.4rem;
 }
 
-html.site-retheme .groupes-retheme-grid .groupe-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-html.site-retheme .groupes-retheme-grid .groupe-card:hover {
+html.site-retheme .groupes-retheme-grid .groupe-card:hover,
+html.site-retheme ul.groupes-list .groupe-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.38);
   border-color: rgba(255, 255, 255, 0.32);
 }
 
 html.site-retheme .groupe-card-visual {
-  height: 170px;
+  position: relative;
+  height: clamp(11rem, 36vw, 15rem);
+  min-height: 176px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.28);
 }
 
 html.site-retheme .groupe-card-visual img {
-  height: 100%;
   width: 100%;
+  height: 100%;
   object-fit: cover;
+  object-position: center 45%;
+  display: block;
+  transform: scale(1.03);
+}
+
+html.site-retheme .groupe-card--blanc .groupe-card-visual img {
+  object-position: center 62%;
+}
+
+html.site-retheme .groupe-card--vert .groupe-card-visual img {
+  object-position: center 18%;
+}
+
+html.site-retheme .groupe-card--bleu .groupe-card-visual img {
+  object-position: center 36%;
+}
+
+html.site-retheme .groupe-card--rouge .groupe-card-visual img {
+  object-position: center 32%;
 }
 
 html.site-retheme .groupe-card-body h2 {
@@ -1163,11 +1061,6 @@ html.site-retheme .home-cta-sorties-card > p:not(.groupes-retheme-eyebrow) {
   font-weight: 300;
   line-height: 1.55;
   margin-bottom: 1.25rem;
-}
-
-html.site-retheme .groupe-stats .groupe-stat-val {
-  font-family: var(--font-serif);
-  font-weight: 600;
 }
 
 html.site-retheme .app-main:not(.app-main--home) {
@@ -2036,6 +1929,102 @@ html.site-retheme #new-route-modal .new-route-edit-pick {
   border-top-color: rgba(26, 58, 74, 0.22);
 }
 
+/* Modale Gérer les sorties — mobile : cheminement (onglets + assistant étapes) */
+html.site-retheme #new-route-modal .new-route-wizard-flow-hint {
+  display: none;
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+  background: #f0f5f9;
+  border: 1px solid #d0dde5;
+  border-radius: 0.65rem;
+}
+
+@media (max-width: 640px) {
+  html.site-retheme #new-route-modal .new-route-wizard-flow-hint {
+    display: block;
+  }
+
+  html.site-retheme #new-route-modal .new-route-tabs {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 0.45rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  html.site-retheme #new-route-modal .new-route-tab {
+    flex: none !important;
+    width: 100% !important;
+    min-height: 2.85rem !important;
+    border-radius: 0.65rem !important;
+    text-align: center !important;
+  }
+
+  html.site-retheme #new-route-modal .new-route-admin-toolbar-top {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+  }
+
+  html.site-retheme #new-route-modal #new-route-admin-logout-toolbar {
+    width: 100%;
+  }
+
+  html.site-retheme #new-route-modal .new-route-admin-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  html.site-retheme #new-route-modal #new-route-admin-submit {
+    width: 100%;
+  }
+
+  html.site-retheme #new-route-modal .new-route-edit-pick-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100%;
+  }
+
+  html.site-retheme #new-route-modal .new-route-edit-pick-actions .btn-primary,
+  html.site-retheme #new-route-modal .new-route-edit-pick-actions .new-route-edit-delete {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  html.site-retheme #new-route-modal .new-route-wizard-nav {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.6rem !important;
+  }
+
+  /* Suivant / Créer en premier (flux naturel), Précédent en dessous */
+  html.site-retheme #new-route-modal .new-route-wizard-nav-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    order: -1;
+  }
+
+  html.site-retheme #new-route-modal #new-route-next,
+  html.site-retheme #new-route-modal #new-route-submit {
+    width: 100% !important;
+  }
+
+  html.site-retheme #new-route-modal #new-route-team-submit {
+    width: 100%;
+  }
+
+  html.site-retheme #new-route-modal #new-route-prev {
+    width: 100% !important;
+  }
+}
+
 /* Typo titres sections sortie */
 html.site-retheme .sortie-map-heading,
 html.site-retheme .sortie-participants-title {
@@ -2208,116 +2197,6 @@ html.site-retheme .visually-hidden {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-/* —— Accueil : aperçu calendrier (statique) —— */
-html.site-retheme .home-calendrier-section {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2.5rem var(--site-edge-l) 2.75rem var(--site-edge-r);
-}
-
-html.site-retheme .home-calendrier-header {
-  text-align: center;
-  margin-bottom: 1.75rem;
-}
-
-html.site-retheme .home-calendrier-header h2 {
-  font-family: var(--font-serif);
-  font-size: clamp(1.55rem, 3.8vw, 2.15rem);
-  color: var(--text);
-  margin: 0.35rem 0 0.5rem;
-}
-
-html.site-retheme .home-calendrier-lead {
-  color: var(--muted);
-  font-size: 0.95rem;
-  max-width: 40rem;
-  margin: 0 auto;
-  line-height: 1.55;
-}
-
-html.site-retheme .home-calendrier-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
-}
-
-html.site-retheme .home-calendrier-card {
-  background: var(--app-surface, #fff);
-  border: 1px solid var(--app-border, #dce6ee);
-  border-radius: 1rem;
-  padding: 1.35rem 1.25rem;
-  box-shadow: 0 4px 18px rgba(15, 30, 45, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-html.site-retheme .home-calendrier-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 28px rgba(15, 30, 45, 0.12);
-}
-
-html.site-retheme .home-calendrier-card h3 {
-  font-family: var(--font-serif);
-  font-size: 1.15rem;
-  color: var(--ocean);
-  margin: 0 0 0.65rem;
-}
-
-html.site-retheme .home-calendrier-meta {
-  font-size: 0.86rem;
-  color: var(--muted);
-  margin: 0 0 0.35rem;
-}
-
-html.site-retheme .home-cal-niveau {
-  display: inline-block;
-  width: 0.62rem;
-  height: 0.62rem;
-  border-radius: 50%;
-  margin-right: 0.35rem;
-  vertical-align: 0.1em;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12);
-}
-
-html.site-retheme .home-cal-niveau--blanc {
-  background: #ffffff;
-  box-shadow:
-    0 0 0 2px #cbd5e1,
-    0 1px 2px rgba(15, 23, 42, 0.1);
-}
-
-html.site-retheme .home-cal-niveau--vert {
-  background: #22c55e;
-  box-shadow: 0 0 0 1px rgba(21, 101, 84, 0.35);
-}
-
-html.site-retheme .home-cal-niveau--bleu {
-  background: #2563eb;
-  box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.35);
-}
-
-html.site-retheme .home-cal-niveau--rouge {
-  background: #dc2626;
-  box-shadow: 0 0 0 1px rgba(127, 29, 29, 0.35);
-}
-
-html.site-retheme .home-calendrier-card .btn-details {
-  display: inline-block;
-  margin-top: 0.85rem;
-  font-weight: 600;
-  font-size: 0.88rem;
-  color: var(--app-sea, #1565a8);
-  text-decoration: none;
-}
-
-html.site-retheme .home-calendrier-card .btn-details:hover {
-  text-decoration: underline;
-}
-
-html.site-retheme .home-calendrier-foot {
-  text-align: center;
-  margin-top: 1.5rem;
 }
 
 /* —— Page Infos pratiques —— */
