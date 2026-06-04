@@ -527,7 +527,7 @@
     }
 
     /* Sections accueil sur fond clair (sauf #groupes : texte sur fond photo immersif) */
-    .app-main--home section:not(#groupes):not(.home-cta-sorties) {
+    .app-main--home section:not(#groupes):not(.home-cta-sorties):not(#calendrier-apercu) {
       background: var(--app-bg);
       color: var(--app-text);
     }
@@ -3958,7 +3958,7 @@
         <div class="groupe-card-body">
           <span class="groupe-level-pill groupe-level-pill--blanc">Blanc</span>
           <h2>Groupe Blanc</h2>
-          <p class="groupe-profile-line">Famille · Vacanciers</p>
+          <p class="groupe-profile-line">Rouleur tranquille</p>
           <div class="groupe-stats groupe-stats-grid" role="group" aria-label="Allure, distance et niveau">
             <div class="groupe-stat">
               <span class="stat-val">15–18</span>
@@ -3975,8 +3975,8 @@
           </div>
           <p class="groupe-desc">Tu reprends le vélo ou tu veux juste profiter du paysage. On roule tranquille, on s’arrête, on profite.</p>
           <div class="groupe-pills">
-            <span class="groupe-pill">Famille</span>
-            <span class="groupe-pill">Vacanciers</span>
+            <span class="groupe-pill">Tranquille</span>
+            <span class="groupe-pill">Découverte</span>
           </div>
           <p class="groupe-parcours">Parcours · <a href="sorties.html">Voir les sorties</a> (niveau Blanc)</p>
         </div>
@@ -3988,7 +3988,7 @@
         <div class="groupe-card-body">
           <span class="groupe-level-pill groupe-level-pill--vert">Vert</span>
           <h2>Groupe Vert</h2>
-          <p class="groupe-profile-line">Convivial · Sans dropped</p>
+          <p class="groupe-profile-line">Convivial · On attend tout le monde</p>
           <div class="groupe-stats groupe-stats-grid" role="group" aria-label="Allure, distance et niveau">
             <div class="groupe-stat">
               <span class="stat-val">18–22</span>
@@ -4006,7 +4006,7 @@
           <p class="groupe-desc">Tu roules régulièrement mais l’ambiance compte autant que la performance. On attend tout le monde.</p>
           <div class="groupe-pills">
             <span class="groupe-pill">Convivial</span>
-            <span class="groupe-pill">Sans dropped</span>
+            <span class="groupe-pill">On attend tout le monde</span>
           </div>
           <p class="groupe-parcours">Parcours · <a href="sortie.html?id=brehec">Vers Bréhec</a></p>
         </div>
@@ -4084,14 +4084,14 @@
       <article class="home-calendrier-card" aria-labelledby="cal-card-boucle">
         <h3 id="cal-card-boucle">La Grande Boucle du Goëlo</h3>
         <p class="home-calendrier-meta"><strong>Date :</strong> à confirmer sur le calendrier</p>
-        <p class="home-calendrier-meta"><strong>Niveau :</strong> Bleu</p>
+        <p class="home-calendrier-meta"><strong>Niveau :</strong> <span class="home-cal-niveau home-cal-niveau--bleu" title="Groupe Bleu"></span> Bleu</p>
         <p class="home-calendrier-meta"><strong>Distance :</strong> 84,5 km</p>
         <a class="btn-details" href="sortie.html?id=boucle">Voir la fiche sortie</a>
       </article>
       <article class="home-calendrier-card" aria-labelledby="cal-card-brehec">
         <h3 id="cal-card-brehec">Vers Bréhec</h3>
         <p class="home-calendrier-meta"><strong>Date :</strong> à confirmer sur le calendrier</p>
-        <p class="home-calendrier-meta"><strong>Niveau :</strong> Vert</p>
+        <p class="home-calendrier-meta"><strong>Niveau :</strong> <span class="home-cal-niveau home-cal-niveau--vert" title="Groupe Vert"></span> Vert</p>
         <p class="home-calendrier-meta"><strong>Distance :</strong> 66 km</p>
         <a class="btn-details" href="sortie.html?id=brehec">Voir la fiche sortie</a>
       </article>

@@ -86,6 +86,7 @@ html.site-retheme body {
   }
 
   html.site-retheme #groupes,
+  html.site-retheme #calendrier-apercu.home-calendrier-section,
   html.site-retheme section.home-cta-sorties,
   html.site-retheme .sortie-parcours-immersif {
     background-attachment: scroll;
@@ -259,6 +260,60 @@ html.site-retheme ul.groupes-list .groupe-pill {
   background: #eef2f6 !important;
   color: var(--text) !important;
   border: 1px solid var(--app-border, #dce6ee) !important;
+}
+
+/* Pastille de niveau devant le titre « Groupe … » (accueil + page groupes) */
+html.site-retheme #groupes .groupe-card-body h2,
+html.site-retheme ul.groupes-list .groupe-card-body h2 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+}
+
+html.site-retheme #groupes .groupe-card--blanc h2::before,
+html.site-retheme ul.groupes-list .groupe-card--blanc h2::before {
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 2px #cbd5e1,
+    0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+html.site-retheme #groupes .groupe-card--vert h2::before,
+html.site-retheme ul.groupes-list .groupe-card--vert h2::before {
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #22c55e;
+  box-shadow: 0 0 0 1px rgba(21, 101, 84, 0.25);
+}
+
+html.site-retheme #groupes .groupe-card--bleu h2::before,
+html.site-retheme ul.groupes-list .groupe-card--bleu h2::before {
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #2563eb;
+  box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.35);
+}
+
+html.site-retheme #groupes .groupe-card--rouge h2::before,
+html.site-retheme ul.groupes-list .groupe-card--rouge h2::before {
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #dc2626;
+  box-shadow: 0 0 0 1px rgba(127, 29, 29, 0.35);
 }
 
 html.site-retheme .groupe-level-pill {
@@ -909,6 +964,70 @@ html.site-retheme #groupes::before {
 html.site-retheme #groupes > * {
   position: relative;
   z-index: 1;
+}
+
+/* Prochaines sorties (accueil) : même fond immersif que #groupes */
+html.site-retheme #calendrier-apercu.home-calendrier-section {
+  position: relative;
+  isolation: isolate;
+  padding: 3rem var(--site-edge-l) 3.5rem var(--site-edge-r);
+  max-width: 1100px;
+  margin: 0 auto;
+  background-color: #0f1f28;
+  background-image: url("assets/hero-accueil.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+html.site-retheme #calendrier-apercu.home-calendrier-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.62);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html.site-retheme #calendrier-apercu.home-calendrier-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+html.site-retheme #calendrier-apercu .groupes-retheme-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+
+html.site-retheme #calendrier-apercu .home-calendrier-header h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.55rem, 3.8vw, 2.15rem);
+  color: #fff;
+  margin: 0.35rem 0 0.5rem;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+}
+
+html.site-retheme #calendrier-apercu .home-calendrier-lead {
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.45);
+}
+
+html.site-retheme #calendrier-apercu .home-calendrier-foot,
+html.site-retheme #calendrier-apercu .home-calendrier-foot a {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+html.site-retheme #calendrier-apercu .home-calendrier-foot a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+html.site-retheme #calendrier-apercu .home-calendrier-foot a:hover {
+  color: var(--sand);
 }
 
 html.site-retheme .groupes-retheme-header {
@@ -1567,6 +1686,34 @@ html.site-retheme .sortie-city-chip.is-start {
   color: #fde68a !important;
 }
 
+/* Carte parcours (fond clair) : puces villes + pied de fiche lisibles */
+html.site-retheme .sortie-parcours-immersif .card-parcours .sortie-cities-heading {
+  color: var(--ocean) !important;
+  text-shadow: none !important;
+}
+
+html.site-retheme .sortie-parcours-immersif .card-parcours .sortie-city-chip {
+  background: #e0f2fe !important;
+  border: 1px solid #38bdf8 !important;
+  color: #0c4a6e !important;
+}
+
+html.site-retheme .sortie-parcours-immersif .card-parcours .sortie-city-chip.is-start {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-footer-note {
+  color: var(--muted) !important;
+  background: #f1f5f9 !important;
+  border-top: 1px solid var(--app-border, #dce6ee) !important;
+}
+
+html.site-retheme .sortie-parcours-immersif #sortie-course .sortie-block-title {
+  color: var(--ocean) !important;
+}
+
 html.site-retheme .sortie-map-inner .leaflet-container.strava-map-tiles {
   background: rgba(15, 23, 42, 0.5) !important;
 }
@@ -2121,6 +2268,38 @@ html.site-retheme .home-calendrier-meta {
   font-size: 0.86rem;
   color: var(--muted);
   margin: 0 0 0.35rem;
+}
+
+html.site-retheme .home-cal-niveau {
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: 0.1em;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12);
+}
+
+html.site-retheme .home-cal-niveau--blanc {
+  background: #ffffff;
+  box-shadow:
+    0 0 0 2px #cbd5e1,
+    0 1px 2px rgba(15, 23, 42, 0.1);
+}
+
+html.site-retheme .home-cal-niveau--vert {
+  background: #22c55e;
+  box-shadow: 0 0 0 1px rgba(21, 101, 84, 0.35);
+}
+
+html.site-retheme .home-cal-niveau--bleu {
+  background: #2563eb;
+  box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.35);
+}
+
+html.site-retheme .home-cal-niveau--rouge {
+  background: #dc2626;
+  box-shadow: 0 0 0 1px rgba(127, 29, 29, 0.35);
 }
 
 html.site-retheme .home-calendrier-card .btn-details {
