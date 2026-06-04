@@ -23,6 +23,27 @@
       };
 
       /**
+       * Texte FormSubmit `_autoresponse` (e-mail de confirmation au cycliste), en français.
+       * Limitation FormSubmit : `_autoresponse` est ignoré pour les envois en AJAX (`fetch`) et quand
+       * `_captcha` est à `false` (notre cas — inscription fluide sans reCAPTCHA). Le texte reste prêt si
+       * vous passez un jour à un POST formulaire classique ou si la règle évolue.
+       * @see https://formsubmit.co/documentation (_autoresponse)
+       */
+      const GOELO_FORMSUBMIT_AUTORESPONSE_INSCRIPTION =
+        "Bonjour,\n\n" +
+        "Nous avons bien reçu ton inscription Goëlo Rides (message automatique).\n\n" +
+        "Retrouve le détail sur la page Sorties du site. Pense à vérifier le point de rendez-vous, le niveau et ton matériel avant le départ.\n\n" +
+        "À bientôt sur la route,\n" +
+        "L’équipe Goëlo Rides";
+
+      const GOELO_FORMSUBMIT_AUTORESPONSE_DESINSCRIPTION =
+        "Bonjour,\n\n" +
+        "Nous avons bien enregistré ta désinscription pour ce parcours (message automatique).\n\n" +
+        "Tu peux te réinscrire à tout moment depuis la page des sorties si tu changes d’avis.\n\n" +
+        "À bientôt,\n" +
+        "L’équipe Goëlo Rides";
+
+      /**
        * Supabase (optionnel) : `window.GOELO_SUPABASE_URL` + `window.GOELO_SUPABASE_ANON_KEY`
        * (voir supabase/SUPABASE.md). Valeurs relues à chaque appel — le petit script de config peut
        * être placé juste après ce fichier. Termine chaque assignation par `;` si les deux lignes
@@ -990,7 +1011,9 @@
             parcours: route.track + " · " + route.depart.dateLabel,
             _subject: "Inscription Goëlo Rides — " + route.track,
             _captcha: "false",
-            _template: "table"
+            _template: "table",
+            _replyto: email,
+            _autoresponse: GOELO_FORMSUBMIT_AUTORESPONSE_INSCRIPTION
           });
           await fetch("https://formsubmit.co/" + encodeURIComponent(SIGNUP.formEmail), {
             method: "POST",
@@ -1018,7 +1041,9 @@
             message: "Désinscription du parcours",
             _subject: "Désinscription Goëlo Rides — " + route.track,
             _captcha: "false",
-            _template: "table"
+            _template: "table",
+            _replyto: email,
+            _autoresponse: GOELO_FORMSUBMIT_AUTORESPONSE_DESINSCRIPTION
           });
           await fetch("https://formsubmit.co/" + encodeURIComponent(SIGNUP.formEmail), {
             method: "POST",

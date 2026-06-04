@@ -607,6 +607,19 @@
   };
 
   const FORM_NOTIFY_EMAIL = "goelo.rides@gmail.com";
+
+  /**
+   * Texte FormSubmit `_autoresponse` (confirmation au cycliste), en français.
+   * Ignoré par FormSubmit tant que l’envoi reste en `fetch` (AJAX) et `_captcha: false` — voir doc
+   * https://formsubmit.co/documentation section _autoresponse.
+   */
+  const GOELO_FORMSUBMIT_AUTORESPONSE_INSCRIPTION =
+    "Bonjour,\n\n" +
+    "Nous avons bien reçu ton inscription Goëlo Rides (message automatique).\n\n" +
+    "Retrouve le détail sur la page Sorties du site. Pense à vérifier le point de rendez-vous, le niveau et ton matériel avant le départ.\n\n" +
+    "À bientôt sur la route,\n" +
+    "L’équipe Goëlo Rides";
+
   var sortiePageRouteRef = null;
 
   function departTimeDisplay(route) {
@@ -865,7 +878,9 @@
         parcours: route.track + " · " + (route.depart && route.depart.dateLabel ? route.depart.dateLabel : ""),
         _subject: "Inscription Goëlo Rides — " + route.track,
         _captcha: "false",
-        _template: "table"
+        _template: "table",
+        _replyto: email,
+        _autoresponse: GOELO_FORMSUBMIT_AUTORESPONSE_INSCRIPTION
       });
       await fetch("https://formsubmit.co/" + encodeURIComponent(FORM_NOTIFY_EMAIL), {
         method: "POST",

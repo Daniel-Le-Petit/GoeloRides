@@ -1169,9 +1169,9 @@ body {
       margin: 0.65rem 0 0.85rem;
       padding: 0.65rem 0.75rem;
       border-radius: 8px;
-      background: rgba(244, 164, 58, 0.12);
-      border: 1px solid rgba(244, 164, 58, 0.38);
-      color: rgba(255, 248, 235, 0.95);
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
       font-weight: 600;
     }
 
