@@ -10,6 +10,17 @@
 
   var STORAGE_KEY = "goelo_user_auth_v1";
   var LAST_EMAIL_KEY = "goeloRides_last_email";
+
+  /** Après inscription sans session immédiate (confirmation e-mail côté Supabase). */
+  var SIGNUP_NEED_CONFIRM_MSG =
+    "Compte créé.\n\n" +
+    "Pas d’e-mail ? Vérifie courrier indésirable / spam et l’orthographe de l’adresse. Attends quelques minutes. " +
+    "Si toujours rien, l’administrateur doit vérifier l’envoi dans Supabase (fournisseur mail, SMTP personnalisé, journaux / rate limits).\n\n" +
+    "Lien dans le mail qui ne mène nulle part ou erreur ? Dans Supabase → Authentication → URL configuration : " +
+    "« Site URL » et la liste « Redirect URLs » doivent inclure l’URL exacte du site (ex. https://goelorides.onrender.com). " +
+    "Si le mail contient encore localhost alors que tu es sur le site en ligne, corrige la Site URL puis renvoie une confirmation (ou supprime l’utilisateur test et réinscris-toi).\n\n" +
+    "Une fois l’e-mail confirmé, utilise l’onglet Connexion avec le même e-mail et mot de passe.";
+
   /**
    * GET /auth/v1/user : une tentative par jeton (succès ou échec HTTP),
    * sans bloquer définitivement si la 1ʳᵉ requête a échoué (réseau / 401).
@@ -303,6 +314,12 @@
     var low = s.toLowerCase();
     var isSignup = authPath && String(authPath).indexOf("signup") !== -1;
 
+    if (low.indexOf("redirect") !== -1 && low.indexOf("allow") !== -1) {
+      return (
+        "L’adresse de retour après confirmation n’est pas autorisée par le projet. " +
+        "Dans Supabase → Authentication → URL configuration, ajoute l’URL du site (ex. https://ton-site.onrender.com et http://127.0.0.1:8765 pour les tests locaux) dans « Redirect URLs »."
+      );
+    }
     if (low.indexOf("invalid login credentials") !== -1) {
       return (
         "Connexion refusée : e-mail ou mot de passe incorrect, ou aucun compte avec cette adresse. " +
@@ -395,11 +412,22 @@
   async function signUp(email, password, pseudo) {
     var p = String(pseudo || "").trim();
     if (!p) return { ok: false, message: "Indique un pseudo." };
-    var r = await authFetch("/auth/v1/signup", {
+    var signupBody = {
       email: String(email).trim().toLowerCase(),
       password: password,
       data: { pseudo: p }
-    });
+    };
+    try {
+      if (typeof window !== "undefined" && window.location && window.location.origin) {
+        var o = String(window.location.origin).replace(/\/$/, "");
+        if (o && (o.indexOf("http:") === 0 || o.indexOf("https:") === 0)) {
+          signupBody.redirect_to = o + "/";
+        }
+      }
+    } catch (e) {
+      void e;
+    }
+    var r = await authFetch("/auth/v1/signup", signupBody);
     if (!r.ok) return r;
     var b = r.body;
     var flat = normalizeTokenResponse(b);
@@ -411,16 +439,14 @@
       return {
         ok: true,
         needConfirm: true,
-        message:
-          "Compte créé. Si une confirmation e-mail est activée sur le projet, ouvre le lien reçu avant de te connecter."
+        message: SIGNUP_NEED_CONFIRM_MSG
       };
     }
     if (b && typeof b.email === "string" && b.id && !flat) {
       return {
         ok: true,
         needConfirm: true,
-        message:
-          "Compte créé. Si une confirmation e-mail est activée sur le projet, ouvre le lien reçu avant de te connecter."
+        message: SIGNUP_NEED_CONFIRM_MSG
       };
     }
     return {

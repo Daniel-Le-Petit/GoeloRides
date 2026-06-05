@@ -182,6 +182,12 @@ Toutes les pages qui chargent **`goelo-auth.js`** avec un emplacement **`[data-g
 
 **Dashboard** : **Authentication → Providers → Email** activé ; autoriser les **inscriptions** si le public doit créer un compte. Si la **confirmation e-mail** est obligatoire, l’utilisateur doit valider le lien reçu avant la première connexion (sinon pas de `access_token` à l’inscription). Sinon la connexion peut renvoyer *Invalid login credentials* même avec le bon mot de passe.
 
+**Pas d’e-mail reçu** : indésirables / spam ; orthographe de l’adresse ; attendre quelques minutes. Côté projet : **Authentication → Providers → Email** (SMTP personnalisé recommandé en prod), journaux / quotas du fournisseur, et pour les tests gratuits parfois des limites d’envoi.
+
+**Lien de confirmation qui « ne mène nulle part »** (page vide, localhost, erreur) : **Authentication → URL configuration** — la **Site URL** doit être l’URL publique du site (ex. `https://goelorides.onrender.com`). Les **Redirect URLs** doivent inclure cette même origine (et les URLs locales utilisées pour tester, ex. `http://127.0.0.1:8765/**`). Le site envoie désormais `redirect_to` à l’inscription avec l’origine actuelle du navigateur : si une URL n’est pas dans la liste autorisée, Supabase peut refuser l’inscription avec une erreur sur la redirection.
+
+Après correction de la configuration, tu peux **renvoyer** un mail de confirmation depuis le dashboard (**Authentication → Users** → l’utilisateur → *Send magic link* / confirmation selon l’UI), ou supprimer l’utilisateur test et refaire une inscription.
+
 **Connexion refusée** : vérifier dans **Authentication → Users** que l’utilisateur existe, que l’e-mail est confirmé (`email_confirmed_at` renseigné), et que le mot de passe est le bon (sinon **Reset password** depuis le dashboard ou flux « Mot de passe oublié » si tu l’actives).
 
 **Fichiers à déployer** : inclure **`goelo-auth.js`** à la racine avec **`app-chrome.css`**. Sur **`groupes.html`**, **`sortie.html`** et **`sorties.html`**, renseigner les mêmes `window.GOELO_SUPABASE_*` que sur l’accueil si tu veux le compte actif partout.
