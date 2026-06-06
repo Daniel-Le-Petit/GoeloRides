@@ -81,7 +81,7 @@
       padding-right: env(safe-area-inset-right);
     }
 
-    body > .app-shell a:not(.btn-home):not(.btn-primary):not(.btn-secondary):not(.btn-new-route):not(.btn-unregister):not(.signup-mailto-link) {
+    body > .app-shell a:not(.btn-home):not(.btn-primary):not(.btn-secondary):not(.btn-new-route):not(.btn-unregister):not(.signup-mailto-link):not(.home-hero-infos) {
       color: var(--app-sea);
     }
 
@@ -346,14 +346,15 @@
     .home-landing-kicker {
       margin: 0 auto 0.85rem;
       max-width: 36rem;
-      font-size: 0.7rem;
-      font-weight: 800;
-      letter-spacing: 0.18em;
+      font-family: var(--font-serif);
+      font-size: clamp(0.78rem, 2vw, 0.92rem);
+      font-weight: 600;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--sq-yellow);
+      color: #fff;
       text-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(249, 215, 28, 0.18);
+        0 2px 6px rgba(0, 0, 0, 0.55),
+        0 12px 40px rgba(0, 0, 0, 0.35);
     }
 
     .home-landing-display {
@@ -575,10 +576,11 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      justify-content: flex-start;
+      justify-content: center;
       gap: 0;
-      margin: 1rem 0 0;
+      margin: 1rem auto 0;
       padding: 0;
+      max-width: 100%;
       background: none;
       border: none;
       box-shadow: none;
@@ -587,7 +589,7 @@
     .home-landing-values li {
       flex: 0 0 auto;
       min-width: 0;
-      text-align: left;
+      text-align: center;
       font-size: clamp(0.88rem, 2vw, 0.95rem);
       font-weight: 500;
       letter-spacing: 0.01em;
@@ -605,45 +607,6 @@
       color: rgba(255, 255, 255, 0.38);
       font-weight: 700;
       text-shadow: none;
-    }
-
-    .home-landing-values--pills {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      justify-items: center;
-      align-items: stretch;
-      gap: 0.45rem 0.55rem;
-      margin: 1.15rem auto 0;
-      max-width: 22rem;
-      width: 100%;
-    }
-
-    .home-landing-values--pills li {
-      text-transform: uppercase;
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      color: rgba(248, 250, 252, 0.95);
-      padding: 0.42rem 0.75rem;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.32);
-      background: rgba(15, 23, 42, 0.38);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-      width: 100%;
-      max-width: 11.5rem;
-      text-align: center;
-    }
-
-    .home-landing-values--pills li:nth-child(3) {
-      grid-column: 1 / -1;
-      justify-self: center;
-      max-width: 11.5rem;
-    }
-
-    .home-landing-values--pills li:not(:last-child)::after {
-      display: none;
     }
 
     .home-scroll-hint {
@@ -741,10 +704,10 @@
       margin: 0;
     }
 
-    /* CTAs hero : sous le bloc Baie / La côte / sous-titre — toujours sur une ligne */
+    /* CTAs hero : deux boutons côte à côte ; lien Infos pratiques en dessous (texte, pas bouton) */
     .home-landing-hero-ctas {
       display: flex;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       align-items: stretch;
       justify-content: center;
       gap: 0.55rem 0.75rem;
@@ -763,6 +726,35 @@
       display: inline-block;
       margin-left: 0.45em;
       font-weight: 700;
+    }
+
+    .home-hero-infos {
+      flex: 1 1 100%;
+      order: 3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+      margin-top: 0.1rem;
+      padding: 0.35rem 0.5rem;
+      font-family: "Lato", var(--font-sans);
+      font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: rgba(248, 250, 252, 0.88);
+      text-decoration: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .home-hero-infos:hover {
+      color: #fff;
+      border-bottom-color: rgba(255, 255, 255, 0.55);
     }
 
     @media (max-width: 520px) {
@@ -873,22 +865,18 @@
         padding-top: 0.9rem;
       }
 
-      .home-landing-values:not(.home-landing-values--pills) {
+      .home-landing-values {
         flex-direction: row;
         flex-wrap: wrap;
         align-items: baseline;
-        justify-content: flex-start;
+        justify-content: center;
         gap: 0;
         margin: 0.75rem 0 0;
         padding: 0;
         overflow: visible;
       }
 
-      .home-landing-values--pills {
-        margin-top: 0.85rem;
-      }
-
-      .home-landing-values:not(.home-landing-values--pills) li {
+      .home-landing-values li {
         font-size: 0.82rem;
         line-height: 1.45;
         white-space: normal;
@@ -902,10 +890,10 @@
         font-size: clamp(1.45rem, 8vw, 2.45rem);
       }
 
-      /* CTAs groupes / sorties : une seule ligne sur téléphone */
+      /* CTAs : deux boutons sur une ligne, Infos pratiques en dessous */
       .home-landing-hero-ctas {
         flex-direction: row;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         align-items: stretch;
       }
 
@@ -914,6 +902,11 @@
         font-size: clamp(0.68rem, 3.4vw, 0.82rem);
         padding: 0.48rem 0.5rem;
         min-height: 2.5rem;
+      }
+
+      .home-hero-infos {
+        margin-top: 0.2rem;
+        font-size: 0.82rem;
       }
 
       .home-landing-visual img {
@@ -4364,7 +4357,7 @@
             <span class="home-landing-philosophy-line">Partager la route, découvrir la côte, la campagne et créer des liens forts.</span>
           </p>
         </div>
-        <ul class="home-landing-values home-landing-values--pills" aria-label="L’esprit Goëlo Rides">
+        <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
           <li>Pas d’adhésion</li>
           <li>Pas de chronomètre</li>
           <li>Rouler ensemble</li>
@@ -4373,6 +4366,7 @@
       <div class="home-landing-hero-ctas">
         <a href="#groupes" class="btn-primary home-hero-groupes">Voir les groupes <span class="home-hero-arrow" aria-hidden="true">↓</span></a>
         <a href="sorties.html" class="btn-ghost home-hero-sorties">Voir les sorties <span class="home-hero-arrow" aria-hidden="true">→</span></a>
+        <a href="infos-pratiques.html" class="home-hero-infos">Infos pratiques</a>
       </div>
     </div>
     <div class="home-scroll-hint" aria-hidden="true">
