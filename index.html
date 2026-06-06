@@ -18,7 +18,7 @@
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lato:wght@400;700&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Lato:wght@400;700&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="site-retheme.css">
@@ -38,7 +38,7 @@
       --font-display: "Outfit", "DM Sans", system-ui, sans-serif;
       --font-logo: "Outfit", "DM Sans", system-ui, sans-serif;
       /* Chapô accueil « Sorties en vélo » */
-      --font-accent-tag: "Lexend", "Outfit", system-ui, sans-serif;
+      --font-accent-tag: "Outfit", var(--font-sans), system-ui, sans-serif;
       /* Saint-Quay-Portrieux (drapeau / identité locale) */
       --sq-yellow: #f9d71c;
       --sq-yellow-hover: #e8cd18;
@@ -805,7 +805,7 @@
     }
 
     /* Sections accueil sur fond clair (sauf #groupes : texte sur fond photo immersif) */
-    .app-main--home section:not(#groupes):not(.home-cta-sorties) {
+    .app-main--home section:not(#groupes):not(.home-cta-sorties):not(.home-groupes-perimeter) {
       background: var(--app-bg);
       color: var(--app-text);
     }
@@ -4505,14 +4505,74 @@
     <p class="groupes-grid-note">Pas sûr de ton groupe ? Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.</p>
   </section>
 
-  <section class="home-cta-sorties" aria-labelledby="cta-sorties-title">
-    <div class="home-cta-sorties-card">
-      <p class="groupes-retheme-eyebrow">Calendrier été 2026</p>
-      <h2 id="cta-sorties-title">Prêt à rouler ?</h2>
-      <p>Consulte les sorties programmées, filtre par niveau ou par type de parcours, et inscris-toi en deux clics.</p>
-      <a class="btn-primary" href="sorties.html">Voir toutes les sorties <span aria-hidden="true">→</span></a>
+  <section class="home-groupes-perimeter" id="carte-perimetres-groupes" aria-labelledby="perimetre-map-title">
+    <div class="home-groupes-perimeter-inner goelo-scrolly">
+      <header class="home-groupes-perimeter-head">
+        <p class="groupes-retheme-eyebrow">Vue d’ensemble</p>
+        <h2 id="perimetre-map-title">~90 km autour de Saint-Quay-Portrieux</h2>
+        <p class="home-groupes-perimeter-intro">
+          Quatre enveloppes <strong>aux couleurs des niveaux</strong> (données indicatives, pas le tracé du jour) : elles donnent l’<strong>ordre de grandeur</strong> des boucles par groupe.
+          Le <strong>cercle pointillé</strong> matérialise environ <strong>90 km de rayon</strong> depuis le départ habituel. Les <strong>petits repères</strong> sont des villes souvent citées sur les parcours — à titre d’orientation seulement.
+        </p>
+      </header>
+      <div
+        id="home-groupes-perimeter-map"
+        class="home-groupes-perimeter-map"
+        data-goelo-perimeter-map
+        data-no-swipe-nav
+        role="region"
+        aria-label="Carte indicative : cercle ~90 km depuis Saint-Quay-Portrieux, enveloppes par niveau de groupe, repères villes."
+      ></div>
+      <p class="home-groupes-perimeter-note">
+        Indicatif — les polygones illustrent les <strong>distances cibles</strong> des
+        <a href="#groupes">cartes groupe</a>, pas le parcours réel. Le <strong>lieu de départ</strong> peut varier : lis toujours la <strong>fiche sortie</strong>.
+      </p>
+      <ul class="home-groupes-perimeter-legend" aria-label="Légende des niveaux sur la carte">
+        <li>
+          <span class="home-groupes-legend-swatch home-groupes-legend-swatch--blanc" aria-hidden="true"></span>
+          <span><strong>Blanc</strong> · ~43 km</span>
+        </li>
+        <li>
+          <span class="home-groupes-legend-swatch home-groupes-legend-swatch--vert" aria-hidden="true"></span>
+          <span><strong>Vert</strong> · ~66 km</span>
+        </li>
+        <li>
+          <span class="home-groupes-legend-swatch home-groupes-legend-swatch--bleu" aria-hidden="true"></span>
+          <span><strong>Bleu</strong> · ~85 km</span>
+        </li>
+        <li>
+          <span class="home-groupes-legend-swatch home-groupes-legend-swatch--rouge" aria-hidden="true"></span>
+          <span><strong>Rouge</strong> · 110 km et +</span>
+        </li>
+      </ul>
     </div>
   </section>
+
+  <section class="home-cta-sorties" aria-labelledby="cta-sorties-title">
+    <div class="home-cta-sorties-card">
+      <div class="home-cta-sorties-card-head">
+        <p class="groupes-retheme-eyebrow">Calendrier été 2026</p>
+        <h2 id="cta-sorties-title">Prêt à rouler ?</h2>
+        <p class="home-cta-sorties-lead">Consulte les sorties programmées, filtre par niveau ou par type de parcours, et inscris-toi en deux clics.</p>
+      </div>
+      <div class="home-cta-sorties-card-body">
+      <p class="home-cta-sorties-towns">
+        Le départ est le plus souvent au <strong>parking du Kasino</strong> (Saint-Quay-Portrieux), mais le <strong>point de rendez-vous peut varier</strong> selon les sorties — vérifie toujours la <strong>description sur la fiche</strong> de celle que tu choisis.
+        Selon les parcours annoncés, on roule sur la côte du Goëlo et l’arrière-pays&nbsp;:
+        <span class="home-cta-sorties-towns-list">Binic, Étables-sur-Mer, Plérin, Plouha, Langueux, Paimpol…</span>
+        — chaque fiche précise aussi le tracé. La <a href="#carte-perimetres-groupes">carte des périmètres par niveau</a> (~90 km) est juste au-dessus.
+      </p>
+      <a class="btn-primary" href="sorties.html">Voir toutes les sorties <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <nav class="goelo-mobile-nav" aria-label="Navigation rapide">
+    <a href="index.html" aria-current="page">Accueil</a>
+    <a href="sorties.html">Sorties</a>
+    <a href="groupes.html">Groupes</a>
+    <a href="infos-pratiques.html">Infos</a>
+  </nav>
 
   <footer class="site-footer" role="contentinfo">
     <p class="footer-logo">GoëloRides</p>
@@ -4840,6 +4900,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="goelo-home-perimeter-map.js" defer></script>
   <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
   <!-- Supabase : URL projet + clé anon / publishable (identique sorties.html / sortie.html). -->

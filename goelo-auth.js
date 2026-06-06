@@ -510,12 +510,12 @@
     enrichSessionPseudoFromJwt();
     var s = readSession();
     if (!s || !s.access_token) return "Se connecter";
-    if (s.pseudo) return s.pseudo.length > 14 ? s.pseudo.slice(0, 13) + "…" : s.pseudo;
-    if (s.email) {
-      var part = s.email.split("@")[0];
-      return part.length > 14 ? part.slice(0, 13) + "…" : part;
+    if (s.pseudo) {
+      var p = String(s.pseudo).trim();
+      return p.length > 18 ? p.slice(0, 17) + "…" : p;
     }
-    return "Connecté";
+    /* Jamais l’e-mail sur le bouton (souvent en capitales via CSS) : pseudo chargé async via /auth/v1/user. */
+    return "Compte";
   }
 
   /** Pseudo pour le message d’accueil (jamais la partie locale de l’e-mail). */
@@ -550,7 +550,7 @@
         greet.textContent = "Bonjour !";
         greet.hidden = false;
         void refreshSessionPseudoFromUserEndpoint().then(function () {
-          if (getConnectedGreetingName()) applyAuthTriggerLabel();
+          applyAuthTriggerLabel();
         });
       } else {
         greet.textContent = "";
@@ -641,6 +641,7 @@
     var loggedText = document.getElementById("goelo-auth-logged-text");
     var tablist = dialog.querySelector(".goelo-auth-tabs");
     var tabs = dialog.querySelectorAll(".goelo-auth-tab");
+    var tabUp = dialog.querySelector('.goelo-auth-tab[data-tab="up"]');
 
     function setErr(el, msg) {
       if (!msg) {
@@ -685,6 +686,11 @@
         formIn.setAttribute("aria-hidden", "true");
         formUp.setAttribute("aria-hidden", "true");
         tablist.hidden = true;
+        if (tabUp) {
+          tabUp.disabled = true;
+          tabUp.setAttribute("aria-disabled", "true");
+          tabUp.setAttribute("title", "Déconnecte-toi pour créer un autre compte.");
+        }
         logged.hidden = false;
         var bits = [];
         if (s.pseudo) bits.push("Pseudo : " + s.pseudo);
@@ -698,6 +704,11 @@
         formIn.setAttribute("aria-hidden", "false");
         formUp.setAttribute("aria-hidden", "true");
         tablist.hidden = false;
+        if (tabUp) {
+          tabUp.disabled = false;
+          tabUp.removeAttribute("aria-disabled");
+          tabUp.removeAttribute("title");
+        }
         logged.hidden = true;
         if (!isConfigured()) {
           lead.textContent =
@@ -750,6 +761,9 @@
 
     tabs.forEach(function (tab) {
       tab.addEventListener("click", function () {
+        var sess = readSession();
+        if (sess && sess.access_token) return;
+        if (tab.disabled) return;
         var id = tab.getAttribute("data-tab");
         syncFormsForTab(id);
         tabs.forEach(function (t) {

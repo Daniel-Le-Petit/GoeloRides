@@ -75,18 +75,16 @@ html.site-retheme body {
   background-image: url("assets/hero-accueil.png");
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
+  /* fixed provoquait du scroll bloqué / erratique sur certains navigateurs PC (flex + dvh). */
+  background-attachment: scroll;
   background-repeat: no-repeat;
   min-height: 100dvh;
 }
 
 @media (max-width: 768px) {
-  html.site-retheme body {
-    background-attachment: scroll;
-  }
-
   html.site-retheme #groupes,
   html.site-retheme section.home-cta-sorties,
+  html.site-retheme section.home-groupes-perimeter,
   html.site-retheme .sortie-parcours-immersif {
     background-attachment: scroll;
   }
@@ -978,6 +976,186 @@ html.site-retheme #groupes > * {
   z-index: 1;
 }
 
+/* Carte périmètres (accueil) : sous #groupes — Leaflet, ~90 km, 4 enveloppes niveau */
+html.site-retheme section.home-groupes-perimeter {
+  position: relative;
+  isolation: isolate;
+  margin: 0 auto;
+  padding: clamp(1.75rem, 4vw, 2.75rem) var(--site-edge-r) clamp(2.5rem, 5vw, 3.5rem) var(--site-edge-l);
+  max-width: 1100px;
+  background-color: #0f1f28;
+  background-image: url("assets/hero-accueil.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: scroll;
+}
+
+html.site-retheme section.home-groupes-perimeter::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 35, 45, 0.68);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html.site-retheme .home-groupes-perimeter-inner {
+  position: relative;
+  z-index: 1;
+  max-width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 1.75rem 1.65rem 1.85rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 5px solid var(--sq-yellow);
+  background: rgba(8, 22, 32, 0.52);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 18px 44px rgba(0, 0, 0, 0.35);
+}
+
+html.site-retheme .home-groupes-perimeter-head {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+html.site-retheme .home-groupes-perimeter-head h2 {
+  font-family: var(--font-serif);
+  color: #fff;
+  font-size: clamp(1.45rem, 3.4vw, 2rem);
+  margin: 0.35rem 0 0.75rem;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.5);
+}
+
+html.site-retheme .home-groupes-perimeter-head .groupes-retheme-eyebrow {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+html.site-retheme .home-groupes-perimeter-intro {
+  max-width: 44rem;
+  margin: 0 auto;
+  font-size: clamp(0.88rem, 2vw, 0.98rem);
+  line-height: 1.58;
+  color: rgba(248, 250, 252, 0.88);
+  text-align: left;
+}
+
+html.site-retheme .home-groupes-perimeter-intro strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+html.site-retheme .home-groupes-perimeter-map {
+  height: min(58vw, 420px);
+  min-height: 240px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 0.75rem;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 32px rgba(0, 0, 0, 0.28);
+  background: rgba(4, 12, 20, 0.58);
+}
+
+html.site-retheme .home-groupes-perimeter-map .leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  background: #0a1520;
+}
+
+html.site-retheme .home-groupes-perimeter-map-fallback,
+html.site-retheme .goelo-perimeter-map-fallback {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+}
+
+html.site-retheme .home-groupes-perimeter-note {
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+  text-align: left;
+}
+
+html.site-retheme .home-groupes-perimeter-note a {
+  color: rgba(186, 230, 253, 0.95) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+html.site-retheme .home-groupes-perimeter-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+html.site-retheme .home-groupes-perimeter-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+html.site-retheme .home-groupes-perimeter-legend strong {
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+html.site-retheme .home-groupes-legend-swatch {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+html.site-retheme .home-groupes-legend-swatch--blanc {
+  background: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+html.site-retheme .home-groupes-legend-swatch--vert {
+  background: #22c55e;
+}
+
+html.site-retheme .home-groupes-legend-swatch--bleu {
+  background: #3b82f6;
+}
+
+html.site-retheme .home-groupes-legend-swatch--rouge {
+  background: #ef4444;
+}
+
+.leaflet-tooltip.goelo-perimeter-town-tip {
+  padding: 0.28rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(15, 35, 45, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
 html.site-retheme .groupes-retheme-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -1098,25 +1276,36 @@ html.site-retheme section.home-cta-sorties > * {
 }
 
 html.site-retheme .home-cta-sorties-card {
-  max-width: 620px;
+  max-width: min(42rem, 100%);
   margin: 0 auto;
-  padding: 2rem 1.75rem;
-  text-align: center;
-  background: rgba(15, 35, 45, 0.48);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1.2rem;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  padding: 0;
+  text-align: left;
+  background: rgba(8, 22, 32, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-left: 5px solid var(--sq-yellow);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 16px 48px rgba(0, 0, 0, 0.35);
   color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
   animation: site-retheme-fadein 0.7s ease 0.15s both;
+}
+
+html.site-retheme .home-cta-sorties-card-head {
+  text-align: center;
+  padding: 1.75rem 1.75rem 1.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 100%);
 }
 
 html.site-retheme .home-cta-sorties-card h2 {
   font-family: var(--font-serif);
   color: #fff;
-  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
-  margin: 0.35rem 0 0.75rem;
+  font-size: clamp(1.65rem, 3.6vw, 2.25rem);
+  margin: 0.35rem 0 0.65rem;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.45);
 }
 
@@ -1126,11 +1315,48 @@ html.site-retheme .home-cta-sorties-card .groupes-retheme-eyebrow {
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
 }
 
-html.site-retheme .home-cta-sorties-card > p:not(.groupes-retheme-eyebrow) {
-  color: rgba(255, 255, 255, 0.82);
-  font-weight: 300;
+html.site-retheme .home-cta-sorties-lead {
+  max-width: 36rem;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 400;
+  line-height: 1.58;
+  font-size: clamp(0.95rem, 2.1vw, 1.05rem);
+}
+
+html.site-retheme .home-cta-sorties-card-body {
+  padding: 1.35rem 1.75rem 1.65rem;
+  text-align: center;
+}
+
+html.site-retheme .home-cta-sorties-card-body .home-cta-sorties-towns {
+  text-align: left;
+}
+
+html.site-retheme .home-cta-sorties-towns {
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 400;
   line-height: 1.55;
-  margin-bottom: 1.25rem;
+  color: rgba(255, 255, 255, 0.86);
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+html.site-retheme .home-cta-sorties-towns strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+html.site-retheme .home-cta-sorties-towns-list {
+  display: block;
+  margin-top: 0.35rem;
+  font-weight: 600;
+  color: rgba(248, 250, 252, 0.95);
+}
+
+html.site-retheme .home-cta-sorties-card .btn-primary {
+  margin-top: 0.15rem;
 }
 
 html.site-retheme .app-main:not(.app-main--home) {
@@ -2167,8 +2393,21 @@ html.site-retheme .sortie-participants-title {
     gap: 1rem;
   }
 
-  html.site-retheme .home-cta-sorties-card {
-    padding: 1.4rem 1rem 1.55rem;
+  html.site-retheme .home-cta-sorties-card-head {
+    padding: 1.35rem 1rem 1.1rem;
+  }
+
+  html.site-retheme .home-cta-sorties-card-body {
+    padding: 1.1rem 1rem 1.35rem;
+  }
+
+  html.site-retheme .home-groupes-perimeter-inner {
+    padding: 1.35rem 1rem 1.45rem;
+  }
+
+  html.site-retheme .home-groupes-perimeter-map {
+    min-height: 200px;
+    height: min(62vw, 320px);
   }
 
   html.site-retheme #new-route-modal.signup-modal {
@@ -2298,16 +2537,9 @@ html.site-retheme .app-main--infos {
   padding-top: 0;
   padding-left: var(--site-edge-l);
   padding-right: var(--site-edge-r);
-  padding-bottom: calc(4.35rem + env(safe-area-inset-bottom, 0px));
   max-width: 100%;
   background: transparent;
   box-sizing: border-box;
-}
-
-@media (min-width: 769px) {
-  html.site-retheme .app-main--infos {
-    padding-bottom: 0;
-  }
 }
 
 html.site-retheme .app-main--infos .sorties-hero-mini {
@@ -2838,7 +3070,8 @@ html.site-retheme .app-main--infos .infos-banner-heart {
   color: #0e7490;
 }
 
-html.site-retheme .infos-mobile-nav {
+/* Bandeau navigation mobile (toutes les pages site-retheme) */
+html.site-retheme .goelo-mobile-nav {
   display: flex;
   position: fixed;
   left: 0;
@@ -2855,7 +3088,7 @@ html.site-retheme .infos-mobile-nav {
   box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35);
 }
 
-html.site-retheme .infos-mobile-nav a {
+html.site-retheme .goelo-mobile-nav a {
   flex: 1;
   text-align: center;
   padding: 0.4rem 0.25rem;
@@ -2869,18 +3102,25 @@ html.site-retheme .infos-mobile-nav a {
   max-width: 5.5rem;
 }
 
-html.site-retheme .infos-mobile-nav a[aria-current="page"] {
+html.site-retheme .goelo-mobile-nav a[aria-current="page"] {
   color: var(--sq-yellow) !important;
   background: rgba(255, 255, 255, 0.06);
 }
 
-html.site-retheme .infos-mobile-nav a:hover {
+html.site-retheme .goelo-mobile-nav a:hover {
   color: #fff !important;
 }
 
 @media (min-width: 769px) {
-  html.site-retheme .infos-mobile-nav {
+  html.site-retheme .goelo-mobile-nav {
     display: none;
+  }
+}
+
+/* Évite que le pied de page soit masqué par le bandeau fixe (≤768px) */
+@media (max-width: 768px) {
+  html.site-retheme body:has(.goelo-mobile-nav) #main-content.app-main {
+    padding-bottom: calc(4.35rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -2888,29 +3128,30 @@ html.site-retheme .app-main--infos .site-footer {
   margin-top: 2rem;
 }
 
-/* —— Scrollytelling (.goelo-scrolly) : entrée plus lisible sur PC (goelo-scrolly.js) —— */
+/* —— Scrollytelling (.goelo-scrolly) : léger (sans blur = beaucoup plus fluide sur iOS). —— */
 @media (prefers-reduced-motion: no-preference) {
   html.site-retheme .goelo-scrolly {
     opacity: 0;
-    transform: translate3d(0, 3.75rem, 0) scale(0.93);
-    filter: blur(2px);
-    transition:
-      opacity 0.88s cubic-bezier(0.16, 1, 0.3, 1),
-      transform 0.88s cubic-bezier(0.16, 1, 0.3, 1),
-      filter 0.65s ease-out;
-    will-change: opacity, transform, filter;
+    transform: translate3d(0, 1.25rem, 0);
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   html.site-retheme .app-main--infos .goelo-scrolly:not(.goelo-scrolly--in) {
-    transform: translate3d(0, 2.25rem, 0) scale(0.96);
-    filter: blur(1.5px);
+    transform: translate3d(0, 0.85rem, 0);
   }
 
   html.site-retheme .goelo-scrolly.goelo-scrolly--in {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
-    will-change: auto;
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Tactile : pas d’attente sur l’IO — évite contenu « invisible » sur iPhone. */
+  @media (pointer: coarse) {
+    html.site-retheme .goelo-scrolly {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
   }
 
   /* Décalage léger entre les 4 cartes groupes (même frame --in) */
@@ -2932,7 +3173,8 @@ html.site-retheme .app-main--infos .site-footer {
 
   /* Remplace les fade-in au chargement pour éviter double animation */
   html.site-retheme .goelo-scrolly.groupes-retheme-header,
-  html.site-retheme .goelo-scrolly.groupe-card {
+  html.site-retheme .goelo-scrolly.groupe-card,
+  html.site-retheme .goelo-scrolly.home-groupes-perimeter-inner {
     animation: none !important;
   }
 }

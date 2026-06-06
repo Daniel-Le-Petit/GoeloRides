@@ -41,6 +41,10 @@
     nodes.forEach(function (el) {
       io.observe(el);
     });
+    /* Filet de sécurité (Safari / IO capricieux) : tout dévoiler après quelques secondes. */
+    setTimeout(function () {
+      revealAll();
+    }, 3200);
   }
 
   if (document.readyState === "loading") {

@@ -560,6 +560,8 @@ body {
 
 .goelo-auth-trigger-label--hero {
   max-width: 10rem;
+  /* Le pseudo reste en casse naturelle (le parent .goelo-auth-trigger--hero est en uppercase). */
+  text-transform: none;
 }
 
 .goelo-auth-trigger--hero:hover {
@@ -692,6 +694,11 @@ html.goelo-auth-modal-open {
   background: var(--app-sea, #1565a8);
   border-color: var(--app-sea, #1565a8);
   color: #fff;
+}
+
+.goelo-auth-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .goelo-auth-form {

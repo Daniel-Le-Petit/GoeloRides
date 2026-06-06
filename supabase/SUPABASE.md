@@ -92,7 +92,7 @@ La logique carte / inscriptions / modale **Gérer les sorties** est dans **`parc
 
 **Attention :** si l’URL est renseignée mais la clé anon est vide (fichier versionné sans secret), le site affiche un **avertissement dans la console** et enregistre **uniquement en local** — la table `signups` dans Supabase restera vide tant que la clé complète n’est pas collée en local ou au déploiement.
 
-**Déploiement :** envoie aussi **`parcours.js`**, **`sortie.js`**, **`sorties.js`**, **`goelo-auth.js`**, **`goelo-scrolly.js`** et **`parcours.css`** avec `index.html`, `sorties.html`, `sortie.html` et `groupes.html` (même dossier à la racine du site).
+**Déploiement :** envoie aussi **`parcours.js`**, **`sortie.js`**, **`sorties.js`**, **`goelo-auth.js`**, **`goelo-scrolly.js`**, **`goelo-home-perimeter-map.js`** et **`parcours.css`** avec `index.html`, `sorties.html`, `sortie.html` et `groupes.html` (même dossier à la racine du site).
 
 **Si tu vois `401` / `Invalid API key` :**
 

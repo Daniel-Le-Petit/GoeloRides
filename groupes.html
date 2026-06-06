@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Outfit:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="parcours.css">
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="site-retheme.css">
@@ -214,6 +215,53 @@
       color: var(--app-sea);
       font-weight: 600;
     }
+    /* Carte périmètres (même logique que l’accueil) */
+    .groupes-perimeter-section {
+      margin-top: 2rem;
+      max-width: 44rem;
+      padding: 1.2rem 1.1rem 1.3rem;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: 0 2px 14px rgba(15, 30, 45, 0.07);
+    }
+    .groupes-perimeter-heading {
+      font-size: clamp(1.08rem, 2.8vw, 1.28rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+      color: var(--app-text);
+    }
+    .groupes-perimeter-lead {
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--app-muted);
+      margin: 0 0 0.85rem;
+    }
+    .groupes-perimeter-map {
+      height: min(56vw, 380px);
+      min-height: 220px;
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--app-border);
+      background: #e8eef5;
+    }
+    .groupes-perimeter-map .leaflet-container {
+      width: 100%;
+      height: 100%;
+      font-family: var(--font-sans), system-ui, sans-serif;
+      background: #f1f5f9;
+    }
+    .groupes-perimeter-note {
+      margin: 0.65rem 0 0;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: var(--app-muted);
+    }
+    .groupes-perimeter-note a {
+      font-weight: 700;
+    }
     @media (max-width: 640px) {
       .app-main { padding: 1rem 0.85rem 2rem; }
       .groupe-card-body { padding: 0.95rem 1rem 1.05rem; }
@@ -377,12 +425,35 @@
         </li>
       </ul>
 
+      <section class="groupes-perimeter-section" id="carte-perimetres-possibles" aria-labelledby="groupes-perimetre-heading">
+        <h2 id="groupes-perimetre-heading" class="groupes-perimeter-heading">Périmètres possibles (~90 km depuis Saint-Quay)</h2>
+        <p class="groupes-perimeter-lead">
+          Cercle indicatif de <strong>90 km</strong> autour du départ habituel et <strong>quatre enveloppes colorées</strong> (blanc, vert, bleu, rouge) d’après les fichiers GPX du site — ordre de grandeur des boucles, <strong>pas les tracés du jour</strong>.
+        </p>
+        <div
+          id="groupes-page-perimeter-map"
+          class="groupes-perimeter-map"
+          data-goelo-perimeter-map
+          data-no-swipe-nav
+          role="region"
+          aria-label="Carte : 90 km et enveloppes par niveau."
+        ></div>
+        <p class="groupes-perimeter-note">Indicatif — détail sur chaque <a href="sorties.html">sortie</a> et <a href="index.html#carte-perimetres-groupes">bloc carte de l’accueil</a>.</p>
+      </section>
+
       <p class="groupes-footnote">
         <strong>Pas sûr de ton groupe ?</strong> Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.
       </p>
       <p class="groupes-photo-credit">
         Photo « groupe Blanc » : cliché fourni pour le site Goëlo Rides (cyclistes en balade, mer en arrière-plan).
       </p>
+
+      <nav class="goelo-mobile-nav" aria-label="Navigation rapide">
+        <a href="index.html">Accueil</a>
+        <a href="sorties.html">Sorties</a>
+        <a href="groupes.html" aria-current="page">Groupes</a>
+        <a href="infos-pratiques.html">Infos</a>
+      </nav>
 
       <footer class="site-footer" role="contentinfo">
         <p class="footer-logo">GoëloRides</p>
@@ -407,6 +478,8 @@
     /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
   </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+  <script src="goelo-home-perimeter-map.js" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
 </body>
