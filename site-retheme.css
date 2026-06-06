@@ -2899,3 +2899,199 @@ html.site-retheme .app-main--infos .infos-banner-heart {
 html.site-retheme .app-main--infos .site-footer {
   margin-top: 2rem;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Alertes « nouvelles / mises à jour » + modale kit Instagram (manuel)      */
+/* -------------------------------------------------------------------------- */
+
+html.site-retheme .goelo-site-updates-banner-root {
+  max-width: 100%;
+}
+
+html.site-retheme .goelo-site-updates-banner {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fdba74;
+  box-shadow: 0 2px 10px rgba(124, 45, 18, 0.08);
+}
+
+html.site-retheme .goelo-site-updates-banner__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+html.site-retheme .goelo-site-updates-banner__text {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #7c2d12;
+}
+
+html.site-retheme .goelo-site-updates-banner__item {
+  display: inline;
+  font-weight: 600;
+}
+
+html.site-retheme .goelo-site-updates-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+html.site-retheme .goelo-site-updates-banner__link {
+  font-weight: 800;
+  font-size: 0.88rem;
+  text-decoration: none;
+  color: #0b5cab;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #bae6fd;
+}
+
+html.site-retheme .goelo-site-updates-banner__link:hover {
+  text-decoration: underline;
+}
+
+html.site-retheme .goelo-site-updates-banner__close {
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(124, 45, 18, 0.35);
+  background: #fff;
+  color: #7c2d12;
+}
+
+html.site-retheme .goelo-site-updates-banner__close:hover {
+  background: #fff7ed;
+}
+
+html.site-retheme .goelo-ig-kit-backdrop {
+  position: fixed;
+  inset: 0;
+  /* Au-dessus des modales inscription / admin / GPX (parcours.css z-index 100000–100001). */
+  z-index: 210000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 30, 45, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+html.site-retheme .goelo-ig-kit-backdrop[hidden] {
+  display: none !important;
+}
+
+html.site-retheme .goelo-ig-kit-modal {
+  width: min(100%, 26rem);
+  max-height: min(90dvh, 34rem);
+  overflow: auto;
+  padding: 1.15rem 1.25rem 1.25rem;
+  border-radius: 14px;
+  background: #fff;
+  color: #15232d;
+  box-shadow: 0 12px 40px rgba(15, 30, 45, 0.2);
+  border: 1px solid #dce6ee;
+}
+
+html.site-retheme .goelo-ig-kit-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+html.site-retheme .goelo-ig-kit-status {
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #14532d;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+html.site-retheme .goelo-ig-kit-lead {
+  margin: 0 0 0.85rem;
+  font-size: 0.84rem;
+  color: #5a6b78;
+  line-height: 1.45;
+}
+
+html.site-retheme .goelo-ig-kit-label {
+  display: block;
+  margin: 0.65rem 0 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #5a6b78;
+}
+
+html.site-retheme .goelo-ig-kit-textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #dce6ee;
+  resize: vertical;
+  min-height: 8rem;
+  background: #f8fafc;
+  color: #15232d;
+}
+
+html.site-retheme .goelo-ig-kit-visual {
+  margin: 0.35rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: #334155;
+}
+
+html.site-retheme .goelo-ig-kit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+html.site-retheme .goelo-ig-kit-btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.86rem;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #15232d;
+}
+
+html.site-retheme .goelo-ig-kit-btn--primary {
+  background: #1565a8;
+  border-color: #0e4d80;
+  color: #fff;
+}
+
+html.site-retheme .goelo-ig-kit-btn--primary:hover {
+  background: #0e4d80;
+}
+
+html.site-retheme .goelo-ig-kit-btn--ghost {
+  background: #fff;
+}

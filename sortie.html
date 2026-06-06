@@ -107,6 +107,16 @@
       color: #92400e;
       border: 1px solid #fcd34d;
     }
+    .sortie-updated-strip {
+      margin: 0.5rem 0 0;
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      background: #e0f2fe;
+      color: #0c4a6e;
+      border: 1px solid #7dd3fc;
+    }
     .sortie-participants-item--leader {
       border-color: #ca8a04;
       background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
@@ -925,6 +935,7 @@
         <p id="sortie-reg-line" class="sortie-reg-line" hidden></p>
         <p id="sortie-signup-count" class="sortie-signup-count" hidden></p>
         <p id="sortie-status-banner" class="sortie-status-banner" hidden role="status"></p>
+        <p id="sortie-updated-strip" class="sortie-updated-strip" hidden role="status"></p>
       </header>
 
       <p id="sortie-error" class="sorties-empty" hidden></p>
@@ -1092,6 +1103,7 @@
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
+  <script src="goelo-ride-updates.js" defer></script>
   <script src="sortie.js" defer></script>
 </body>
 </html>

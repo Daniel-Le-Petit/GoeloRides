@@ -2294,7 +2294,12 @@
           const submitBtn = document.getElementById("new-route-submit");
           if (prevBtn) prevBtn.hidden = wizardStep <= 1;
           if (nextBtn) nextBtn.hidden = wizardStep >= 5;
-          if (submitBtn) submitBtn.hidden = wizardStep < 5;
+          if (submitBtn) {
+            submitBtn.hidden = wizardStep < 5;
+            if (!submitBtn.hidden) {
+              submitBtn.textContent = newRouteEditId ? "Enregistrer les modifications" : "Créer la sortie";
+            }
+          }
           modal.__goeloWizardStep = wizardStep;
           if (wizardStep === 5) fillRecap();
           setTimeout(function () {
@@ -2346,6 +2351,8 @@
           const titleIn = document.getElementById("new-route-track");
           if (titleIn) titleIn.removeAttribute("data-title-auto");
           if (gpxInput) gpxInput.value = "";
+          const submitBtnReset = document.getElementById("new-route-submit");
+          if (submitBtnReset) submitBtnReset.textContent = "Créer la sortie";
           setWizardStep(1);
         }
 
@@ -2752,6 +2759,18 @@
             setWizardStep(5);
             return;
           }
+          const editSelectGuard = document.getElementById("new-route-edit-select");
+          const pickedListRouteId =
+            editSelectGuard && editSelectGuard.value ? String(editSelectGuard.value).trim() : "";
+          if (pickedListRouteId && !newRouteEditId) {
+            window.alert(
+              "Tu as sélectionné une sortie dans « Modifier une sortie » mais tu n’as pas cliqué sur **Charger**.\n\n" +
+                "Sans « Charger », Supabase enregistre une **nouvelle** sortie (route_create) au lieu de mettre à jour celle de la liste (route_update).\n\n" +
+                "Ouvre l’onglet « Modifier une sortie », clique **Charger**, puis reviens valider à l’étape 5."
+            );
+            setNewRouteModalTab("edit");
+            return;
+          }
           const track = document.getElementById("new-route-track").value.trim();
           const group = document.getElementById("new-route-group").value.trim();
           const pace = document.getElementById("new-route-pace").value.trim();
@@ -2787,6 +2806,16 @@
             return;
           }
 
+          if (!rideLeaderStr) {
+            if (
+              !window.confirm(
+                "Tu n’as pas indiqué de capitaine (Team Rider) : la fiche n’affichera pas de nom sur cette ligne. Continuer quand même ?"
+              )
+            ) {
+              return;
+            }
+          }
+
           const meetDetailStr = (function () {
             const el = document.getElementById("new-route-meet-detail");
             return el ? el.value.trim() : "";
@@ -2810,6 +2839,15 @@
               "Durée invalide : indique un nombre de minutes (ex. 165), un horaire H:MM (ex. 2:45), ou une plage H:MM - H:MM (ex. 2:30 - 3:00)."
             );
             return;
+          }
+          if (!durRaw) {
+            if (
+              !window.confirm(
+                "Tu n’as pas indiqué de temps estimé sur la route : la fiche restera sans durée affichée pour les participant·e·s. Continuer quand même ?"
+              )
+            ) {
+              return;
+            }
           }
           const maxPRaw = (function () {
             const el = document.getElementById("new-route-max-p");
@@ -2922,13 +2960,52 @@
             return;
           }
           const wasEdit = !!newRouteEditId;
+          const routeIdForKit =
+            (data && data.route_id != null && String(data.route_id).trim()) ||
+            (newRouteEditId != null && String(newRouteEditId).trim()) ||
+            "";
           closeNewRouteModal();
-          window.alert(
-            wasEdit
-              ? "Sortie mise à jour. La page va se recharger."
-              : "Sortie créée. La page va se recharger pour afficher le nouveau parcours."
-          );
-          window.location.reload();
+          const kitRoute = {
+            id: routeIdForKit,
+            track: track,
+            name: group || raceTypeLabel(rt),
+            depart: frontConfig.depart,
+            meetPlace: SHARED.meetPlace,
+            meetPlaceDetail: meetDetailStr,
+            pace: pace || "—",
+            raceType: rt,
+            color: cols.color,
+            profile: { totalKm: newRouteProfile.totalKm }
+          };
+          const kitPayload = {
+            route: kitRoute,
+            wasEdit: wasEdit,
+            changeLine: wasEdit ? "Les participant·e·s voient la fiche à jour après rechargement." : ""
+          };
+          if (typeof window.goeloRideUpdatesShowInstagramKit === "function") {
+            /* Après fermeture de la modale admin (z-index élevé), afficher au prochain frame pour éviter tout recouvrement. */
+            window.setTimeout(function () {
+              try {
+                window.goeloRideUpdatesShowInstagramKit(kitPayload);
+              } catch (err) {
+                void err;
+                console.warn("goeloRideUpdatesShowInstagramKit", err);
+                window.alert(
+                  wasEdit
+                    ? "Sortie mise à jour. La page va se recharger."
+                    : "Sortie créée. La page va se recharger pour afficher le nouveau parcours."
+                );
+                window.location.reload();
+              }
+            }, 0);
+          } else {
+            window.alert(
+              wasEdit
+                ? "Sortie mise à jour. La page va se recharger."
+                : "Sortie créée. La page va se recharger pour afficher le nouveau parcours."
+            );
+            window.location.reload();
+          }
         });
 
         refreshEditRouteSelect();
@@ -3643,6 +3720,12 @@
         syncRouteDistances(loadedRoutesCache.filter(routeVisibleOnPublicSite));
         updateRoutePickerLayout();
         await refreshJoinButtons();
+
+        if (window.goeloRideUpdatesProcessList && window.goeloRideUpdatesMountBanner) {
+          const bannerEl = document.getElementById("goelo-site-updates-banner");
+          const upd = window.goeloRideUpdatesProcessList(loadedRoutesCache.filter(routeVisibleOnPublicSite));
+          window.goeloRideUpdatesMountBanner(bannerEl, upd);
+        }
 
         if (mapLoading) mapLoading.classList.add("is-hidden");
 

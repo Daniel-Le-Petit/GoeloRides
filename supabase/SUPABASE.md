@@ -46,7 +46,7 @@ Puis exécuter **pour le fil de discussion sur chaque fiche sortie** (commentair
 
 `supabase/migrations/20250620120000_sortie_route_comments.sql`
 
-(Table `route_comments`, RPC `sortie_comment_list` / `sortie_comment_add`. Sans ce fichier, les appels RPC renvoient 404 : le fil de discussion ne peut pas charger ni publier. La section n’apparaît pas si la clé Supabase n’est pas configurée sur la page.)
+(Table `route_comments`, RPC `sortie_comment_list` / `sortie_comment_add`. **Sans ce fichier, les appels RPC renvoient HTTP 404** : impossible de charger les messages ni de publier — l’erreur « Erreur 37 (HTTP 404) » au clic sur **Publier** en est le symptôme. La section n’apparaît pas si la clé Supabase n’est pas configurée sur la page.)
 
 Puis exécuter **pour la capacité max, liste d’attente, statut / visibilité des sorties et filtre `routes_list`** :
 
@@ -133,6 +133,7 @@ La logique carte / inscriptions / modale **Gérer les sorties** est dans **`parc
 
 - Mets un **`;`** après la ligne URL si la ligne suivante commence par `window` sur la même ligne copiée-collée (sinon JavaScript fusionne les deux chaînes et tout casse).
 - Vérifie l’onglet **Network** : `POST …/rest/v1/rpc/signup_register` doit être **200** (sinon lire le corps : **401** = clé / projet, **404** = RPC absente, **400** avec `PGRST202` / « Could not find » = **signature RPC ou colonnes** pas à jour → exécuter les migrations **`20250623120000_signups_cyclist_level.sql`** puis **`20250624120000_signups_participant_city.sql`** sur ce projet).
+- Fil de discussion (`sortie_comment_list` / `sortie_comment_add`) : un **HTTP 404** sur ces RPC signifie en général que **`20250620120000_sortie_route_comments.sql`** n’a pas été exécuté sur ce projet Supabase.
 - Le code relit `window.GOELO_SUPABASE_*` à chaque appel ; un petit script de config peut être placé **après** `parcours.js` dans le HTML (moins pratique) ou **avant** dans le `<head>` / en tête de `<body>`.
 
 **Option B** : renseigner directement les chaînes dans l’objet `SUPABASE` dans le script (moins recommandé si le dépôt est public).
@@ -183,6 +184,12 @@ La session admin est stockée dans **`sessionStorage`** (clé `goelo_admin_auth_
 - **E-mail FormSubmit** : si `SIGNUP.formEmail` / `FORM_NOTIFY_EMAIL` est rempli, une copie de l’inscription part vers ta boîte. Le code envoie aussi `_autoresponse` et `_replyto` **en français** pour le cycliste — **limite FormSubmit** : `_autoresponse` n’est **pas** appliqué quand l’envoi se fait en **AJAX** (`fetch`) ou quand **`_captcha` est désactivé** (notre cas pour rester fluide). Tant que ces deux points restent, l’e-mail automatique reçu par l’utilisateur peut rester le modèle anglais de FormSubmit. Pour une confirmation 100 % en français, il faudrait un autre canal (ex. Edge Function + fournisseur mail) ou un envoi formulaire HTML classique avec reCAPTCHA activé.
 - **Fiche sortie — capitaine** : dans le JSON `front_config` d’une route (`routes`), le champ optionnel `"rideLeader": "Prénom Nom"` (ou `"ride_leader"`) alimente la ligne « Capitaine · Team Rider » sur `sortie.html`. À la création ou modification d’une sortie (assistant Team Rider, étape **Détails**), le champ **Capitaine de sortie — Team Rider** remplit ce même champ.
 
+### Notifications « nouvelle sortie » / « changement » (e-mail à tous les inscrits)
+
+Pour **notifier par e-mail** toutes les adresses encore actives dans `signups` lorsqu’une ligne **`routes`** est créée ou mise à jour, voir le guide (webhook + Edge Function d’exemple + Resend) :
+
+**[`supabase/NOTIFICATIONS-SORTIES.md`](./NOTIFICATIONS-SORTIES.md)**
+
 ## 7. Sécurité (à terme)
 
 La clé **anon** exposée permet d’appeler les RPC d’inscription / listes. `route_create` n’est plus exécutable en **anon** après la migration admin. Pour limiter le spam sur les autres RPC, tu pourras ajouter **Rate limiting** (Edge Function), **CAPTCHA**, ou **clé secrète** dans une Edge Function.
@@ -223,3 +230,7 @@ Après correction de la configuration, tu peux **renvoyer** un mail de confirmat
 ## 10. Sauvegardes Postgres → Cloudflare R2
 
 Guide pas à pas (bucket privé, GitHub Actions gratuit, scripts dump / restore) : **`supabase/BACKUP-R2.md`**.
+
+## 11. Alertes « nouvelles sorties / fiches mises à jour » (navigateur)
+
+Sans colonne `updated_at` : le script **`goelo-ride-updates.js`** enregistre une empreinte des champs visibles (liste des sorties) dans **`localStorage`** (`goelo_routes_fingerprint_v1`), affiche un bandeau sur l’accueil et la page Sorties, un encart sur la fiche sortie, et une modale **texte + idée visuelle** pour Instagram après **création / modification** admin (**`parcours.js`**). Aucune publication automatique sur les réseaux.

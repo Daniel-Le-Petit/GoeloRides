@@ -320,6 +320,26 @@
         typeof fc.meetPlace === "string" && fc.meetPlace.trim()
           ? fc.meetPlace.trim()
           : DEFAULT_MEET_PLACE,
+      meetPlaceDetail:
+        typeof fc.meetPlaceDetail === "string" && fc.meetPlaceDetail.trim()
+          ? fc.meetPlaceDetail.trim()
+          : "",
+      estimatedDurationHm:
+        typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
+          ? String(fc.estimatedDurationHm).trim()
+          : "",
+      estimatedDurationMinutes:
+        typeof fc.estimatedDurationMinutes === "number" && Number.isFinite(fc.estimatedDurationMinutes)
+          ? Math.max(0, Math.round(fc.estimatedDurationMinutes))
+          : null,
+      maxParticipants:
+        typeof fc.maxParticipants === "number" && Number.isFinite(fc.maxParticipants) && fc.maxParticipants > 0
+          ? Math.round(fc.maxParticipants)
+          : typeof fc.maxParticipants === "string" && String(fc.maxParticipants).trim()
+            ? Math.max(0, parseInt(String(fc.maxParticipants).replace(/\D/g, ""), 10) || 0) || null
+            : null,
+      sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
+      visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
       cities: Array.isArray(fc.cities) && fc.cities.length
         ? fc.cities
         : [{ name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }],
@@ -970,6 +990,12 @@
     window.addEventListener("goelo-user-session-updated", function () {
       refreshRegState().then(redraw);
     });
+
+    if (window.goeloRideUpdatesProcessList && window.goeloRideUpdatesMountBanner) {
+      const bannerMount = document.getElementById("goelo-site-updates-banner");
+      const upd = window.goeloRideUpdatesProcessList(routesAll);
+      window.goeloRideUpdatesMountBanner(bannerMount, upd);
+    }
 
     redraw();
   });

@@ -252,6 +252,19 @@
         (b.length > 320 ? b.slice(0, 320) + "…" : b)
       );
     }
+    if (
+      code === 37 &&
+      httpStatus === 404 &&
+      (fnName === "sortie_comment_add" || fnName === "sortie_comment_list")
+    ) {
+      return (
+        "Fil de discussion indisponible : les fonctions « sortie_comment_list » et « sortie_comment_add » sont introuvables sur le projet Supabase (HTTP 404).\n\n" +
+        "Pour l’administrateur : exécuter le SQL du dépôt :\n" +
+        "• supabase/migrations/20250620120000_sortie_route_comments.sql\n\n" +
+        "Ensuite, pour rester aligné avec le site (inscriptions, visibilité, commentaires si sortie annulée…), enchaîner les migrations du dossier `supabase/migrations/` dans l’ordre des dates, au minimum jusqu’à `20250621130000_signup_waitlist_route_visibility.sql`.\n\n" +
+        "(Ou `supabase db push`.)"
+      );
+    }
     var ref = "Erreur " + code;
     if (httpStatus) ref += " (HTTP " + httpStatus + ")";
     ref += " — contacter l’administrateur en communiquant ce code exact.";
@@ -1800,7 +1813,13 @@
       if (statusEl) {
         statusEl.hidden = false;
         statusEl.dataset.sortieHadError = "1";
-        statusEl.textContent = "Impossible de charger les messages pour le moment.";
+        const fail = goeloLastRpcFailure;
+        if (fail && fail.httpStatus === 404 && fail.fnName === "sortie_comment_list") {
+          statusEl.textContent =
+            "Fil indisponible : migration SQL « sortie_route_comments » non appliquée sur Supabase (HTTP 404) — voir supabase/SUPABASE.md.";
+        } else {
+          statusEl.textContent = "Impossible de charger les messages pour le moment.";
+        }
       }
       renderSortieCommentsList([], { suppressEmpty: true });
       return;
@@ -2511,6 +2530,8 @@
     await refreshRegisteredUI(route);
 
     applySortieStatusBanner(route);
+
+    if (window.goeloRideUpdatesApplySortieStrip) window.goeloRideUpdatesApplySortieStrip(route);
 
     initSortieMap(route);
     initSortieDiscussion(route);
