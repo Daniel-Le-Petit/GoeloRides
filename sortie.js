@@ -223,11 +223,33 @@
   /** Dernier échec transport / HTTP (codes 36–39). Réinitialisé à chaque appel RPC. */
   var goeloLastRpcFailure = null;
 
-  function goeloFormatDbFailureAlert(code, httpStatus) {
+  function goeloFormatDbFailureAlert(code, httpStatus, fnName, failBody) {
     if (code === 41) {
       return (
         "Impossible d’enregistrer dans la mémoire de ce navigateur (quota plein, navigation privée ou blocage).\n\n" +
         "Erreur 41 — contacter l’administrateur ou réessaie après avoir libéré de l’espace."
+      );
+    }
+    if (
+      code === 37 &&
+      httpStatus === 400 &&
+      fnName === "signup_register" &&
+      failBody &&
+      (String(failBody).indexOf("PGRST202") !== -1 ||
+        String(failBody).toLowerCase().indexOf("could not find") !== -1 ||
+        String(failBody).indexOf("signup_register") !== -1 ||
+        (String(failBody).toLowerCase().indexOf("column") !== -1 &&
+          String(failBody).toLowerCase().indexOf("does not exist") !== -1))
+    ) {
+      const b = String(failBody);
+      return (
+        "Inscription impossible : la base Supabase du site n’est pas alignée avec le formulaire actuel (fonction RPC ou colonnes manquantes — HTTP 400).\n\n" +
+        "Pour l’administrateur : sur ce projet Supabase, exécuter dans l’ordre les migrations du dépôt :\n" +
+        "• supabase/migrations/20250623120000_signups_cyclist_level.sql\n" +
+        "• supabase/migrations/20250624120000_signups_participant_city.sql\n\n" +
+        "(ou `supabase db push` depuis la machine de développement), puis réessayer.\n\n" +
+        "Détail technique : " +
+        (b.length > 320 ? b.slice(0, 320) + "…" : b)
       );
     }
     var ref = "Erreur " + code;
@@ -264,7 +286,14 @@
       return null;
     }
     if (!res.ok) {
-      goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName };
+      var errTxt = "";
+      try {
+        errTxt = await res.text();
+      } catch (e0) {
+        void e0;
+      }
+      goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName, body: errTxt };
+      console.warn("Supabase RPC", fnName, res.status, errTxt);
       return null;
     }
     if (res.status === 204) {
@@ -290,7 +319,21 @@
     return String(h) + ":" + String(mm).padStart(2, "0");
   }
 
-  /** Saisie admin : minutes entières ou « H:MM » / « HH:MM » → { minutes, hm } ou null. */
+  /** « H:MM » seul → minutes ; plage « 2:30 - 3:00 » (tiret – ou —) → minutes = moyenne, hm = libellé normalisé. */
+  function parseSingleHmFragment(frag) {
+    const m = String(frag || "")
+      .trim()
+      .match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
+    if (!m) return null;
+    const hh = parseInt(m[1], 10);
+    const mm = parseInt(m[2], 10);
+    if (!Number.isFinite(hh) || !Number.isFinite(mm) || mm < 0 || mm > 59 || hh > 36) return null;
+    const minutes = hh * 60 + mm;
+    if (minutes <= 0) return null;
+    return { minutes: minutes, hm: formatMinutesToHm(minutes) };
+  }
+
+  /** Saisie admin : minutes entières ou « H:MM » ou « H:MM - H:MM » → { minutes, hm, isRange? } ou null. */
   function parseDurationInputToStore(raw) {
     const s = String(raw || "").trim();
     if (!s) return null;
@@ -299,15 +342,28 @@
       if (!Number.isFinite(n) || n <= 0 || n > 36 * 60) return null;
       return { minutes: n, hm: formatMinutesToHm(n) };
     }
-    const m = s.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
-    if (m) {
-      const hh = parseInt(m[1], 10);
-      const mm = parseInt(m[2], 10);
-      if (!Number.isFinite(hh) || !Number.isFinite(mm) || mm < 0 || mm > 59 || hh > 36) return null;
-      const minutes = hh * 60 + mm;
-      if (minutes <= 0) return null;
-      return { minutes: minutes, hm: formatMinutesToHm(minutes) };
+    const rm = s.match(
+      /^(\d{1,2}\s*:\s*\d{1,2})\s*[-–—]\s*(\d{1,2}\s*:\s*\d{1,2})$/
+    );
+    if (rm) {
+      const a = parseSingleHmFragment(rm[1]);
+      const b = parseSingleHmFragment(rm[2]);
+      if (!a || !b) return null;
+      if (b.minutes < a.minutes) return null;
+      if (b.minutes === a.minutes) {
+        return { minutes: a.minutes, hm: a.hm };
+      }
+      const avg = Math.round((a.minutes + b.minutes) / 2);
+      return {
+        minutes: avg,
+        hm: a.hm + " - " + b.hm,
+        isRange: true,
+        minMinutes: a.minutes,
+        maxMinutes: b.minutes
+      };
     }
+    const one = parseSingleHmFragment(s);
+    if (one) return { minutes: one.minutes, hm: one.hm };
     return null;
   }
 
@@ -329,6 +385,25 @@
 
   /** Texte HTML-échappé pour <dd> (vide si pas de durée). */
   function routeEstimatedDurationDdHtml(route) {
+    const hmRaw =
+      route && typeof route.estimatedDurationHm === "string" && route.estimatedDurationHm.trim()
+        ? String(route.estimatedDurationHm).trim()
+        : "";
+    if (hmRaw) {
+      const p = parseDurationInputToStore(hmRaw);
+      if (p) {
+        if (p.isRange) {
+          return escapeHtml("Environ " + p.hm);
+        }
+        const min = p.minutes;
+        if (min < 60) {
+          return escapeHtml("Environ " + min + " min");
+        }
+        const human =
+          "Environ " + Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0");
+        return escapeHtml(human + " (≈ " + formatMinutesToHm(min) + ")");
+      }
+    }
     const min = routeEffectiveDurationMinutes(route);
     if (min <= 0) return "";
     if (min < 60) {
@@ -338,8 +413,16 @@
     return escapeHtml(human + " (≈ " + formatMinutesToHm(min) + ")");
   }
 
-  /** Libellé court pour pastille héros, ex. « ≈ 2:30 ». */
+  /** Libellé court pour pastille héros, ex. « ≈ 2:30 » ou « ≈ 2:30 - 3:00 ». */
   function routeDurationHeroLabel(route) {
+    const hmRaw =
+      route && typeof route.estimatedDurationHm === "string" && route.estimatedDurationHm.trim()
+        ? String(route.estimatedDurationHm).trim()
+        : "";
+    if (hmRaw) {
+      const p = parseDurationInputToStore(hmRaw);
+      if (p) return "≈ " + p.hm;
+    }
     const min = routeEffectiveDurationMinutes(route);
     if (min <= 0) return "";
     return "≈ " + formatMinutesToHm(min);
@@ -793,6 +876,76 @@
     return "bleu";
   }
 
+  function escapeXml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+  function sortieGpxFilename(route) {
+    const base = String((route && route.track) || (route && route.id) || "parcours")
+      .replace(/[/\\?%*:|"<>]/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 72);
+    return (base || "goelo-parcours") + ".gpx";
+  }
+
+  function buildGpxFileFromProfile(route) {
+    const pts = route && route.profile && route.profile.points;
+    if (!pts || pts.length < 2) return null;
+    const name = escapeXml(route.track || "GoëloRides");
+    const timeIso = escapeXml(new Date().toISOString());
+    var body =
+      '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<gpx version="1.1" creator="GoëloRides" xmlns="http://www.topografix.com/GPX/1/1">\n' +
+      "  <metadata>\n" +
+      "    <name>" +
+      name +
+      "</name>\n" +
+      "    <time>" +
+      timeIso +
+      "</time>\n" +
+      "  </metadata>\n" +
+      "  <trk>\n" +
+      "    <name>" +
+      name +
+      "</name>\n" +
+      "    <trkseg>\n";
+    var written = 0;
+    for (var i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const lat = Number(p.lat);
+      const lon = Number(p.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      body += '      <trkpt lat="' + lat + '" lon="' + lon + '">';
+      if (typeof p.ele === "number" && !Number.isNaN(p.ele)) {
+        body += "<ele>" + Math.round(p.ele * 10) / 10 + "</ele>";
+      }
+      body += "</trkpt>\n";
+      written++;
+    }
+    if (written < 2) return null;
+    body += "    </trkseg>\n  </trk>\n</gpx>";
+    return body;
+  }
+
+  function sortieAccordionBlock(title, innerHtml) {
+    return (
+      '<details class="sortie-accordion">' +
+      '<summary class="sortie-accordion-summary">' +
+      escapeHtml(title) +
+      '<span class="sortie-accordion-chevron" aria-hidden="true">▸</span></summary>' +
+      '<div class="sortie-accordion-panel">' +
+      innerHtml +
+      "</div></details>"
+    );
+  }
+
   /** Héros fiche sortie (image + overlay + CTA #sortie-hero-actions inchangé pour le JS). */
   function buildSortieHero(route) {
     const thumb = thumbForRoute(route);
@@ -938,55 +1091,61 @@
         : "") +
       "</dl>" +
 
-      '<section class="sortie-block">' +
-      '<h3 class="sortie-block-title">À propos</h3>' +
-      '<p class="sortie-warn">Merci de bien lire la description avant de t’inscrire.</p>' +
-      '<p class="sortie-prose">La sortie pourra être <strong>annulée ou décalée</strong> selon les conditions météorologiques. ' +
-      "En cas de doute, suis les messages sur " +
-      '<a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a> ' +
-      "ou contacte-nous par e-mail.</p>" +
-      '<p class="sortie-prose">' +
-      pacePhil +
-      "</p>" +
-      '<p class="sortie-prose">' +
-      philo +
-      "</p></section>" +
+      sortieAccordionBlock(
+        "À propos",
+        '<p class="sortie-warn">Merci de bien lire la description avant de t’inscrire.</p>' +
+          '<p class="sortie-prose">La sortie pourra être <strong>annulée ou décalée</strong> selon les conditions météorologiques. ' +
+          "En cas de doute, suis les messages sur " +
+          '<a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a> ' +
+          "ou contacte-nous par e-mail.</p>" +
+          '<p class="sortie-prose">' +
+          pacePhil +
+          "</p>" +
+          '<p class="sortie-prose">' +
+          philo +
+          "</p>"
+      ) +
 
-      '<section class="sortie-block">' +
-      '<h3 class="sortie-block-title">En montée</h3>' +
-      '<p class="sortie-prose">Chacun roule à son rythme ; <strong>regroupement en haut</strong> des bosses pour repartir groupés.</p></section>' +
+      sortieAccordionBlock(
+        "En montée",
+        '<p class="sortie-prose">Chacun roule à son rythme ; <strong>regroupement en haut</strong> des bosses pour repartir groupés.</p>'
+      ) +
 
-      '<section class="sortie-block">' +
-      '<h3 class="sortie-block-title">Préparation et autonomie</h3>' +
-      "<ul class=\"sortie-list\">" +
-      "<li>Aie la <strong>trace GPS</strong> du parcours sur ton téléphone ou GPS pour pouvoir rentrer en autonomie en cas de problème.</li>" +
-      "<li>Sois autonome : <strong>outillage</strong>, chambre à air / patins, <strong>alimentation</strong> et eau adaptées à la durée.</li>" +
-      "</ul></section>" +
+      sortieAccordionBlock(
+        "Préparation et autonomie",
+        "<ul class=\"sortie-list\">" +
+          "<li>Aie la <strong>trace GPS</strong> du parcours sur ton téléphone ou GPS pour pouvoir rentrer en autonomie en cas de problème.</li>" +
+          "<li>Sois autonome : <strong>outillage</strong>, chambre à air / patins, <strong>alimentation</strong> et eau adaptées à la durée.</li>" +
+          "</ul>"
+      ) +
 
-      '<section class="sortie-block">' +
-      '<h3 class="sortie-block-title">Consignes de sécurité</h3>' +
-      "<ul class=\"sortie-list\">" +
-      "<li>Participation réservée aux <strong>personnes majeures</strong> ; les <strong>mineur·e·s</strong> ne peuvent pas prendre part à la sortie.</li>" +
-      "<li>Sur routes larges, roulez en <strong>file à deux</strong> au maximum ; en file indienne sur les portions étroites.</li>" +
-      "<li><strong>Dépassements par la gauche</strong> uniquement ; annonce clairement ton intention avant de passer.</li>" +
-      "<li>Signale les obstacles (poteaux, nids-de-poule, dos-d’âne…).</li>" +
-      "<li>Garde ta ligne et signale tout changement de position utile au groupe.</li>" +
-      "</ul></section>" +
+      sortieAccordionBlock(
+        "Consignes de sécurité",
+        "<ul class=\"sortie-list\">" +
+          "<li>Participation réservée aux <strong>personnes majeures</strong> ; les <strong>mineur·e·s</strong> ne peuvent pas prendre part à la sortie.</li>" +
+          "<li>Sur routes larges, roulez en <strong>file à deux</strong> au maximum ; en file indienne sur les portions étroites.</li>" +
+          "<li><strong>Dépassements par la gauche</strong> uniquement ; annonce clairement ton intention avant de passer.</li>" +
+          "<li>Signale les obstacles (poteaux, nids-de-poule, dos-d’âne…).</li>" +
+          "<li>Garde ta ligne et signale tout changement de position utile au groupe.</li>" +
+          "</ul>"
+      ) +
 
-      '<section class="sortie-block">' +
-      '<h3 class="sortie-block-title">Matériel</h3>' +
-      "<ul class=\"sortie-list\">" +
-      "<li>Respect du <strong>code de la route</strong> et du bon sens collectif. Comportement dangereux = exclusion possible de la sortie.</li>" +
-      "<li><strong>Casque obligatoire</strong> (quelle que soit la météo).</li>" +
-      "<li><strong>Éclairage</strong> et <strong>avertisseur</strong> conformes si les conditions l’exigent.</li>" +
-      "<li>Prolongateurs de cintre type « clip-on » : <strong>interdits</strong> sur la sortie.</li>" +
-      "<li>Prévois l’équipement adapté à la météo (couche chaude, coupe-vent, protection pluie…).</li>" +
-      "</ul></section>" +
+      sortieAccordionBlock(
+        "Matériel",
+        "<ul class=\"sortie-list\">" +
+          "<li>Respect du <strong>code de la route</strong> et du bon sens collectif. Comportement dangereux = exclusion possible de la sortie.</li>" +
+          "<li><strong>Casque obligatoire</strong> (quelle que soit la météo).</li>" +
+          "<li><strong>Éclairage</strong> et <strong>avertisseur</strong> conformes si les conditions l’exigent.</li>" +
+          "<li>Prolongateurs de cintre type « clip-on » : <strong>interdits</strong> sur la sortie.</li>" +
+          "<li>Prévois l’équipement adapté à la météo (couche chaude, coupe-vent, protection pluie…).</li>" +
+          "</ul>"
+      ) +
 
-      '<section class="sortie-block">' +
-      '<h3 class="sortie-block-title">Inscription</h3>' +
-      '<p class="sortie-prose"><strong>Phase de lancement — cadre et assurance</strong> : Goëlo Rides n’a pas encore de <strong>structure associative</strong> ni d’<strong>assurance collective</strong> pour encadrer les sorties. Elles se déroulent dans un cadre <strong>informel</strong> : chaque participant·e reste <strong>responsable</strong> de sa personne, de son matériel et des risques liés à la route. <strong>Dès qu’une association sera créée</strong> (statuts, éventuelle adhésion et assurance), nous mettrons à jour cette fiche et la page <a href="infos-pratiques.html">Infos pratiques</a> pour que tout soit <strong>clair et à jour</strong>.</p>' +
-      '<p class="sortie-prose"><strong>Pas de cotisation annuelle</strong> pour l’instant. L’inscription sur la page Sorties, ici avec « Je participe ! », ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. Préviens-nous si tu ne peux finalement pas venir.</p></section>' +
+      sortieAccordionBlock(
+        "Inscription",
+        '<p class="sortie-prose"><strong>Phase de lancement — cadre et assurance</strong> : Goëlo Rides n’a pas encore de <strong>structure associative</strong> ni d’<strong>assurance collective</strong> pour encadrer les sorties. Elles se déroulent dans un cadre <strong>informel</strong> : chaque participant·e reste <strong>responsable</strong> de sa personne, de son matériel et des risques liés à la route. <strong>Dès qu’une association sera créée</strong> (statuts, éventuelle adhésion et assurance), nous mettrons à jour cette fiche et la page <a href="infos-pratiques.html">Infos pratiques</a> pour que tout soit <strong>clair et à jour</strong>.</p>' +
+          '<p class="sortie-prose"><strong>Pas de cotisation annuelle</strong> pour l’instant. L’inscription sur la page Sorties, ici avec « Je participe ! », ou par e-mail sert à <strong>anticiper le nombre de participants</strong>. Préviens-nous si tu ne peux finalement pas venir.</p>'
+      ) +
 
       '<p class="sortie-footer-note">Bonne sortie · Goëlo Rides · ' +
       escapeHtml(SHARED.region) +
@@ -1106,7 +1265,9 @@
         }
         var fail = goeloLastRpcFailure;
         var code = fail ? fail.code : 40;
-        window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
+        window.alert(
+          goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName, fail && fail.body)
+        );
         return { ok: false, error: "db" };
       }
       try {
@@ -1158,7 +1319,9 @@
       if (!(data && data.ok)) {
         var failU = goeloLastRpcFailure;
         var codeU = failU ? failU.code : 40;
-        window.alert(goeloFormatDbFailureAlert(codeU, failU && failU.httpStatus));
+        window.alert(
+          goeloFormatDbFailureAlert(codeU, failU && failU.httpStatus, failU && failU.fnName, failU && failU.body)
+        );
         return false;
       }
       return true;
@@ -1733,7 +1896,14 @@
           window.alert("Pseudo ou message invalide. Vérifie les longueurs autorisées.");
         } else {
           const code = goeloLastRpcFailure && goeloLastRpcFailure.code ? goeloLastRpcFailure.code : 37;
-          window.alert(goeloFormatDbFailureAlert(code, goeloLastRpcFailure && goeloLastRpcFailure.httpStatus));
+          window.alert(
+            goeloFormatDbFailureAlert(
+              code,
+              goeloLastRpcFailure && goeloLastRpcFailure.httpStatus,
+              goeloLastRpcFailure && goeloLastRpcFailure.fnName,
+              goeloLastRpcFailure && goeloLastRpcFailure.body
+            )
+          );
         }
       });
     }
@@ -2123,19 +2293,34 @@
         "Type de sortie : <strong>" + escapeHtml(sortieRaceTypeLabel(route)) + "</strong>";
     }
 
-    const pts = route.profile.points;
-    const latlngs = pts.map(function (p) {
-      return [p.lat, p.lon];
-    });
-    const hasElev = profileHasElevation(pts);
-
-    if (optGrade) {
-      optGrade.disabled = !hasElev;
-      const lab = optGrade.closest("label");
-      if (lab) lab.style.opacity = hasElev ? "" : "0.5";
+    function routeLatLngs() {
+      const p = route.profile && route.profile.points;
+      if (!p || p.length < 2) return [];
+      return p.map(function (pt) {
+        return [pt.lat, pt.lon];
+      });
     }
 
-    const map = L.map(mapEl, { scrollWheelZoom: true, zoomControl: true }).setView([pts[0].lat, pts[0].lon], 12);
+    function routeHasElevation() {
+      const p = route.profile && route.profile.points;
+      return !!(p && profileHasElevation(p));
+    }
+
+    function updateGradeOptionState() {
+      const elev = routeHasElevation();
+      if (optGrade) {
+        optGrade.disabled = !elev;
+        if (!elev) optGrade.checked = false;
+        const lab = optGrade.closest("label");
+        if (lab) lab.style.opacity = elev ? "" : "0.5";
+      }
+    }
+
+    const startPts = route.profile.points;
+    const map = L.map(mapEl, { scrollWheelZoom: true, zoomControl: true }).setView(
+      [startPts[0].lat, startPts[0].lon],
+      12
+    );
     mapEl.classList.add("strava-map-tiles");
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -2169,9 +2354,11 @@
         map.removeLayer(trackLayer);
         trackLayer = null;
       }
+      const ll = routeLatLngs();
+      const elev = routeHasElevation();
       const useGrade = optGrade && optGrade.checked;
       if (gradeLegend) {
-        gradeLegend.hidden = !(useGrade && hasElev);
+        gradeLegend.hidden = !(useGrade && elev);
       }
       trackLayer = sortieAddTrackForRoute(map, route, useGrade);
       trackLayer.addTo(map);
@@ -2182,20 +2369,45 @@
         formatKm(route.profile.totalKm) +
         " · " +
         escapeHtml(route.name || "") +
-        (useGrade && hasElev
+        (useGrade && elev
           ? "<br><span style=\"font-size:0.8em;opacity:0.9\">Couleurs = pente (rouge = montée raide).</span>"
           : "");
       if (trackLayer.mainLine) {
         trackLayer.mainLine.bindPopup(popupInner);
       }
       try {
-        map.fitBounds(boundsForLatLngs(latlngs), { padding: [36, 36], maxZoom: 14 });
+        if (ll.length >= 2) map.fitBounds(boundsForLatLngs(ll), { padding: [36, 36], maxZoom: 14 });
       } catch (e1) {
         void e1;
       }
       showCitiesOnMap();
     }
 
+    const btnGpxDownload = document.getElementById("sortie-gpx-download");
+    if (btnGpxDownload && !btnGpxDownload.dataset.sortieGpxBound) {
+      btnGpxDownload.dataset.sortieGpxBound = "1";
+      btnGpxDownload.addEventListener("click", function () {
+        const xml = buildGpxFileFromProfile(route);
+        if (!xml) {
+          window.alert("Trace indisponible pour le téléchargement.");
+          return;
+        }
+        const blob = new Blob([xml], { type: "application/gpx+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = sortieGpxFilename(route);
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.setTimeout(function () {
+          URL.revokeObjectURL(url);
+        }, 4000);
+      });
+    }
+
+    updateGradeOptionState();
     redrawTrack();
 
     if (optCities) {

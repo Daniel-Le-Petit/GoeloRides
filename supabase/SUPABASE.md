@@ -132,7 +132,7 @@ La logique carte / inscriptions / modale **Gérer les sorties** est dans **`parc
 **Autres pièges :**
 
 - Mets un **`;`** après la ligne URL si la ligne suivante commence par `window` sur la même ligne copiée-collée (sinon JavaScript fusionne les deux chaînes et tout casse).
-- Vérifie l’onglet **Network** : `POST …/rest/v1/rpc/signup_register` doit être **200** (sinon lire le corps : 401 = clé / projet, 404 = migration SQL non appliquée).
+- Vérifie l’onglet **Network** : `POST …/rest/v1/rpc/signup_register` doit être **200** (sinon lire le corps : **401** = clé / projet, **404** = RPC absente, **400** avec `PGRST202` / « Could not find » = **signature RPC ou colonnes** pas à jour → exécuter les migrations **`20250623120000_signups_cyclist_level.sql`** puis **`20250624120000_signups_participant_city.sql`** sur ce projet).
 - Le code relit `window.GOELO_SUPABASE_*` à chaque appel ; un petit script de config peut être placé **après** `parcours.js` dans le HTML (moins pratique) ou **avant** dans le `<head>` / en tête de `<body>`.
 
 **Option B** : renseigner directement les chaînes dans l’objet `SUPABASE` dans le script (moins recommandé si le dépôt est public).

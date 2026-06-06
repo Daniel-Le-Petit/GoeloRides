@@ -91,11 +91,33 @@
       /** Dernier échec transport / HTTP pour message utilisateur (codes 36–39). Réinitialisé à chaque appel RPC. */
       let goeloLastRpcFailure = null;
 
-      function goeloFormatDbFailureAlert(code, httpStatus, fnName) {
+      function goeloFormatDbFailureAlert(code, httpStatus, fnName, failBody) {
         if (code === 41) {
           return (
             "Impossible d’enregistrer dans la mémoire de ce navigateur (quota plein, navigation privée ou blocage).\n\n" +
             "Erreur 41 — contacter l’administrateur ou réessaie après avoir libéré de l’espace."
+          );
+        }
+        if (
+          code === 37 &&
+          httpStatus === 400 &&
+          fnName === "signup_register" &&
+          failBody &&
+          (String(failBody).indexOf("PGRST202") !== -1 ||
+            String(failBody).toLowerCase().indexOf("could not find") !== -1 ||
+            String(failBody).indexOf("signup_register") !== -1 ||
+            (String(failBody).toLowerCase().indexOf("column") !== -1 &&
+              String(failBody).toLowerCase().indexOf("does not exist") !== -1))
+        ) {
+          const b = String(failBody);
+          return (
+            "Inscription impossible : la base Supabase du site n’est pas alignée avec le formulaire actuel (fonction RPC ou colonnes manquantes — HTTP 400).\n\n" +
+            "Pour l’administrateur : sur ce projet Supabase, exécuter dans l’ordre les migrations du dépôt :\n" +
+            "• supabase/migrations/20250623120000_signups_cyclist_level.sql\n" +
+            "• supabase/migrations/20250624120000_signups_participant_city.sql\n\n" +
+            "(ou `supabase db push` depuis la machine de développement), puis réessayer.\n\n" +
+            "Détail technique : " +
+            (b.length > 320 ? b.slice(0, 320) + "…" : b)
           );
         }
         if (code === 37 && httpStatus === 404 && fnName === "route_delete") {
@@ -318,10 +340,15 @@
           return null;
         }
         if (!res.ok) {
-          goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName };
-          const txt = await res.text();
-          console.warn("Supabase RPC", fnName, res.status, txt);
-          if (res.status === 401 && txt.indexOf("Invalid API key") !== -1) {
+          let errTxt = "";
+          try {
+            errTxt = await res.text();
+          } catch (eRead) {
+            void eRead;
+          }
+          goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName, body: errTxt };
+          console.warn("Supabase RPC", fnName, res.status, errTxt);
+          if (res.status === 401 && errTxt.indexOf("Invalid API key") !== -1) {
             console.warn(
               "Goëlo — 401 : vérifie la clé (Legacy **anon** JWT eyJ…, ou **sb_publishable_** sans faute). " +
                 "Même URL et clé pour le même projet."
@@ -721,7 +748,20 @@
         return String(h) + ":" + String(mm).padStart(2, "0");
       }
 
-      /** Saisie admin : minutes entières ou « H:MM » → { minutes, hm } ou null. */
+      /** « H:MM » ou plage « 2:30 - 3:00 ». */
+      function parseSingleHmFragment(frag) {
+        const m = String(frag || "")
+          .trim()
+          .match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
+        if (!m) return null;
+        const hh = parseInt(m[1], 10);
+        const mm = parseInt(m[2], 10);
+        if (!Number.isFinite(hh) || !Number.isFinite(mm) || mm < 0 || mm > 59 || hh > 36) return null;
+        const minutes = hh * 60 + mm;
+        if (minutes <= 0) return null;
+        return { minutes: minutes, hm: formatMinutesToHm(minutes) };
+      }
+
       function parseDurationInputToStore(raw) {
         const s = String(raw || "").trim();
         if (!s) return null;
@@ -730,15 +770,28 @@
           if (!Number.isFinite(n) || n <= 0 || n > 36 * 60) return null;
           return { minutes: n, hm: formatMinutesToHm(n) };
         }
-        const m = s.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
-        if (m) {
-          const hh = parseInt(m[1], 10);
-          const mm = parseInt(m[2], 10);
-          if (!Number.isFinite(hh) || !Number.isFinite(mm) || mm < 0 || mm > 59 || hh > 36) return null;
-          const minutes = hh * 60 + mm;
-          if (minutes <= 0) return null;
-          return { minutes: minutes, hm: formatMinutesToHm(minutes) };
+        const rm = s.match(
+          /^(\d{1,2}\s*:\s*\d{1,2})\s*[-–—]\s*(\d{1,2}\s*:\s*\d{1,2})$/
+        );
+        if (rm) {
+          const a = parseSingleHmFragment(rm[1]);
+          const b = parseSingleHmFragment(rm[2]);
+          if (!a || !b) return null;
+          if (b.minutes < a.minutes) return null;
+          if (b.minutes === a.minutes) {
+            return { minutes: a.minutes, hm: a.hm };
+          }
+          const avg = Math.round((a.minutes + b.minutes) / 2);
+          return {
+            minutes: avg,
+            hm: a.hm + " - " + b.hm,
+            isRange: true,
+            minMinutes: a.minutes,
+            maxMinutes: b.minutes
+          };
         }
+        const one = parseSingleHmFragment(s);
+        if (one) return { minutes: one.minutes, hm: one.hm };
         return null;
       }
 
@@ -799,6 +852,30 @@
             ? "<p><strong>Départ précis</strong> · " + escapeHtml(String(route.meetPlaceDetail).trim()) + "</p>"
             : "") +
           (function () {
+            const hmRaw =
+              route && typeof route.estimatedDurationHm === "string" && route.estimatedDurationHm.trim()
+                ? String(route.estimatedDurationHm).trim()
+                : "";
+            if (hmRaw) {
+              const pr = parseDurationInputToStore(hmRaw);
+              if (pr) {
+                if (pr.isRange) {
+                  return "<p><strong>Durée estimée</strong> · " + escapeHtml("Environ " + pr.hm) + "</p>";
+                }
+                const min = pr.minutes;
+                const line =
+                  min < 60
+                    ? "Environ " + min + " min"
+                    : "Environ " +
+                      Math.floor(min / 60) +
+                      " h " +
+                      String(min % 60).padStart(2, "0") +
+                      " (≈ " +
+                      formatMinutesToHm(min) +
+                      ")";
+                return "<p><strong>Durée estimée</strong> · " + escapeHtml(line) + "</p>";
+              }
+            }
             const min = routeEffectiveDurationMinutes(route);
             if (min <= 0) return "";
             const line =
@@ -1348,7 +1425,9 @@
           if (!data || !data.ok) {
             const fail = goeloLastRpcFailure;
             const code = fail ? fail.code : 40;
-            window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
+            window.alert(
+              goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName, fail && fail.body)
+            );
             return false;
           }
           await refreshSupabaseNames();
@@ -1407,7 +1486,9 @@
             } else {
               const fail = goeloLastRpcFailure;
               const code = fail ? fail.code : 40;
-              window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
+              window.alert(
+                goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName, fail && fail.body)
+              );
             }
             return false;
           }
@@ -2188,6 +2269,7 @@
                 (function () {
                   const p = parseDurationInputToStore(durStr);
                   if (!p) return escapeHtml(durStr);
+                  if (p.isRange) return escapeHtml("≈ " + p.hm + " (" + p.minMinutes + "–" + p.maxMinutes + " min)");
                   return escapeHtml("≈ " + p.hm + " (" + p.minutes + " min)");
                 })() +
                 "</li>"
@@ -2470,7 +2552,7 @@
               }
               const code = fail ? fail.code : 40;
               window.alert(
-                goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName)
+                goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName, fail && fail.body)
               );
               return;
             }
@@ -2725,7 +2807,7 @@
           const durParsed = parseDurationInputToStore(durRaw);
           if (durRaw && !durParsed) {
             window.alert(
-              "Durée invalide : indique un nombre de minutes (ex. 165) ou un horaire H:MM (ex. 2:45)."
+              "Durée invalide : indique un nombre de minutes (ex. 165), un horaire H:MM (ex. 2:45), ou une plage H:MM - H:MM (ex. 2:30 - 3:00)."
             );
             return;
           }
@@ -2833,7 +2915,9 @@
               );
             } else {
               const code = fail ? fail.code : 40;
-              window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
+              window.alert(
+                goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName, fail && fail.body)
+              );
             }
             return;
           }

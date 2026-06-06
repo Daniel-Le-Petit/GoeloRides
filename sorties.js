@@ -252,7 +252,14 @@
       return null;
     }
     if (!res.ok) {
-      goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName };
+      var errTxtS = "";
+      try {
+        errTxtS = await res.text();
+      } catch (eS) {
+        void eS;
+      }
+      goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName, body: errTxtS };
+      console.warn("Supabase RPC", fnName, res.status, errTxtS);
       return null;
     }
     if (res.status === 204) {

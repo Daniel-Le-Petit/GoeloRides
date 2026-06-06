@@ -265,6 +265,59 @@
       border-color: var(--app-sea);
       color: var(--app-sea);
     }
+    .sortie-map-gpx-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.65rem;
+      width: 100%;
+      margin-top: 0.35rem;
+      padding-top: 0.45rem;
+      border-top: 1px dashed var(--app-border);
+    }
+    .sortie-map-gpx-hint {
+      flex: 1 1 100%;
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--app-muted);
+      line-height: 1.35;
+    }
+    .sortie-accordion {
+      border-top: 1px solid var(--app-border);
+      background: #fff;
+    }
+    .sortie-detail > dl + .sortie-accordion {
+      border-top: none;
+    }
+    .sortie-accordion-summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 1rem 1.25rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--app-sea);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      user-select: none;
+    }
+    .sortie-accordion-summary::-webkit-details-marker { display: none; }
+    .sortie-accordion-chevron {
+      flex-shrink: 0;
+      font-size: 0.65rem;
+      color: var(--app-muted);
+      transition: transform 0.2s ease;
+    }
+    .sortie-accordion[open] .sortie-accordion-chevron {
+      transform: rotate(90deg);
+    }
+    .sortie-accordion-panel {
+      padding: 0 1.25rem 1.15rem;
+    }
     .sortie-grade-legend {
       display: flex;
       flex-wrap: wrap;
@@ -814,6 +867,13 @@
         height: 1.85rem;
         font-size: 1.05rem;
       }
+      .sortie-accordion-summary {
+        padding: 0.75rem 0.85rem 0.65rem;
+        font-size: 0.78rem;
+      }
+      .sortie-accordion-panel {
+        padding: 0 0.85rem 0.85rem;
+      }
       .sortie-grade-legend {
         gap: 0.3rem 0.45rem;
         padding: 0.3rem 0.45rem;
@@ -894,6 +954,12 @@
                     <button type="button" id="sortie-zoom-in" title="Zoom avant">+</button>
                     <button type="button" id="sortie-zoom-out" title="Zoom arrière">−</button>
                   </div>
+                </div>
+                <div class="sortie-map-gpx-row" id="sortie-map-gpx-row">
+                  <button type="button" class="btn-sortie-ghost" id="sortie-gpx-download" title="Enregistrer la trace sur ton téléphone ou ton GPS (fichier .gpx)">
+                    Télécharger la trace GPX
+                  </button>
+                  <p class="sortie-map-gpx-hint">Même trace que sur la carte — à ouvrir dans ton appli vélo ou ton GPS pour rouler avec le bon itinéraire.</p>
                 </div>
                 <p class="sortie-grade-legend" id="sortie-grade-legend" hidden>
                   <span class="sortie-grade-legend-item"><span class="sortie-grade-swatch" style="background:#64748b"></span> Plat</span>
