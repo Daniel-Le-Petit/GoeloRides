@@ -2887,3 +2887,62 @@ html.site-retheme .infos-mobile-nav a:hover {
 html.site-retheme .app-main--infos .site-footer {
   margin-top: 2rem;
 }
+
+/* —— Scrollytelling (.goelo-scrolly) : entrée plus lisible sur PC (goelo-scrolly.js) —— */
+@media (prefers-reduced-motion: no-preference) {
+  html.site-retheme .goelo-scrolly {
+    opacity: 0;
+    transform: translate3d(0, 3.75rem, 0) scale(0.93);
+    filter: blur(2px);
+    transition:
+      opacity 0.88s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.88s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.65s ease-out;
+    will-change: opacity, transform, filter;
+  }
+
+  html.site-retheme .app-main--infos .goelo-scrolly:not(.goelo-scrolly--in) {
+    transform: translate3d(0, 2.25rem, 0) scale(0.96);
+    filter: blur(1.5px);
+  }
+
+  html.site-retheme .goelo-scrolly.goelo-scrolly--in {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+    will-change: auto;
+  }
+
+  /* Décalage léger entre les 4 cartes groupes (même frame --in) */
+  html.site-retheme #groupes .groupes-retheme-grid article.goelo-scrolly:nth-child(1) {
+    transition-delay: 0s;
+  }
+
+  html.site-retheme #groupes .groupes-retheme-grid article.goelo-scrolly:nth-child(2) {
+    transition-delay: 0.12s;
+  }
+
+  html.site-retheme #groupes .groupes-retheme-grid article.goelo-scrolly:nth-child(3) {
+    transition-delay: 0.24s;
+  }
+
+  html.site-retheme #groupes .groupes-retheme-grid article.goelo-scrolly:nth-child(4) {
+    transition-delay: 0.36s;
+  }
+
+  /* Remplace les fade-in au chargement pour éviter double animation */
+  html.site-retheme .goelo-scrolly.groupes-retheme-header,
+  html.site-retheme .goelo-scrolly.groupe-card,
+  html.site-retheme section.home-cta-sorties.goelo-scrolly .home-cta-sorties-card {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.site-retheme .goelo-scrolly {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+}
