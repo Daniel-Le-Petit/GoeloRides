@@ -104,8 +104,7 @@ html.site-retheme .app-sidebar {
   display: none !important;
 }
 
-html.site-retheme .app-main,
-html.site-retheme .app-main--home {
+html.site-retheme .app-main {
   flex: 1;
   min-width: 0;
   width: 100%;
@@ -113,6 +112,12 @@ html.site-retheme .app-main--home {
   padding: 0;
   background: transparent;
   color: var(--text);
+}
+
+/* Main accueil transparent : l’espace avant #groupes laisse voir le fond body (photo),
+   sans masquer l’image comme un panneau #eef2f6 plein écran. */
+html.site-retheme .app-main--home {
+  background: transparent;
 }
 
 /* —— Cartes flottantes —— */
@@ -944,14 +949,20 @@ html.site-retheme .home-landing-lead {
 html.site-retheme #groupes {
   position: relative;
   isolation: isolate;
-  padding: 3rem var(--site-edge-l) 3.5rem var(--site-edge-r);
+  margin-top: clamp(2.25rem, 5.5vw, 4rem);
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 0;
+  padding-top: clamp(2rem, 5vw, 3rem);
+  padding-right: var(--site-edge-r);
+  padding-bottom: 3.5rem;
+  padding-left: var(--site-edge-l);
   max-width: 1100px;
-  margin: 0 auto;
   background-color: #0f1f28;
   background-image: url("assets/hero-accueil.png");
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
+  background-attachment: scroll;
 }
 
 html.site-retheme #groupes::before {
@@ -1070,7 +1081,7 @@ html.site-retheme section.home-cta-sorties {
   background-image: url("assets/hero-accueil.png");
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
+  background-attachment: scroll;
 }
 
 html.site-retheme section.home-cta-sorties::before {
@@ -2175,7 +2186,7 @@ html.site-retheme .sortie-participants-title {
 
 @media (max-width: 640px) {
   /* Une seule couche de gouttière : annule le padding horizontal des pages (inline) */
-  html.site-retheme main.app-main:not(.app-main--home):not(.app-main--sortie) {
+  html.site-retheme main.app-main:not(.app-main--home):not(.app-main--sortie):not(.app-main--infos) {
     padding-top: var(--site-top-clear) !important;
     padding-bottom: max(1.35rem, env(safe-area-inset-bottom, 0px)) !important;
     padding-left: max(0.88rem, env(safe-area-inset-left, 0px)) !important;
@@ -2197,7 +2208,8 @@ html.site-retheme .sortie-participants-title {
   }
 
   html.site-retheme #groupes {
-    padding-top: 2.15rem;
+    margin-top: clamp(1.75rem, 5vw, 3rem);
+    padding-top: clamp(1.65rem, 5vw, 2.5rem);
     padding-bottom: 2.35rem;
   }
 
@@ -2272,43 +2284,607 @@ html.site-retheme .visually-hidden {
   border: 0;
 }
 
-/* —— Page Infos pratiques —— */
-html.site-retheme .infos-pratiques-wrap {
-  max-width: 44rem;
-  margin: 0 auto;
-  padding: 1.5rem var(--site-edge-l) 2.5rem var(--site-edge-r);
+html.site-retheme body:has(#main-content.app-main--infos) {
+  background-color: #0f2740;
+  background-image: url("assets/Saint-Quay.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: scroll;
+  background-repeat: no-repeat;
+  min-height: 100dvh;
 }
 
-html.site-retheme .infos-pratiques-wrap h1 {
+/* —— Page Infos pratiques : fond mer sur toute la page, hero comme Sorties, cadres clairs lisibles —— */
+html.site-retheme .app-main--infos {
+  padding-top: 0;
+  padding-left: var(--site-edge-l);
+  padding-right: var(--site-edge-r);
+  padding-bottom: calc(4.35rem + env(safe-area-inset-bottom, 0px));
+  max-width: 100%;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  html.site-retheme .app-main--infos {
+    padding-bottom: 0;
+  }
+}
+
+html.site-retheme .app-main--infos .sorties-hero-mini {
+  background: linear-gradient(135deg, rgba(10, 30, 48, 0.74) 0%, rgba(15, 48, 68, 0.6) 45%, rgba(8, 26, 40, 0.78) 100%),
+    url("assets/Saint-Quay.jpeg") center / cover no-repeat;
+}
+
+html.site-retheme .app-main--infos .sorties-hero-mini h1 {
+  margin-bottom: 0.45rem;
+}
+
+html.site-retheme .app-main--infos .infos-hero-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+  margin: 0 0 0.65rem;
+}
+
+html.site-retheme .app-main--infos .sorties-hero-mini > p:not(.infos-hero-kicker) {
+  max-width: 36rem;
+  margin: 0 auto 1rem;
+  font-size: clamp(0.92rem, 2.1vw, 1.05rem);
+  font-weight: 400;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+html.site-retheme .app-main--infos .sorties-hero-mini .btn-sea {
+  margin-top: 0.2rem;
+}
+
+html.site-retheme .infos-pratiques-main > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Infos pratiques : panneaux « eau » (bleu-ciel / cyan) — pas de blanc pur */
+html.site-retheme .app-main--infos .infos-panel,
+html.site-retheme .app-main--infos .infos-accordion,
+html.site-retheme .app-main--infos .infos-banner {
+  overflow: hidden;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.2s ease;
+  background: linear-gradient(
+    165deg,
+    rgba(224, 242, 254, 0.96) 0%,
+    rgba(204, 251, 241, 0.88) 38%,
+    rgba(186, 230, 253, 0.94) 100%
+  );
+  border: 1px solid rgba(14, 116, 144, 0.22);
+  border-radius: 1rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.42) inset,
+    0 10px 34px rgba(8, 55, 75, 0.14);
+  color: #0c2c38;
+}
+
+html.site-retheme .app-main--infos .infos-panel {
+  padding: 1.15rem 1.2rem 1.2rem;
+  margin-bottom: 0.85rem;
+  border-left: 5px solid #1565a8;
+}
+
+html.site-retheme .app-main--infos .infos-panel:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 16px 42px rgba(8, 70, 90, 0.2);
+  border-color: rgba(8, 145, 178, 0.32);
+}
+
+html.site-retheme .app-main--infos .infos-accordion {
+  margin-bottom: 0.85rem;
+  border-left: 5px solid #0e7490;
+}
+
+html.site-retheme .app-main--infos .infos-accordion--wide {
+  border-left-color: #0284c7;
+}
+
+html.site-retheme .app-main--infos .infos-accordion:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.48) inset,
+    0 14px 40px rgba(8, 65, 85, 0.18);
+}
+
+html.site-retheme .app-main--infos .infos-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.95rem 1.1rem;
+  margin-bottom: 0;
+  border-left: 5px solid #0891b2;
+  background: linear-gradient(
+    155deg,
+    rgba(236, 254, 255, 0.97) 0%,
+    rgba(165, 243, 252, 0.55) 45%,
+    rgba(254, 249, 195, 0.75) 100%
+  );
+  color: #134e4a;
+}
+
+html.site-retheme .app-main--infos .infos-banner:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 14px 38px rgba(8, 70, 85, 0.16);
+}
+
+html.site-retheme .app-main--infos .infos-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+html.site-retheme .app-main--infos .infos-panel-title {
   font-family: var(--font-serif);
-  font-size: clamp(1.6rem, 4vw, 2.1rem);
-  color: var(--text);
-  margin-bottom: 0.5rem;
+  font-size: clamp(1.08rem, 2.5vw, 1.28rem);
+  font-weight: 600;
+  color: #0c2c38;
+  margin: 0;
 }
 
-html.site-retheme .infos-pratiques-wrap h2 {
+html.site-retheme .app-main--infos .infos-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0e7490;
+  margin: 0 0 0.85rem;
+}
+
+html.site-retheme .app-main--infos .infos-kicker-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: rgba(165, 243, 252, 0.55);
+  border: 1px solid rgba(8, 145, 178, 0.28);
+  color: #0c4a6e;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+html.site-retheme .app-main--infos .infos-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: #e0f2fe;
+  border: 1px solid #7dd3fc;
+  color: #0369a1;
+  font-size: 0.85rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+html.site-retheme .app-main--infos .infos-step--sm {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.72rem;
+}
+
+html.site-retheme .app-main--infos .infos-depart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.1rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  html.site-retheme .app-main--infos .infos-depart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+html.site-retheme .app-main--infos .infos-depart-text p {
+  color: #334155;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0 0 0.65rem;
+}
+
+html.site-retheme .app-main--infos .infos-depart-text p:last-of-type {
+  margin-bottom: 0.85rem;
+}
+
+html.site-retheme .app-main--infos .infos-depart-text strong,
+html.site-retheme .app-main--infos .infos-accordion-body strong {
+  color: #0c2c38;
+  font-weight: 700;
+}
+
+html.site-retheme .app-main--infos .infos-btn-map {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.52rem 1rem;
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  background: linear-gradient(180deg, #1a6fb8 0%, #1565a8 48%, #124d80 100%);
+  border: 1px solid rgba(0, 85, 164, 0.28);
+  color: #fff !important;
+  text-decoration: none;
+  box-shadow:
+    inset 0 -2px 0 0 rgba(249, 215, 28, 0.85),
+    0 3px 14px rgba(21, 101, 168, 0.28);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+html.site-retheme .app-main--infos .infos-btn-map:hover {
+  background: linear-gradient(180deg, #1f7ac4 0%, #0e4d80 50%, #0c3d68 100%);
+  border-color: rgba(0, 85, 164, 0.45);
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+
+html.site-retheme .app-main--infos .infos-map-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(8, 145, 178, 0.25);
+  min-height: 200px;
+  background: linear-gradient(180deg, rgba(207, 250, 254, 0.65) 0%, rgba(186, 230, 253, 0.5) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+html.site-retheme .app-main--infos .infos-leaflet-map {
+  width: 100%;
+  height: 200px;
+  min-height: 200px;
+  border-radius: 12px;
+  font-family: var(--font-sans);
+}
+
+@media (min-width: 769px) {
+  html.site-retheme .app-main--infos .infos-leaflet-map {
+    height: 220px;
+  }
+}
+
+html.site-retheme .app-main--infos .infos-map-wrap .leaflet-control-attribution {
+  font-size: 0.58rem;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #334155 !important;
+}
+
+html.site-retheme .app-main--infos .infos-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  html.site-retheme .app-main--infos .infos-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+html.site-retheme .app-main--infos .infos-accordion-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 1rem 0.8rem 1.05rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  color: #0c2c38;
+}
+
+html.site-retheme .app-main--infos .infos-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+html.site-retheme .app-main--infos .infos-accordion-icon {
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  color: #0e7490;
+  flex-shrink: 0;
+  background: rgba(165, 243, 252, 0.65);
+  border-radius: 10px;
+  border: 1px solid rgba(8, 145, 178, 0.22);
+}
+
+html.site-retheme .app-main--infos .infos-accordion-icon svg {
+  width: 1.28rem;
+  height: 1.28rem;
+}
+
+html.site-retheme .app-main--infos .infos-accordion-titles {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+html.site-retheme .app-main--infos .infos-accordion-title {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
-  margin: 1.75rem 0 0.75rem;
-  color: var(--ocean);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0c2c38;
 }
 
-html.site-retheme .infos-pratiques-wrap p,
-html.site-retheme .infos-pratiques-wrap li {
-  color: var(--text);
-  line-height: 1.6;
+html.site-retheme .app-main--infos .infos-accordion-chev {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  position: relative;
+  opacity: 0.75;
+  color: #0e7490;
 }
 
-html.site-retheme .infos-pratiques-wrap ul {
-  margin: 0.5rem 0 0 1.25rem;
+@media (min-width: 769px) {
+  html.site-retheme .app-main--infos .infos-accordion-chev {
+    display: none;
+  }
+
+  html.site-retheme .app-main--infos .infos-accordion-summary {
+    cursor: default;
+    border-bottom: 1px solid rgba(8, 145, 178, 0.18);
+  }
+}
+
+html.site-retheme .app-main--infos .infos-accordion-chev::after {
+  content: "";
+  position: absolute;
+  inset: 0.35rem 0.2rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+html.site-retheme .app-main--infos .infos-accordion[open] .infos-accordion-chev::after {
+  transform: rotate(-135deg);
+  inset: 0.45rem 0.2rem;
+}
+
+html.site-retheme .app-main--infos .infos-accordion-body {
+  padding: 0 1.05rem 1.05rem 1.05rem;
+  border-top: 1px solid rgba(8, 145, 178, 0.16);
+}
+
+@media (min-width: 769px) {
+  html.site-retheme .app-main--infos .infos-accordion-body {
+    border-top: none;
+    padding-top: 0.15rem;
+  }
+}
+
+html.site-retheme .app-main--infos .infos-accordion-body p {
+  color: #334155;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin: 0 0 0.65rem;
+}
+
+html.site-retheme .app-main--infos .infos-accordion-body a:not(.infos-btn-map) {
+  color: #0b5cab;
+  font-weight: 600;
+}
+
+html.site-retheme .app-main--infos .infos-checklist {
+  list-style: none;
+  margin: 0.35rem 0 0;
   padding: 0;
 }
 
-html.site-retheme .infos-pratiques-wrap address {
-  font-style: normal;
-  margin: 0.75rem 0;
-  padding: 1rem 1.1rem;
-  background: rgba(21, 101, 168, 0.06);
-  border: 1px solid rgba(21, 101, 168, 0.18);
+html.site-retheme .app-main--infos .infos-checklist li {
+  position: relative;
+  padding-left: 1.2rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+html.site-retheme .app-main--infos .infos-checklist li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #15803d;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+html.site-retheme .app-main--infos .infos-callout {
+  margin-top: 0.55rem;
+  padding: 0.65rem 0.85rem;
   border-radius: 0.65rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+html.site-retheme .app-main--infos .infos-callout--sea {
+  background: rgba(103, 232, 249, 0.28);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  color: #164e63;
+}
+
+html.site-retheme .app-main--infos .infos-callout--alert {
+  background: rgba(254, 202, 202, 0.45);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #7f1d1d;
+}
+
+html.site-retheme .app-main--infos .infos-callout--priority {
+  background: rgba(153, 246, 228, 0.35);
+  border: 1px solid rgba(20, 184, 166, 0.42);
+  color: #115e59;
+}
+
+html.site-retheme .app-main--infos .infos-contact-line {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+html.site-retheme .app-main--infos .infos-contact-list {
+  list-style: none;
+  margin: 0 0 0.45rem;
+  padding: 0;
+}
+
+html.site-retheme .app-main--infos .infos-contact-list li {
+  margin-bottom: 0.35rem;
+}
+
+html.site-retheme .app-main--infos .infos-contact-list a {
+  color: #0b5cab;
+  font-weight: 600;
+}
+
+html.site-retheme .app-main--infos .infos-muted {
+  font-size: 0.84rem;
+  color: #0f766e;
+  margin: 0.35rem 0 0;
+}
+
+html.site-retheme .app-main--infos .infos-safety-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0.15rem 0 0.5rem;
+}
+
+@media (max-width: 1100px) {
+  html.site-retheme .app-main--infos .infos-safety-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  html.site-retheme .app-main--infos .infos-safety-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+html.site-retheme .app-main--infos .infos-safety-card {
+  background: linear-gradient(
+    180deg,
+    rgba(236, 254, 255, 0.88) 0%,
+    rgba(165, 243, 252, 0.42) 100%
+  );
+  border: 1px solid rgba(8, 145, 178, 0.22);
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.6rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+}
+
+html.site-retheme .app-main--infos .infos-safety-card-title {
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #0c4a6e;
+  margin: 0 0 0.35rem;
+  line-height: 1.2;
+}
+
+html.site-retheme .app-main--infos .infos-safety-card-text {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #134e4a;
+}
+
+html.site-retheme .app-main--infos .infos-safety-card-text a {
+  color: #0b5cab;
+}
+
+html.site-retheme .app-main--infos .infos-banner p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #134e4a;
+}
+
+html.site-retheme .app-main--infos .infos-banner p strong {
+  color: #0f3d4d;
+}
+
+html.site-retheme .app-main--infos .infos-banner-heart {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  color: #0e7490;
+}
+
+html.site-retheme .infos-mobile-nav {
+  display: flex;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 120;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem max(0.5rem, env(safe-area-inset-left, 0px)) calc(0.45rem + env(safe-area-inset-bottom, 0px))
+    max(0.5rem, env(safe-area-inset-right, 0px));
+  background: linear-gradient(180deg, #0f2740 0%, #0a1a28 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35);
+}
+
+html.site-retheme .infos-mobile-nav a {
+  flex: 1;
+  text-align: center;
+  padding: 0.4rem 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(248, 250, 252, 0.88) !important;
+  text-decoration: none;
+  border-radius: 0.45rem;
+  max-width: 5.5rem;
+}
+
+html.site-retheme .infos-mobile-nav a[aria-current="page"] {
+  color: var(--sq-yellow) !important;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html.site-retheme .infos-mobile-nav a:hover {
+  color: #fff !important;
+}
+
+@media (min-width: 769px) {
+  html.site-retheme .infos-mobile-nav {
+    display: none;
+  }
+}
+
+html.site-retheme .app-main--infos .site-footer {
+  margin-top: 2rem;
 }

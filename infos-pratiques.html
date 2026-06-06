@@ -8,7 +8,7 @@
   <title>Infos pratiques · Goëlo Rides</title>
   <meta property="og:title" content="Infos pratiques · GoëloRides" />
   <meta property="og:description" content="Parking du Kasino, équipement, contacts et sécurité sur la route." />
-  <meta property="og:image" content="https://goelorides.onrender.com/assets/hero-accueil.png" />
+  <meta property="og:image" content="https://goelorides.onrender.com/assets/Saint-Quay.jpeg" />
   <meta property="og:url" content="https://goelorides.onrender.com/infos-pratiques.html" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -18,119 +18,157 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Outfit:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="parcours.css">
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="site-retheme.css">
-  <style>
-    :root {
-      --app-sea: #1565a8;
-      --app-sea-hover: #0e4d80;
-      --app-bg: #eef2f6;
-      --app-surface: #ffffff;
-      --app-text: #15232d;
-      --app-muted: #5a6b78;
-      --app-border: #dce6ee;
-      --sidebar-w: 15.5rem;
-      --font-sans: "DM Sans", system-ui, sans-serif;
-      --font-logo: "Outfit", "DM Sans", system-ui, sans-serif;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; background: var(--app-bg); overflow-x: hidden; max-width: 100%; }
-    body {
-      font-family: var(--font-sans);
-      background: var(--app-bg);
-      color: var(--app-text);
-      min-height: 100dvh;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      max-width: 100%;
-    }
-    a { color: var(--app-sea); }
-    .app-main {
-      flex: 1;
-      min-width: 0;
-      max-width: 100%;
-      padding: 1.35rem 1.75rem 2.5rem;
-      background: var(--app-bg);
-    }
-    .infos-pratiques-lead {
-      font-size: 1.05rem;
-      color: var(--app-muted);
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-    }
-    @media (max-width: 640px) {
-      .app-main { padding: 1rem 0.85rem 2rem; }
-    }
-  </style>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Aller au contenu principal</a>
-  <a href="index.html" class="back-link">← Accueil</a>
+  <a href="index.html" class="back-link">← GoëloRides</a>
   <div class="sorties-auth-top"><div data-goelo-auth-home></div></div>
   <div class="app-shell">
-    <main class="app-main" id="main-content" role="main">
-      <div class="infos-pratiques-wrap">
-        <h1><span aria-hidden="true">ℹ️ </span>Infos pratiques</h1>
-        <p class="infos-pratiques-lead">Tout ce qu’il faut savoir avant de rouler avec nous.</p>
-
-        <section aria-labelledby="point-de-depart">
-          <h2 id="point-de-depart"><span aria-hidden="true">📍 </span>Point de départ</h2>
-          <p>Toutes les sorties partent du même lieu :</p>
-          <address>
-            <strong>Parking du Kasino</strong><br>
-            22410 Saint-Quay-Portrieux, Bretagne
-          </address>
-          <p>
-            <a href="https://www.google.com/maps/search/?api=1&amp;query=Kasino+Saint-Quay-Portrieux+22410" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le point de départ sur Google Maps dans un nouvel onglet">
-              Voir sur Google Maps <span aria-hidden="true">→</span>
-            </a>
-          </p>
-        </section>
-
-        <section aria-labelledby="equipement">
-          <h2 id="equipement"><span aria-hidden="true">🛠 </span>Équipement requis</h2>
-          <ul>
-            <li><strong>Casque obligatoire</strong> (sans exception).</li>
-            <li>Vélo en bon état (freins, vitesses, pneus gonflés).</li>
-            <li>Kit de réparation : chambre à air, dérive-chaîne, pompe.</li>
-            <li>Gourde et encas pour les sorties de plus de deux heures.</li>
-            <li>Vêtements adaptés à la météo (coupe-vent, gilet fluorescent si besoin).</li>
-          </ul>
-        </section>
-
-        <section aria-labelledby="contacts">
-          <h2 id="contacts"><span aria-hidden="true">📞 </span>Contacts</h2>
-          <ul>
-            <li>
-              <strong>E-mail :</strong>
-              <a href="mailto:goelo.rides@gmail.com" aria-label="Envoyer un e-mail à goelo.rides@gmail.com">goelo.rides@gmail.com</a>
-            </li>
-            <li>
-              <strong>Instagram :</strong>
-              <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer" aria-label="Suivre GoëloRides sur Instagram, nouvelle fenêtre">@goelo.rides</a>
-            </li>
-          </ul>
-        </section>
-
-        <section aria-labelledby="cadre-lancement">
-          <h2 id="cadre-lancement"><span aria-hidden="true">🏗 </span>Cadre et assurance (phase de lancement)</h2>
-          <p>Goëlo Rides est une initiative <strong>en phase de lancement</strong>. Il n’existe pas encore de <strong>structure associative</strong> ni d’<strong>assurance collective</strong> dédiée aux sorties : elles se déroulent dans un cadre <strong>informel</strong>, sur la base du respect mutuel et du code de la route.</p>
-          <p>Chaque participant·e reste <strong>responsable</strong> de sa personne, de son équipement et des risques liés à la pratique du vélo sur route. <strong>Dès qu’une association sera constituée</strong> (statuts, éventuelle adhésion, assurance ou règlement intérieur), nous l’<strong>indiquerons clairement</strong> sur cette page et sur les fiches sorties.</p>
-        </section>
-
-        <section aria-labelledby="regles">
-          <h2 id="regles"><span aria-hidden="true">⚠️ </span>Règles de sécurité</h2>
-          <ul>
-            <li>Respect du <strong>code de la route</strong> à tout moment.</li>
-            <li>Participation réservée aux <strong>personnes majeures</strong> ; les <strong>mineur·e·s</strong> ne peuvent pas participer aux sorties.</li>
-            <li><strong>Dépassements par la gauche</strong> uniquement ; annoncer clairement son intention avant de passer.</li>
-            <li>Signaler tout <strong>problème mécanique</strong> avant le départ.</li>
-            <li>Les groupes roulent en <strong>cohésion</strong> ; le rythme et l’écart dépendent du niveau du groupe (voir la page <a href="groupes.html">Les groupes</a>).</li>
-          </ul>
-        </section>
+    <main class="app-main app-main--infos" id="main-content" role="main">
+      <!-- Même structure que sorties.html : bandeau hero puis contenu dans .sorties-main-pad -->
+      <div class="sorties-hero-mini" role="banner" aria-labelledby="infos-hero-title">
+        <p class="infos-hero-kicker">Saint-Quay-Portrieux · Côtes-d’Armor</p>
+        <h1 id="infos-hero-title">Infos pratiques</h1>
+        <p>Départ parking du Kasino · Saint-Quay-Portrieux — tout ce qu’il faut savoir pour profiter de votre sortie vélo en toute sérénité.</p>
+        <a class="btn-sea" href="mailto:goelo.rides@gmail.com">Nous contacter</a>
       </div>
+
+      <div class="sorties-main-pad infos-pratiques-main">
+        <section class="infos-panel infos-panel--depart" aria-labelledby="infos-depart-title">
+          <p class="infos-kicker"><span class="infos-kicker-num">1</span> Point de départ</p>
+          <h2 id="infos-depart-title" class="visually-hidden">Point de départ</h2>
+          <div class="infos-depart-grid">
+            <div class="infos-depart-text">
+              <p><strong>Parking du Kasino</strong>, 22410 Saint-Quay-Portrieux.</p>
+              <p>Face à la plage du Casino : accès facile et stationnement gratuit. C’est le point de rendez-vous des sorties publiées sur le site, sauf mention contraire sur la fiche.</p>
+              <a class="infos-btn-map" href="https://www.google.com/maps/search/?api=1&amp;query=Kasino+Saint-Quay-Portrieux+22410" target="_blank" rel="noopener noreferrer">Voir sur la carte</a>
+            </div>
+            <div class="infos-map-wrap">
+              <div id="infos-kasino-map" class="infos-leaflet-map" data-no-swipe-nav role="region" aria-label="Carte interactive — Parking du Kasino"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="infos-cards">
+          <details class="infos-accordion">
+            <summary class="infos-accordion-summary">
+              <span class="infos-accordion-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M8 7V3m8 4V3M5 11h14M5 21h14V9H5v12z"/><path d="M9 7a3 3 0 016 0v1H9V7z"/></svg>
+              </span>
+              <span class="infos-accordion-titles">
+                <span class="infos-step infos-step--sm" aria-hidden="true">2</span>
+                <span class="infos-accordion-title">Équipement requis</span>
+              </span>
+              <span class="infos-accordion-chev" aria-hidden="true"></span>
+            </summary>
+            <div class="infos-accordion-body">
+              <ul class="infos-checklist">
+                <li>Vélo en bon état (freins, transmission, pneus).</li>
+                <li><strong>Casque obligatoire</strong>.</li>
+                <li>Gants et lunettes de soleil recommandés.</li>
+                <li>Vêtements adaptés à la météo.</li>
+                <li>Bidon d’eau (minimum ~1 L) et encas si sortie longue.</li>
+                <li>Téléphone chargé ; chambre à air / petit kit si possible.</li>
+              </ul>
+              <p class="infos-callout infos-callout--sea">Les <strong>VAE</strong> sont acceptés si la sortie le précise : vérifie la <strong>charge batterie</strong> selon distance et dénivelé.</p>
+            </div>
+          </details>
+
+          <details class="infos-accordion">
+            <summary class="infos-accordion-summary">
+              <span class="infos-accordion-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20.5v-1a5 5 0 0110 0v1"/></svg>
+              </span>
+              <span class="infos-accordion-titles">
+                <span class="infos-step infos-step--sm" aria-hidden="true">3</span>
+                <span class="infos-accordion-title">Contacts</span>
+              </span>
+              <span class="infos-accordion-chev" aria-hidden="true"></span>
+            </summary>
+            <div class="infos-accordion-body">
+              <p class="infos-contact-line"><strong>GoëloRides</strong> — organisation &amp; encadrement bénévole, été 2026.</p>
+              <ul class="infos-contact-list">
+                <li><a href="mailto:goelo.rides@gmail.com">goelo.rides@gmail.com</a></li>
+                <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">Instagram @goelo.rides</a></li>
+              </ul>
+              <p class="infos-muted">Nous visons une réponse sous 24 h ; merci de votre patience en période chargée.</p>
+              <p class="infos-callout infos-callout--alert"><strong>Urgence le jour J</strong> : <strong>15</strong> (SAMU) ou <strong>112</strong>.</p>
+            </div>
+          </details>
+
+          <details class="infos-accordion">
+            <summary class="infos-accordion-summary">
+              <span class="infos-accordion-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3l8 5v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V8l8-5z"/><path d="M9.5 12.5l2 2 3.5-4"/></svg>
+              </span>
+              <span class="infos-accordion-titles">
+                <span class="infos-step infos-step--sm" aria-hidden="true">4</span>
+                <span class="infos-accordion-title">Cadre &amp; assurance</span>
+              </span>
+              <span class="infos-accordion-chev" aria-hidden="true"></span>
+            </summary>
+            <div class="infos-accordion-body">
+              <p>Initiative <strong>en phase de lancement</strong> : pas encore d’association ni d’assurance collective. Sorties <strong>informelles</strong>, encadrées par l’expérience des cyclistes présents et le respect du <strong>code de la route</strong>.</p>
+              <p>Chacun·e reste <strong>responsable</strong> de sa personne et de son matériel. Toute évolution (statuts, adhésion, assurance) sera annoncée ici et sur les fiches sorties.</p>
+              <p class="infos-callout infos-callout--priority"><strong>Votre sécurité est notre priorité.</strong> Roulez prudemment, on se parle sur la route.</p>
+            </div>
+          </details>
+        </div>
+
+        <details class="infos-accordion infos-accordion--wide">
+          <summary class="infos-accordion-summary">
+            <span class="infos-accordion-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+            </span>
+            <span class="infos-accordion-titles">
+              <span class="infos-step infos-step--sm" aria-hidden="true">5</span>
+              <span class="infos-accordion-title">Règles de sécurité</span>
+            </span>
+            <span class="infos-accordion-chev" aria-hidden="true"></span>
+          </summary>
+          <div class="infos-accordion-body">
+            <div class="infos-safety-cards" role="list">
+              <article class="infos-safety-card" role="listitem">
+                <h3 class="infos-safety-card-title">Roulez en groupe</h3>
+                <p class="infos-safety-card-text">Respecter les écarts du <a href="groupes.html">niveau</a> ; ne pas briser le peloton sans prévenir.</p>
+              </article>
+              <article class="infos-safety-card" role="listitem">
+                <h3 class="infos-safety-card-title">Respectez le code</h3>
+                <p class="infos-safety-card-text">Signalisations, priorités, autres usagers : même exigence qu’en solo.</p>
+              </article>
+              <article class="infos-safety-card" role="listitem">
+                <h3 class="infos-safety-card-title">Signalez</h3>
+                <p class="infos-safety-card-text">Obstacles, nids-de-poule, changements de direction ou d’allure.</p>
+              </article>
+              <article class="infos-safety-card" role="listitem">
+                <h3 class="infos-safety-card-title">Adaptez l’allure</h3>
+                <p class="infos-safety-card-text">Météo, fatigue, revêtement : la sortie doit rester accessible à tout le monde.</p>
+              </article>
+              <article class="infos-safety-card" role="listitem">
+                <h3 class="infos-safety-card-title">En cas de problème</h3>
+                <p class="infos-safety-card-text">Prévenir celles et ceux qui roulent avec toi ; arrêt groupé si besoin.</p>
+              </article>
+            </div>
+            <p class="infos-muted">Sorties réservées aux <strong>majeur·e·s</strong>.</p>
+          </div>
+        </details>
+
+        <div class="infos-banner" role="note">
+          <span class="infos-banner-heart" aria-hidden="true">♡</span>
+          <p><strong>Bienveillance, esprit d’équipe et bonne humeur</strong> sont essentiels pour une belle sortie sur la côte du Goëlo.</p>
+        </div>
+      </div>
+
+      <nav class="infos-mobile-nav" aria-label="Navigation rapide">
+        <a href="index.html">Accueil</a>
+        <a href="sorties.html">Sorties</a>
+        <a href="groupes.html">Groupes</a>
+        <a href="infos-pratiques.html" aria-current="page">Infos</a>
+      </nav>
 
       <footer class="site-footer" role="contentinfo">
         <p class="footer-logo">GoëloRides</p>
@@ -153,6 +191,56 @@
   <script>
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    (function () {
+      function syncAccordion() {
+        var wide = window.matchMedia("(min-width: 769px)").matches;
+        document.querySelectorAll(".infos-accordion").forEach(function (d) {
+          d.open = wide;
+        });
+      }
+      syncAccordion();
+      window.addEventListener("resize", syncAccordion);
+
+      function initKasinoMap() {
+        var el = document.getElementById("infos-kasino-map");
+        if (!el || typeof L === "undefined") return;
+        var lat = 48.65185;
+        var lng = -2.83235;
+        var map = L.map(el, {
+          scrollWheelZoom: false,
+          zoomControl: true,
+          attributionControl: true
+        }).setView([lat, lng], 16);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19
+        }).addTo(map);
+        L.marker([lat, lng]).addTo(map).bindPopup("<strong>Parking du Kasino</strong><br>Point de rendez-vous GoëloRides.");
+        setTimeout(function () {
+          try {
+            map.invalidateSize();
+          } catch (e) {
+            void e;
+          }
+        }, 200);
+        window.addEventListener("resize", function () {
+          try {
+            map.invalidateSize();
+          } catch (e2) {
+            void e2;
+          }
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initKasinoMap);
+      } else {
+        initKasinoMap();
+      }
+    })();
   </script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>

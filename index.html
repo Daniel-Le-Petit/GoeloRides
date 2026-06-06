@@ -270,11 +270,11 @@
         0 0 1px rgba(0, 0, 0, 1);
     }
 
-    /* Bandeau illustratif : cyclistes + ligne de paysage (lisible d’un coup d’œil) */
+    /* Bandeau illustratif : piste en dégradé + arbres + cyclistes (sans cadre) */
     .home-landing-bike-motif {
       width: min(100%, 26rem);
       margin: 0 auto 0.75rem;
-      color: rgba(248, 250, 252, 0.92);
+      color: rgba(248, 250, 252, 0.96);
       filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
     }
 
@@ -285,12 +285,27 @@
       overflow: visible;
     }
 
-    .home-landing-bike-motif .home-landing-bike-horizon {
-      stroke: rgba(255, 255, 255, 0.38);
+    /* Ligne : dégradé défini dans le SVG (url #home-landing-road) */
+
+    /* Cyclistes : 1 = clair, 2 = vert, 3 = bleu, 4 = rouge */
+    .home-landing-bike-motif .home-landing-bike--1 {
+      color: rgba(255, 255, 255, 0.98);
     }
 
-    .home-landing-bike-motif .home-landing-bike-horizon-accent {
-      stroke: rgba(249, 215, 28, 0.28);
+    .home-landing-bike-motif .home-landing-bike--2 {
+      color: #22c55e;
+    }
+
+    .home-landing-bike-motif .home-landing-bike--3 {
+      color: #2563eb;
+    }
+
+    .home-landing-bike-motif .home-landing-bike--4 {
+      color: #dc2626;
+    }
+
+    .home-landing-bike-motif .home-landing-bike-tree {
+      pointer-events: none;
     }
 
     @media (max-width: 640px) {
@@ -4253,32 +4268,76 @@
           <div class="goelo-auth-home-slot" data-goelo-auth-home></div>
         </div>
       </div>
-      <div class="home-landing-bike-motif" role="img" aria-label="Illustration : cyclistes en groupe sur la côte">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 56" fill="none" aria-hidden="true">
+      <div class="home-landing-bike-motif" role="img" aria-label="Illustration : piste en couleurs, petits arbres et quatre cyclistes sur la côte">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 472 56" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="home-landing-road" x1="0" y1="42" x2="472" y2="42" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff" />
+              <stop offset="30%" stop-color="#22c55e" />
+              <stop offset="62%" stop-color="#3b82f6" />
+              <stop offset="100%" stop-color="#ef4444" />
+            </linearGradient>
+          </defs>
           <path
             class="home-landing-bike-horizon"
-            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S384 34 420 40"
-            stroke-width="2.2"
+            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S392 34 472 40"
+            stroke="url(#home-landing-road)"
+            stroke-width="2.35"
             stroke-linecap="round" />
           <path
             class="home-landing-bike-horizon-accent"
-            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S384 34 420 40"
-            stroke-width="1"
+            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S392 34 472 40"
+            stroke="url(#home-landing-road)"
+            stroke-opacity="0.42"
+            stroke-width="1.05"
             stroke-linecap="round"
             transform="translate(0 1.5)" />
-          <g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+          <g class="home-landing-bike-tree" aria-hidden="true">
+            <line x1="112" y1="44" x2="112" y2="37" stroke="rgba(34, 55, 45, 0.55)" stroke-width="1.25" stroke-linecap="round" />
+            <path
+              d="M112 37 L107 40.5 L112 33.5 L117 40.5 Z"
+              fill="rgba(34, 197, 94, 0.42)"
+              stroke="rgba(255, 255, 255, 0.35)"
+              stroke-width="0.85"
+              stroke-linejoin="round" />
+          </g>
+          <g class="home-landing-bike-tree" aria-hidden="true">
+            <line x1="242" y1="44" x2="242" y2="36.5" stroke="rgba(34, 55, 45, 0.55)" stroke-width="1.25" stroke-linecap="round" />
+            <path
+              d="M242 36.5 L236.5 40.5 L242 32.5 L247.5 40.5 Z"
+              fill="rgba(59, 130, 246, 0.38)"
+              stroke="rgba(255, 255, 255, 0.32)"
+              stroke-width="0.85"
+              stroke-linejoin="round" />
+          </g>
+          <g class="home-landing-bike-tree" aria-hidden="true">
+            <line x1="378" y1="44" x2="378" y2="37" stroke="rgba(55, 34, 34, 0.5)" stroke-width="1.25" stroke-linecap="round" />
+            <path
+              d="M378 37 L373 40.5 L378 33.5 L383 40.5 Z"
+              fill="rgba(248, 113, 113, 0.4)"
+              stroke="rgba(255, 255, 255, 0.3)"
+              stroke-width="0.85"
+              stroke-linejoin="round" />
+          </g>
+          <g class="home-landing-bike--1" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
             <path d="M38 33 L26 33 M38 29 L28 29 M38 25 L30 25" stroke-opacity="0.4" stroke-width="1.15" />
             <circle cx="50" cy="43" r="5.5" fill="none" />
             <circle cx="66" cy="43" r="5.5" fill="none" />
             <path d="M50 43 L55 29 L62 33 L66 43 M55 29 L58 23 M58 23 L61 21" fill="none" />
           </g>
-          <g stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <g class="home-landing-bike--2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <path d="M168 26 L154 26 M168 22 L156 22 M168 18 L158 18" stroke-opacity="0.4" stroke-width="1.15" />
             <circle cx="182" cy="36" r="6" fill="none" />
             <circle cx="200" cy="36" r="6" fill="none" />
             <path d="M182 36 L188 20 L196 25 L200 36 M188 20 L191 13 M191 13 L194 11" fill="none" />
           </g>
-          <g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+          <g class="home-landing-bike--3" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M302 33 L290 33 M302 29 L292 29 M302 25 L294 25" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="314" cy="43" r="5.5" fill="none" />
+            <circle cx="330" cy="43" r="5.5" fill="none" />
+            <path d="M314 43 L319 29 L326 33 L330 43 M319 29 L322 23 M322 23 L325 21" fill="none" />
+          </g>
+          <g class="home-landing-bike--4" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" transform="translate(128, 0)">
             <path d="M302 33 L290 33 M302 29 L292 29 M302 25 L294 25" stroke-opacity="0.4" stroke-width="1.15" />
             <circle cx="314" cy="43" r="5.5" fill="none" />
             <circle cx="330" cy="43" r="5.5" fill="none" />
