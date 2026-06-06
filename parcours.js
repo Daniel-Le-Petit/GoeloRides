@@ -557,8 +557,24 @@
         return !mergeHiddenBuiltinIdsSet()[String(route.id)];
       }
 
+      /** front_config (jsonb) : objet ; certains chemins renvoient une chaîne JSON. */
+      function parseRouteFrontConfig(raw) {
+        if (raw == null) return {};
+        if (typeof raw === "string") {
+          try {
+            const p = JSON.parse(raw);
+            return p && typeof p === "object" && !Array.isArray(p) ? p : {};
+          } catch (err) {
+            void err;
+            return {};
+          }
+        }
+        if (typeof raw === "object" && !Array.isArray(raw)) return raw;
+        return {};
+      }
+
       function dbRowToRoute(row) {
-        const fc = row && row.front_config && typeof row.front_config === "object" ? row.front_config : {};
+        const fc = parseRouteFrontConfig(row && row.front_config);
         const so = row.sort_order;
         return {
           id: row.id,
@@ -582,21 +598,40 @@
                 ? fc.ride_leader.trim()
                 : "",
           meetPlace:
-            typeof fc.meetPlace === "string" && fc.meetPlace.trim() ? fc.meetPlace.trim() : "",
+            typeof fc.meetPlace === "string" && fc.meetPlace.trim()
+              ? fc.meetPlace.trim()
+              : typeof fc.meet_place === "string" && fc.meet_place.trim()
+                ? fc.meet_place.trim()
+                : "",
           meetPlaceDetail:
             typeof fc.meetPlaceDetail === "string" && fc.meetPlaceDetail.trim()
               ? fc.meetPlaceDetail.trim()
-              : "",
+              : typeof fc.meet_place_detail === "string" && fc.meet_place_detail.trim()
+                ? fc.meet_place_detail.trim()
+                : "",
           estimatedDurationHm:
             typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
               ? String(fc.estimatedDurationHm).trim()
-              : "",
+              : typeof fc.estimated_duration_hm === "string" && fc.estimated_duration_hm.trim()
+                ? String(fc.estimated_duration_hm).trim()
+                : "",
           estimatedDurationMinutes: (function () {
-            if (typeof fc.estimatedDurationMinutes === "number" && Number.isFinite(fc.estimatedDurationMinutes)) {
-              return Math.max(0, Math.round(fc.estimatedDurationMinutes));
+            const nRaw = fc.estimatedDurationMinutes != null ? fc.estimatedDurationMinutes : fc.estimated_duration_minutes;
+            if (typeof nRaw === "number" && Number.isFinite(nRaw)) {
+              return Math.max(0, Math.round(nRaw));
             }
-            if (typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()) {
-              const p = parseDurationInputToStore(fc.estimatedDurationHm);
+            if (typeof nRaw === "string" && /^\d+$/.test(nRaw.trim())) {
+              const n = parseInt(nRaw.trim(), 10);
+              if (Number.isFinite(n) && n > 0) return Math.min(n, 36 * 60);
+            }
+            const hmStr =
+              typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
+                ? fc.estimatedDurationHm.trim()
+                : typeof fc.estimated_duration_hm === "string" && fc.estimated_duration_hm.trim()
+                  ? fc.estimated_duration_hm.trim()
+                  : "";
+            if (hmStr) {
+              const p = parseDurationInputToStore(hmStr);
               return p ? p.minutes : null;
             }
             return null;
@@ -1651,6 +1686,7 @@
       }
 
       function closeNewRouteModal() {
+        removeNewRouteAdminOverlays();
         const modal = document.getElementById("new-route-modal");
         closeGpxUploadPop();
         destroyNewRoutePreviewMap();
@@ -1664,12 +1700,100 @@
         document.body.style.overflow = "";
       }
 
+      function removeNewRouteAdminOverlays() {
+        const modal = document.getElementById("new-route-modal");
+        if (!modal) return;
+        modal.querySelectorAll(".new-route-after-save-overlay, .goelo-ig-kit-backdrop--nested").forEach(function (el) {
+          el.remove();
+        });
+      }
+
+      function showNewRouteAfterSaveOverlay(panelMountEl, kitRoute, wasEdit, changeLine) {
+        if (!panelMountEl || !kitRoute) return;
+        removeNewRouteAdminOverlays();
+        const build =
+          typeof window.goeloRideUpdatesBuildInstagramStoryText === "function"
+            ? window.goeloRideUpdatesBuildInstagramStoryText
+            : null;
+        const pick =
+          typeof window.goeloRideUpdatesPickVisualIdea === "function" ? window.goeloRideUpdatesPickVisualIdea : null;
+        const copyFn =
+          typeof window.goeloRideUpdatesCopyToClipboard === "function"
+            ? window.goeloRideUpdatesCopyToClipboard
+            : null;
+        const story = build
+          ? build(kitRoute, {
+              wasEdit: wasEdit,
+              changeLine: String(changeLine || "").trim(),
+              origin: window.location.origin
+            })
+          : "";
+        const visual = pick ? pick(kitRoute) : "";
+        const wrap = document.createElement("div");
+        wrap.className = "new-route-after-save-overlay";
+        wrap.setAttribute("role", "region");
+        wrap.setAttribute("aria-label", "Après enregistrement — partage Instagram");
+        wrap.innerHTML =
+          '<div class="new-route-after-save-inner">' +
+          "<h3 class=\"new-route-after-save-title\">Sortie enregistrée</h3>" +
+          (wasEdit
+            ? '<p class="new-route-after-save-ok">La sortie a été <strong>mise à jour</strong> dans Supabase.</p>'
+            : '<p class="new-route-after-save-ok">La sortie a été <strong>créée</strong> dans Supabase.</p>') +
+          '<p class="new-route-after-save-intro">Étape suivante : texte et idée visuelle pour une story Instagram (publication <strong>manuelle</strong> — rien n’est envoyé automatiquement).</p>' +
+          '<label class="new-route-after-save-label" for="new-route-after-save-story">Texte à copier</label>' +
+          '<textarea id="new-route-after-save-story" class="new-route-after-save-textarea" rows="12" readonly></textarea>' +
+          '<div class="new-route-after-save-actions">' +
+          '<button type="button" class="btn-primary" id="new-route-after-save-copy">Copier le texte</button>' +
+          '<button type="button" class="btn-app-outline" id="new-route-after-save-reload">Recharger la page</button>' +
+          "</div>" +
+          '<h4 class="new-route-after-save-sub">Idée visuelle (Canva, Stories…)</h4>' +
+          '<p class="new-route-after-save-visual" id="new-route-after-save-visual"></p>' +
+          "</div>";
+        panelMountEl.appendChild(wrap);
+        const ta = wrap.querySelector("#new-route-after-save-story");
+        if (ta) ta.value = story;
+        const visEl = wrap.querySelector("#new-route-after-save-visual");
+        if (visEl) visEl.textContent = visual;
+        const copyBtn = wrap.querySelector("#new-route-after-save-copy");
+        if (copyBtn && copyFn) {
+          copyBtn.addEventListener("click", function () {
+            copyFn(
+              story,
+              function () {
+                window.alert("Texte copié dans le presse-papiers.");
+              },
+              function () {
+                window.alert("Sélectionne le texte dans la zone si la copie est refusée.");
+              }
+            );
+          });
+        } else if (copyBtn) {
+          copyBtn.addEventListener("click", function () {
+            window.alert("Copie : sélectionne le texte dans la zone puis Ctrl+C (ou Cmd+C).");
+          });
+        }
+        const rel = wrap.querySelector("#new-route-after-save-reload");
+        if (rel) {
+          rel.addEventListener("click", function () {
+            window.location.reload();
+          });
+        }
+        if (ta) {
+          try {
+            ta.focus();
+          } catch (err) {
+            void err;
+          }
+        }
+      }
+
       async function openNewRouteModal() {
         const modal = document.getElementById("new-route-modal");
         const form = document.getElementById("new-route-form");
         if (!modal || !form) return;
         closeGpxUploadPop();
         destroyNewRoutePreviewMap();
+        removeNewRouteAdminOverlays();
         if (typeof modal.__goeloResetNewRouteDraft === "function") {
           modal.__goeloResetNewRouteDraft();
         }
@@ -1732,6 +1856,55 @@
         };
         const timeLabel = (th < 10 ? "0" + th : String(th)) + "h" + (tm < 10 ? "0" + tm : String(tm));
         return cap(weekday) + " " + d + " " + month + " " + y + " · " + timeLabel;
+      }
+
+      /** Inverse partiel de formatFrenchRideDateLabel : remplit l’input date si `rideDateIso` manque en base. */
+      function normalizeFrMonthKey(raw) {
+        return String(raw || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/œ/g, "oe")
+          .replace(/æ/g, "ae");
+      }
+
+      function parseFrenchDateLabelToRideDateParts(dateLabel) {
+        const dl = String(dateLabel || "").trim();
+        if (!dl) return { iso: "", time: "" };
+        const bits = dl.split(/\s*·\s*/);
+        const main = (bits[0] || "").trim();
+        const timePart = bits.length > 1 ? bits[1].trim() : "";
+        const MONTHS = {
+          janvier: 1,
+          fevrier: 2,
+          mars: 3,
+          avril: 4,
+          mai: 5,
+          juin: 6,
+          juillet: 7,
+          aout: 8,
+          septembre: 9,
+          octobre: 10,
+          novembre: 11,
+          decembre: 12
+        };
+        const rm = main.match(/(\d{1,2})\s+([A-Za-zÀÂÄÈÉÊËÎÏÔÙÛÜÇàâäèéêëîïôùûüç]+)\s+(\d{4})/);
+        if (!rm) return { iso: "", time: "" };
+        const day = parseInt(rm[1], 10);
+        const y = parseInt(rm[3], 10);
+        const mo = MONTHS[normalizeFrMonthKey(rm[2])];
+        if (!mo || !Number.isFinite(day) || !Number.isFinite(y)) return { iso: "", time: "" };
+        const iso = y + "-" + String(mo).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+        let timeStr = "";
+        if (timePart) {
+          const tm = timePart.match(/(\d{1,2})\s*h\s*(\d{2})/i);
+          if (tm) {
+            const hh = Math.min(23, Math.max(0, parseInt(tm[1], 10)));
+            const mm = Math.min(59, Math.max(0, parseInt(tm[2], 10)));
+            timeStr = String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+          }
+        }
+        return { iso: iso, time: timeStr };
       }
 
       function setNewRouteModalTab(tab) {
@@ -2136,14 +2309,30 @@
           const dateIn = document.getElementById("new-route-date");
           const timeIn = document.getElementById("new-route-time");
           if (dateIn) {
-            dateIn.value =
-              route.rideDateIso && /^\d{4}-\d{2}-\d{2}$/.test(route.rideDateIso)
-                ? route.rideDateIso
+            let iso =
+              route.rideDateIso && /^\d{4}-\d{2}-\d{2}$/.test(String(route.rideDateIso).trim())
+                ? String(route.rideDateIso).trim()
                 : "";
+            if (!iso) {
+              const fromLabel = parseFrenchDateLabelToRideDateParts(
+                route.depart && route.depart.dateLabel ? route.depart.dateLabel : ""
+              );
+              if (fromLabel.iso) iso = fromLabel.iso;
+            }
+            dateIn.value = iso;
           }
           if (timeIn) {
-            timeIn.value =
-              route.rideTime && /^\d{2}:\d{2}$/.test(route.rideTime) ? route.rideTime : "08:30";
+            let t =
+              route.rideTime && /^\d{2}:\d{2}$/.test(String(route.rideTime).trim())
+                ? String(route.rideTime).trim()
+                : "";
+            if (!t) {
+              const fromLabel = parseFrenchDateLabelToRideDateParts(
+                route.depart && route.depart.dateLabel ? route.depart.dateLabel : ""
+              );
+              if (fromLabel.time) t = fromLabel.time;
+            }
+            timeIn.value = t || "08:30";
           }
           const meetD = document.getElementById("new-route-meet-detail");
           if (meetD) {
@@ -2445,7 +2634,13 @@
             closeGpxUploadPop();
             return;
           }
-          if (modal && !modal.hidden) closeNewRouteModal();
+          if (modal && !modal.hidden) {
+            if (modal.querySelector(".new-route-after-save-overlay, .goelo-ig-kit-backdrop--nested")) {
+              removeNewRouteAdminOverlays();
+              return;
+            }
+            closeNewRouteModal();
+          }
         });
 
         if (btn) {
@@ -2863,6 +3058,19 @@
             return el && el.value ? el.value : "public";
           })();
 
+          const meetPlaceVal = (function () {
+            const def = SHARED && SHARED.meetPlace ? String(SHARED.meetPlace).trim() : "";
+            if (!newRouteEditId) return def || "Devant le Kasino";
+            const prev = loadedRoutesCache.find(function (r) {
+              return r && r.id === newRouteEditId;
+            });
+            const mp =
+              prev && typeof prev.meetPlace === "string" && prev.meetPlace.trim()
+                ? prev.meetPlace.trim()
+                : "";
+            return mp || def || "Devant le Kasino";
+          })();
+
           const emb = serializeEmbeddedPoints(newRouteProfile.points, EMBEDDED_POINTS_MAX);
           const cols = colorsForRaceType(rt);
           const yearFromDate = parseInt(String(dateStr).slice(0, 4), 10) || 2026;
@@ -2891,13 +3099,18 @@
             rideDateIso: dateStr,
             rideTime: timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : "08:30",
             rideLeader: rideLeaderStr,
-            meetPlace: SHARED.meetPlace,
+            meetPlace: meetPlaceVal,
             meetPlaceDetail: meetDetailStr,
             estimatedDurationHm: durParsed ? durParsed.hm : "",
             estimatedDurationMinutes: durParsed ? durParsed.minutes : null,
             maxParticipants: maxPRaw,
             sortieStatus: sortieStatusVal,
-            visibility: visibilityVal
+            visibility: visibilityVal,
+            ride_leader: rideLeaderStr,
+            meet_place: meetPlaceVal,
+            meet_place_detail: meetDetailStr,
+            estimated_duration_hm: durParsed ? durParsed.hm : "",
+            estimated_duration_minutes: durParsed ? durParsed.minutes : null
           };
 
           const admTok = getAdminSession();
@@ -2964,13 +3177,12 @@
             (data && data.route_id != null && String(data.route_id).trim()) ||
             (newRouteEditId != null && String(newRouteEditId).trim()) ||
             "";
-          closeNewRouteModal();
           const kitRoute = {
             id: routeIdForKit,
             track: track,
             name: group || raceTypeLabel(rt),
             depart: frontConfig.depart,
-            meetPlace: SHARED.meetPlace,
+            meetPlace: meetPlaceVal,
             meetPlaceDetail: meetDetailStr,
             pace: pace || "—",
             raceType: rt,
@@ -2982,23 +3194,23 @@
             wasEdit: wasEdit,
             changeLine: wasEdit ? "Les participant·e·s voient la fiche à jour après rechargement." : ""
           };
-          if (typeof window.goeloRideUpdatesShowInstagramKit === "function") {
-            /* Après fermeture de la modale admin (z-index élevé), afficher au prochain frame pour éviter tout recouvrement. */
-            window.setTimeout(function () {
-              try {
-                window.goeloRideUpdatesShowInstagramKit(kitPayload);
-              } catch (err) {
-                void err;
-                console.warn("goeloRideUpdatesShowInstagramKit", err);
-                window.alert(
-                  wasEdit
-                    ? "Sortie mise à jour. La page va se recharger."
-                    : "Sortie créée. La page va se recharger pour afficher le nouveau parcours."
-                );
-                window.location.reload();
-              }
-            }, 0);
+          const dlg = document.querySelector("#new-route-modal .signup-modal-dialog");
+          if (dlg) {
+            try {
+              showNewRouteAfterSaveOverlay(dlg, kitRoute, wasEdit, kitPayload.changeLine);
+            } catch (err) {
+              void err;
+              console.warn("showNewRouteAfterSaveOverlay", err);
+              closeNewRouteModal();
+              window.alert(
+                wasEdit
+                  ? "Sortie mise à jour. La page va se recharger."
+                  : "Sortie créée. La page va se recharger pour afficher le nouveau parcours."
+              );
+              window.location.reload();
+            }
           } else {
+            closeNewRouteModal();
             window.alert(
               wasEdit
                 ? "Sortie mise à jour. La page va se recharger."

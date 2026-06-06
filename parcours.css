@@ -161,6 +161,7 @@ body {
     }
 
     #new-route-modal.new-route-modal--goelo-app .new-route-modal-dialog {
+      position: relative;
       max-width: min(96vw, 1040px);
       max-height: min(92dvh, 920px);
       background: var(--app-surface);
@@ -177,7 +178,92 @@ body {
       -webkit-overflow-scrolling: touch;
     }
 
+    /* Écran « après enregistrement » (texte Instagram) dans le même modal */
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      box-sizing: border-box;
+      padding: 1.25rem 1.5rem 1.5rem;
+      background: var(--app-surface);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: inherit;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-inner {
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-title {
+      margin: 0 0 0.65rem;
+      font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+      font-weight: 800;
+      color: var(--app-sea-hover);
+      letter-spacing: -0.02em;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-ok,
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-intro {
+      margin: 0 0 0.85rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--app-text);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-intro {
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-label {
+      display: block;
+      margin: 0.35rem 0 0.35rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-textarea {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0 0 1rem;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.8125rem;
+      line-height: 1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--app-text);
+      background: #f8fafc;
+      border: 1px solid var(--app-border);
+      border-radius: 10px;
+      resize: vertical;
+      min-height: 10rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-bottom: 1.15rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-sub {
+      margin: 0 0 0.45rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--app-sea-hover);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-visual {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--app-muted);
+    }
+
     #new-route-modal.new-route-modal--goelo-app .signup-modal-close {
+      z-index: 40;
       color: var(--app-muted);
       top: 0.65rem;
       right: 0.65rem;

@@ -441,8 +441,23 @@
     return "≈ " + formatMinutesToHm(min);
   }
 
+  function parseRouteFrontConfig(raw) {
+    if (raw == null) return {};
+    if (typeof raw === "string") {
+      try {
+        const p = JSON.parse(raw);
+        return p && typeof p === "object" && !Array.isArray(p) ? p : {};
+      } catch (err) {
+        void err;
+        return {};
+      }
+    }
+    if (typeof raw === "object" && !Array.isArray(raw)) return raw;
+    return {};
+  }
+
   function dbRowToRoute(row) {
-    const fc = row && row.front_config && typeof row.front_config === "object" ? row.front_config : {};
+    const fc = parseRouteFrontConfig(row && row.front_config);
     return {
       id: row.id,
       file: String(fc.file || "").trim(),
@@ -481,21 +496,38 @@
       meetPlace:
         typeof fc.meetPlace === "string" && fc.meetPlace.trim()
           ? fc.meetPlace.trim()
-          : DEFAULT_MEET_PLACE,
+          : typeof fc.meet_place === "string" && fc.meet_place.trim()
+            ? fc.meet_place.trim()
+            : DEFAULT_MEET_PLACE,
       meetPlaceDetail:
         typeof fc.meetPlaceDetail === "string" && fc.meetPlaceDetail.trim()
           ? fc.meetPlaceDetail.trim()
-          : "",
+          : typeof fc.meet_place_detail === "string" && fc.meet_place_detail.trim()
+            ? fc.meet_place_detail.trim()
+            : "",
       estimatedDurationHm:
         typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
           ? String(fc.estimatedDurationHm).trim()
-          : "",
+          : typeof fc.estimated_duration_hm === "string" && fc.estimated_duration_hm.trim()
+            ? String(fc.estimated_duration_hm).trim()
+            : "",
       estimatedDurationMinutes: (function () {
-        if (typeof fc.estimatedDurationMinutes === "number" && Number.isFinite(fc.estimatedDurationMinutes)) {
-          return Math.max(0, Math.round(fc.estimatedDurationMinutes));
+        const nRaw = fc.estimatedDurationMinutes != null ? fc.estimatedDurationMinutes : fc.estimated_duration_minutes;
+        if (typeof nRaw === "number" && Number.isFinite(nRaw)) {
+          return Math.max(0, Math.round(nRaw));
         }
-        if (typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()) {
-          const p = parseDurationInputToStore(fc.estimatedDurationHm);
+        if (typeof nRaw === "string" && /^\d+$/.test(String(nRaw).trim())) {
+          const n = parseInt(String(nRaw).trim(), 10);
+          if (Number.isFinite(n) && n > 0) return Math.min(n, 36 * 60);
+        }
+        const hmStr =
+          typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
+            ? fc.estimatedDurationHm.trim()
+            : typeof fc.estimated_duration_hm === "string" && fc.estimated_duration_hm.trim()
+              ? fc.estimated_duration_hm.trim()
+              : "";
+        if (hmStr) {
+          const p = parseDurationInputToStore(hmStr);
           return p ? p.minutes : null;
         }
         return null;
@@ -508,6 +540,14 @@
             : null,
       sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
       visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
+      rideDateIso:
+        typeof fc.rideDateIso === "string" && /^\d{4}-\d{2}-\d{2}$/.test(String(fc.rideDateIso).trim())
+          ? String(fc.rideDateIso).trim()
+          : "",
+      rideTime:
+        typeof fc.rideTime === "string" && /^\d{2}:\d{2}$/.test(String(fc.rideTime).trim())
+          ? String(fc.rideTime).trim()
+          : "",
       cities: Array.isArray(fc.cities) && fc.cities.length
         ? fc.cities
         : [{ name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }],

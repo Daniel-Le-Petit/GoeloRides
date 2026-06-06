@@ -332,92 +332,11 @@
     } else fallbackCopy(t, onOk, onErr);
   }
 
-  function goeloRideUpdatesShowInstagramKit(opts) {
-    var route = opts && opts.route;
-    if (!route) return;
-    var wasEdit = !!(opts && opts.wasEdit);
-    var changeLine =
-      (opts && opts.changeLine && String(opts.changeLine).trim()) ||
-      (wasEdit ? "Détails modifiés sur le site." : "");
-    var storyText = buildInstagramStoryText(route, {
-      wasEdit: wasEdit,
-      changeLine: changeLine,
-      origin: opts && opts.origin
-    });
-    var visual = pickVisualIdea(route);
-    var statusHtml = wasEdit
-      ? "<p class=\"goelo-ig-kit-status\"><strong>OK</strong> — la sortie a bien été <strong>mise à jour dans Supabase</strong>. Ci-dessous : texte optionnel pour une story Instagram.</p>"
-      : "<p class=\"goelo-ig-kit-status\"><strong>OK</strong> — la sortie a bien été <strong>créée dans Supabase</strong>. Ci-dessous : texte optionnel pour une story Instagram.</p>";
-
-    var backdrop = document.getElementById("goelo-ig-kit-backdrop");
-    if (!backdrop) {
-      backdrop = document.createElement("div");
-      backdrop.id = "goelo-ig-kit-backdrop";
-      backdrop.className = "goelo-ig-kit-backdrop";
-      document.body.appendChild(backdrop);
-    }
-    /* Styles de secours : visibles même si la feuille thème charge mal ; z-index > modales parcours (1e5). */
-    backdrop.style.cssText =
-      "position:fixed;inset:0;z-index:210000;display:flex;align-items:center;justify-content:center;" +
-      "padding:1rem;background:rgba(15,30,45,0.45);backdrop-filter:blur(2px);";
-    backdrop.innerHTML =
-      '<div class="goelo-ig-kit-modal" role="dialog" aria-modal="true" aria-labelledby="goelo-ig-kit-title">' +
-      '<h2 id="goelo-ig-kit-title" class="goelo-ig-kit-title">Partage Instagram (manuel)</h2>' +
-      statusHtml +
-      '<p class="goelo-ig-kit-lead">Copie le texte dans ta story. Aucune publication automatique.</p>' +
-      '<label class="goelo-ig-kit-label" for="goelo-ig-kit-text">Texte story</label>' +
-      '<textarea id="goelo-ig-kit-text" class="goelo-ig-kit-textarea" rows="10" readonly></textarea>' +
-      '<button type="button" class="goelo-ig-kit-btn goelo-ig-kit-btn--primary" id="goelo-ig-kit-copy">Copier le texte</button>' +
-      '<p class="goelo-ig-kit-label">Idée visuelle (Canva / app photo)</p>' +
-      '<p class="goelo-ig-kit-visual" id="goelo-ig-kit-visual"></p>' +
-      '<div class="goelo-ig-kit-footer">' +
-      '<button type="button" class="goelo-ig-kit-btn goelo-ig-kit-btn--primary" id="goelo-ig-kit-reload">Recharger la page</button>' +
-      '<button type="button" class="goelo-ig-kit-btn goelo-ig-kit-btn--ghost" id="goelo-ig-kit-close">Fermer et recharger</button>' +
-      "</div></div>";
-
-    var ta = backdrop.querySelector("#goelo-ig-kit-text");
-    if (ta) ta.value = storyText;
-    var visEl = backdrop.querySelector("#goelo-ig-kit-visual");
-    if (visEl) visEl.textContent = visual;
-    var modalEl = backdrop.querySelector(".goelo-ig-kit-modal");
-    if (modalEl) {
-      modalEl.style.cssText =
-        "width:min(100%,26rem);max-height:min(90dvh,34rem);overflow:auto;padding:1.15rem 1.25rem;" +
-        "border-radius:14px;background:#fff;color:#15232d;border:1px solid #dce6ee;" +
-        "box-shadow:0 12px 40px rgba(15,30,45,0.2);";
-    }
-
-    function reload() {
-      window.location.reload();
-    }
-
-    backdrop.hidden = false;
-    var copyBtn = backdrop.querySelector("#goelo-ig-kit-copy");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", function () {
-        copyTextToClipboard(
-          storyText,
-          function () {
-            window.alert("Texte copié dans le presse-papiers.");
-          },
-          function () {
-            window.alert("Copie impossible : sélectionne le texte à la main dans la zone.");
-          }
-        );
-      });
-    }
-    var reloadBtn = backdrop.querySelector("#goelo-ig-kit-reload");
-    if (reloadBtn) reloadBtn.addEventListener("click", reload);
-    var closeBtn = backdrop.querySelector("#goelo-ig-kit-close");
-    if (closeBtn) closeBtn.addEventListener("click", reload);
-    backdrop.onclick = function (e) {
-      if (e.target === backdrop) reload();
-    };
-  }
-
   window.goeloRideRouteSnapshot = goeloRideRouteSnapshot;
   window.goeloRideUpdatesProcessList = goeloRideUpdatesProcessList;
   window.goeloRideUpdatesMountBanner = goeloRideUpdatesMountBanner;
   window.goeloRideUpdatesApplySortieStrip = goeloRideUpdatesApplySortieStrip;
-  window.goeloRideUpdatesShowInstagramKit = goeloRideUpdatesShowInstagramKit;
+  window.goeloRideUpdatesBuildInstagramStoryText = buildInstagramStoryText;
+  window.goeloRideUpdatesPickVisualIdea = pickVisualIdea;
+  window.goeloRideUpdatesCopyToClipboard = copyTextToClipboard;
 })();

@@ -60,6 +60,10 @@ Puis exécuter **si la modale admin « Modifier la sortie » doit pouvoir enregi
 
 (Sinon `route_update` renvoie `not_found_or_fixed` pour ces ids.)
 
+Puis exécuter **pour que `route_update` ne renvoie plus `ok: true` si aucune ligne n’a été mise à jour** (évite un succès trompeur si l’`UPDATE` ne matche pas) :
+
+`supabase/migrations/20250625120000_route_update_rowcount.sql`
+
 Puis exécuter **pour afficher le niveau cycliste à côté des pseudos dans les listes d’inscrits** (colonne `signups.cyclist_level`, paramètre optionnel `p_cyclist_level` sur `signup_register`, `signup_list_all_names` renvoie des objets `{ "pseudo", "cyclist_level" }`) :
 
 `supabase/migrations/20250623120000_signups_cyclist_level.sql`
