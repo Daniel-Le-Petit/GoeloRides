@@ -3127,13 +3127,3 @@ html.site-retheme .goelo-mobile-nav a:hover {
 html.site-retheme .app-main--infos .site-footer {
   margin-top: 2rem;
 }
-
-/* —— .goelo-scrolly : toujours visible (l’ancien effet opacity:0 cassait l’accueil et #groupes sur mobile). —— */
-html.site-retheme .goelo-scrolly,
-html.site-retheme .goelo-scrolly.goelo-scrolly--in {
-  opacity: 1 !important;
-  transform: none !important;
-  filter: none !important;
-  transition: none !important;
-  will-change: auto !important;
-}

@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="parcours.css">
   <link rel="stylesheet" href="app-chrome.css">
-  <link rel="stylesheet" href="site-retheme.css?v=4">
+  <link rel="stylesheet" href="site-retheme.css?v=5">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Aller au contenu principal</a>
@@ -38,7 +38,7 @@
       </div>
 
       <div class="sorties-main-pad infos-pratiques-main">
-        <section class="infos-panel infos-panel--depart goelo-scrolly" aria-labelledby="infos-depart-title">
+        <section class="infos-panel infos-panel--depart" aria-labelledby="infos-depart-title">
           <p class="infos-kicker"><span class="infos-kicker-num">1</span> Point de départ</p>
           <h2 id="infos-depart-title" class="visually-hidden">Point de départ</h2>
           <div class="infos-depart-grid">
@@ -54,7 +54,7 @@
         </section>
 
         <div class="infos-cards">
-          <details class="infos-accordion goelo-scrolly">
+          <details class="infos-accordion">
             <summary class="infos-accordion-summary">
               <span class="infos-accordion-icon" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M8 7V3m8 4V3M5 11h14M5 21h14V9H5v12z"/><path d="M9 7a3 3 0 016 0v1H9V7z"/></svg>
@@ -78,7 +78,7 @@
             </div>
           </details>
 
-          <details class="infos-accordion goelo-scrolly">
+          <details class="infos-accordion">
             <summary class="infos-accordion-summary">
               <span class="infos-accordion-icon" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20.5v-1a5 5 0 0110 0v1"/></svg>
@@ -100,7 +100,7 @@
             </div>
           </details>
 
-          <details class="infos-accordion goelo-scrolly">
+          <details class="infos-accordion">
             <summary class="infos-accordion-summary">
               <span class="infos-accordion-icon" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3l8 5v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V8l8-5z"/><path d="M9.5 12.5l2 2 3.5-4"/></svg>
@@ -119,7 +119,7 @@
           </details>
         </div>
 
-        <details class="infos-accordion infos-accordion--wide goelo-scrolly">
+        <details class="infos-accordion infos-accordion--wide">
           <summary class="infos-accordion-summary">
             <span class="infos-accordion-icon" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
@@ -132,23 +132,23 @@
           </summary>
           <div class="infos-accordion-body">
             <div class="infos-safety-cards" role="list">
-              <article class="infos-safety-card goelo-scrolly" role="listitem">
+              <article class="infos-safety-card" role="listitem">
                 <h3 class="infos-safety-card-title">Roulez en groupe</h3>
                 <p class="infos-safety-card-text">Respecter les écarts du <a href="groupes.html">niveau</a> ; ne pas briser le peloton sans prévenir.</p>
               </article>
-              <article class="infos-safety-card goelo-scrolly" role="listitem">
+              <article class="infos-safety-card" role="listitem">
                 <h3 class="infos-safety-card-title">Respectez le code</h3>
                 <p class="infos-safety-card-text">Signalisations, priorités, autres usagers : même exigence qu’en solo.</p>
               </article>
-              <article class="infos-safety-card goelo-scrolly" role="listitem">
+              <article class="infos-safety-card" role="listitem">
                 <h3 class="infos-safety-card-title">Signalez</h3>
                 <p class="infos-safety-card-text">Obstacles, nids-de-poule, changements de direction ou d’allure.</p>
               </article>
-              <article class="infos-safety-card goelo-scrolly" role="listitem">
+              <article class="infos-safety-card" role="listitem">
                 <h3 class="infos-safety-card-title">Adaptez l’allure</h3>
                 <p class="infos-safety-card-text">Météo, fatigue, revêtement : la sortie doit rester accessible à tout le monde.</p>
               </article>
-              <article class="infos-safety-card goelo-scrolly" role="listitem">
+              <article class="infos-safety-card" role="listitem">
                 <h3 class="infos-safety-card-title">En cas de problème</h3>
                 <p class="infos-safety-card-text">Prévenir celles et ceux qui roulent avec toi ; arrêt groupé si besoin.</p>
               </article>
@@ -157,7 +157,7 @@
           </div>
         </details>
 
-        <div class="infos-banner goelo-scrolly" role="note">
+        <div class="infos-banner" role="note">
           <span class="infos-banner-heart" aria-hidden="true">♡</span>
           <p><strong>Bienveillance, esprit d’équipe et bonne humeur</strong> sont essentiels pour une belle sortie sur la côte du Goëlo.</p>
         </div>
@@ -242,7 +242,6 @@
       }
     })();
   </script>
-  <script src="goelo-scrolly.js" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
 </body>
