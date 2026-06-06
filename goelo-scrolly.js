@@ -33,7 +33,8 @@
         }
       });
     },
-    { root: null, rootMargin: "0px 0px 18% 0px", threshold: 0.04 }
+    /* threshold 0 : plus fiable sur mobile (derniers blocs en bas de page). */
+    { root: null, rootMargin: "0px 0px 18% 0px", threshold: 0 }
   );
 
   function start() {
