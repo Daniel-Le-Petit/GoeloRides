@@ -728,6 +728,23 @@ html.goelo-auth-modal-open {
   outline-offset: 1px;
 }
 
+.goelo-auth-field select {
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(21, 101, 168, 0.25);
+  font-family: inherit;
+  font-size: 0.9rem;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  background: #fff;
+  color: var(--app-text, #15232d);
+}
+
+.goelo-auth-field select:focus {
+  outline: 2px solid rgba(21, 101, 168, 0.35);
+  outline-offset: 1px;
+}
+
 .goelo-auth-hint {
   margin: 0;
   font-size: 0.72rem;
@@ -788,4 +805,73 @@ html.goelo-auth-modal-open {
   line-height: 1.5;
   color: var(--app-text, #15232d);
   word-break: break-word;
+}
+
+/* —— Barre de navigation fixe en bas (téléphone / écran étroit) —— */
+.goelo-mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .goelo-mobile-tabbar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9500;
+    justify-content: stretch;
+    align-items: stretch;
+    gap: 0.2rem;
+    padding: 0.4rem max(0.35rem, env(safe-area-inset-left, 0px)) calc(0.4rem + env(safe-area-inset-bottom, 0px))
+      max(0.35rem, env(safe-area-inset-right, 0px));
+    background: linear-gradient(180deg, #132f45 0%, #0a1a28 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.38);
+    font-family: var(--font-sans, "DM Sans", system-ui, sans-serif);
+  }
+
+  .goelo-mobile-tabbar__link {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 0.45rem 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.78);
+    border-radius: 0.45rem;
+    border: 1px solid transparent;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .goelo-mobile-tabbar__link:hover,
+  .goelo-mobile-tabbar__link:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+
+  .goelo-mobile-tabbar__link:focus-visible {
+    border-color: rgba(249, 215, 28, 0.55);
+    box-shadow: 0 0 0 2px rgba(249, 215, 28, 0.25);
+  }
+
+  .goelo-mobile-tabbar__link[aria-current="page"] {
+    color: var(--sq-yellow, #f9d71c);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(249, 215, 28, 0.35);
+  }
 }

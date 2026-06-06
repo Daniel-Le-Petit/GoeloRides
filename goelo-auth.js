@@ -395,6 +395,52 @@
     return { ok: true, body: j };
   }
 
+  /** Met à jour user_metadata (ex. niveau cycliste) pour la session courante. */
+  async function authUserPutMetadata(dataPatch) {
+    var s = readSession();
+    if (!s || !s.access_token) return { ok: false, message: "Pas de session active." };
+    var c = getSupabaseConfig();
+    if (!isConfigured()) return { ok: false, message: "Supabase non configuré." };
+    var base = c.url.replace(/\/?$/, "");
+    var res;
+    try {
+      res = await fetch(base + "/auth/v1/user", {
+        method: "PUT",
+        headers: {
+          apikey: c.anonKey,
+          Authorization: "Bearer " + s.access_token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ data: dataPatch || {} })
+      });
+    } catch (err) {
+      void err;
+      return { ok: false, message: "Réseau indisponible." };
+    }
+    var j;
+    try {
+      j = await res.json();
+    } catch (e) {
+      void e;
+      return { ok: false, message: "Réponse illisible." };
+    }
+    if (!res.ok) {
+      var raw =
+        (j && (j.msg || j.message || j.error_description)) ||
+        (j && j.error ? String(j.error) : "") ||
+        "HTTP " + res.status;
+      return { ok: false, message: humanizeAuthError(String(raw).trim(), "/auth/v1/user") };
+    }
+    void j;
+    void refreshSessionPseudoFromUserEndpoint();
+    try {
+      window.dispatchEvent(new CustomEvent("goelo-user-session-updated"));
+    } catch (e2) {
+      void e2;
+    }
+    return { ok: true };
+  }
+
   async function signInWithPassword(email, password) {
     var r = await authFetch("/auth/v1/token?grant_type=password", {
       email: String(email).trim().toLowerCase(),
@@ -409,13 +455,15 @@
     return { ok: true };
   }
 
-  async function signUp(email, password, pseudo) {
+  async function signUp(email, password, pseudo, cyclistLevel) {
     var p = String(pseudo || "").trim();
     if (!p) return { ok: false, message: "Indique un pseudo." };
+    var cl = String(cyclistLevel || "").trim();
+    if (!cl) return { ok: false, message: "Indique ton niveau cycliste (débutant, intermédiaire ou confirmé)." };
     var signupBody = {
       email: String(email).trim().toLowerCase(),
       password: password,
-      data: { pseudo: p }
+      data: { pseudo: p, cyclist_level: cl }
     };
     try {
       if (typeof window !== "undefined" && window.location && window.location.origin) {
@@ -573,15 +621,27 @@
       '      <button type="button" class="goelo-auth-tab is-active" data-tab="in" role="tab" aria-selected="true">Connexion</button>' +
       '      <button type="button" class="goelo-auth-tab" data-tab="up" role="tab" aria-selected="false">Inscription</button>' +
       "    </div>" +
-      '    <form class="goelo-auth-form" id="goelo-auth-form-in" autocomplete="on">' +
-      '      <label class="goelo-auth-field"><span>E-mail</span><input type="email" name="email" required autocomplete="username" maxlength="120"></label>' +
-      '      <label class="goelo-auth-field"><span>Mot de passe</span><input type="password" name="password" required autocomplete="current-password" minlength="6" maxlength="128"></label>' +
-      '      <p class="goelo-auth-error" id="goelo-auth-err-in" hidden></p>' +
+    '    <form class="goelo-auth-form" id="goelo-auth-form-in" autocomplete="on">' +
+    '      <label class="goelo-auth-field"><span>E-mail</span><input type="email" name="email" required autocomplete="username" maxlength="120"></label>' +
+    '      <label class="goelo-auth-field"><span>Mot de passe</span><input type="password" name="password" required autocomplete="current-password" minlength="6" maxlength="128"></label>' +
+    '      <label class="goelo-auth-field"><span>Niveau cycliste (optionnel)</span><select name="cyclist_level">' +
+    '        <option value="">— Ne pas mettre à jour —</option>' +
+    '        <option value="debutant">Débutant</option>' +
+    '        <option value="intermediaire">Intermédiaire</option>' +
+    '        <option value="confirme">Confirmé</option>' +
+    "      </select></label>" +
+    '      <p class="goelo-auth-error" id="goelo-auth-err-in" hidden></p>' +
       '      <button type="submit" class="goelo-auth-submit">Se connecter</button>' +
       "    </form>" +
-      '    <form class="goelo-auth-form" id="goelo-auth-form-up" hidden autocomplete="on">' +
-      '      <label class="goelo-auth-field"><span>Pseudo</span><input type="text" name="pseudo" required autocomplete="nickname" maxlength="40" pattern="[\\S].*"></label>' +
-      '      <label class="goelo-auth-field"><span>E-mail</span><input type="email" name="email" required autocomplete="email" maxlength="120"></label>' +
+    '    <form class="goelo-auth-form" id="goelo-auth-form-up" hidden autocomplete="on">' +
+    '      <label class="goelo-auth-field"><span>Pseudo</span><input type="text" name="pseudo" required autocomplete="nickname" maxlength="40" pattern="[\\S].*"></label>' +
+    '      <label class="goelo-auth-field"><span>Niveau cycliste</span><select name="cyclist_level">' +
+    '        <option value="" disabled hidden>— Choisir —</option>' +
+    '        <option value="debutant">Débutant</option>' +
+    '        <option value="intermediaire">Intermédiaire</option>' +
+    '        <option value="confirme">Confirmé</option>' +
+    "      </select></label>" +
+    '      <label class="goelo-auth-field"><span>E-mail</span><input type="email" name="email" required autocomplete="email" maxlength="120"></label>' +
       '      <label class="goelo-auth-field"><span>Mot de passe</span><input type="password" name="password" required autocomplete="new-password" minlength="6" maxlength="128"></label>' +
       '      <p class="goelo-auth-hint">Au moins 6 caractères. Tu te reconnecteras avec ton e-mail et ce mot de passe.</p>' +
       '      <p class="goelo-auth-error" id="goelo-auth-err-up" hidden></p>' +
@@ -776,6 +836,14 @@
         setErr(errIn, r.message);
         return;
       }
+      var cl = fd.get("cyclist_level");
+      if (cl != null && String(cl).trim()) {
+        var pu = await authUserPutMetadata({ cyclist_level: String(cl).trim() });
+        if (!pu.ok) {
+          window.alert("Connexion OK, mais la mise à jour du niveau a échoué : " + pu.message);
+        }
+      }
+      setErr(errIn, "");
       updateTrigger();
       showLoggedState();
     });
@@ -787,7 +855,8 @@
       var email = fd.get("email");
       var password = fd.get("password");
       var pseudo = fd.get("pseudo");
-      var r = await signUp(email, password, pseudo);
+      var cyclistLevel = fd.get("cyclist_level");
+      var r = await signUp(email, password, pseudo, cyclistLevel);
       if (!r.ok) {
         setErr(errUp, r.message);
         return;
@@ -828,11 +897,22 @@
     init();
   }
 
+  /** Niveau cycliste depuis le JWT (user_metadata), si session Goëlo active. */
+  function getCyclistLevelFromSession() {
+    var s = readSession();
+    if (!s || !s.access_token) return "";
+    var pl = parseJwtPayload(s.access_token);
+    if (!pl || typeof pl !== "object") return "";
+    var um = normalizeUserMetadata(pl.user_metadata);
+    return String(um.cyclist_level || "").trim();
+  }
+
   window.GoeloAuth = {
     readSession: readSession,
     getAccessToken: function () {
       var s = readSession();
       return s && s.access_token ? s.access_token : null;
-    }
+    },
+    getCyclistLevelFromSession: getCyclistLevelFromSession
   };
 })();

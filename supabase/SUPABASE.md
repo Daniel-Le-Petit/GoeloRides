@@ -42,6 +42,32 @@ Puis exécuter **si tu veux supprimer une sortie personnalisée** depuis le site
 
 (Crée la RPC `route_delete(p_route_id text)` : même garde admin, `is_active = false` sur les routes `route_kind = 'custom'` uniquement.)
 
+Puis exécuter **pour le fil de discussion sur chaque fiche sortie** (commentaires publics pseudo + texte, RPC uniquement — pas d’accès direct anon à la table) :
+
+`supabase/migrations/20250620120000_sortie_route_comments.sql`
+
+(Table `route_comments`, RPC `sortie_comment_list` / `sortie_comment_add`. Sans ce fichier, les appels RPC renvoient 404 : le fil de discussion ne peut pas charger ni publier. La section n’apparaît pas si la clé Supabase n’est pas configurée sur la page.)
+
+Puis exécuter **pour la capacité max, liste d’attente, statut / visibilité des sorties et filtre `routes_list`** :
+
+`supabase/migrations/20250621130000_signup_waitlist_route_visibility.sql`
+
+(Colonne `signups.waitlist`, évolution des RPC `signup_register`, `signup_unregister`, `signup_list_all_names` { participants + waitlist }, `signup_get_registration` avec `on_waitlist`, `routes_list` avec filtre visibilité + mode admin `p_filter.includeNonPublic`, et blocage commentaires si sortie annulée.)
+
+Puis exécuter **si la modale admin « Modifier la sortie » doit pouvoir enregistrer les trois parcours intégrés** (Falaises, Bréhec, Boucle) et non seulement les sorties `custom` :
+
+`supabase/migrations/20250622120000_route_update_allow_fixed_builtins.sql`
+
+(Sinon `route_update` renvoie `not_found_or_fixed` pour ces ids.)
+
+Puis exécuter **pour afficher le niveau cycliste à côté des pseudos dans les listes d’inscrits** (colonne `signups.cyclist_level`, paramètre optionnel `p_cyclist_level` sur `signup_register`, `signup_list_all_names` renvoie des objets `{ "pseudo", "cyclist_level" }`) :
+
+`supabase/migrations/20250623120000_signups_cyclist_level.sql`
+
+Puis exécuter **pour une ville / commune optionnelle affichée avec les inscrits** (colonne `signups.participant_city`, paramètre `p_participant_city` sur `signup_register`, clé `city` dans les objets renvoyés par `signup_list_all_names`) :
+
+`supabase/migrations/20250624120000_signups_participant_city.sql`
+
 Puis exécuter **pour masquer aussi les parcours intégrés** (`falaises`, `brehec`, `boucle`) depuis la même modale **« Gérer les sorties »** / liste **« Corriger une sortie »** :
 
 `supabase/migrations/20250611140000_goelo_hidden_builtins.sql`

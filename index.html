@@ -4532,6 +4532,13 @@
     </main>
   </div>
 
+  <nav class="goelo-mobile-tabbar" role="navigation" aria-label="Navigation principale" data-no-swipe-nav>
+    <a href="index.html" class="goelo-mobile-tabbar__link" aria-current="page">Accueil</a>
+    <a href="groupes.html" class="goelo-mobile-tabbar__link">Groupes</a>
+    <a href="sorties.html" class="goelo-mobile-tabbar__link">Sorties</a>
+    <a href="infos-pratiques.html" class="goelo-mobile-tabbar__link">Infos</a>
+  </nav>
+
   <div class="signup-modal new-route-modal new-route-modal--goelo-app" id="new-route-modal" hidden>
     <div class="signup-modal-backdrop" data-close-new-route aria-hidden="true"></div>
     <div class="signup-modal-dialog new-route-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="new-route-modal-title">
@@ -4712,15 +4719,43 @@
                 <span class="new-route-field-label">Description courte (optionnel)</span>
                 <input type="text" id="new-route-desc" placeholder="Une ligne sur la sortie" maxlength="200" autocomplete="off">
               </label>
+              <label>
+                <span class="new-route-field-label">Lieu de départ précis <strong>(affiché sur la fiche sortie)</strong></span>
+                <input type="text" id="new-route-meet-detail" placeholder="Ex. : parking du port, côté WC publics — Kasino, entrée principale…" maxlength="220" autocomplete="off">
+              </label>
+              <label>
+                <span class="new-route-field-label">Durée estimée (optionnel)</span>
+                <input type="text" id="new-route-duration-min" inputmode="text" maxlength="12" placeholder="ex. 2:30 ou 165 (minutes)" title="Heures:minutes (2:30) ou nombre de minutes (165) — roulage + pauses" autocomplete="off">
+              </label>
             </div>
 
             <div class="new-route-panel" id="new-route-panel-4" data-wizard-step="4" hidden>
               <p class="signup-hint new-route-panel-intro">
-                <strong>Étape 4 — Participants</strong>
+                <strong>Étape 4 — Capacité &amp; visibilité</strong>
               </p>
               <p class="new-route-panel-hint">
-                Après création, les inscriptions se font sur la page <strong>Sorties</strong> : bouton <strong>« Je participe ! »</strong> sur la carte du parcours.
+                Après création, les inscriptions se font sur la page Sorties puis la fiche sortie. Tu peux limiter le nombre de places : au-delà, file d’attente automatique.
               </p>
+              <label>
+                <span class="new-route-field-label">Places max (peloton principal)</span>
+                <input type="number" id="new-route-max-p" min="0" max="500" step="1" placeholder="0 = sans limite" value="0" title="0 = illimité">
+              </label>
+              <label>
+                <span class="new-route-field-label">Statut des inscriptions</span>
+                <select id="new-route-status" class="new-route-select">
+                  <option value="open">Ouvertes</option>
+                  <option value="closed">Fermées (plus d’inscription)</option>
+                  <option value="cancelled">Sortie annulée</option>
+                </select>
+              </label>
+              <label>
+                <span class="new-route-field-label">Visibilité</span>
+                <select id="new-route-visibility" class="new-route-select">
+                  <option value="public">Publique (listes + fiche + inscription)</option>
+                  <option value="invitation">Sur invitation (fiche visible ; inscription web bloquée)</option>
+                  <option value="private">Privée (masquée des listes publiques — admin / édition OK)</option>
+                </select>
+              </label>
             </div>
 
             <div class="new-route-panel" id="new-route-panel-5" data-wizard-step="5" hidden>
@@ -4824,6 +4859,19 @@
           <span class="sr-only">E-mail</span>
           <input type="email" name="email" id="signup-modal-email" placeholder="Ton e-mail" required autocomplete="email" maxlength="120">
         </label>
+        <label>
+          <span class="sr-only">Niveau cycliste (optionnel)</span>
+          <select id="signup-modal-cyclist-level" name="cyclist_level" aria-label="Niveau cycliste (optionnel)" autocomplete="off">
+            <option value="">— Non indiqué —</option>
+            <option value="debutant">Débutant</option>
+            <option value="intermediaire">Intermédiaire</option>
+            <option value="confirme">Confirmé</option>
+          </select>
+        </label>
+        <label>
+          <span class="sr-only">Ville ou commune (optionnel)</span>
+          <input type="text" id="signup-modal-city" name="participant_city" maxlength="80" placeholder="Ville (optionnel)" aria-label="Ville ou commune (optionnel)" autocomplete="address-level2">
+        </label>
         <button type="submit" class="btn-primary">Je participe !</button>
       </form>
       <div class="participants-panel" aria-live="polite">
@@ -4832,6 +4880,11 @@
         </p>
         <ul class="participants-list is-hidden" id="modal-participants-list"></ul>
         <p class="participants-empty" id="modal-participants-empty">Personne pour l’instant — sois le ou la première !</p>
+      </div>
+      <div class="participants-panel participants-panel--waitlist" id="signup-modal-waitlist-wrap" hidden aria-live="polite">
+        <p class="participants-heading">Liste d’attente</p>
+        <ul class="participants-list is-hidden" id="modal-waitlist-list"></ul>
+        <p class="participants-empty" id="modal-waitlist-empty">Personne en liste d’attente.</p>
       </div>
       <a class="signup-mailto-link" id="signup-modal-mailto" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer">Je m’inscris par e-mail à goelo.rides@gmail.com</a>
       <p class="signup-hint">Gratuit · sans engagement · tu peux annuler jusqu’à la veille.</p>
@@ -4849,7 +4902,7 @@
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
   </script>
   <script src="goelo-swipe-nav.js" defer></script>
-  <script src="parcours.js" defer></script>
   <script src="goelo-auth.js" defer></script>
+  <script src="parcours.js" defer></script>
 </body>
 </html>

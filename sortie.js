@@ -284,6 +284,67 @@
     }
   }
 
+  function formatMinutesToHm(totalMin) {
+    const h = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    return String(h) + ":" + String(mm).padStart(2, "0");
+  }
+
+  /** Saisie admin : minutes entières ou « H:MM » / « HH:MM » → { minutes, hm } ou null. */
+  function parseDurationInputToStore(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return null;
+    if (/^\d+$/.test(s)) {
+      const n = parseInt(s, 10);
+      if (!Number.isFinite(n) || n <= 0 || n > 36 * 60) return null;
+      return { minutes: n, hm: formatMinutesToHm(n) };
+    }
+    const m = s.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
+    if (m) {
+      const hh = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      if (!Number.isFinite(hh) || !Number.isFinite(mm) || mm < 0 || mm > 59 || hh > 36) return null;
+      const minutes = hh * 60 + mm;
+      if (minutes <= 0) return null;
+      return { minutes: minutes, hm: formatMinutesToHm(minutes) };
+    }
+    return null;
+  }
+
+  function routeEffectiveDurationMinutes(route) {
+    let min =
+      route && route.estimatedDurationMinutes != null && Number.isFinite(Number(route.estimatedDurationMinutes))
+        ? Math.round(Number(route.estimatedDurationMinutes))
+        : 0;
+    const hmRaw =
+      route && typeof route.estimatedDurationHm === "string" && route.estimatedDurationHm.trim()
+        ? String(route.estimatedDurationHm).trim()
+        : "";
+    if (hmRaw) {
+      const p = parseDurationInputToStore(hmRaw);
+      if (p) min = p.minutes;
+    }
+    return min > 0 ? min : 0;
+  }
+
+  /** Texte HTML-échappé pour <dd> (vide si pas de durée). */
+  function routeEstimatedDurationDdHtml(route) {
+    const min = routeEffectiveDurationMinutes(route);
+    if (min <= 0) return "";
+    if (min < 60) {
+      return escapeHtml("Environ " + min + " min");
+    }
+    const human = "Environ " + Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0");
+    return escapeHtml(human + " (≈ " + formatMinutesToHm(min) + ")");
+  }
+
+  /** Libellé court pour pastille héros, ex. « ≈ 2:30 ». */
+  function routeDurationHeroLabel(route) {
+    const min = routeEffectiveDurationMinutes(route);
+    if (min <= 0) return "";
+    return "≈ " + formatMinutesToHm(min);
+  }
+
   function dbRowToRoute(row) {
     const fc = row && row.front_config && typeof row.front_config === "object" ? row.front_config : {};
     return {
@@ -325,6 +386,32 @@
         typeof fc.meetPlace === "string" && fc.meetPlace.trim()
           ? fc.meetPlace.trim()
           : DEFAULT_MEET_PLACE,
+      meetPlaceDetail:
+        typeof fc.meetPlaceDetail === "string" && fc.meetPlaceDetail.trim()
+          ? fc.meetPlaceDetail.trim()
+          : "",
+      estimatedDurationHm:
+        typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
+          ? String(fc.estimatedDurationHm).trim()
+          : "",
+      estimatedDurationMinutes: (function () {
+        if (typeof fc.estimatedDurationMinutes === "number" && Number.isFinite(fc.estimatedDurationMinutes)) {
+          return Math.max(0, Math.round(fc.estimatedDurationMinutes));
+        }
+        if (typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()) {
+          const p = parseDurationInputToStore(fc.estimatedDurationHm);
+          return p ? p.minutes : null;
+        }
+        return null;
+      })(),
+      maxParticipants:
+        typeof fc.maxParticipants === "number" && Number.isFinite(fc.maxParticipants) && fc.maxParticipants > 0
+          ? Math.round(fc.maxParticipants)
+          : typeof fc.maxParticipants === "string" && String(fc.maxParticipants).trim()
+            ? Math.max(0, parseInt(String(fc.maxParticipants).replace(/\D/g, ""), 10) || 0) || null
+            : null,
+      sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
+      visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
       cities: Array.isArray(fc.cities) && fc.cities.length
         ? fc.cities
         : [{ name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }],
@@ -519,6 +606,45 @@
       .replace(/\"/g, "&quot;");
   }
 
+  function sanitizeSignupCyclistLevel(raw) {
+    const c = String(raw || "").trim().toLowerCase();
+    if (c === "debutant" || c === "intermediaire" || c === "confirme") return c;
+    return "";
+  }
+
+  function sanitizeParticipantCity(raw) {
+    let s = String(raw || "")
+      .replace(/[\u0000-\u001F\u007F]/g, "")
+      .trim()
+      .replace(/\s+/g, " ");
+    if (s.length > 80) s = s.slice(0, 80);
+    return s;
+  }
+
+  function cyclistLevelLabelFr(code) {
+    const c = String(code || "").trim().toLowerCase();
+    if (c === "debutant") return "Débutant";
+    if (c === "intermediaire") return "Intermédiaire";
+    if (c === "confirme") return "Confirmé";
+    return "";
+  }
+
+  /** Élément renvoyé par signup_list_all_names : chaîne (ancien format) ou { pseudo, cyclist_level, city }. */
+  function normalizeParticipantRowRpc(x) {
+    if (x == null) return { pseudo: "", cyclist_level: "", city: "" };
+    if (typeof x === "string") {
+      const p = String(x).trim();
+      return { pseudo: p, cyclist_level: "", city: "" };
+    }
+    if (typeof x === "object") {
+      const p = String(x.pseudo != null ? x.pseudo : x.name != null ? x.name : "").trim();
+      const cl = sanitizeSignupCyclistLevel(x.cyclist_level);
+      const cy = sanitizeParticipantCity(x.city != null ? x.city : x.participant_city);
+      return { pseudo: p, cyclist_level: cl, city: cy };
+    }
+    return { pseudo: "", cyclist_level: "", city: "" };
+  }
+
   /** Pour src/href : ne pas transformer & (sinon data URLs et query cassent). */
   function escapeAttr(s) {
     return String(s || "").replace(/"/g, "&quot;");
@@ -621,6 +747,7 @@
     "L’équipe Goëlo Rides";
 
   var sortiePageRouteRef = null;
+  var sortieCommentsPollId = null;
 
   function departTimeDisplay(route) {
     const label = String((route.depart && route.depart.dateLabel) || "");
@@ -628,6 +755,33 @@
     if (m) return m[1];
     const m2 = label.match(/(\d{1,2}h\d{2})/);
     return m2 ? m2[1] : SHARED.time;
+  }
+
+  function visibilityLabelSortie(v) {
+    const s = String(v || "public").toLowerCase();
+    if (s === "private" || s === "prive" || s === "privee") return "Privée";
+    if (s === "invitation" || s === "invite" || s === "invitation_only") return "Sur invitation";
+    return "Publique";
+  }
+
+  function sortieStatusPublicLabel(st) {
+    const s = String(st || "open").toLowerCase();
+    if (s === "closed" || s === "ferme" || s === "fermée") return "Inscriptions fermées — contacte l’organisation pour toute exception.";
+    if (s === "cancelled" || s === "canceled" || s === "annulee" || s === "annulée") return "Cette sortie est annulée.";
+    return "";
+  }
+
+  function applySortieStatusBanner(route) {
+    const el = document.getElementById("sortie-status-banner");
+    if (!el) return;
+    const msg = sortieStatusPublicLabel(route && route.sortieStatus);
+    if (!msg) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    el.textContent = msg;
   }
 
   function levelSlugForHero(levelClass) {
@@ -679,6 +833,10 @@
       "<span>" +
       escapeHtml(dplus) +
       "</span>" +
+      (function () {
+        const dur = routeDurationHeroLabel(route);
+        return dur ? "<span>" + escapeHtml(dur) + "</span>" : "";
+      })() +
       "</div>" +
       '<div id="sortie-hero-actions" class="sortie-hero-actions"></div>' +
       "</div></div>"
@@ -764,9 +922,21 @@
       " · <strong>Départ roulant</strong> · " +
       escapeHtml(departTimeDisplay(route)) +
       "</dd></div>" +
-      '<div class="sortie-fact"><dt>Lieu de rendez-vous</dt><dd>' +
-      escapeHtml(route.meetPlace || DEFAULT_MEET_PLACE) +
-      "</dd></div></dl>" +
+      (route.meetPlaceDetail && String(route.meetPlaceDetail).trim()
+        ? '<div class="sortie-fact"><dt>Départ précis</dt><dd>' +
+          escapeHtml(String(route.meetPlaceDetail).trim()) +
+          "</dd></div>"
+        : "") +
+      (function () {
+        const dd = routeEstimatedDurationDdHtml(route);
+        return dd ? '<div class="sortie-fact"><dt>Durée estimée</dt><dd>' + dd + "</dd></div>" : "";
+      })() +
+      (route.visibility && String(route.visibility).toLowerCase() !== "public"
+        ? '<div class="sortie-fact"><dt>Visibilité</dt><dd>' +
+          escapeHtml(visibilityLabelSortie(route.visibility)) +
+          "</dd></div>"
+        : "") +
+      "</dl>" +
 
       '<section class="sortie-block">' +
       '<h3 class="sortie-block-title">À propos</h3>' +
@@ -899,20 +1069,40 @@
     }
   }
 
-  async function registerSortie(route, pseudo, email) {
+  async function registerSortie(route, pseudo, email, cyclistLevelRaw, participantCityRaw) {
     const p = (pseudo || "").trim();
     const e = (email || "").trim().toLowerCase();
+    const cl = sanitizeSignupCyclistLevel(cyclistLevelRaw);
+    const city = sanitizeParticipantCity(participantCityRaw);
     if (!p || !e) return { ok: false, error: "missing" };
     if (isSupabaseEnabled()) {
       var data = await supabaseRpc("signup_register", {
         p_route_id: route.id,
         p_pseudo: p,
-        p_email: e
+        p_email: e,
+        p_cyclist_level: cl || null,
+        p_participant_city: city || null
       });
       if (Array.isArray(data)) data = data[0];
       if (!data || !data.ok) {
         if (data && data.error === "already_registered") {
           return { ok: false, error: "already_registered" };
+        }
+        if (data && data.error === "sortie_cancelled") {
+          window.alert("Cette sortie est annulée — inscription impossible.");
+          return { ok: false, error: "sortie_cancelled" };
+        }
+        if (data && data.error === "sortie_closed") {
+          window.alert("Les inscriptions sont fermées pour cette sortie.");
+          return { ok: false, error: "sortie_closed" };
+        }
+        if (data && data.error === "private_route") {
+          window.alert("Cette sortie est privée — inscription impossible depuis le site.");
+          return { ok: false, error: "private_route" };
+        }
+        if (data && data.error === "invitation_only") {
+          window.alert("Inscription sur invitation uniquement — contacte l’organisation.");
+          return { ok: false, error: "invitation_only" };
         }
         var fail = goeloLastRpcFailure;
         var code = fail ? fail.code : 40;
@@ -923,13 +1113,29 @@
         localStorage.setItem("goeloRides_last_email", JSON.stringify(e));
       } catch (e1) { /* ignore */ }
       await notifySignupFormSubmit(route, p, e);
-      return { ok: true };
+      return { ok: true, waitlist: !!data.waitlist };
     }
     const obj = loadLocalSignupsObject();
     if (!obj[route.id]) obj[route.id] = [];
+    const maxP =
+      route && route.maxParticipants != null && Number(route.maxParticipants) > 0
+        ? Number(route.maxParticipants)
+        : null;
+    const mainCount = (obj[route.id] || []).filter(function (x) {
+      return x && !x.waitlist;
+    }).length;
     const wasNew = !isRegisteredLocal(route.id, e, obj);
+    let waitlist = false;
+    if (wasNew && maxP != null && mainCount >= maxP) waitlist = true;
     if (wasNew) {
-      obj[route.id].push({ pseudo: p, email: e, at: new Date().toISOString() });
+      obj[route.id].push({
+        pseudo: p,
+        email: e,
+        at: new Date().toISOString(),
+        waitlist: waitlist,
+        cyclist_level: cl,
+        participant_city: city
+      });
     }
     if (!saveLocalSignupsObject(obj)) {
       if (wasNew) obj[route.id].pop();
@@ -940,7 +1146,7 @@
       localStorage.setItem("goeloRides_last_email", JSON.stringify(e));
     } catch (e2) { /* ignore */ }
     await notifySignupFormSubmit(route, p, e);
-    return { ok: true };
+    return { ok: true, waitlist: waitlist };
   }
 
   async function unregisterSortie(route, email) {
@@ -980,8 +1186,12 @@
   }
 
   /** Inscrits : texte + liste de pseudos (Supabase signup_list_all_names ou localStorage). */
-  async function fetchSignupSnapshotForRoute(routeId) {
-    const rid = String(routeId);
+  async function fetchSignupSnapshotForRoute(route) {
+    const rid = String(route && route.id != null ? route.id : "");
+    const leaderPseudo =
+      route && route.rideLeader && String(route.rideLeader).trim()
+        ? String(route.rideLeader).trim()
+        : "";
     if (isSupabaseEnabled()) {
       var data = await supabaseRpc("signup_list_all_names", {});
       if (Array.isArray(data) && data.length) data = data[0];
@@ -989,84 +1199,253 @@
         return {
           countText: "Inscrits : —",
           names: [],
+          participantRows: [],
+          waitlistNames: [],
+          waitlistRows: [],
+          leaderPseudo: leaderPseudo,
+          maxParticipants: null,
           rpcFailed: true,
           localMode: false
         };
       }
       var arr = data[rid];
-      var names = Array.isArray(arr)
-        ? arr
-            .map(function (x) {
-              return String(x).trim();
-            })
-            .filter(Boolean)
-        : [];
+      var participantRows = [];
+      var waitlistRows = [];
+      if (Array.isArray(arr)) {
+        participantRows = arr
+          .map(normalizeParticipantRowRpc)
+          .filter(function (row) {
+            return row.pseudo;
+          });
+      } else if (arr && typeof arr === "object") {
+        var p = arr.participants;
+        var w = arr.waitlist;
+        participantRows = Array.isArray(p)
+          ? p
+              .map(normalizeParticipantRowRpc)
+              .filter(function (row) {
+                return row.pseudo;
+              })
+          : [];
+        waitlistRows = Array.isArray(w)
+          ? w
+              .map(normalizeParticipantRowRpc)
+              .filter(function (row) {
+                return row.pseudo;
+              })
+          : [];
+      }
+      var names = participantRows.map(function (row) {
+        return row.pseudo;
+      });
+      var waitNames = waitlistRows.map(function (row) {
+        return row.pseudo;
+      });
       var n = names.length;
-      var countText = n === 0 ? "0 inscrit·e·s" : n === 1 ? "1 inscrit·e" : n + " inscrit·e·s";
-      return { countText: countText, names: names, rpcFailed: false, localMode: false };
+      var maxP =
+        route && route.maxParticipants != null && Number(route.maxParticipants) > 0
+          ? Number(route.maxParticipants)
+          : null;
+      var capFrag = maxP != null ? " / " + maxP + " places" : "";
+      var countText =
+        n === 0
+          ? "0 inscrit·e·s" + capFrag
+          : n === 1
+            ? "1 inscrit·e" + capFrag
+            : n + " inscrit·e·s" + capFrag;
+      return {
+        countText: countText,
+        names: names,
+        participantRows: participantRows,
+        waitlistNames: waitNames,
+        waitlistRows: waitlistRows,
+        leaderPseudo: leaderPseudo,
+        maxParticipants: maxP,
+        rpcFailed: false,
+        localMode: false
+      };
     }
     var obj = loadLocalSignupsObject();
     var localArr = obj[rid];
     var names = [];
+    var waitNames = [];
+    var participantRows = [];
+    var waitlistRows = [];
     if (Array.isArray(localArr)) {
       localArr.forEach(function (e) {
         var p = e && e.pseudo ? String(e.pseudo).trim() : "";
-        if (p && names.indexOf(p) === -1) names.push(p);
+        if (!p) return;
+        var row = {
+          pseudo: p,
+          cyclist_level: sanitizeSignupCyclistLevel(e && e.cyclist_level),
+          city: sanitizeParticipantCity(e && (e.participant_city || e.city))
+        };
+        if (e && e.waitlist) {
+          if (waitNames.indexOf(p) === -1) {
+            waitNames.push(p);
+            waitlistRows.push(row);
+          }
+        } else {
+          if (names.indexOf(p) === -1) {
+            names.push(p);
+            participantRows.push(row);
+          }
+        }
       });
     }
     var m = names.length;
+    var maxPl =
+      route && route.maxParticipants != null && Number(route.maxParticipants) > 0
+        ? Number(route.maxParticipants)
+        : null;
+    var capL = maxPl != null ? " / " + maxPl + " places" : "";
     var countText =
       m === 0
-        ? "0 inscrit·e·s (mode local)"
+        ? "0 inscrit·e·s (mode local)" + capL
         : m === 1
-          ? "1 inscrit·e (mode local)"
-          : m + " inscrit·e·s (mode local)";
-    return { countText: countText, names: names, rpcFailed: false, localMode: true };
+          ? "1 inscrit·e (mode local)" + capL
+          : m + " inscrit·e·s (mode local)" + capL;
+    return {
+      countText: countText,
+      names: names,
+      participantRows: participantRows,
+      waitlistNames: waitNames,
+      waitlistRows: waitlistRows,
+      leaderPseudo: leaderPseudo,
+      maxParticipants: maxPl,
+      rpcFailed: false,
+      localMode: true
+    };
   }
 
   function renderSortieParticipantsPanel(snap) {
     var sec = document.getElementById("sortie-participants-section");
     var listEl = document.getElementById("sortie-participants-list");
     var emptyEl = document.getElementById("sortie-participants-empty");
+    var wlSec = document.getElementById("sortie-waitlist-section");
+    var wlList = document.getElementById("sortie-waitlist-list");
+    var wlEmpty = document.getElementById("sortie-waitlist-empty");
     if (!sec || !listEl || !emptyEl) return;
     sec.hidden = false;
     listEl.innerHTML = "";
+    var leaderKey = (snap.leaderPseudo || "").trim().toLowerCase();
     if (snap.rpcFailed) {
       emptyEl.hidden = false;
       emptyEl.textContent = "Liste des participant·e·s indisponible pour le moment.";
       var thFail = document.getElementById("sortie-participants-title");
       if (thFail) thFail.textContent = "Participant·e·s";
+      if (wlSec) wlSec.hidden = true;
       return;
     }
     var titleHeading = document.getElementById("sortie-participants-title");
+    var mainRows = snap.participantRows && snap.participantRows.length ? snap.participantRows : null;
+    var nameList =
+      mainRows ||
+      (snap.names || []).map(function (nm) {
+        return { pseudo: String(nm || "").trim(), cyclist_level: "", city: "" };
+      });
     if (titleHeading) {
-      var n = snap.names.length;
+      var n = nameList.length;
       titleHeading.textContent =
         n === 0 ? "Participant·e·s" : n === 1 ? "1 participe" : n + " participent";
     }
-    snap.names.forEach(function (name) {
+    nameList.forEach(function (row) {
+      var name = row.pseudo || "";
       var li = document.createElement("li");
       li.className = "sortie-participants-item";
-      li.textContent = name;
+      var isLead = leaderKey && String(name).trim().toLowerCase() === leaderKey;
+      if (isLead) li.classList.add("sortie-participants-item--leader");
+      li.appendChild(document.createTextNode(name));
+      var lv = cyclistLevelLabelFr(row.cyclist_level);
+      if (lv) {
+        var lvSp = document.createElement("span");
+        lvSp.className = "sortie-participants-level";
+        lvSp.textContent = " · " + lv;
+        li.appendChild(lvSp);
+      }
+      var cty = String(row.city || "").trim();
+      if (cty) {
+        var cSp = document.createElement("span");
+        cSp.className = "sortie-participants-city";
+        cSp.textContent = " · " + cty;
+        li.appendChild(cSp);
+      }
+      if (isLead) {
+        var sp = document.createElement("span");
+        sp.className = "sortie-participants-role";
+        sp.textContent = " · capitaine";
+        li.appendChild(sp);
+      }
       listEl.appendChild(li);
     });
-    emptyEl.hidden = snap.names.length > 0;
+    emptyEl.hidden = nameList.length > 0;
     emptyEl.textContent = snap.localMode
       ? "Aucun pseudo enregistré sur cet appareil pour cette sortie."
       : "Personne pour l’instant — sois le ou la première !";
+
+    var wl = snap.waitlistRows && snap.waitlistRows.length ? snap.waitlistRows : null;
+    var wlNamesFlat =
+      wl ||
+      (snap.waitlistNames || []).map(function (nm) {
+        return { pseudo: String(nm || "").trim(), cyclist_level: "", city: "" };
+      });
+    if (wlSec && wlList && wlEmpty) {
+      var showWl = wlNamesFlat.length > 0;
+      wlSec.hidden = !showWl;
+      wlList.innerHTML = "";
+      wlNamesFlat.forEach(function (row) {
+        var li = document.createElement("li");
+        li.className = "sortie-participants-item";
+        li.appendChild(document.createTextNode(row.pseudo || ""));
+        var wlv = cyclistLevelLabelFr(row.cyclist_level);
+        if (wlv) {
+          var wsp = document.createElement("span");
+          wsp.className = "sortie-participants-level";
+          wsp.textContent = " · " + wlv;
+          li.appendChild(wsp);
+        }
+        var wct = String(row.city || "").trim();
+        if (wct) {
+          var wcSp = document.createElement("span");
+          wcSp.className = "sortie-participants-city";
+          wcSp.textContent = " · " + wct;
+          li.appendChild(wcSp);
+        }
+        wlList.appendChild(li);
+      });
+      wlEmpty.hidden = wlNamesFlat.length > 0;
+    }
   }
 
   async function refreshRegisteredUI(route) {
     const registered = await userIsRegisteredForRoute(route.id);
+    let onWaitlist = false;
+    if (isSupabaseEnabled()) {
+      const em = getLastStoredEmail().trim().toLowerCase();
+      if (em && registered) {
+        let rg = await supabaseRpc("signup_get_registration", {
+          p_route_id: route.id,
+          p_email: em
+        });
+        if (Array.isArray(rg) && rg.length) rg = rg[0];
+        onWaitlist = !!(rg && rg.on_waitlist);
+      }
+    }
     const regLine = document.getElementById("sortie-reg-line");
     if (regLine) {
       regLine.hidden = false;
-      regLine.textContent = registered
-        ? "Tu es inscrit·e sur cette sortie ✓"
-        : "Pas encore inscrit·e — utilise le bouton orange « Je participe ! » ci-dessous.";
-      regLine.classList.toggle("sortie-reg-line--ok", registered);
+      if (registered) {
+        regLine.textContent = onWaitlist
+          ? "Tu es en liste d’attente — si un·e cycliste se désinscrit, tu seras promu·e automatiquement sur le peloton."
+          : "Tu es inscrit·e sur cette sortie ✓";
+        regLine.classList.toggle("sortie-reg-line--ok", !onWaitlist);
+      } else {
+        regLine.textContent =
+          "Pas encore inscrit·e — utilise le bouton orange « Je participe ! » ci-dessous.";
+        regLine.classList.toggle("sortie-reg-line--ok", false);
+      }
     }
-    const snap = await fetchSignupSnapshotForRoute(route.id);
+    const snap = await fetchSignupSnapshotForRoute(route);
     const countEl = document.getElementById("sortie-signup-count");
     if (countEl) {
       countEl.hidden = false;
@@ -1074,14 +1453,42 @@
       countEl.setAttribute("aria-label", snap.countText);
     }
     renderSortieParticipantsPanel(snap);
-    mountSortieParticipateUI(route, registered);
+    mountSortieParticipateUI(route, { registered: registered, onWaitlist: onWaitlist });
   }
 
-  function mountSortieParticipateUI(route, registered) {
+  function sortieSignupBlockedReason(route) {
+    if (!route) return "";
+    const st = String(route.sortieStatus || "open").toLowerCase();
+    if (st === "cancelled" || st === "canceled" || st === "annulee" || st === "annulée") return "cancelled";
+    if (st === "closed" || st === "ferme" || st === "fermée") return "closed";
+    const vis = String(route.visibility || "public").toLowerCase();
+    if (vis === "invitation" || vis === "invite" || vis === "invitation_only") return "invitation";
+    return "";
+  }
+
+  function mountSortieParticipateUI(route, ctx) {
+    ctx = ctx || {};
+    const registered = !!ctx.registered;
+    const onWaitlist = !!ctx.onWaitlist;
     sortiePageRouteRef = route;
     const host = document.getElementById("sortie-hero-actions");
     if (!host) return;
     host.innerHTML = "";
+
+    const block = sortieSignupBlockedReason(route);
+    if (block && !registered) {
+      const p = document.createElement("p");
+      p.className = "sortie-signup-blocked-msg";
+      if (block === "cancelled") {
+        p.textContent = "Inscriptions indisponibles — sortie annulée.";
+      } else if (block === "closed") {
+        p.textContent = "Inscriptions fermées pour cette sortie.";
+      } else {
+        p.textContent = "Inscription sur invitation uniquement — contacte l’organisation ou le·a capitaine.";
+      }
+      host.appendChild(p);
+      return;
+    }
 
     if (registered) {
       const row = document.createElement("div");
@@ -1090,7 +1497,7 @@
       const badge = document.createElement("span");
       badge.className = "btn-je-participe btn-je-participe--done";
       badge.setAttribute("role", "status");
-      badge.textContent = "Inscrit·e ✓";
+      badge.textContent = onWaitlist ? "Liste d’attente" : "Inscrit·e ✓";
       row.appendChild(badge);
 
       const unsub = document.createElement("button");
@@ -1124,11 +1531,216 @@
       const panel = document.getElementById("sortie-signup-panel");
       const emEl = document.getElementById("sortie-signup-email");
       const psEl = document.getElementById("sortie-signup-pseudo");
+      const clEl = document.getElementById("sortie-signup-cyclist-level");
       if (emEl) emEl.value = getLastStoredEmail() || "";
+      if (clEl) {
+        clEl.value = "";
+        if (window.GoeloAuth && typeof window.GoeloAuth.getCyclistLevelFromSession === "function") {
+          const gl = window.GoeloAuth.getCyclistLevelFromSession();
+          if (gl && ["debutant", "intermediaire", "confirme"].indexOf(gl) !== -1) {
+            clEl.value = gl;
+          }
+        }
+      }
       if (panel) panel.hidden = false;
       if (psEl) psEl.focus();
     });
     host.appendChild(go);
+  }
+
+  function unwrapRpcSingle(data) {
+    if (Array.isArray(data) && data.length === 1) return data[0];
+    return data;
+  }
+
+  function stopSortieCommentsPolling() {
+    if (sortieCommentsPollId != null) {
+      clearInterval(sortieCommentsPollId);
+      sortieCommentsPollId = null;
+    }
+  }
+
+  /** Pseudo pour le fil : uniquement si compte Goëlo connecté (session), sinon champ vide. */
+  function getSuggestedCommentPseudoFromAuth() {
+    if (window.GoeloAuth && typeof window.GoeloAuth.readSession === "function") {
+      const s = window.GoeloAuth.readSession();
+      const p = s && s.pseudo ? String(s.pseudo).trim() : "";
+      if (p) return p.slice(0, 40);
+    }
+    return "";
+  }
+
+  function formatCommentDate(iso) {
+    try {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
+    } catch (e) {
+      void e;
+      return "";
+    }
+  }
+
+  function renderSortieCommentsList(items, opts) {
+    opts = opts || {};
+    const listEl = document.getElementById("sortie-comments-list");
+    const emptyEl = document.getElementById("sortie-comments-empty");
+    if (!listEl || !emptyEl) return;
+    listEl.innerHTML = "";
+    if (!items || !items.length) {
+      emptyEl.hidden = !!opts.suppressEmpty;
+      return;
+    }
+    emptyEl.hidden = true;
+    items.forEach(function (c) {
+      if (!c || typeof c !== "object") return;
+      const li = document.createElement("li");
+      li.className = "sortie-comments-item";
+      const meta = document.createElement("div");
+      meta.className = "sortie-comments-meta";
+      const strong = document.createElement("strong");
+      strong.textContent = String(c.pseudo || "").trim() || "—";
+      meta.appendChild(strong);
+      const when = formatCommentDate(c.created_at);
+      if (when) {
+        meta.appendChild(document.createTextNode(" · "));
+        const timeEl = document.createElement("time");
+        timeEl.dateTime = String(c.created_at || "");
+        timeEl.textContent = when;
+        meta.appendChild(timeEl);
+      }
+      li.appendChild(meta);
+      const bodyEl = document.createElement("div");
+      bodyEl.className = "sortie-comments-body";
+      bodyEl.textContent = String(c.body || "").trim();
+      li.appendChild(bodyEl);
+      listEl.appendChild(li);
+    });
+  }
+
+  async function loadSortieCommentsForRoute(route, silent) {
+    const statusEl = document.getElementById("sortie-comments-status");
+    if (!route || !isSupabaseEnabled()) return;
+    if (!silent && statusEl && !statusEl.dataset.sortieHadError) {
+      statusEl.hidden = false;
+      statusEl.textContent = "Chargement des messages…";
+    }
+    const raw = await supabaseRpc("sortie_comment_list", {
+      p_route_id: String(route.id),
+      p_limit: 80
+    });
+    if (!silent && statusEl) {
+      statusEl.hidden = true;
+      statusEl.textContent = "";
+    }
+    if (raw === null) {
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.dataset.sortieHadError = "1";
+        statusEl.textContent = "Impossible de charger les messages pour le moment.";
+      }
+      renderSortieCommentsList([], { suppressEmpty: true });
+      return;
+    }
+    if (statusEl) delete statusEl.dataset.sortieHadError;
+    const arr = Array.isArray(raw) ? raw : [];
+    renderSortieCommentsList(arr);
+  }
+
+  function initSortieDiscussion(route) {
+    const section = document.getElementById("sortie-comments-section");
+    if (!section) return;
+    stopSortieCommentsPolling();
+    const st = String((route && route.sortieStatus) || "open").toLowerCase();
+    if (st === "cancelled" || st === "canceled" || st === "annulee" || st === "annulée") {
+      section.hidden = true;
+      return;
+    }
+    if (!isSupabaseEnabled()) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    const pseudoInput = document.getElementById("sortie-comment-pseudo");
+    if (pseudoInput) {
+      const fromAuth = getSuggestedCommentPseudoFromAuth();
+      if (fromAuth) {
+        pseudoInput.value = fromAuth;
+        pseudoInput.placeholder = "Pseudo ou prénom affiché avec le message";
+      } else {
+        pseudoInput.value = "";
+        pseudoInput.placeholder =
+          "Indique ton pseudo ou prénom (obligatoire) — connecte-toi en haut pour préremplir depuis ton compte";
+      }
+    }
+    const bodyTa = document.getElementById("sortie-comment-body");
+    if (bodyTa) {
+      bodyTa.removeAttribute("readonly");
+      bodyTa.removeAttribute("disabled");
+    }
+    const form = document.getElementById("sortie-comments-form");
+    if (form && !form.dataset.sortieCommentsBound) {
+      form.dataset.sortieCommentsBound = "1";
+      if (!window.__goeloSortieCommentAuthBound) {
+        window.__goeloSortieCommentAuthBound = true;
+        window.addEventListener("goelo-user-session-updated", function () {
+          if (!sortiePageRouteRef) return;
+          const pi = document.getElementById("sortie-comment-pseudo");
+          if (!pi) return;
+          if (String(pi.value || "").trim()) return;
+          const na = getSuggestedCommentPseudoFromAuth();
+          if (na) {
+            pi.value = na;
+            pi.placeholder = "Pseudo ou prénom affiché avec le message";
+          }
+        });
+      }
+      form.addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        if (!sortiePageRouteRef) return;
+        const ps = document.getElementById("sortie-comment-pseudo");
+        const bd = document.getElementById("sortie-comment-body");
+        const btn = document.getElementById("sortie-comment-submit");
+        const pseudo = ps ? String(ps.value || "").trim() : "";
+        const body = bd ? String(bd.value || "").trim() : "";
+        if (pseudo.length < 1 || pseudo.length > 40) {
+          window.alert("Indique un pseudo ou prénom (1 à 40 caractères).");
+          return;
+        }
+        if (body.length < 1 || body.length > 1200) {
+          window.alert("Le message doit faire entre 1 et 1200 caractères.");
+          return;
+        }
+        if (btn) btn.disabled = true;
+        let data = await supabaseRpc("sortie_comment_add", {
+          p_route_id: String(sortiePageRouteRef.id),
+          p_pseudo: pseudo,
+          p_body: body
+        });
+        data = unwrapRpcSingle(data);
+        if (btn) btn.disabled = false;
+        if (data && data.ok === true) {
+          if (bd) bd.value = "";
+          await loadSortieCommentsForRoute(sortiePageRouteRef, true);
+          return;
+        }
+        const err = data && data.error ? String(data.error) : "";
+        if (err === "invalid_route") {
+          window.alert(
+            "Cette sortie n’accepte pas de commentaires (parcours introuvable ou inactif côté serveur)."
+          );
+        } else if (err === "invalid_pseudo" || err === "invalid_body") {
+          window.alert("Pseudo ou message invalide. Vérifie les longueurs autorisées.");
+        } else {
+          const code = goeloLastRpcFailure && goeloLastRpcFailure.code ? goeloLastRpcFailure.code : 37;
+          window.alert(goeloFormatDbFailureAlert(code, goeloLastRpcFailure && goeloLastRpcFailure.httpStatus));
+        }
+      });
+    }
+    loadSortieCommentsForRoute(route, false);
+    sortieCommentsPollId = window.setInterval(function () {
+      loadSortieCommentsForRoute(route, true);
+    }, 90000);
   }
 
   /** Libellé type de sortie (aligné page Sorties / parcours). */
@@ -1686,7 +2298,10 @@
 
     await refreshRegisteredUI(route);
 
+    applySortieStatusBanner(route);
+
     initSortieMap(route);
+    initSortieDiscussion(route);
 
     const signupForm = document.getElementById("sortie-signup-form");
     const signupCancel = document.getElementById("sortie-signup-cancel");
@@ -1704,8 +2319,21 @@
         if (!sortiePageRouteRef) return;
         const ps = document.getElementById("sortie-signup-pseudo");
         const em = document.getElementById("sortie-signup-email");
-        const res = await registerSortie(sortiePageRouteRef, ps ? ps.value : "", em ? em.value : "");
+        const cl = document.getElementById("sortie-signup-cyclist-level");
+        const cityEl = document.getElementById("sortie-signup-city");
+        const res = await registerSortie(
+          sortiePageRouteRef,
+          ps ? ps.value : "",
+          em ? em.value : "",
+          cl ? cl.value : "",
+          cityEl ? cityEl.value : ""
+        );
         if (res.ok) {
+          if (res.waitlist) {
+            window.alert(
+              "Les places du peloton principal sont prises — tu es en liste d’attente. Si un·e cycliste se désinscrit, tu seras promu·e automatiquement (tu le verras ici et sur la page Sorties)."
+            );
+          }
           const panel = document.getElementById("sortie-signup-panel");
           if (panel) panel.hidden = true;
           signupForm.reset();

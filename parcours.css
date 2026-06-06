@@ -723,6 +723,25 @@ body {
       margin-bottom: 0.35rem;
     }
 
+    #new-route-modal.new-route-modal--goelo-app .new-route-select {
+      width: 100%;
+      min-height: 2.65rem;
+      padding: 0.45rem 0.55rem;
+      border-radius: 10px;
+      border: 1px solid var(--app-border);
+      font: inherit;
+      font-size: 0.92rem;
+      background: #fff;
+      color: var(--app-text);
+      margin-bottom: 0.65rem;
+    }
+
+    .participants-panel--waitlist {
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--app-border, #e2e8f0);
+    }
+
     .new-route-type-row {
       display: flex;
       flex-wrap: wrap;
@@ -1332,6 +1351,17 @@ body {
       background: rgba(61, 139, 139, 0.25);
       border: 1px solid rgba(61, 139, 139, 0.5);
       color: var(--white);
+    }
+
+    .participants-list li .modal-participants-level {
+      font-weight: 600;
+      opacity: 0.88;
+    }
+
+    .participants-list li .modal-participants-city {
+      font-weight: 600;
+      font-style: italic;
+      opacity: 0.88;
     }
 
     .participants-empty {

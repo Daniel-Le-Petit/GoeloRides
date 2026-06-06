@@ -85,6 +85,7 @@
         }
       })();
       const supabaseNamesByRoute = {};
+      const supabaseWaitlistByRoute = {};
       let registeredRouteIdsCache = { email: "", routes: [] };
       let emailSupabaseDebounce = null;
       /** Dernier échec transport / HTTP pour message utilisateur (codes 36–39). Réinitialisé à chaque appel RPC. */
@@ -363,9 +364,33 @@
         Object.keys(supabaseNamesByRoute).forEach(function (k) {
           delete supabaseNamesByRoute[k];
         });
+        Object.keys(supabaseWaitlistByRoute).forEach(function (k) {
+          delete supabaseWaitlistByRoute[k];
+        });
         Object.keys(data).forEach(function (id) {
-          const arr = data[id];
-          supabaseNamesByRoute[id] = Array.isArray(arr) ? arr.map(function (x) { return String(x); }) : [];
+          const v = data[id];
+          if (Array.isArray(v)) {
+            supabaseNamesByRoute[id] = v.map(normalizeParticipantEntryRpc).filter(function (r) {
+              return r.pseudo;
+            });
+            supabaseWaitlistByRoute[id] = [];
+          } else if (v && typeof v === "object") {
+            const p = v.participants;
+            const w = v.waitlist;
+            supabaseNamesByRoute[id] = Array.isArray(p)
+              ? p.map(normalizeParticipantEntryRpc).filter(function (r) {
+                  return r.pseudo;
+                })
+              : [];
+            supabaseWaitlistByRoute[id] = Array.isArray(w)
+              ? w.map(normalizeParticipantEntryRpc).filter(function (r) {
+                  return r.pseudo;
+                })
+              : [];
+          } else {
+            supabaseNamesByRoute[id] = [];
+            supabaseWaitlistByRoute[id] = [];
+          }
         });
       }
 
@@ -529,6 +554,34 @@
               : typeof fc.ride_leader === "string" && fc.ride_leader.trim()
                 ? fc.ride_leader.trim()
                 : "",
+          meetPlace:
+            typeof fc.meetPlace === "string" && fc.meetPlace.trim() ? fc.meetPlace.trim() : "",
+          meetPlaceDetail:
+            typeof fc.meetPlaceDetail === "string" && fc.meetPlaceDetail.trim()
+              ? fc.meetPlaceDetail.trim()
+              : "",
+          estimatedDurationHm:
+            typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
+              ? String(fc.estimatedDurationHm).trim()
+              : "",
+          estimatedDurationMinutes: (function () {
+            if (typeof fc.estimatedDurationMinutes === "number" && Number.isFinite(fc.estimatedDurationMinutes)) {
+              return Math.max(0, Math.round(fc.estimatedDurationMinutes));
+            }
+            if (typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()) {
+              const p = parseDurationInputToStore(fc.estimatedDurationHm);
+              return p ? p.minutes : null;
+            }
+            return null;
+          })(),
+          maxParticipants:
+            typeof fc.maxParticipants === "number" && Number.isFinite(fc.maxParticipants) && fc.maxParticipants > 0
+              ? Math.round(fc.maxParticipants)
+              : typeof fc.maxParticipants === "string" && String(fc.maxParticipants).trim()
+                ? Math.max(0, parseInt(String(fc.maxParticipants).replace(/\D/g, ""), 10) || 0) || null
+                : null,
+          sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
+          visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
           rideDateIso: typeof fc.rideDateIso === "string" ? fc.rideDateIso : "",
           rideTime: typeof fc.rideTime === "string" ? fc.rideTime : "",
           sortOrder: typeof so === "number" && Number.isFinite(so) ? so : 40,
@@ -565,9 +618,16 @@
         return [];
       }
 
-      async function fetchCustomRoutesFromSupabase() {
+      async function fetchCustomRoutesFromSupabase(opts) {
         if (!isSupabaseEnabled()) return [];
-        const raw = await supabaseRpc("routes_list", { p_filter: {} });
+        const forAdmin =
+          opts && opts.forAdminEdit && isAdminSessionUsable();
+        const adm = forAdmin ? getAdminSession() : null;
+        const raw = await supabaseRpc(
+          "routes_list",
+          forAdmin ? { p_filter: { includeNonPublic: true } } : { p_filter: {} },
+          adm && adm.access_token ? { accessToken: adm.access_token } : undefined
+        );
         const rows = normalizeRoutesListRows(raw);
         const builtIds = {};
         ROUTES_BUILTIN.forEach(function (r) {
@@ -586,7 +646,7 @@
       /** Alimente loadedRoutesCache avec les sorties custom (pour la liste « Corriger une sortie »). */
       async function hydrateCustomRoutesForToolbarEdit() {
         if (!isSupabaseEnabled() || !document.getElementById("new-route-edit-select")) return;
-        const customs = await fetchCustomRoutesFromSupabase();
+        const customs = await fetchCustomRoutesFromSupabase({ forAdminEdit: true });
         if (!customs.length) return;
         const results = await Promise.all(
           customs.map(async function (cfg) {
@@ -615,6 +675,87 @@
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
           .replace(/\"/g, "&quot;");
+      }
+
+      function sanitizeSignupCyclistLevel(raw) {
+        const c = String(raw || "").trim().toLowerCase();
+        if (c === "debutant" || c === "intermediaire" || c === "confirme") return c;
+        return "";
+      }
+
+      function sanitizeParticipantCity(raw) {
+        let s = String(raw || "")
+          .replace(/[\u0000-\u001F\u007F]/g, "")
+          .trim()
+          .replace(/\s+/g, " ");
+        if (s.length > 80) s = s.slice(0, 80);
+        return s;
+      }
+
+      function normalizeParticipantEntryRpc(x) {
+        if (x == null) return { pseudo: "", cyclist_level: "", city: "" };
+        if (typeof x === "string") {
+          const p = String(x).trim();
+          return { pseudo: p, cyclist_level: "", city: "" };
+        }
+        if (typeof x === "object") {
+          const p = String(x.pseudo != null ? x.pseudo : x.name != null ? x.name : "").trim();
+          const cl = sanitizeSignupCyclistLevel(x.cyclist_level);
+          const cy = sanitizeParticipantCity(x.city != null ? x.city : x.participant_city);
+          return { pseudo: p, cyclist_level: cl, city: cy };
+        }
+        return { pseudo: "", cyclist_level: "", city: "" };
+      }
+
+      function cyclistLevelLabelFrModal(code) {
+        const c = String(code || "").trim().toLowerCase();
+        if (c === "debutant") return "Débutant";
+        if (c === "intermediaire") return "Intermédiaire";
+        if (c === "confirme") return "Confirmé";
+        return "";
+      }
+
+      function formatMinutesToHm(totalMin) {
+        const h = Math.floor(totalMin / 60);
+        const mm = totalMin % 60;
+        return String(h) + ":" + String(mm).padStart(2, "0");
+      }
+
+      /** Saisie admin : minutes entières ou « H:MM » → { minutes, hm } ou null. */
+      function parseDurationInputToStore(raw) {
+        const s = String(raw || "").trim();
+        if (!s) return null;
+        if (/^\d+$/.test(s)) {
+          const n = parseInt(s, 10);
+          if (!Number.isFinite(n) || n <= 0 || n > 36 * 60) return null;
+          return { minutes: n, hm: formatMinutesToHm(n) };
+        }
+        const m = s.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
+        if (m) {
+          const hh = parseInt(m[1], 10);
+          const mm = parseInt(m[2], 10);
+          if (!Number.isFinite(hh) || !Number.isFinite(mm) || mm < 0 || mm > 59 || hh > 36) return null;
+          const minutes = hh * 60 + mm;
+          if (minutes <= 0) return null;
+          return { minutes: minutes, hm: formatMinutesToHm(minutes) };
+        }
+        return null;
+      }
+
+      function routeEffectiveDurationMinutes(route) {
+        let min =
+          route && route.estimatedDurationMinutes != null && Number.isFinite(Number(route.estimatedDurationMinutes))
+            ? Math.round(Number(route.estimatedDurationMinutes))
+            : 0;
+        const hmRaw =
+          route && typeof route.estimatedDurationHm === "string" && route.estimatedDurationHm.trim()
+            ? String(route.estimatedDurationHm).trim()
+            : "";
+        if (hmRaw) {
+          const p = parseDurationInputToStore(hmRaw);
+          if (p) min = p.minutes;
+        }
+        return min > 0 ? min : 0;
       }
 
       function buildCourseDetailsHtml(route) {
@@ -654,6 +795,24 @@
           (route.rideLeader && String(route.rideLeader).trim()
             ? "<p><strong>Capitaine · Team Rider</strong> · " + escapeHtml(String(route.rideLeader).trim()) + "</p>"
             : "") +
+          (route.meetPlaceDetail && String(route.meetPlaceDetail).trim()
+            ? "<p><strong>Départ précis</strong> · " + escapeHtml(String(route.meetPlaceDetail).trim()) + "</p>"
+            : "") +
+          (function () {
+            const min = routeEffectiveDurationMinutes(route);
+            if (min <= 0) return "";
+            const line =
+              min < 60
+                ? "Environ " + min + " min"
+                : "Environ " +
+                  Math.floor(min / 60) +
+                  " h " +
+                  String(min % 60).padStart(2, "0") +
+                  " (≈ " +
+                  formatMinutesToHm(min) +
+                  ")";
+            return "<p><strong>Durée estimée</strong> · " + escapeHtml(line) + "</p>";
+          })() +
           "<p><strong>Date</strong> · " +
           escapeHtml(route.depart.dateLabel) +
           "</p>" +
@@ -787,24 +946,67 @@
         }
       }
 
-      function getParticipantNames(routeId) {
-        const names = (participantsByRoute[routeId] || []).slice();
-        if (isSupabaseEnabled()) {
-          (supabaseNamesByRoute[routeId] || []).forEach(function (n) {
-            const ntrim = String(n).trim();
-            if (!ntrim) return;
-            const key = ntrim.toLowerCase();
-            if (!names.some(function (x) { return x.toLowerCase() === key; })) names.push(ntrim);
-          });
-          return names;
-        }
-        (localSignupsByRoute[routeId] || []).forEach(function (entry) {
-          const n = (entry.pseudo || "").trim();
-          if (!n) return;
-          const key = n.toLowerCase();
-          if (!names.some(function (x) { return x.toLowerCase() === key; })) names.push(n);
+      function getParticipantRows(routeId) {
+        const byKey = {};
+        (participantsByRoute[routeId] || []).forEach(function (n) {
+          const p = String(n).trim();
+          if (!p) return;
+          const k = p.toLowerCase();
+          if (!byKey[k]) byKey[k] = { pseudo: p, cyclist_level: "", city: "" };
         });
-        return names;
+        if (isSupabaseEnabled()) {
+          (supabaseNamesByRoute[routeId] || []).forEach(function (entry) {
+            const r =
+              entry && typeof entry === "object" && entry.pseudo != null
+                ? {
+                    pseudo: String(entry.pseudo).trim(),
+                    cyclist_level: sanitizeSignupCyclistLevel(entry.cyclist_level),
+                    city: sanitizeParticipantCity(entry.city != null ? entry.city : entry.participant_city)
+                  }
+                : { pseudo: String(entry || "").trim(), cyclist_level: "", city: "" };
+            if (!r.pseudo) return;
+            byKey[r.pseudo.toLowerCase()] = r;
+          });
+        } else {
+          (localSignupsByRoute[routeId] || []).forEach(function (e) {
+            const p = (e.pseudo || "").trim();
+            if (!p) return;
+            const k = p.toLowerCase();
+            byKey[k] = {
+              pseudo: p,
+              cyclist_level: sanitizeSignupCyclistLevel(e.cyclist_level),
+              city: sanitizeParticipantCity(e.participant_city || e.city)
+            };
+          });
+        }
+        return Object.keys(byKey)
+          .sort(function (a, b) {
+            return a.localeCompare(b, "fr", { sensitivity: "base" });
+          })
+          .map(function (k) {
+            return byKey[k];
+          });
+      }
+
+      function getParticipantNames(routeId) {
+        return getParticipantRows(routeId).map(function (r) {
+          return r.pseudo;
+        });
+      }
+
+      function getWaitlistRows(routeId) {
+        if (!isSupabaseEnabled()) return [];
+        return (supabaseWaitlistByRoute[routeId] || [])
+          .map(normalizeParticipantEntryRpc)
+          .filter(function (r) {
+            return r.pseudo;
+          });
+      }
+
+      function getWaitlistNames(routeId) {
+        return getWaitlistRows(routeId).map(function (r) {
+          return r.pseudo;
+        });
       }
 
       function isRegisteredForRoute(routeId, email) {
@@ -837,22 +1039,67 @@
       }
 
       function renderParticipantsInModal(routeId) {
-        const names = getParticipantNames(routeId);
+        const rows = getParticipantRows(routeId);
+        const waitRows = getWaitlistRows(routeId);
         const countEl = document.getElementById("modal-participants-count");
         const listEl = document.getElementById("modal-participants-list");
         const emptyEl = document.getElementById("modal-participants-empty");
+        const wrapWl = document.getElementById("signup-modal-waitlist-wrap");
+        const listWl = document.getElementById("modal-waitlist-list");
+        const emptyWl = document.getElementById("modal-waitlist-empty");
 
-        if (countEl) countEl.textContent = String(names.length);
+        if (countEl) countEl.textContent = String(rows.length);
         if (listEl) {
           listEl.innerHTML = "";
-          names.forEach(function (name) {
+          rows.forEach(function (row) {
             const li = document.createElement("li");
-            li.textContent = name;
+            li.appendChild(document.createTextNode(row.pseudo || ""));
+            const lv = cyclistLevelLabelFrModal(row.cyclist_level);
+            if (lv) {
+              const sp = document.createElement("span");
+              sp.className = "modal-participants-level";
+              sp.textContent = " · " + lv;
+              li.appendChild(sp);
+            }
+            const cty = String(row.city || "").trim();
+            if (cty) {
+              const csp = document.createElement("span");
+              csp.className = "modal-participants-city";
+              csp.textContent = " · " + cty;
+              li.appendChild(csp);
+            }
             listEl.appendChild(li);
           });
-          listEl.classList.toggle("is-hidden", names.length === 0);
+          listEl.classList.toggle("is-hidden", rows.length === 0);
         }
-        if (emptyEl) emptyEl.classList.toggle("is-hidden", names.length > 0);
+        if (emptyEl) emptyEl.classList.toggle("is-hidden", rows.length > 0);
+
+        if (wrapWl && listWl && emptyWl) {
+          const showWl = waitRows.length > 0;
+          wrapWl.hidden = !showWl;
+          listWl.innerHTML = "";
+          waitRows.forEach(function (row) {
+            const li = document.createElement("li");
+            li.appendChild(document.createTextNode(row.pseudo || ""));
+            const lv = cyclistLevelLabelFrModal(row.cyclist_level);
+            if (lv) {
+              const sp = document.createElement("span");
+              sp.className = "modal-participants-level";
+              sp.textContent = " · " + lv;
+              li.appendChild(sp);
+            }
+            const cty = String(row.city || "").trim();
+            if (cty) {
+              const csp = document.createElement("span");
+              csp.className = "modal-participants-city";
+              csp.textContent = " · " + cty;
+              li.appendChild(csp);
+            }
+            listWl.appendChild(li);
+          });
+          listWl.classList.toggle("is-hidden", waitRows.length === 0);
+          emptyWl.classList.toggle("is-hidden", waitRows.length > 0);
+        }
       }
 
       async function refreshJoinButtons() {
@@ -915,7 +1162,11 @@
             (route.profile ? formatKm(route.profile.totalKm) + " · " : "") +
             escapeHtml(route.pace) + " · " + escapeHtml(route.levelLabel) + "<br>" +
             escapeHtml(route.shortDesc || "") + "<br>" +
-            escapeHtml(SHARED.meetPlace) + " · " + escapeHtml(SHARED.time);
+            (route.meetPlaceDetail && String(route.meetPlaceDetail).trim()
+              ? escapeHtml(String(route.meetPlaceDetail).trim())
+              : escapeHtml(SHARED.meetPlace)) +
+            " · " +
+            escapeHtml(SHARED.time);
         }
 
         const courseEl = document.getElementById("signup-modal-course");
@@ -943,24 +1194,31 @@
         }
 
         let welcomePseudo = "";
+        let onWaitlist = false;
         if (registered) {
           if (isSupabaseEnabled() && emailInput && emailInput.value) {
-            const regData = await supabaseRpc("signup_get_registration", {
+            let regData = await supabaseRpc("signup_get_registration", {
               p_route_id: route.id,
               p_email: emailInput.value
             });
+            if (Array.isArray(regData) && regData.length) regData = regData[0];
             welcomePseudo = regData && regData.pseudo ? String(regData.pseudo).trim() : "";
+            onWaitlist = !!(regData && regData.on_waitlist);
             if (welcomePseudo && pseudoInput && !pseudoInput.value) pseudoInput.value = welcomePseudo;
           } else {
             const entry = getLocalSignup(route.id, emailInput.value);
             welcomePseudo = entry && entry.pseudo ? String(entry.pseudo).trim() : "";
+            onWaitlist = !!(entry && entry.waitlist);
             if (entry && pseudoInput && !pseudoInput.value) pseudoInput.value = entry.pseudo || "";
           }
-          if (title) title.textContent = "Tu es inscrit·e !";
+          if (title) title.textContent = onWaitlist ? "Tu es sur la liste d’attente" : "Tu es inscrit·e !";
           if (done) {
-            done.textContent = welcomePseudo
-              ? welcomePseudo + ", tu es bien inscrit·e sur ce parcours. À bientôt au départ !"
-              : "Tu es bien inscrit·e sur ce parcours. À bientôt au départ !";
+            done.textContent = onWaitlist
+              ? (welcomePseudo ? welcomePseudo + ", " : "") +
+                "Les places du peloton principal sont prises — tu es en liste d’attente. Si un·e cycliste se désinscrit, tu seras promu·e automatiquement."
+              : welcomePseudo
+                ? welcomePseudo + ", tu es bien inscrit·e sur ce parcours. À bientôt au départ !"
+                : "Tu es bien inscrit·e sur ce parcours. À bientôt au départ !";
             done.classList.add("is-visible");
           }
           if (registeredActions) registeredActions.hidden = false;
@@ -975,6 +1233,16 @@
           if (registeredActions) registeredActions.hidden = true;
           if (form) form.style.display = "";
           if (mailto) mailto.style.display = "";
+          const clSel = document.getElementById("signup-modal-cyclist-level");
+          if (clSel) {
+            clSel.value = "";
+            if (window.GoeloAuth && typeof window.GoeloAuth.getCyclistLevelFromSession === "function") {
+              const gl = window.GoeloAuth.getCyclistLevelFromSession();
+              if (gl && ["debutant", "intermediaire", "confirme"].indexOf(gl) !== -1) {
+                clSel.value = gl;
+              }
+            }
+          }
         }
       }
 
@@ -1110,26 +1378,43 @@
         return true;
       }
 
-      async function registerForRoute(route, pseudo, email) {
+      async function registerForRoute(route, pseudo, email, cyclistLevelRaw, participantCityRaw) {
         const p = pseudo.trim();
         const e = email.trim().toLowerCase();
+        const cl = sanitizeSignupCyclistLevel(cyclistLevelRaw);
+        const city = sanitizeParticipantCity(participantCityRaw);
         if (!p || !e) return false;
         if (isSupabaseEnabled()) {
           let data = await supabaseRpc("signup_register", {
             p_route_id: route.id,
             p_pseudo: p,
-            p_email: e
+            p_email: e,
+            p_cyclist_level: cl || null,
+            p_participant_city: city || null
           });
           if (Array.isArray(data)) data = data[0];
           if (!data || !data.ok) {
             if (data && data.error === "already_registered") {
               window.alert("Tu es déjà inscrit·e sur ce parcours avec cet e-mail.");
+            } else if (data && data.error === "sortie_cancelled") {
+              window.alert("Cette sortie est annulée — inscription impossible.");
+            } else if (data && data.error === "sortie_closed") {
+              window.alert("Les inscriptions sont fermées pour cette sortie.");
+            } else if (data && data.error === "private_route") {
+              window.alert("Cette sortie est privée — inscription impossible depuis le site.");
+            } else if (data && data.error === "invitation_only") {
+              window.alert("Inscription sur invitation uniquement — contacte l’organisation.");
             } else {
               const fail = goeloLastRpcFailure;
               const code = fail ? fail.code : 40;
               window.alert(goeloFormatDbFailureAlert(code, fail && fail.httpStatus));
             }
             return false;
+          }
+          if (data.waitlist === true) {
+            window.alert(
+              "Les places du peloton principal sont prises — tu es en liste d’attente. Si un·e cycliste se désinscrit, tu seras promu·e automatiquement."
+            );
           }
           await refreshSupabaseNames();
           await refreshRegisteredRoutesCache(e);
@@ -1143,8 +1428,28 @@
           return true;
         }
         if (!localSignupsByRoute[route.id]) localSignupsByRoute[route.id] = [];
+        const maxP =
+          route && route.maxParticipants != null && Number(route.maxParticipants) > 0
+            ? Number(route.maxParticipants)
+            : null;
+        const mainCount = (localSignupsByRoute[route.id] || []).filter(function (x) {
+          return x && !x.waitlist;
+        }).length;
         if (!isRegisteredForRoute(route.id, e)) {
-          localSignupsByRoute[route.id].push({ pseudo: p, email: e, at: new Date().toISOString() });
+          const wait = maxP != null && mainCount >= maxP;
+          localSignupsByRoute[route.id].push({
+            pseudo: p,
+            email: e,
+            at: new Date().toISOString(),
+            waitlist: wait,
+            cyclist_level: cl,
+            participant_city: city
+          });
+          if (wait) {
+            window.alert(
+              "Mode local : places « max » atteintes — tu es enregistré·e en liste d’attente sur cet appareil."
+            );
+          }
           if (!saveLocalSignups()) {
             localSignupsByRoute[route.id].pop();
             window.alert(goeloFormatDbFailureAlert(41, 0));
@@ -1179,7 +1484,11 @@
           if (!modalRouteRef) return;
           const pseudo = document.getElementById("signup-modal-pseudo").value;
           const email = document.getElementById("signup-modal-email").value;
-          await registerForRoute(modalRouteRef, pseudo, email);
+          const clEl = document.getElementById("signup-modal-cyclist-level");
+          const cyclistLevelRaw = clEl ? clEl.value : "";
+          const cityEl = document.getElementById("signup-modal-city");
+          const participantCityRaw = cityEl ? cityEl.value : "";
+          await registerForRoute(modalRouteRef, pseudo, email, cyclistLevelRaw, participantCityRaw);
         });
 
         const emailInput = document.getElementById("signup-modal-email");
@@ -1755,6 +2064,38 @@
             timeIn.value =
               route.rideTime && /^\d{2}:\d{2}$/.test(route.rideTime) ? route.rideTime : "08:30";
           }
+          const meetD = document.getElementById("new-route-meet-detail");
+          if (meetD) {
+            meetD.value =
+              route.meetPlaceDetail && String(route.meetPlaceDetail).trim()
+                ? String(route.meetPlaceDetail).trim()
+                : "";
+          }
+          const durM = document.getElementById("new-route-duration-min");
+          if (durM) {
+            const hm =
+              route.estimatedDurationHm && String(route.estimatedDurationHm).trim()
+                ? String(route.estimatedDurationHm).trim()
+                : "";
+            if (hm) {
+              durM.value = hm;
+            } else if (route.estimatedDurationMinutes != null && Number(route.estimatedDurationMinutes) > 0) {
+              durM.value = String(route.estimatedDurationMinutes);
+            } else {
+              durM.value = "";
+            }
+          }
+          const maxPIn = document.getElementById("new-route-max-p");
+          if (maxPIn) {
+            maxPIn.value =
+              route.maxParticipants != null && Number(route.maxParticipants) > 0
+                ? String(route.maxParticipants)
+                : "0";
+          }
+          const stEl = document.getElementById("new-route-status");
+          if (stEl) stEl.value = route.sortieStatus || "open";
+          const visEl = document.getElementById("new-route-visibility");
+          if (visEl) visEl.value = route.visibility || "public";
           const rt = route.raceType || "route";
           form.querySelectorAll('input[name="new-route-race"]').forEach(function (radio) {
             radio.checked = radio.value === rt;
@@ -1817,6 +2158,18 @@
           const desc = descEl ? descEl.value.trim() : "";
           const rideEl = document.getElementById("new-route-ride-leader");
           const rl = rideEl ? rideEl.value.trim() : "";
+          const meetDEl = document.getElementById("new-route-meet-detail");
+          const meetD = meetDEl ? meetDEl.value.trim() : "";
+          const durEl = document.getElementById("new-route-duration-min");
+          const durStr = durEl ? durEl.value.trim() : "";
+          const maxEl = document.getElementById("new-route-max-p");
+          const maxStr = maxEl ? maxEl.value.trim() : "0";
+          const stEl = document.getElementById("new-route-status");
+          const stVal = stEl ? stEl.value : "open";
+          const visEl = document.getElementById("new-route-visibility");
+          const visVal = visEl ? visEl.value : "public";
+          const stLab = { open: "Ouvertes", closed: "Fermées", cancelled: "Annulée" };
+          const visLab = { public: "Publique", invitation: "Sur invitation", private: "Privée" };
           recap.innerHTML =
             "<ul class=\"new-route-recap-list\">" +
             "<li><strong>Titre</strong> · " + escapeHtml(track) + "</li>" +
@@ -1829,6 +2182,19 @@
             (pace ? "<li><strong>Allure</strong> · " + escapeHtml(pace) + "</li>" : "") +
             (rl ? "<li><strong>Capitaine · Team Rider</strong> · " + escapeHtml(rl) + "</li>" : "") +
             (desc ? "<li><strong>Description</strong> · " + escapeHtml(desc) + "</li>" : "") +
+            (meetD ? "<li><strong>Départ précis</strong> · " + escapeHtml(meetD) + "</li>" : "") +
+            (durStr
+              ? "<li><strong>Durée estimée</strong> · " +
+                (function () {
+                  const p = parseDurationInputToStore(durStr);
+                  if (!p) return escapeHtml(durStr);
+                  return escapeHtml("≈ " + p.hm + " (" + p.minutes + " min)");
+                })() +
+                "</li>"
+              : "") +
+            (maxStr && maxStr !== "0" ? "<li><strong>Places max</strong> · " + escapeHtml(maxStr) + "</li>" : "<li><strong>Places max</strong> · Illimité</li>") +
+            "<li><strong>Statut</strong> · " + escapeHtml(stLab[stVal] || stVal) + "</li>" +
+            "<li><strong>Visibilité</strong> · " + escapeHtml(visLab[visVal] || visVal) + "</li>" +
             "</ul>";
         }
 
@@ -1885,6 +2251,16 @@
             coverPreview.hidden = true;
             coverPreview.innerHTML = "";
           }
+          const meetD = document.getElementById("new-route-meet-detail");
+          if (meetD) meetD.value = "";
+          const durM = document.getElementById("new-route-duration-min");
+          if (durM) durM.value = "";
+          const maxPIn = document.getElementById("new-route-max-p");
+          if (maxPIn) maxPIn.value = "0";
+          const stEl = document.getElementById("new-route-status");
+          if (stEl) stEl.value = "open";
+          const visEl = document.getElementById("new-route-visibility");
+          if (visEl) visEl.value = "public";
           const titleIn = document.getElementById("new-route-track");
           if (titleIn) titleIn.removeAttribute("data-title-auto");
           if (gpxInput) gpxInput.value = "";
@@ -2329,6 +2705,44 @@
             return;
           }
 
+          const meetDetailStr = (function () {
+            const el = document.getElementById("new-route-meet-detail");
+            return el ? el.value.trim() : "";
+          })();
+          if (!meetDetailStr) {
+            if (
+              !window.confirm(
+                "Tu n’as pas indiqué de lieu de départ précis : la fiche restera moins claire pour les participant·e·s. Continuer quand même ?"
+              )
+            ) {
+              return;
+            }
+          }
+          const durRaw = (function () {
+            const el = document.getElementById("new-route-duration-min");
+            return el ? String(el.value || "").trim() : "";
+          })();
+          const durParsed = parseDurationInputToStore(durRaw);
+          if (durRaw && !durParsed) {
+            window.alert(
+              "Durée invalide : indique un nombre de minutes (ex. 165) ou un horaire H:MM (ex. 2:45)."
+            );
+            return;
+          }
+          const maxPRaw = (function () {
+            const el = document.getElementById("new-route-max-p");
+            const v = el ? parseInt(String(el.value || "").trim(), 10) : 0;
+            return Number.isFinite(v) && v > 0 ? v : null;
+          })();
+          const sortieStatusVal = (function () {
+            const el = document.getElementById("new-route-status");
+            return el && el.value ? el.value : "open";
+          })();
+          const visibilityVal = (function () {
+            const el = document.getElementById("new-route-visibility");
+            return el && el.value ? el.value : "public";
+          })();
+
           const emb = serializeEmbeddedPoints(newRouteProfile.points, EMBEDDED_POINTS_MAX);
           const cols = colorsForRaceType(rt);
           const yearFromDate = parseInt(String(dateStr).slice(0, 4), 10) || 2026;
@@ -2356,7 +2770,14 @@
             coverImageDataUrl: newRouteCoverDataUrl || "",
             rideDateIso: dateStr,
             rideTime: timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : "08:30",
-            rideLeader: rideLeaderStr
+            rideLeader: rideLeaderStr,
+            meetPlace: SHARED.meetPlace,
+            meetPlaceDetail: meetDetailStr,
+            estimatedDurationHm: durParsed ? durParsed.hm : "",
+            estimatedDurationMinutes: durParsed ? durParsed.minutes : null,
+            maxParticipants: maxPRaw,
+            sortieStatus: sortieStatusVal,
+            visibility: visibilityVal
           };
 
           const admTok = getAdminSession();
@@ -2406,7 +2827,9 @@
               window.alert("Nombre maximum de sorties personnalisées atteint. Contacte l’organisation.");
             } else if (data && data.error === "not_found_or_fixed") {
               window.alert(
-                "Impossible de modifier cette sortie (introuvable, parcours figé, ou migration route_update non appliquée)."
+                "Impossible de modifier cette sortie : elle n’existe pas en base, est inactive, ou le SQL n’est pas à jour.\n\n" +
+                  "Pour les parcours intégrés (Falaises, Bréhec, Boucle), exécute aussi sur Supabase :\n" +
+                  "supabase/migrations/20250622120000_route_update_allow_fixed_builtins.sql"
               );
             } else {
               const code = fail ? fail.code : 40;

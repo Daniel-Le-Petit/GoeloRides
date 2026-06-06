@@ -97,6 +97,49 @@
       color: var(--app-muted);
     }
     .sortie-reg-line--ok { color: #15803d; }
+    .sortie-status-banner {
+      margin: 0.35rem 0 0;
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+    .sortie-participants-item--leader {
+      border-color: #ca8a04;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    .sortie-participants-role {
+      font-weight: 700;
+      font-size: 0.72rem;
+      color: #b45309;
+      margin-left: 0.35rem;
+    }
+    .sortie-participants-level {
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: var(--app-muted);
+      margin-left: 0.25rem;
+    }
+    .sortie-participants-city {
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: var(--app-muted);
+      font-style: italic;
+      margin-left: 0.15rem;
+    }
+    .sortie-waitlist {
+      margin-top: 0.75rem;
+    }
+    .sortie-signup-blocked-msg {
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--app-muted);
+      max-width: 22rem;
+    }
     .sortie-signup-count {
       font-size: 0.88rem;
       font-weight: 600;
@@ -538,11 +581,14 @@
       letter-spacing: 0.04em;
       color: var(--app-muted);
     }
-    .sortie-signup-field input {
+    .sortie-signup-field input,
+    .sortie-signup-field select {
       font: inherit;
       padding: 0.45rem 0.55rem;
       border-radius: 8px;
       border: 1px solid var(--app-border);
+      background: #fff;
+      color: var(--app-text);
     }
     .sortie-signup-actions {
       display: flex;
@@ -596,6 +642,96 @@
     }
     .sortie-participants-empty[hidden] {
       display: none !important;
+    }
+    .sortie-comments {
+      max-width: 100%;
+      margin: 0 0 1.25rem;
+      padding: 1rem 1.15rem 1.1rem;
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface);
+      box-shadow: 0 1px 8px rgba(15, 30, 45, 0.04);
+    }
+    .sortie-comments[hidden] {
+      display: none !important;
+    }
+    .sortie-comments-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--app-sea);
+      margin: 0 0 0.45rem;
+    }
+    .sortie-comments-hint {
+      font-size: 0.78rem;
+      color: var(--app-muted);
+      margin: 0 0 0.85rem;
+      line-height: 1.35;
+    }
+    .sortie-comments-list-wrap {
+      max-height: min(40vh, 18rem);
+      overflow-y: auto;
+      margin-bottom: 0.85rem;
+      padding: 0.35rem 0.15rem 0.35rem 0;
+      border-top: 1px solid var(--app-border);
+      border-bottom: 1px solid var(--app-border);
+    }
+    .sortie-comments-status {
+      font-size: 0.78rem;
+      color: var(--app-muted);
+      margin: 0 0 0.5rem;
+    }
+    .sortie-comments-status[hidden] {
+      display: none !important;
+    }
+    .sortie-comments-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .sortie-comments-item {
+      font-size: 0.86rem;
+      line-height: 1.35;
+      color: var(--app-text);
+      padding: 0.55rem 0.65rem;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .sortie-comments-meta {
+      font-size: 0.72rem;
+      color: var(--app-muted);
+      margin-bottom: 0.35rem;
+    }
+    .sortie-comments-meta strong {
+      color: var(--app-text);
+      font-weight: 700;
+    }
+    .sortie-comments-body {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .sortie-comments-empty {
+      font-size: 0.84rem;
+      color: var(--app-muted);
+      margin: 0.5rem 0 0;
+    }
+    .sortie-comments-empty[hidden] {
+      display: none !important;
+    }
+    .sortie-comments-form textarea {
+      font: inherit;
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--app-border);
+      resize: vertical;
+      min-height: 4.5rem;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     @media (max-width: 1024px) {
       .sortie-hero-grid {
@@ -691,10 +827,15 @@
         font-size: 0.72rem;
         margin-bottom: 0.2rem;
       }
-      .sortie-signup-field input {
+      .sortie-signup-field input,
+      .sortie-signup-field select {
         padding: 0.4rem 0.5rem;
         font-size: 16px;
         min-height: 2.35rem;
+      }
+      .sortie-comments-form textarea {
+        font-size: 16px;
+        min-height: 5rem;
       }
       .sortie-signup-actions {
         gap: 0.35rem;
@@ -723,6 +864,7 @@
         </div>
         <p id="sortie-reg-line" class="sortie-reg-line" hidden></p>
         <p id="sortie-signup-count" class="sortie-signup-count" hidden></p>
+        <p id="sortie-status-banner" class="sortie-status-banner" hidden role="status"></p>
       </header>
 
       <p id="sortie-error" class="sorties-empty" hidden></p>
@@ -787,6 +929,19 @@
                     <span class="sortie-signup-label">E-mail</span>
                     <input type="email" id="sortie-signup-email" name="email" required maxlength="120" autocomplete="email">
                   </label>
+                  <label class="sortie-signup-field">
+                    <span class="sortie-signup-label">Niveau cycliste (optionnel)</span>
+                    <select id="sortie-signup-cyclist-level" name="cyclist_level" autocomplete="off">
+                      <option value="">— Non indiqué —</option>
+                      <option value="debutant">Débutant</option>
+                      <option value="intermediaire">Intermédiaire</option>
+                      <option value="confirme">Confirmé</option>
+                    </select>
+                  </label>
+                  <label class="sortie-signup-field">
+                    <span class="sortie-signup-label">Ville ou commune (optionnel)</span>
+                    <input type="text" id="sortie-signup-city" name="participant_city" maxlength="80" placeholder="ex. Lannion, Paimpol…" autocomplete="address-level2">
+                  </label>
                   <div class="sortie-signup-actions">
                     <button type="submit" class="btn-je-participe btn-je-participe--confirm">Valider mon inscription</button>
                     <button type="button" class="btn-sortie-ghost" id="sortie-signup-cancel">Annuler</button>
@@ -805,6 +960,35 @@
                 <p id="sortie-participants-empty" class="sortie-participants-empty" hidden>
                   Personne pour l’instant — sois le ou la première !
                 </p>
+              </section>
+              <section id="sortie-waitlist-section" class="sortie-participants sortie-waitlist" aria-labelledby="sortie-waitlist-title" hidden>
+                <h2 id="sortie-waitlist-title" class="sortie-participants-title">Liste d’attente</h2>
+                <ul id="sortie-waitlist-list" class="sortie-participants-list"></ul>
+                <p id="sortie-waitlist-empty" class="sortie-participants-empty" hidden>Personne en liste d’attente.</p>
+              </section>
+              <section id="sortie-comments-section" class="sortie-comments" aria-labelledby="sortie-comments-title" hidden>
+                <h2 id="sortie-comments-title" class="sortie-comments-title">Fil de discussion</h2>
+                <p class="sortie-comments-hint">
+                  Échanges entre participant·e·s (météo, point de rendez-vous…). Messages publics — restez respectueux·ses.
+                </p>
+                <div class="sortie-comments-list-wrap">
+                  <p id="sortie-comments-status" class="sortie-comments-status" hidden></p>
+                  <ul id="sortie-comments-list" class="sortie-comments-list"></ul>
+                  <p id="sortie-comments-empty" class="sortie-comments-empty">Aucun message pour l’instant.</p>
+                </div>
+                <form id="sortie-comments-form" class="sortie-comments-form sortie-signup-form" novalidate>
+                  <label class="sortie-signup-field">
+                    <span class="sortie-signup-label">Pseudo ou prénom</span>
+                    <input type="text" id="sortie-comment-pseudo" name="comment_pseudo" maxlength="40" required autocomplete="nickname">
+                  </label>
+                  <label class="sortie-signup-field">
+                    <span class="sortie-signup-label">Message</span>
+                    <textarea id="sortie-comment-body" name="comment_body" rows="4" maxlength="1200" required placeholder="Ex. : je vous rejoins à Plouha vers 10 h — la météo annonce de la pluie ?"></textarea>
+                  </label>
+                  <div class="sortie-signup-actions">
+                    <button type="submit" id="sortie-comment-submit" class="btn-je-participe btn-je-participe--confirm">Publier</button>
+                  </div>
+                </form>
               </section>
             </div>
           </div>
@@ -830,11 +1014,18 @@
     </main>
   </div>
 
+  <nav class="goelo-mobile-tabbar" role="navigation" aria-label="Navigation principale" data-no-swipe-nav>
+    <a href="index.html" class="goelo-mobile-tabbar__link">Accueil</a>
+    <a href="groupes.html" class="goelo-mobile-tabbar__link">Groupes</a>
+    <a href="sorties.html" class="goelo-mobile-tabbar__link" aria-current="page">Sorties</a>
+    <a href="infos-pratiques.html" class="goelo-mobile-tabbar__link">Infos</a>
+  </nav>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
   <script src="goelo-swipe-nav.js" defer></script>
-  <script src="sortie.js" defer></script>
   <script src="goelo-auth.js" defer></script>
+  <script src="sortie.js" defer></script>
 </body>
 </html>
