@@ -301,6 +301,28 @@
         }
       });
     }
+
+    /* Pré-chauffe OneSignal : le clic ne cumule pas l’attente d’init (souvent perçue comme « 25 s »). */
+    if (btnEn && typeof window.goeloOneSignalInitPromise === "function") {
+      var modeAfterPrep = initialMode;
+      btnEn.disabled = true;
+      btnEn.textContent = "Préparation…";
+      btnEn.setAttribute("aria-busy", "true");
+      var PREP_UI_MS = 15000;
+      Promise.race([
+        window.goeloOneSignalInitPromise(),
+        new Promise(function (r) {
+          setTimeout(function () {
+            r("__prep_cap");
+          }, PREP_UI_MS);
+        })
+      ]).then(function () {
+        if (!bar.isConnected || !btnEn) return;
+        btnEn.removeAttribute("aria-busy");
+        btnEn.disabled = false;
+        setBannerMode(bar, bar.getAttribute("data-goelo-notify-mode") || modeAfterPrep);
+      });
+    }
   }
 
   function shouldShow() {

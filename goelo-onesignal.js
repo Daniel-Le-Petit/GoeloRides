@@ -81,6 +81,8 @@
 
   /** Délai max pour qu’init ne reste jamais bloquée indéfiniment (SW / réseau). */
   var INIT_ABSOLUTE_CAP_MS = 120000;
+  /** Après clic : garde-fou si l’init n’était pas finie (le bandeau prépare OneSignal avant). */
+  var INIT_WAIT_AFTER_CLICK_MS = 50000;
 
   function startOneSignalInnerInit(appId) {
     return new Promise(function (resolve) {
@@ -158,8 +160,7 @@
   window.goeloRequestPushSubscription = async function goeloRequestPushSubscription() {
     var OneSignal;
     try {
-      /* 70 s : sur mobile, l’enregistrement du service worker + init OneSignal dépassent souvent 25 s. */
-      OneSignal = await raceTimeout(window.goeloOneSignalInitPromise(), 70000, "init_timeout");
+      OneSignal = await raceTimeout(window.goeloOneSignalInitPromise(), INIT_WAIT_AFTER_CLICK_MS, "init_timeout");
     } catch (toErr) {
       void toErr;
       return {
