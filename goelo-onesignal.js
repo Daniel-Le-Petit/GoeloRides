@@ -11,6 +11,7 @@
  *   goeloOneSignalInitPromise() → Promise<OneSignal|null>
  *   goeloRequestPushSubscription() → Promise<{ ok, reason?, permission?, message?, pendingFinalize? }>
  *       (permission native d’abord ; si accord : ok tout de suite, finalisation OneSignal en arrière-plan)
+ *   goeloUnsupportedNotificationMessage() — texte explicite (surtout iPhone in-app sans `Notification`)
  *   goeloSendNotification(type, payload)  et alias sendNotification()
  *   GOELO_NOTIFICATION_TYPES
  */
@@ -88,6 +89,39 @@
     var h = location.hostname || "";
     return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
   }
+
+  function isLikelyIOSDevice() {
+    var ua = navigator.userAgent || "";
+    if (/iPhone|iPad|iPod/i.test(ua)) return true;
+    if (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) return true;
+    return false;
+  }
+
+  /**
+   * Message utilisateur quand l’API Notifications n’existe pas ou qu’aucune voie permission n’est dispo.
+   * Sur iPhone, le cas le plus fréquent est le navigateur **in-app** (Instagram, Messenger…) : pas de `window.Notification`.
+   */
+  function goeloUnsupportedNotificationMessage() {
+    if (isLikelyIOSDevice()) {
+      var host = "";
+      try {
+        host = location.hostname || "";
+      } catch (e) {
+        void e;
+      }
+      return (
+        "Sur cet iPhone ou iPad, les notifications web ne sont pas disponibles dans cet écran : le site tourne dans un navigateur intégré (Instagram, Messenger, Gmail…) qui ne fournit pas l’API Notifications.\n\n" +
+        "Ouvre le même lien dans Safari (icône bleue), en HTTPS, puis réessaie. iOS 16.4 minimum pour les push web. " +
+        "Tu peux aussi ajouter GoëloRides à l’écran d’accueil depuis Safari puis activer depuis cette icône." +
+        (host ? "\n\nSite : " + host : "")
+      );
+    }
+    return (
+      "Les notifications ne sont pas disponibles dans ce navigateur. Utilise une version récente de Safari, Chrome ou Firefox, sur une page HTTPS (pas une prévisualisation ou un WebView limité)."
+    );
+  }
+
+  window.goeloUnsupportedNotificationMessage = goeloUnsupportedNotificationMessage;
 
   /** granted | denied | default — les navigateurs envoient parfois undefined / "" / "prompt". */
   function notificationPermNormalized() {
@@ -196,7 +230,7 @@
    */
   window.goeloRequestPushSubscription = async function goeloRequestPushSubscription() {
     if (typeof Notification === "undefined") {
-      return { ok: false, reason: "unsupported", message: "Notifications non supportées sur ce navigateur." };
+      return { ok: false, reason: "unsupported", message: goeloUnsupportedNotificationMessage() };
     }
     var permEarly = notificationPermNormalized();
 
@@ -334,7 +368,7 @@
             };
           }
         } else {
-          return { ok: false, reason: "unsupported", message: "Notifications non supportées sur ce navigateur." };
+          return { ok: false, reason: "unsupported", message: goeloUnsupportedNotificationMessage() };
         }
 
         if (OneSignalSlow.User && OneSignalSlow.User.PushSubscription && typeof OneSignalSlow.User.PushSubscription.optIn === "function") {
