@@ -52,6 +52,32 @@
     return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
   }
 
+  /** Évite un clic « Activer » bloqué si init / optIn reste en attente (SW, réseau, iOS). */
+  function raceTimeout(promise, ms, onTimeoutMsg) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var t = setTimeout(function () {
+        if (done) return;
+        done = true;
+        reject(new Error(onTimeoutMsg || "timeout"));
+      }, ms);
+      Promise.resolve(promise).then(
+        function (v) {
+          if (done) return;
+          done = true;
+          clearTimeout(t);
+          resolve(v);
+        },
+        function (e) {
+          if (done) return;
+          done = true;
+          clearTimeout(t);
+          reject(e);
+        }
+      );
+    });
+  }
+
   window.goeloOneSignalInitPromise = function goeloOneSignalInitPromise() {
     if (initPromise) return initPromise;
     var appId = getAppId();
@@ -103,7 +129,18 @@
    * Utilise l’API Notifications du SDK v16 si disponible, sinon repli navigateur.
    */
   window.goeloRequestPushSubscription = async function goeloRequestPushSubscription() {
-    var OneSignal = await window.goeloOneSignalInitPromise();
+    var OneSignal;
+    try {
+      OneSignal = await raceTimeout(window.goeloOneSignalInitPromise(), 25000, "init_timeout");
+    } catch (toErr) {
+      void toErr;
+      return {
+        ok: false,
+        reason: "timeout",
+        message:
+          "OneSignal met trop longtemps à démarrer (réseau ou service worker). Ferme les onglets du site, recharge la page et réessaie."
+      };
+    }
     if (!OneSignal) {
       return { ok: false, reason: "no_onesignal", message: "App ID OneSignal non configuré." };
     }
@@ -112,9 +149,10 @@
         var result = await OneSignal.Notifications.requestPermission();
         if (OneSignal.User && OneSignal.User.PushSubscription && typeof OneSignal.User.PushSubscription.optIn === "function") {
           try {
-            await OneSignal.User.PushSubscription.optIn();
+            await raceTimeout(OneSignal.User.PushSubscription.optIn(), 12000, "optin_timeout");
           } catch (optErr) {
             void optErr;
+            /* Permission peut déjà être OK ; ne pas bloquer l’UI indéfiniment. */
           }
         }
         return { ok: true, result: result };

@@ -35,7 +35,14 @@
           var result = await O.Notifications.requestPermission();
           if (O.User && O.User.PushSubscription && typeof O.User.PushSubscription.optIn === "function") {
             try {
-              await O.User.PushSubscription.optIn();
+              await Promise.race([
+                O.User.PushSubscription.optIn(),
+                new Promise(function (_, rej) {
+                  setTimeout(function () {
+                    rej(new Error("optin_timeout"));
+                  }, 12000);
+                })
+              ]);
             } catch (optErr) {
               void optErr;
             }
@@ -128,24 +135,29 @@
     if (btnEn) {
       btnEn.addEventListener("click", async function () {
         btnEn.disabled = true;
-        var res = await window.goeloRequestPushSubscription();
-        if (res && res.ok) {
-          try {
-            localStorage.setItem(STORAGE_DISMISS, "1");
-          } catch (e) {
-            void e;
+        try {
+          var res = await window.goeloRequestPushSubscription();
+          if (res && res.ok) {
+            try {
+              localStorage.setItem(STORAGE_DISMISS, "1");
+            } catch (e) {
+              void e;
+            }
+            bar.remove();
+            return;
           }
-          bar.remove();
-          return;
+          var msg =
+            res && res.message
+              ? res.message
+              : res && res.reason === "no_onesignal"
+                ? "Configuration OneSignal manquante (GOELO_ONESIGNAL_APP_ID)."
+                : "Impossible d’activer les notifications. Réessaie ou vérifie les réglages du navigateur.";
+          window.alert(msg);
+        } finally {
+          if (btnEn && document.body.contains(btnEn)) {
+            btnEn.disabled = false;
+          }
         }
-        btnEn.disabled = false;
-        var msg =
-          res && res.message
-            ? res.message
-            : res && res.reason === "no_onesignal"
-              ? "Configuration OneSignal manquante (GOELO_ONESIGNAL_APP_ID)."
-              : "Impossible d’activer les notifications. Réessaie ou vérifie les réglages du navigateur.";
-        window.alert(msg);
       });
     }
 
