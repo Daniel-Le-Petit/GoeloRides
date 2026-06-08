@@ -132,6 +132,33 @@
   var STORAGE_DISMISS = "goelo_notify_banner_dismiss_v1";
   /* « Plus tard » : masque jusqu’à fermeture de l’onglet (pas 7 jours). */
   var SESSION_SNOOZE_TAB = "goelo_notify_snooze_tab_v1";
+  /** Garde-fou : réactive le bouton si la promesse OneSignal ne se termine pas (réseau, onglet en arrière-plan). */
+  var NOTIFY_CLICK_MAX_MS = 90000;
+
+  function resetNotifyBannerPrimaryButton() {
+    var bar = document.getElementById("goelo-enable-notifications-banner");
+    if (!bar) return;
+    var btn = bar.querySelector("#goelo-notify-enable");
+    if (!btn) return;
+    try {
+      btn.disabled = false;
+      btn.removeAttribute("aria-busy");
+    } catch (e) {
+      void e;
+    }
+    var mode = bar.getAttribute("data-goelo-notify-mode") || "prompt";
+    setBannerMode(bar, mode);
+  }
+
+  window.addEventListener(
+    "pageshow",
+    function (ev) {
+      if (ev && ev.persisted) {
+        resetNotifyBannerPrimaryButton();
+      }
+    },
+    false
+  );
 
   function isSnoozed() {
     try {
@@ -158,6 +185,7 @@
     } catch (e3) {
       void e3;
     }
+    resetNotifyBannerPrimaryButton();
   };
 
   function isDismissedForever() {
@@ -220,7 +248,7 @@
       bar.classList.remove("goelo-enable-notifications-banner--denied");
       if (title) {
         title.textContent =
-          "Ne manque aucune sortie : le bouton ci-dessous déclenche la demande du navigateur (comme Strava ou Komoot).";
+          "Ne manque aucune sortie : le bouton ci-dessous ouvre tout de suite la demande de notification du navigateur ou du téléphone.";
       }
       if (hint) {
         hint.textContent = "";
@@ -259,6 +287,7 @@
     if (btnEn) {
       btnEn.addEventListener("click", async function () {
         btnEn.disabled = true;
+        btnEn.setAttribute("aria-busy", "true");
         try {
           var retryMsg = bar.querySelector("#goelo-notify-retry");
           if (retryMsg) {
@@ -266,7 +295,28 @@
             retryMsg.hidden = true;
           }
           var curMode = bar.getAttribute("data-goelo-notify-mode") || "prompt";
-          var res = await window.goeloRequestPushSubscription();
+          var res;
+          if (typeof window.goeloRequestPushSubscription === "function") {
+            res = await Promise.race([
+              window.goeloRequestPushSubscription(),
+              new Promise(function (resolve) {
+                setTimeout(function () {
+                  resolve({
+                    ok: false,
+                    reason: "client_timeout",
+                    message:
+                      "C’est trop long. Recharge la page puis réessaie, ou vérifie la connexion."
+                  });
+                }, NOTIFY_CLICK_MAX_MS);
+              })
+            ]);
+          } else {
+            res = {
+              ok: false,
+              reason: "no_sdk",
+              message: "Le module OneSignal n’est pas prêt. Réessaie ou recharge la page."
+            };
+          }
           if (res && res.ok) {
             try {
               localStorage.setItem(STORAGE_DISMISS, "1");
@@ -290,37 +340,22 @@
               ? res.message
               : res && res.reason === "no_onesignal"
                 ? "Configuration OneSignal manquante (GOELO_ONESIGNAL_APP_ID)."
-                : res && res.reason === "no_sdk"
-                  ? "Le module OneSignal n’est pas prêt. Réessaie ou recharge la page."
-                  : "Impossible d’activer les notifications. Réessaie ou vérifie les réglages du navigateur.";
+                : res && res.reason === "no_onesignal_after_grant"
+                  ? "Permission enregistrée ; recharge la page pour finaliser les notifications."
+                  : res && res.reason === "no_sdk"
+                    ? "Le module OneSignal n’est pas prêt. Réessaie ou recharge la page."
+                    : "Impossible d’activer les notifications. Réessaie ou vérifie les réglages du navigateur.";
           if (msg) window.alert(msg);
         } finally {
-          if (btnEn && document.body.contains(btnEn)) {
-            btnEn.disabled = false;
+          if (btnEn) {
+            try {
+              btnEn.disabled = false;
+              btnEn.removeAttribute("aria-busy");
+            } catch (fe) {
+              void fe;
+            }
           }
         }
-      });
-    }
-
-    /* Pré-chauffe OneSignal : le clic ne cumule pas l’attente d’init (souvent perçue comme « 25 s »). */
-    if (btnEn && typeof window.goeloOneSignalInitPromise === "function") {
-      var modeAfterPrep = initialMode;
-      btnEn.disabled = true;
-      btnEn.textContent = "Préparation…";
-      btnEn.setAttribute("aria-busy", "true");
-      var PREP_UI_MS = 15000;
-      Promise.race([
-        window.goeloOneSignalInitPromise(),
-        new Promise(function (r) {
-          setTimeout(function () {
-            r("__prep_cap");
-          }, PREP_UI_MS);
-        })
-      ]).then(function () {
-        if (!bar.isConnected || !btnEn) return;
-        btnEn.removeAttribute("aria-busy");
-        btnEn.disabled = false;
-        setBannerMode(bar, bar.getAttribute("data-goelo-notify-mode") || modeAfterPrep);
       });
     }
   }
