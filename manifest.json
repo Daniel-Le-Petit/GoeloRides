@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "GoëloRides",
+  "short_name": "GoëloRides",
+  "description": "Sorties vélo à Saint-Quay-Portrieux — calendrier et inscriptions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef2f6",
+  "theme_color": "#1565a8",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/assets/hero-accueil.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ]
+}

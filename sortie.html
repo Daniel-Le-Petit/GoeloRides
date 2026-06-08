@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Détail d’une sortie GoëloRides : parcours, carte, inscription. Départ parking du Kasino à Saint-Quay-Portrieux.">
   <meta name="theme-color" content="#eef2f6">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GoëloRides">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css">
   <title>Sortie · Goëlo Rides</title>
   <meta property="og:title" content="Sortie · GoëloRides" />
   <meta property="og:description" content="Détail d’une sortie vélo — parcours, carte et inscription." />
@@ -919,6 +924,8 @@
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
     /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    window.GOELO_ONESIGNAL_APP_ID = "";
+    window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
   </script>
 </head>
 <body>
@@ -1101,6 +1108,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
+  <script src="goelo-onesignal.js" defer></script>
+  <script src="goelo-enable-notifications-banner.js" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
   <script src="goelo-ride-updates.js" defer></script>

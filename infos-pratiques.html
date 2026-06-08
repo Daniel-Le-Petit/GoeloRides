@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Point de départ, équipement, contacts et règles de sécurité pour les sorties vélo GoëloRides à Saint-Quay-Portrieux.">
   <meta name="theme-color" content="#eef2f6">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GoëloRides">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css">
   <title>Infos pratiques · Goëlo Rides</title>
   <meta property="og:title" content="Infos pratiques · GoëloRides" />
   <meta property="og:description" content="Parking du Kasino, équipement, contacts et sécurité sur la route." />
@@ -243,6 +248,12 @@
       }
     })();
   </script>
+  <script>
+    window.GOELO_ONESIGNAL_APP_ID = "";
+    window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
+  </script>
+  <script src="goelo-onesignal.js" defer></script>
+  <script src="goelo-enable-notifications-banner.js" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
 </body>

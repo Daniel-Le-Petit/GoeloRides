@@ -6,6 +6,19 @@
   <meta name="description" content="Rejoins un groupe à ton rythme. Départ parking du Kasino à Saint-Quay-Portrieux — sorties vélo été 2026.">
   <meta name="theme-color" content="#eef2f6">
   <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GoëloRides">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css">
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({ appId: "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a" });
+    });
+    window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";
+  </script>
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
   <meta property="og:title" content="GoëloRides · Sorties vélo à Saint-Quay-Portrieux" />
   <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du « Kasino » de Saint-Quay — été 2026." />
@@ -4902,7 +4915,10 @@
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
     /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    /* OneSignal : init + App ID dans le head (script OneSignalSDK.page.js). Safari Web ID optionnel si besoin iOS. */
+    window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
   </script>
+  <script src="goelo-enable-notifications-banner.js" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
   <script src="goelo-ride-updates.js" defer></script>

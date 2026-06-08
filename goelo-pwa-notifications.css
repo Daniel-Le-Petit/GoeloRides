@@ -1,0 +1,82 @@
+/* PWA + bandeau notifications (priorité mobile, safe area) */
+
+.goelo-enable-notifications-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 220000;
+  padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+  background: linear-gradient(180deg, rgba(21, 101, 168, 0.97) 0%, #0e4d80 100%);
+  color: #fff;
+  box-shadow: 0 -6px 24px rgba(15, 40, 65, 0.22);
+  font-family: inherit;
+}
+
+.goelo-enable-notifications-banner__inner {
+  max-width: 42rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+@media (min-width: 520px) {
+  .goelo-enable-notifications-banner__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+}
+
+.goelo-enable-notifications-banner__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.goelo-enable-notifications-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.goelo-enable-notifications-banner__btn {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.goelo-enable-notifications-banner__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.goelo-enable-notifications-banner__btn--primary {
+  background: #f9d71c;
+  color: #14222d;
+}
+
+.goelo-enable-notifications-banner__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.goelo-enable-notifications-banner__btn--ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.goelo-enable-notifications-banner__btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
