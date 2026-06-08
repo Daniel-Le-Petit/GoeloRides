@@ -7,11 +7,28 @@
 (function () {
   "use strict";
 
+  async function waitForOneSignalSdk(maxMs) {
+    var step = 80;
+    var deadline = Date.now() + (typeof maxMs === "number" ? maxMs : 12000);
+    while (Date.now() < deadline) {
+      if (window.OneSignal) return window.OneSignal;
+      await new Promise(function (r) {
+        setTimeout(r, step);
+      });
+    }
+    return window.OneSignal || null;
+  }
+
   if (typeof window.goeloRequestPushSubscription !== "function") {
     window.goeloRequestPushSubscription = async function goeloRequestPushSubscription() {
-      var O = window.OneSignal;
+      var O = await waitForOneSignalSdk(12000);
       if (!O) {
-        return { ok: false, message: "OneSignal non chargé. Recharge la page.", reason: "no_sdk" };
+        return {
+          ok: false,
+          message:
+            "Le module OneSignal n’est pas prêt (réseau lent ou bloqueur). Réessaie dans quelques secondes ou recharge la page.",
+          reason: "no_sdk"
+        };
       }
       try {
         if (O.Notifications && typeof O.Notifications.requestPermission === "function") {
