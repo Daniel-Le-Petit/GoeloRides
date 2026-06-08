@@ -21,8 +21,10 @@
     "Notifications bloquées pour ce site. Ouvre Réglages → Safari (ou Réglages → Notifications si GoëloRides est sur l’écran d’accueil), autorise ce site, puis recharge la page.";
   var HELP_DENIED_DESKTOP =
     "Notifications bloquées pour ce site. Autorise-les dans les réglages du navigateur (icône à gauche de l’adresse), puis recharge la page.";
-  var HELP_IOS_NO_API =
-    "Ce navigateur intégré ne permet pas les notifications web. Utilise les boutons sous ce texte pour ouvrir dans Safari ou copier le lien.";
+  var HELP_IOS_NO_API_INAPP =
+    "Tu n’es probablement pas dans le Safari du système (Instagram, Messenger, Mail… masquent la vraie fenêtre Safari). Descends : touche « Ouvrir dans Safari » ou « Copier le lien », puis réessaie « Activer les notifications » une fois dans Safari.";
+  var HELP_IOS_NO_API_OTHER =
+    "Ce mode ne permet pas les notifications web ici. Si tu es déjà dans l’app Safari : mets iOS à jour (16.4+), ferme la navigation privée, recharge la page ou rouvre l’URL dans un nouvel onglet. Sinon utilise les boutons ci-dessous.";
 
   var inAppEscapeWired = false;
 
@@ -41,6 +43,12 @@
     if (/iPad|iPhone|iPod/.test(ua)) return true;
     if (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) return true;
     return false;
+  }
+
+  /** UA typique d’un WebView intégré (Instagram, Messenger, etc.). */
+  function isLikelyInAppEmbeddedBrowser() {
+    var ua = navigator.userAgent || "";
+    return /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Twitter|TikTok|Snapchat|LinkedInApp|Messenger|GSA\/|; wv\)/i.test(ua);
   }
 
   function isIOSLikeForHelp() {
@@ -187,11 +195,19 @@
       btn.disabled = false;
       btn.removeAttribute("aria-busy");
       btn.classList.add("goelo-notif-manual__btn--needs-safari");
-      btn.textContent = isAppleMobileOrTablet() ? "Aide : Safari requis" : "Notifications : navigateur limité";
+      btn.textContent = isAppleMobileOrTablet()
+        ? isLikelyInAppEmbeddedBrowser()
+          ? "Ouvrir dans Safari ↓"
+          : "Safari / iOS : voir aide ↓"
+        : "Notifications : navigateur limité";
       var help0 = findHelpForButton(btn);
       if (help0) {
         help0.hidden = false;
-        help0.textContent = isAppleMobileOrTablet() ? HELP_IOS_NO_API : "Ce navigateur ne fournit pas l’API notifications pour les sites web. Essaie Safari, Chrome ou Firefox récent.";
+        if (isAppleMobileOrTablet()) {
+          help0.textContent = isLikelyInAppEmbeddedBrowser() ? HELP_IOS_NO_API_INAPP : HELP_IOS_NO_API_OTHER;
+        } else {
+          help0.textContent = "Ce navigateur ne fournit pas l’API notifications pour les sites web. Essaie Safari, Chrome ou Firefox récent.";
+        }
       }
       syncInAppEscapeUi();
       return;
@@ -234,8 +250,9 @@
             void se;
           }
           window.alert(
-            "Les notifications web ne fonctionnent pas dans ce navigateur intégré.\n\n" +
-              "Utilise les boutons juste en dessous : « Ouvrir dans Safari » (souvent ouvre Safari) ou « Copier le lien » puis colle dans Safari."
+            isLikelyInAppEmbeddedBrowser()
+              ? "Les notifications web ne fonctionnent pas dans ce navigateur intégré.\n\nUtilise les boutons juste en dessous : « Ouvrir dans Safari » ou « Copier le lien »."
+              : "Ce mode ne permet pas les notifications web ici.\n\nSi tu es dans Safari : mets à jour vers iOS 16.4+, ferme la navigation privée, recharge la page ou copie l’URL dans un nouvel onglet. Sinon utilise les boutons ci-dessous."
           );
         } else {
           window.alert(

@@ -24,6 +24,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 | `goelo-enable-notifications-banner.js` | Bandeau **v2** : bouton explicite « Activer les notifications » (geste → demande native) ; si **refus** (`denied`), bandeau ambre avec consignes **Safari / iOS** ou navigateur desktop ; « Plus tard » / masquage = **session** (fermeture onglet) |
 | `goelo-pwa-notifications.css` | Styles du bandeau + bloc **bouton manuel** hero (accueil) |
 | `goelo-notif-manual-button.js` | **Canal principal accueil** : `#goelo-notif-btn` + `#goelo-notif-help` ; si permission **déjà refusée**, pas d’appel `requestPermission` / OneSignal (pas de popup fantôme). **In-app iOS** : bloc `#goelo-notif-inapp-actions` (lien `target=_blank` vers l’URL courante, copier, partager) car Apple ne fournit pas `Notification` dans le WebView — il faut Safari. `window.goeloInitNotifications()`. |
+| `goelo-debug-panel.js` | **Debug temporaire** (désactivé par défaut) : overlay bas d’écran si `window.GOELO_DEBUG === true` ; `showGoeloDebugPanel()` ; clic = fermer. Ne modifie pas OneSignal ni le SW. |
 
 **Accueil (`index.html`)** : bloc hero « Activer les notifications » + `goelo-notif-manual-button.js` (en plus du bandeau). Les autres pages utilisent en général `goelo-onesignal.js` + variables `window.GOELO_ONESIGNAL_*` (sans bouton manuel tant que l’App ID n’y est pas renseigné).
 
@@ -64,6 +65,7 @@ Chrome → **Application → Service Workers** : un seul worker lié à OneSigna
 - `window.EnableNotificationsBanner.mount({ container })`
 - `window.GoeloNotificationsClearBannerState()` — en console : réaffiche le bandeau (efface masquage définitif après succès, snooze session, ancienne clé snooze 7 jours si présente) et **réactive le bouton** s’il était resté grisé.
 - `window.goeloInitNotifications()` — accueil : re-exécute le câblage du bouton `#goelo-notif-btn` et l’aide `#goelo-notif-help` (utile si le bloc est injecté après chargement).
+- **Debug mobile** : dans le HTML, passer `window.GOELO_DEBUG = true` **avant** `goelo-debug-panel.js`, recharger ; panneau bas d’écran après 2 s, ou `showGoeloDebugPanel()` en console (avec le flag à `true`). Clic sur le panneau = fermer.
 
 ## Icônes PWA
 
