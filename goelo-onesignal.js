@@ -104,13 +104,12 @@
   function goeloUnsupportedNotificationMessage() {
     if (isLikelyIOSDevice()) {
       return (
-        "Tu suis sans doute le lien depuis Instagram, Messenger ou la messagerie : dans cette fenêtre, les notifications ne peuvent pas s’allumer.\n\n" +
-        "Rien à installer : ouvre le site dans Safari (icône boussole), colle l’adresse ou tape-la, puis touche « Activer les notifications » sur la page. Sur iPhone récent, ça suffit — pas besoin d’ajouter une icône sur l’écran d’accueil.\n\n" +
-        "(Si tu préfères un raccourci sur l’écran d’accueil, tu peux, mais ce n’est pas obligatoire.)"
+        "Les notifications ne peuvent pas s’activer ici.\n\n" +
+        "Ouvre cette page dans Safari (icône boussole), puis touche encore « Activer les notifications ». Tu peux coller l’adresse dans Safari ou utiliser « Copier le lien » sur l’accueil. Pas besoin d’installer une app."
       );
     }
     return (
-      "Les notifications ne sont pas disponibles dans ce navigateur. Utilise une version récente de Safari, Chrome ou Firefox, sur une page HTTPS (pas une prévisualisation ou un WebView limité)."
+      "Les notifications ne sont pas disponibles dans ce navigateur. Essaie Safari, Chrome ou Firefox récent, en HTTPS."
     );
   }
 
