@@ -443,4 +443,15 @@
   }
 
   void goeloOneSignalInitPromise();
+
+  /* TEMP DEBUG — retirer après diagnostic (notifications / iOS / in-app) */
+  setTimeout(function () {
+    if (typeof console !== "undefined" && console.log) {
+      console.log("UA:", navigator.userAgent);
+      console.log(
+        "Notification:",
+        typeof Notification !== "undefined" ? Notification.permission : "(API absente)"
+      );
+    }
+  }, 3000);
 })();
