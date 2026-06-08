@@ -9,8 +9,8 @@
  *
  * API exposée :
  *   goeloOneSignalInitPromise() → Promise<OneSignal|null>
- *   goeloRequestPushSubscription() → Promise<{ ok, reason?, permission?, message? }>
- *       (permission navigateur en premier si possible, puis init OneSignal + optIn)
+ *   goeloRequestPushSubscription() → Promise<{ ok, reason?, permission?, message?, pendingFinalize? }>
+ *       (permission native d’abord ; si accord : ok tout de suite, finalisation OneSignal en arrière-plan)
  *   goeloSendNotification(type, payload)  et alias sendNotification()
  *   GOELO_NOTIFICATION_TYPES
  */
@@ -33,11 +33,47 @@
     return id && String(id).trim() ? String(id).trim() : "";
   }
 
+  (function goeloInjectOneSignalEarlyHints() {
+    if (!getAppId()) return;
+    try {
+      if (document.documentElement.getAttribute("data-goelo-os-hints") === "1") return;
+      document.documentElement.setAttribute("data-goelo-os-hints", "1");
+    } catch (e) {
+      return;
+    }
+    var head = document.head || document.getElementsByTagName("head")[0];
+    if (!head) return;
+    try {
+      if (!document.querySelector('link[data-goelo-preconnect="onesignal"]')) {
+        var pre = document.createElement("link");
+        pre.rel = "preconnect";
+        pre.href = "https://cdn.onesignal.com";
+        pre.setAttribute("data-goelo-preconnect", "onesignal");
+        head.appendChild(pre);
+      }
+    } catch (e2) {
+      void e2;
+    }
+    try {
+      if (!document.querySelector('link[data-goelo-preload="onesignal-page"]')) {
+        var pl = document.createElement("link");
+        pl.rel = "preload";
+        pl.as = "script";
+        pl.href = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+        pl.crossOrigin = "anonymous";
+        pl.setAttribute("data-goelo-preload", "onesignal-page");
+        head.appendChild(pl);
+      }
+    } catch (e3) {
+      void e3;
+    }
+  })();
+
   function loadScript(src) {
     return new Promise(function (resolve, reject) {
       var s = document.createElement("script");
       s.src = src;
-      s.defer = true;
+      s.async = true;
       s.onload = function () {
         resolve();
       };
@@ -112,24 +148,6 @@
           resolve(null);
         }
       });
-      try {
-        var pre = document.createElement("link");
-        pre.rel = "preconnect";
-        pre.href = "https://cdn.onesignal.com";
-        document.head.appendChild(pre);
-      } catch (preErr) {
-        void preErr;
-      }
-      try {
-        var pl = document.createElement("link");
-        pl.rel = "preload";
-        pl.as = "script";
-        pl.href = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-        pl.crossOrigin = "anonymous";
-        document.head.appendChild(pl);
-      } catch (plErr) {
-        void plErr;
-      }
       loadScript("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js").catch(function (e) {
         console.warn("[GoëloRides] OneSignal : chargement SDK impossible.", e);
         resolve(null);
@@ -165,8 +183,8 @@
 
   /**
    * Demande d’activation push (uniquement après clic utilisateur).
-   * Permission navigateur d’abord (boîte native immédiate), puis init OneSignal + optIn
-   * — évite d’attendre le service worker avant toute réponse visuelle.
+   * Boîte native dès que possible ; si la permission est accordée, retour ok immédiat et
+   * OneSignal.init + optIn en arrière-plan (sans bloquer la disparition du bandeau).
    */
   window.goeloRequestPushSubscription = async function goeloRequestPushSubscription() {
     var permEarly =
@@ -182,7 +200,6 @@
       };
     }
 
-    /* Boîte système tout de suite (même geste) — sans attendre OneSignal.init (souvent le goulot d’étranglement). */
     if (typeof Notification !== "undefined" && typeof Notification.requestPermission === "function" && permEarly === "default") {
       var nperm;
       try {
@@ -216,41 +233,33 @@
       }
     }
 
-    var OneSignal;
-    try {
-      OneSignal = await raceTimeout(window.goeloOneSignalInitPromise(), INIT_WAIT_AFTER_CLICK_MS, "init_timeout");
-    } catch (toErr) {
-      void toErr;
-      return {
-        ok: false,
-        reason: "timeout",
-        message:
-          "OneSignal met trop longtemps à démarrer (réseau ou service worker). Ferme les onglets du site, recharge la page et réessaie."
-      };
-    }
-    if (!OneSignal) {
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    /* Cas rare : pas encore « granted » (navigateur sans API native utile) — flux bloquant. */
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+      var OneSignalSlow;
+      try {
+        OneSignalSlow = await raceTimeout(window.goeloOneSignalInitPromise(), INIT_WAIT_AFTER_CLICK_MS, "init_timeout");
+      } catch (toErr) {
+        void toErr;
         return {
           ok: false,
-          reason: "no_onesignal_after_grant",
+          reason: "timeout",
           message:
-            "Permission accordée, mais OneSignal n’est pas prêt. Recharge la page pour finaliser les notifications."
+            "OneSignal met trop longtemps à démarrer (réseau ou service worker). Ferme les onglets du site, recharge la page et réessaie."
         };
       }
-      return {
-        ok: false,
-        reason: "no_onesignal",
-        message:
-          "OneSignal ne s’est pas lancé. Recharge la page et réessaie (connexion ou bloqueur de contenu)."
-      };
-    }
-
-    try {
-      if (typeof Notification === "undefined" || Notification.permission !== "granted") {
-        if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === "function") {
+      if (!OneSignalSlow) {
+        return {
+          ok: false,
+          reason: "no_onesignal",
+          message:
+            "OneSignal ne s’est pas lancé. Recharge la page et réessaie (connexion ou bloqueur de contenu)."
+        };
+      }
+      try {
+        if (OneSignalSlow.Notifications && typeof OneSignalSlow.Notifications.requestPermission === "function") {
           var result;
           try {
-            result = await raceTimeout(OneSignal.Notifications.requestPermission(), 60000, "permission_timeout");
+            result = await raceTimeout(OneSignalSlow.Notifications.requestPermission(), 60000, "permission_timeout");
           } catch (pe) {
             void pe;
             return {
@@ -314,20 +323,47 @@
         } else {
           return { ok: false, reason: "unsupported", message: "Notifications non supportées sur ce navigateur." };
         }
-      }
 
-      if (OneSignal.User && OneSignal.User.PushSubscription && typeof OneSignal.User.PushSubscription.optIn === "function") {
-        try {
-          await raceTimeout(OneSignal.User.PushSubscription.optIn(), 20000, "optin_timeout");
-        } catch (optErr) {
-          void optErr;
+        if (OneSignalSlow.User && OneSignalSlow.User.PushSubscription && typeof OneSignalSlow.User.PushSubscription.optIn === "function") {
+          try {
+            await raceTimeout(OneSignalSlow.User.PushSubscription.optIn(), 20000, "optin_timeout");
+          } catch (optErr) {
+            void optErr;
+          }
+        }
+        return { ok: true, permission: "granted" };
+      } catch (e) {
+        console.warn("[GoëloRides] OneSignal : demande permission.", e);
+        return { ok: false, reason: "error", error: e && e.message ? e.message : String(e) };
+      }
+    }
+
+    void (async function goeloFinalizeOneSignalPush() {
+      try {
+        var O = await raceTimeout(window.goeloOneSignalInitPromise(), INIT_WAIT_AFTER_CLICK_MS, "init_timeout");
+        if (!O) {
+          if (typeof console !== "undefined" && console.warn) {
+            console.warn(
+              "[GoëloRides] OneSignal : permission accordée mais init absente — recharge la page pour finaliser l’abonnement push."
+            );
+          }
+          return;
+        }
+        if (O.User && O.User.PushSubscription && typeof O.User.PushSubscription.optIn === "function") {
+          try {
+            await raceTimeout(O.User.PushSubscription.optIn(), 20000, "optin_timeout");
+          } catch (optErr2) {
+            void optErr2;
+          }
+        }
+      } catch (bgErr) {
+        if (typeof console !== "undefined" && console.warn) {
+          console.warn("[GoëloRides] OneSignal : finalisation push en arrière-plan.", bgErr);
         }
       }
-      return { ok: true, permission: "granted" };
-    } catch (e) {
-      console.warn("[GoëloRides] OneSignal : demande permission.", e);
-      return { ok: false, reason: "error", error: e && e.message ? e.message : String(e) };
-    }
+    })();
+
+    return { ok: true, permission: "granted", pendingFinalize: true };
   };
 
   /**

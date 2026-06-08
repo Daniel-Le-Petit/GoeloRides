@@ -56,7 +56,7 @@ Chrome → **Application → Service Workers** : un seul worker lié à OneSigna
 
 - `window.GOELO_NOTIFICATION_TYPES` — `NEW_RIDE`, `RIDE_UPDATE`, `RIDE_CANCELLED`
 - `window.goeloSendNotification(type, payload)` — enveloppe / log ; envoi réel = dashboard ou **API REST** (clé jamais côté navigateur).
-- `window.goeloOneSignalInitPromise()`, `window.goeloRequestPushSubscription()` — la demande **navigateur** (`Notification.requestPermission`) est déclenchée **avant** l’attente de `OneSignal.init` (boîte système plus rapide), puis `optIn` ; plafond init ~120 s ; garde-fou après accord ~60 s ; `optIn` ~20 s. Retours utiles : `ok`, `reason`, `message` (dont `no_onesignal_after_grant` → recharger la page).
+- `window.goeloOneSignalInitPromise()`, `window.goeloRequestPushSubscription()` — boîte **native** en premier ; dès **Autoriser**, retour **`ok` immédiat** (`pendingFinalize`) et **init + optIn** OneSignal **en arrière-plan** (le bandeau ne attend plus le service worker). Plafond init ~120 s ; tâche de fond ~60 s + `optIn` ~20 s. En cas d’échec silencieux en arrière-plan : message dans la **console** + recharger la page si besoin.
 - Les balises `<script src="goelo-onesignal.js?v=…">` / `goelo-enable-notifications-banner.js?v=…` : **incrémente `?v=`** à chaque changement de ces fichiers pour éviter un vieux JS en cache.
 - `window.EnableNotificationsBanner.mount({ container })`
 - `window.GoeloNotificationsClearBannerState()` — en console : réaffiche le bandeau (efface masquage définitif après succès, snooze session, ancienne clé snooze 7 jours si présente) et **réactive le bouton** s’il était resté grisé.
