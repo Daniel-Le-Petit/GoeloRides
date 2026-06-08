@@ -1,11 +1,19 @@
 /**
- * Équivalent du composant React « EnableNotificationsBanner » — site statique sans build.
- * Bandeau discret ; permission uniquement au clic sur « Activer ».
+ * Bandeau notifications (équivalent EnableNotificationsBanner) — site statique.
+ * v2 : bouton explicite « Activer les notifications », mode refus (Safari / iOS) avec consignes,
+ * pas d’alert sur simple refus — bascule vers le bandeau « réglages ».
  *
  * API : EnableNotificationsBanner.mount({ container?: HTMLElement })
  */
 (function () {
   "use strict";
+
+  /* Ancien snooze 7 jours (localStorage) : on retire pour que le bandeau réapparaisse après déploiement. */
+  try {
+    localStorage.removeItem("goelo_notify_snooze_until_v1");
+  } catch (e) {
+    void e;
+  }
 
   async function waitForOneSignalSdk(maxMs) {
     var step = 80;
@@ -32,7 +40,34 @@
       }
       try {
         if (O.Notifications && typeof O.Notifications.requestPermission === "function") {
-          var result = await O.Notifications.requestPermission();
+          var result = await Promise.race([
+            O.Notifications.requestPermission(),
+            new Promise(function (_, rej) {
+              setTimeout(function () {
+                rej(new Error("permission_timeout"));
+              }, 60000);
+            })
+          ]);
+          void result;
+          var permAfter = typeof Notification !== "undefined" ? Notification.permission : "default";
+          if (permAfter !== "granted") {
+            if (permAfter === "denied") {
+              return {
+                ok: false,
+                reason: "permission_denied",
+                permission: "denied",
+                message:
+                  "Notifications refusées. Sur iPhone : Réglages → Safari ou Réglages → Notifications (app sur l’écran d’accueil)."
+              };
+            }
+            return {
+              ok: false,
+              reason: "permission_not_granted",
+              permission: permAfter,
+              message:
+                "Les notifications ne sont pas activées. Réessaie et choisis « Autoriser » si une boîte de dialogue s’affiche."
+            };
+          }
           if (O.User && O.User.PushSubscription && typeof O.User.PushSubscription.optIn === "function") {
             try {
               await Promise.race([
@@ -47,41 +82,224 @@
               void optErr;
             }
           }
-          return { ok: true, result: result };
+          return { ok: true, permission: "granted" };
         }
         if (typeof Notification !== "undefined" && Notification.requestPermission) {
-          var perm = await Notification.requestPermission();
-          return { ok: perm === "granted", permission: perm };
+          var perm = await Promise.race([
+            Notification.requestPermission(),
+            new Promise(function (_, rej) {
+              setTimeout(function () {
+                rej(new Error("permission_timeout"));
+              }, 60000);
+            })
+          ]);
+          if (perm === "denied") {
+            return {
+              ok: false,
+              reason: "permission_denied",
+              permission: "denied",
+              message:
+                "Notifications refusées. Autorise ce site dans les réglages du navigateur (icône cadenas ou à gauche de l’adresse)."
+            };
+          }
+          if (perm !== "granted") {
+            return {
+              ok: false,
+              reason: "permission_not_granted",
+              permission: perm,
+              message:
+                "Les notifications ne sont pas activées. Réessaie et choisis « Autoriser » si une boîte de dialogue s’affiche."
+            };
+          }
+          return { ok: true, permission: perm };
         }
         return { ok: false, message: "Notifications non supportées.", reason: "unsupported" };
       } catch (e) {
-        return { ok: false, message: e && e.message ? e.message : String(e), reason: "error" };
+        var errMsg = e && e.message ? e.message : String(e);
+        if (errMsg === "permission_timeout") {
+          return {
+            ok: false,
+            reason: "permission_timeout",
+            message:
+              "La demande de notification n’a pas abouti à temps. Recharge la page et réessaie."
+          };
+        }
+        return { ok: false, message: errMsg, reason: "error" };
       }
     };
   }
 
   var STORAGE_DISMISS = "goelo_notify_banner_dismiss_v1";
-  var STORAGE_SNOOZE_UNTIL = "goelo_notify_snooze_until_v1";
-  var SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+  /* « Plus tard » : masque jusqu’à fermeture de l’onglet (pas 7 jours). */
+  var SESSION_SNOOZE_TAB = "goelo_notify_snooze_tab_v1";
 
-  function readSnoozeUntil() {
+  function isSnoozed() {
     try {
-      var n = parseInt(localStorage.getItem(STORAGE_SNOOZE_UNTIL) || "0", 10);
-      return Number.isFinite(n) ? n : 0;
+      return sessionStorage.getItem(SESSION_SNOOZE_TAB) === "1";
     } catch (e) {
-      return 0;
+      return false;
     }
   }
 
-  function isSnoozed() {
-    return Date.now() < readSnoozeUntil();
-  }
+  /** Réaffiche le bandeau (console / support) : efface masquage définitif et snooze session. */
+  window.GoeloNotificationsClearBannerState = function () {
+    try {
+      localStorage.removeItem(STORAGE_DISMISS);
+    } catch (e) {
+      void e;
+    }
+    try {
+      localStorage.removeItem("goelo_notify_snooze_until_v1");
+    } catch (e2) {
+      void e2;
+    }
+    try {
+      sessionStorage.removeItem(SESSION_SNOOZE_TAB);
+    } catch (e3) {
+      void e3;
+    }
+  };
 
   function isDismissedForever() {
     try {
       return localStorage.getItem(STORAGE_DISMISS) === "1";
     } catch (e) {
       return false;
+    }
+  }
+
+  function isAppleMobileOrTablet() {
+    var ua = navigator.userAgent || "";
+    if (/iPad|iPhone|iPod/.test(ua)) return true;
+    if (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) return true;
+    return false;
+  }
+
+  function setBannerMode(bar, mode) {
+    bar.setAttribute("data-goelo-notify-mode", mode);
+    var title = bar.querySelector("#goelo-notify-title");
+    var hint = bar.querySelector("#goelo-notify-hint");
+    var btnEn = bar.querySelector("#goelo-notify-enable");
+    var btnLater = bar.querySelector("#goelo-notify-later");
+    var retryMsg = bar.querySelector("#goelo-notify-retry");
+    if (retryMsg) {
+      retryMsg.textContent = "";
+      retryMsg.hidden = true;
+    }
+    if (mode === "denied") {
+      bar.classList.add("goelo-enable-notifications-banner--denied");
+      if (isAppleMobileOrTablet()) {
+        if (title) {
+          title.textContent =
+            "Active les notifications dans les réglages Safari pour recevoir les sorties.";
+        }
+        if (hint) {
+          hint.innerHTML =
+            "Va dans <strong>Réglages → Safari</strong> (notifications ou paramètres des sites web) ou, si GoëloRides est sur l’<strong>écran d’accueil</strong> : <strong>Réglages → Notifications</strong>. Ensuite reviens ici, touche <strong>Réessayer</strong> ou recharge la page.";
+          hint.hidden = false;
+        }
+      } else {
+        if (title) {
+          title.textContent = "Les notifications sont bloquées pour ce site.";
+        }
+        if (hint) {
+          hint.textContent =
+            "Dans la barre d’adresse, ouvre le menu du site (cadenas ou i) → autorise les notifications pour ce domaine, puis recharge la page si besoin.";
+          hint.hidden = false;
+        }
+      }
+      if (btnEn) {
+        btnEn.textContent = "Réessayer";
+        btnEn.setAttribute("aria-label", "Vérifier à nouveau les notifications après les réglages");
+      }
+      if (btnLater) {
+        btnLater.textContent = "Masquer pour cette visite";
+        btnLater.setAttribute("aria-label", "Masquer le bandeau jusqu’à la prochaine visite sur cet onglet");
+      }
+    } else {
+      bar.classList.remove("goelo-enable-notifications-banner--denied");
+      if (title) {
+        title.textContent =
+          "Ne manque aucune sortie : le bouton ci-dessous déclenche la demande du navigateur (comme Strava ou Komoot).";
+      }
+      if (hint) {
+        hint.textContent = "";
+        hint.hidden = true;
+      }
+      if (btnEn) {
+        btnEn.textContent = "Activer les notifications";
+        btnEn.setAttribute(
+          "aria-label",
+          "Activer les notifications — déclenche la demande du téléphone ou du navigateur"
+        );
+      }
+      if (btnLater) {
+        btnLater.textContent = "Plus tard";
+        btnLater.setAttribute("aria-label", "Masquer le bandeau pour cette visite");
+      }
+    }
+  }
+
+  function wireNotifyBanner(bar, initialMode) {
+    var btnEn = bar.querySelector("#goelo-notify-enable");
+    var btnLater = bar.querySelector("#goelo-notify-later");
+    setBannerMode(bar, initialMode);
+
+    if (btnLater) {
+      btnLater.addEventListener("click", function () {
+        try {
+          sessionStorage.setItem(SESSION_SNOOZE_TAB, "1");
+        } catch (e) {
+          void e;
+        }
+        bar.remove();
+      });
+    }
+
+    if (btnEn) {
+      btnEn.addEventListener("click", async function () {
+        btnEn.disabled = true;
+        try {
+          var retryMsg = bar.querySelector("#goelo-notify-retry");
+          if (retryMsg) {
+            retryMsg.textContent = "";
+            retryMsg.hidden = true;
+          }
+          var curMode = bar.getAttribute("data-goelo-notify-mode") || "prompt";
+          var res = await window.goeloRequestPushSubscription();
+          if (res && res.ok) {
+            try {
+              localStorage.setItem(STORAGE_DISMISS, "1");
+            } catch (e) {
+              void e;
+            }
+            bar.remove();
+            return;
+          }
+          if (res && res.reason === "permission_denied") {
+            setBannerMode(bar, "denied");
+            if (curMode === "denied" && retryMsg) {
+              retryMsg.textContent =
+                "Toujours bloqué : vérifie Réglages / Safari, puis recharge la page.";
+              retryMsg.hidden = false;
+            }
+            return;
+          }
+          var msg =
+            res && res.message
+              ? res.message
+              : res && res.reason === "no_onesignal"
+                ? "Configuration OneSignal manquante (GOELO_ONESIGNAL_APP_ID)."
+                : res && res.reason === "no_sdk"
+                  ? "Le module OneSignal n’est pas prêt. Réessaie ou recharge la page."
+                  : "Impossible d’activer les notifications. Réessaie ou vérifie les réglages du navigateur.";
+          if (msg) window.alert(msg);
+        } finally {
+          if (btnEn && document.body.contains(btnEn)) {
+            btnEn.disabled = false;
+          }
+        }
+      });
     }
   }
 
@@ -102,6 +320,9 @@
     if (!shouldShow()) return null;
     if (document.getElementById("goelo-enable-notifications-banner")) return document.getElementById("goelo-enable-notifications-banner");
 
+    var nv = typeof Notification !== "undefined" ? Notification.permission : "default";
+    var initialMode = nv === "denied" ? "denied" : "prompt";
+
     var root = opts.container || document.body;
     var bar = document.createElement("aside");
     bar.id = "goelo-enable-notifications-banner";
@@ -110,56 +331,16 @@
     bar.setAttribute("aria-label", "Notifications sorties");
     bar.innerHTML =
       '<div class="goelo-enable-notifications-banner__inner">' +
-      '<p class="goelo-enable-notifications-banner__text">Active les notifications pour être informé des sorties GoëloRides</p>' +
+      '<p id="goelo-notify-title" class="goelo-enable-notifications-banner__text"></p>' +
+      '<p id="goelo-notify-hint" class="goelo-enable-notifications-banner__hint" hidden></p>' +
+      '<p id="goelo-notify-retry" class="goelo-enable-notifications-banner__retry" hidden></p>' +
       '<div class="goelo-enable-notifications-banner__actions">' +
-      '<button type="button" class="goelo-enable-notifications-banner__btn goelo-enable-notifications-banner__btn--primary" id="goelo-notify-enable">Activer</button>' +
-      '<button type="button" class="goelo-enable-notifications-banner__btn goelo-enable-notifications-banner__btn--ghost" id="goelo-notify-later">Plus tard</button>' +
+      '<button type="button" class="goelo-enable-notifications-banner__btn goelo-enable-notifications-banner__btn--primary" id="goelo-notify-enable"></button>' +
+      '<button type="button" class="goelo-enable-notifications-banner__btn goelo-enable-notifications-banner__btn--ghost" id="goelo-notify-later"></button>' +
       "</div></div>";
 
     root.appendChild(bar);
-
-    var btnEn = bar.querySelector("#goelo-notify-enable");
-    var btnLater = bar.querySelector("#goelo-notify-later");
-
-    if (btnLater) {
-      btnLater.addEventListener("click", function () {
-        try {
-          localStorage.setItem(STORAGE_SNOOZE_UNTIL, String(Date.now() + SNOOZE_MS));
-        } catch (e) {
-          void e;
-        }
-        bar.remove();
-      });
-    }
-
-    if (btnEn) {
-      btnEn.addEventListener("click", async function () {
-        btnEn.disabled = true;
-        try {
-          var res = await window.goeloRequestPushSubscription();
-          if (res && res.ok) {
-            try {
-              localStorage.setItem(STORAGE_DISMISS, "1");
-            } catch (e) {
-              void e;
-            }
-            bar.remove();
-            return;
-          }
-          var msg =
-            res && res.message
-              ? res.message
-              : res && res.reason === "no_onesignal"
-                ? "Configuration OneSignal manquante (GOELO_ONESIGNAL_APP_ID)."
-                : "Impossible d’activer les notifications. Réessaie ou vérifie les réglages du navigateur.";
-          window.alert(msg);
-        } finally {
-          if (btnEn && document.body.contains(btnEn)) {
-            btnEn.disabled = false;
-          }
-        }
-      });
-    }
+    wireNotifyBanner(bar, initialMode);
 
     return bar;
   }

@@ -39,6 +39,32 @@
   font-weight: 600;
 }
 
+.goelo-enable-notifications-banner__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.goelo-enable-notifications-banner__hint strong {
+  font-weight: 800;
+  color: #fff;
+}
+
+.goelo-enable-notifications-banner__retry {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #fde047;
+}
+
+.goelo-enable-notifications-banner--denied {
+  background: linear-gradient(180deg, rgba(124, 45, 18, 0.97) 0%, #5c2810 100%);
+  box-shadow: 0 -6px 24px rgba(40, 15, 8, 0.28);
+}
+
 .goelo-enable-notifications-banner__actions {
   display: flex;
   flex-wrap: wrap;

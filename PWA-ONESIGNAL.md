@@ -21,7 +21,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 | `manifest.json` | Web App Manifest (`display: standalone`, icônes, thème) — « Ajouter à l’écran d’accueil » |
 | `OneSignalSDKWorker.js` | **Seul** worker push ; servi en `https://…/OneSignalSDKWorker.js` (doit afficher du JS, pas du HTML ni 404) |
 | `goelo-onesignal.js` | Charge le SDK page v16, `OneSignal.init({ appId })` **sans** `serviceWorkerPath` (défaut = racine) |
-| `goelo-enable-notifications-banner.js` | Bandeau « Activer / Plus tard » ; permission **uniquement** au clic |
+| `goelo-enable-notifications-banner.js` | Bandeau **v2** : bouton explicite « Activer les notifications » (geste → demande native) ; si **refus** (`denied`), bandeau ambre avec consignes **Safari / iOS** ou navigateur desktop ; « Plus tard » / masquage = **session** (fermeture onglet) |
 | `goelo-pwa-notifications.css` | Styles du bandeau (safe area mobile) |
 
 **Accueil (`index.html`)** : init OneSignal peut être dans le `<head>` (snippet dashboard) + `GOELO_ONESIGNAL_APP_ID` pour le bandeau. Les autres pages utilisent en général `goelo-onesignal.js` + variables `window.GOELO_ONESIGNAL_*`.
@@ -56,8 +56,9 @@ Chrome → **Application → Service Workers** : un seul worker lié à OneSigna
 
 - `window.GOELO_NOTIFICATION_TYPES` — `NEW_RIDE`, `RIDE_UPDATE`, `RIDE_CANCELLED`
 - `window.goeloSendNotification(type, payload)` — enveloppe / log ; envoi réel = dashboard ou **API REST** (clé jamais côté navigateur).
-- `window.goeloOneSignalInitPromise()`, `window.goeloRequestPushSubscription()`
+- `window.goeloOneSignalInitPromise()`, `window.goeloRequestPushSubscription()` (init ~25 s, demande de permission ~60 s max). Retours utiles : `ok`, `reason` (`permission_denied`, `permission_not_granted`, `timeout`, …), `message`.
 - `window.EnableNotificationsBanner.mount({ container })`
+- `window.GoeloNotificationsClearBannerState()` — en console : réaffiche le bandeau (efface masquage définitif après succès, snooze session, ancienne clé snooze 7 jours si présente)
 
 ## Icônes PWA
 

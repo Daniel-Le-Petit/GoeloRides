@@ -9,7 +9,8 @@
  *
  * API exposée :
  *   goeloOneSignalInitPromise() → Promise<OneSignal|null>
- *   goeloRequestPushSubscription() → Promise<{ ok, ... }>  (à appeler après geste utilisateur)
+ *   goeloRequestPushSubscription() → Promise<{ ok, reason?, permission?, message? }>
+ *       (à appeler après geste ; ok true seulement si Notification.permission === granted après la demande)
  *   goeloSendNotification(type, payload)  et alias sendNotification()
  *   GOELO_NOTIFICATION_TYPES
  */
@@ -146,7 +147,37 @@
     }
     try {
       if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === "function") {
-        var result = await OneSignal.Notifications.requestPermission();
+        var result;
+        try {
+          result = await raceTimeout(OneSignal.Notifications.requestPermission(), 60000, "permission_timeout");
+        } catch (pe) {
+          void pe;
+          return {
+            ok: false,
+            reason: "permission_timeout",
+            message:
+              "La demande de notification n’a pas abouti à temps. Ferme les autres fenêtres du site, recharge la page et réessaie."
+          };
+        }
+        var permNow = typeof Notification !== "undefined" ? Notification.permission : "default";
+        if (permNow !== "granted") {
+          if (permNow === "denied") {
+            return {
+              ok: false,
+              reason: "permission_denied",
+              permission: "denied",
+              message:
+                "Notifications refusées. Sur iPhone : Réglages → Safari ou Réglages → Notifications (app sur l’écran d’accueil), puis autorise ce site."
+            };
+          }
+          return {
+            ok: false,
+            reason: "permission_not_granted",
+            permission: permNow,
+            message:
+              "Les notifications ne sont pas activées. Réessaie et choisis « Autoriser » si une boîte de dialogue s’affiche."
+          };
+        }
         if (OneSignal.User && OneSignal.User.PushSubscription && typeof OneSignal.User.PushSubscription.optIn === "function") {
           try {
             await raceTimeout(OneSignal.User.PushSubscription.optIn(), 12000, "optin_timeout");
@@ -155,11 +186,40 @@
             /* Permission peut déjà être OK ; ne pas bloquer l’UI indéfiniment. */
           }
         }
-        return { ok: true, result: result };
+        return { ok: true, result: result, permission: "granted" };
       }
       if (typeof Notification !== "undefined" && Notification.requestPermission) {
-        var perm = await Notification.requestPermission();
-        return { ok: perm === "granted", permission: perm };
+        var perm;
+        try {
+          perm = await raceTimeout(Notification.requestPermission(), 60000, "permission_timeout");
+        } catch (pe2) {
+          void pe2;
+          return {
+            ok: false,
+            reason: "permission_timeout",
+            message:
+              "La demande de notification n’a pas abouti à temps. Recharge la page et réessaie."
+          };
+        }
+        if (perm === "denied") {
+          return {
+            ok: false,
+            reason: "permission_denied",
+            permission: "denied",
+            message:
+              "Notifications refusées. Autorise ce site dans les réglages du navigateur (icône cadenas ou à gauche de l’adresse)."
+          };
+        }
+        if (perm !== "granted") {
+          return {
+            ok: false,
+            reason: "permission_not_granted",
+            permission: perm,
+            message:
+              "Les notifications ne sont pas activées. Réessaie et choisis « Autoriser » si une boîte de dialogue s’affiche."
+          };
+        }
+        return { ok: true, permission: perm };
       }
       return { ok: false, reason: "unsupported", message: "Notifications non supportées sur ce navigateur." };
     } catch (e) {
