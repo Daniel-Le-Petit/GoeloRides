@@ -104,8 +104,8 @@
   function goeloUnsupportedNotificationMessage() {
     if (isLikelyIOSDevice()) {
       return (
-        "Les notifications ne peuvent pas s’activer ici.\n\n" +
-        "Ouvre cette page dans Safari (icône boussole), puis touche encore « Activer les notifications ». Tu peux coller l’adresse dans Safari ou utiliser « Copier le lien » sur l’accueil. Pas besoin d’installer une app."
+        "Les notifications ne s’activent pas dans cette fenêtre.\n\n" +
+        "Le plus simple : touche « Partager » (icône carré + flèche en bas), puis « Ouvrir dans Safari » si iOS le propose. Sur la page d’accueil du site, le gros bouton « Ouvrir dans Safari » fait pareil — sans copier-coller."
       );
     }
     return (

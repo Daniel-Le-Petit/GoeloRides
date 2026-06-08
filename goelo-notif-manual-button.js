@@ -16,15 +16,15 @@
   var HELP_DESKTOP =
     "Reçois les sorties, les changements et les annulations en temps réel.";
   var HELP_IOS_ONBOARD =
-    "Sur iPhone : ouvre le site dans Safari (icône boussole), surtout si le lien vient d’Instagram ou Messenger — puis touche « Activer les notifications ». Pas besoin d’une icône sur l’écran d’accueil pour essayer.";
+    "Sur iPhone : ouvre le site dans Safari (icône boussole), surtout si le lien vient d’Instagram ou Messenger — puis « Activer les notifications ». Pas besoin d’icône sur l’écran d’accueil pour essayer.";
   var HELP_DENIED_IOS =
     "Notifications bloquées pour ce site. Réglages → Safari (sites web / notifications) pour autoriser ce site, puis recharge. Si tu as une icône Goëlo sur l’écran d’accueil : Réglages → Notifications (optionnel).";
   var HELP_DENIED_DESKTOP =
     "Notifications bloquées pour ce site. Autorise-les dans les réglages du navigateur (icône à gauche de l’adresse), puis recharge la page.";
   var HELP_IOS_NO_API_INAPP =
-    "Tu n’es pas dans Safari (Instagram, Messenger… bloquent les alertes). Descends : « Ouvrir dans Safari » ou « Copier le lien », puis sur la page dans Safari touche « Activer les notifications ». Rien à installer sur l’écran d’accueil pour essayer.";
+    "Tu n’es pas dans Safari. Descends et touche d’abord « Ouvrir dans Safari » — ou « Partager » puis « Ouvrir dans Safari ». « Si besoin : copier » sert seulement si rien d’autre ne marche.";
   var HELP_IOS_NO_API_OTHER =
-    "Ici le téléphone ne propose pas les notifications web. Si tu es déjà dans Safari : mets l’iPhone à jour, ferme la navigation privée, recharge ou rouvre l’URL dans un nouvel onglet. Sinon utilise les boutons ci-dessous.";
+    "Ici le téléphone ne propose pas les notifications web. Si tu es déjà dans Safari : mets l’iPhone à jour, ferme la navigation privée, recharge ou nouvel onglet. Sinon essaie « Partager » → « Ouvrir dans Safari ».";
 
   var inAppEscapeWired = false;
 
@@ -124,7 +124,7 @@
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(u);
         window.alert(
-          "Lien copié.\n\nOuvre Safari, colle dans la barre d’adresse, valide, puis touche « Activer les notifications ». Pas besoin d’ajouter une icône sur l’écran d’accueil pour tester."
+          "Lien copié — à utiliser seulement si « Ouvrir dans Safari » n’a rien ouvert.\n\nColle une fois dans Safari, valide, puis « Activer les notifications »."
         );
         return;
       }
@@ -132,7 +132,7 @@
       void e;
     }
     try {
-      window.prompt("Copie ce lien puis ouvre-le dans Safari :", u);
+      window.prompt("Dernier recours — copie ce lien et ouvre-le dans Safari :", u);
     } catch (e2) {
       window.alert(u);
     }
@@ -144,7 +144,7 @@
     try {
       await navigator.share({
         title: document.title || "GoëloRides",
-        text: "Ouvre le lien dans Safari pour activer les notifications (rien à installer).",
+        text: "Ouvre dans Safari pour les notifications GoëloRides.",
         url: u
       });
     } catch (e) {
@@ -251,10 +251,10 @@
           }
           window.alert(
             isLikelyInAppEmbeddedBrowser()
-              ? "Les notifications ne marchent pas dans cette fenêtre (Instagram, Messenger…).\n\n" +
-                  "Touche un bouton en dessous : « Ouvrir dans Safari » ou « Copier le lien » — dans Safari, pas besoin d’installer une app sur l’écran d’accueil pour activer."
+              ? "Les notifications ne marchent pas ici (Instagram, Messenger…).\n\n" +
+                  "Touche d’abord « Ouvrir dans Safari » en dessous, ou « Partager » puis « Ouvrir dans Safari ». Le copier-coller n’est qu’en secours."
               : "Ce téléphone n’active pas les notifications dans cette fenêtre.\n\n" +
-                  "Si tu es dans Safari : mets l’iPhone à jour, ferme la navigation privée, recharge ou ouvre l’URL dans un nouvel onglet. Sinon utilise les boutons ci-dessous."
+                  "Essaie « Partager » → « Ouvrir dans Safari », ou mets à jour l’iPhone / recharge Safari."
           );
         } else {
           window.alert(
