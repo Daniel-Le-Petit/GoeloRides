@@ -79,6 +79,52 @@
     });
   }
 
+  /** Délai max pour qu’init ne reste jamais bloquée indéfiniment (SW / réseau). */
+  var INIT_ABSOLUTE_CAP_MS = 120000;
+
+  function startOneSignalInnerInit(appId) {
+    return new Promise(function (resolve) {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        try {
+          var opts = {
+            appId: appId
+          };
+          var swid = window.GOELO_ONESIGNAL_SAFARI_WEB_ID;
+          if (swid && String(swid).trim()) {
+            opts.safari_web_id = String(swid).trim();
+          }
+          if (isLocalhost()) {
+            opts.allowLocalhostAsSecureOrigin = true;
+          }
+          await OneSignal.init(opts);
+          oneSignalInstance = OneSignal;
+          try {
+            window.dispatchEvent(new CustomEvent("goelo-onesignal-ready", { detail: { OneSignal: OneSignal } }));
+          } catch (evErr) {
+            void evErr;
+          }
+          resolve(OneSignal);
+        } catch (err) {
+          console.warn("[GoëloRides] OneSignal : init échouée.", err);
+          resolve(null);
+        }
+      });
+      try {
+        var pre = document.createElement("link");
+        pre.rel = "preconnect";
+        pre.href = "https://cdn.onesignal.com";
+        document.head.appendChild(pre);
+      } catch (preErr) {
+        void preErr;
+      }
+      loadScript("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js").catch(function (e) {
+        console.warn("[GoëloRides] OneSignal : chargement SDK impossible.", e);
+        resolve(null);
+      });
+    });
+  }
+
   window.goeloOneSignalInitPromise = function goeloOneSignalInitPromise() {
     if (initPromise) return initPromise;
     var appId = getAppId();
@@ -87,40 +133,20 @@
       return initPromise;
     }
 
-    initPromise = (async function () {
-      return await new Promise(function (resolve) {
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async function (OneSignal) {
-          try {
-            var opts = {
-              appId: appId
-            };
-            var swid = window.GOELO_ONESIGNAL_SAFARI_WEB_ID;
-            if (swid && String(swid).trim()) {
-              opts.safari_web_id = String(swid).trim();
-            }
-            if (isLocalhost()) {
-              opts.allowLocalhostAsSecureOrigin = true;
-            }
-            await OneSignal.init(opts);
-            oneSignalInstance = OneSignal;
-            try {
-              window.dispatchEvent(new CustomEvent("goelo-onesignal-ready", { detail: { OneSignal: OneSignal } }));
-            } catch (evErr) {
-              void evErr;
-            }
-            resolve(OneSignal);
-          } catch (err) {
-            console.warn("[GoëloRides] OneSignal : init échouée.", err);
-            resolve(null);
-          }
-        });
-        loadScript("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js").catch(function (e) {
-          console.warn("[GoëloRides] OneSignal : chargement SDK impossible.", e);
-          resolve(null);
-        });
-      });
-    })();
+    var inner = startOneSignalInnerInit(appId);
+    initPromise = Promise.race([
+      inner,
+      new Promise(function (res) {
+        setTimeout(function () {
+          console.warn(
+            "[GoëloRides] OneSignal : délai max d’init (" +
+              INIT_ABSOLUTE_CAP_MS +
+              " ms) — souvent réseau lent ou service worker bloqué."
+          );
+          res(null);
+        }, INIT_ABSOLUTE_CAP_MS);
+      })
+    ]);
 
     return initPromise;
   };
@@ -132,7 +158,8 @@
   window.goeloRequestPushSubscription = async function goeloRequestPushSubscription() {
     var OneSignal;
     try {
-      OneSignal = await raceTimeout(window.goeloOneSignalInitPromise(), 25000, "init_timeout");
+      /* 70 s : sur mobile, l’enregistrement du service worker + init OneSignal dépassent souvent 25 s. */
+      OneSignal = await raceTimeout(window.goeloOneSignalInitPromise(), 70000, "init_timeout");
     } catch (toErr) {
       void toErr;
       return {
@@ -143,7 +170,12 @@
       };
     }
     if (!OneSignal) {
-      return { ok: false, reason: "no_onesignal", message: "App ID OneSignal non configuré." };
+      return {
+        ok: false,
+        reason: "no_onesignal",
+        message:
+          "OneSignal ne s’est pas lancé. Recharge la page et réessaie (connexion ou bloqueur de contenu)."
+      };
     }
     try {
       if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === "function") {
