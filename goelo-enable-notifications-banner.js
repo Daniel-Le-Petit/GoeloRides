@@ -57,7 +57,7 @@
                 reason: "permission_denied",
                 permission: "denied",
                 message:
-                  "Notifications refusées. Sur iPhone : Réglages → Safari ou Réglages → Notifications (app sur l’écran d’accueil)."
+                  "Notifications refusées. Réglages → Safari pour autoriser ce site. (Option : icône sur l’écran d’accueil → Réglages → Notifications.)"
               };
             }
             return {
@@ -228,7 +228,7 @@
         }
         if (hint) {
           hint.innerHTML =
-            "Va dans <strong>Réglages → Safari</strong> (notifications ou paramètres des sites web) ou, si GoëloRides est sur l’<strong>écran d’accueil</strong> : <strong>Réglages → Notifications</strong>. Ensuite reviens ici, touche <strong>Réessayer</strong> ou recharge la page.";
+            "Va dans <strong>Réglages → Safari</strong> (sites web ou notifications pour ce site). Ce n’est <strong>pas obligatoire</strong> d’avoir une icône sur l’écran d’accueil : dans Safari ça marche aussi sur iPhone récent. Ensuite <strong>Réessayer</strong> ou recharge la page.";
           hint.hidden = false;
         }
       } else {

@@ -104,9 +104,9 @@
   function goeloUnsupportedNotificationMessage() {
     if (isLikelyIOSDevice()) {
       return (
-        "Tu ouvres probablement le site depuis une app (Instagram, Messenger, Mail…) : ce navigateur intégré ne propose pas les notifications web.\n\n" +
-        "Ouvre le même lien dans Safari (icône bleue), en HTTPS. iOS 16.4 minimum pour les push. " +
-        "Tu peux aussi ajouter GoëloRides à l’écran d’accueil depuis Safari, puis activer les notifications depuis cette icône."
+        "Tu suis sans doute le lien depuis Instagram, Messenger ou la messagerie : dans cette fenêtre, les notifications ne peuvent pas s’allumer.\n\n" +
+        "Rien à installer : ouvre le site dans Safari (icône boussole), colle l’adresse ou tape-la, puis touche « Activer les notifications » sur la page. Sur iPhone récent, ça suffit — pas besoin d’ajouter une icône sur l’écran d’accueil.\n\n" +
+        "(Si tu préfères un raccourci sur l’écran d’accueil, tu peux, mais ce n’est pas obligatoire.)"
       );
     }
     return (
@@ -233,7 +233,7 @@
         reason: "permission_denied",
         permission: "denied",
         message:
-          "Notifications refusées. Sur iPhone : Réglages → Safari ou Réglages → Notifications (app sur l’écran d’accueil), puis autorise ce site."
+          "Notifications refusées. Va dans Réglages → Safari pour autoriser ce site, puis recharge. (Option seulement : si tu as une icône Goëlo sur l’écran d’accueil, Réglages → Notifications.)"
       };
     }
 
@@ -258,7 +258,7 @@
           reason: "permission_denied",
           permission: "denied",
           message:
-            "Notifications refusées. Sur iPhone : Réglages → Safari ou Réglages → Notifications (app sur l’écran d’accueil), puis autorise ce site."
+            "Notifications refusées. Va dans Réglages → Safari pour autoriser ce site, puis recharge. (Option seulement : si tu as une icône Goëlo sur l’écran d’accueil, Réglages → Notifications.)"
         };
       }
       if (nperm !== "granted") {
