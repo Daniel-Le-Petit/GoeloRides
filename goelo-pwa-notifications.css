@@ -83,6 +83,12 @@
   border: none;
 }
 
+.goelo-enable-notifications-banner__btn[aria-busy="true"] {
+  cursor: wait;
+  pointer-events: none;
+  opacity: 0.88;
+}
+
 .goelo-enable-notifications-banner__btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -121,10 +127,15 @@
   gap: 0.4rem;
 }
 
-.goelo-notif-manual__btn {
-  width: 100%;
-  justify-content: center;
-  text-align: center;
+.goelo-notif-manual__btn[aria-busy="true"] {
+  cursor: wait;
+  pointer-events: none;
+  opacity: 0.88;
+}
+
+.goelo-notif-manual__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .goelo-notif-manual__hint {

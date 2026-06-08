@@ -89,6 +89,14 @@
     return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
   }
 
+  /** granted | denied | default — les navigateurs envoient parfois undefined / "" / "prompt". */
+  function notificationPermNormalized() {
+    if (typeof Notification === "undefined") return "";
+    var p = Notification.permission;
+    if (p === "granted" || p === "denied") return p;
+    return "default";
+  }
+
   /** Évite un clic « Activer » bloqué si init / optIn reste en attente (SW, réseau, iOS). */
   function raceTimeout(promise, ms, onTimeoutMsg) {
     return new Promise(function (resolve, reject) {
@@ -187,8 +195,10 @@
    * OneSignal.init + optIn en arrière-plan (sans bloquer la disparition du bandeau).
    */
   window.goeloRequestPushSubscription = async function goeloRequestPushSubscription() {
-    var permEarly =
-      typeof Notification !== "undefined" && Notification.permission ? Notification.permission : "";
+    if (typeof Notification === "undefined") {
+      return { ok: false, reason: "unsupported", message: "Notifications non supportées sur ce navigateur." };
+    }
+    var permEarly = notificationPermNormalized();
 
     if (permEarly === "denied") {
       return {
@@ -200,6 +210,8 @@
       };
     }
 
+    /** True si l’utilisateur vient d’obtenir « granted » via la boîte native (Promise), même si `Notification.permission` reste vide un instant (WebKit). */
+    var nativeDialogGranted = false;
     if (typeof Notification !== "undefined" && typeof Notification.requestPermission === "function" && permEarly === "default") {
       var nperm;
       try {
@@ -231,10 +243,11 @@
             "Les notifications ne sont pas activées. Réessaie et choisis « Autoriser » si une boîte de dialogue s’affiche."
         };
       }
+      nativeDialogGranted = true;
     }
 
-    /* Cas rare : pas encore « granted » (navigateur sans API native utile) — flux bloquant. */
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+    /* Cas rare : pas de dialogue natif ou permission encore illisible — flux bloquant init + SDK. */
+    if (!nativeDialogGranted && notificationPermNormalized() !== "granted") {
       var OneSignalSlow;
       try {
         OneSignalSlow = await raceTimeout(window.goeloOneSignalInitPromise(), INIT_WAIT_AFTER_CLICK_MS, "init_timeout");
@@ -269,7 +282,7 @@
                 "La demande de notification n’a pas abouti à temps. Ferme les autres fenêtres du site, recharge la page et réessaie."
             };
           }
-          var permNow = typeof Notification !== "undefined" ? Notification.permission : "default";
+          var permNow = notificationPermNormalized() || "default";
           if (permNow !== "granted") {
             if (permNow === "denied") {
               return {

@@ -146,6 +146,11 @@
     } catch (e) {
       void e;
     }
+    try {
+      delete bar._goeloNotifyInFlight;
+    } catch (e2) {
+      void e2;
+    }
     var mode = bar.getAttribute("data-goelo-notify-mode") || "prompt";
     setBannerMode(bar, mode);
   }
@@ -286,15 +291,17 @@
 
     if (btnEn) {
       btnEn.addEventListener("click", async function () {
-        btnEn.disabled = true;
+        var curMode = bar.getAttribute("data-goelo-notify-mode") || "prompt";
+        if (bar._goeloNotifyInFlight) return;
+        bar._goeloNotifyInFlight = true;
         btnEn.setAttribute("aria-busy", "true");
+        btnEn.textContent = "Ouverture du dialogue…";
         try {
           var retryMsg = bar.querySelector("#goelo-notify-retry");
           if (retryMsg) {
             retryMsg.textContent = "";
             retryMsg.hidden = true;
           }
-          var curMode = bar.getAttribute("data-goelo-notify-mode") || "prompt";
           var res;
           if (typeof window.goeloRequestPushSubscription === "function") {
             res = await Promise.race([
@@ -349,11 +356,18 @@
         } finally {
           if (btnEn) {
             try {
-              btnEn.disabled = false;
               btnEn.removeAttribute("aria-busy");
             } catch (fe) {
               void fe;
             }
+          }
+          try {
+            delete bar._goeloNotifyInFlight;
+          } catch (fe2) {
+            void fe2;
+          }
+          if (bar.isConnected && btnEn && document.body.contains(btnEn)) {
+            setBannerMode(bar, bar.getAttribute("data-goelo-notify-mode") || curMode);
           }
         }
       });

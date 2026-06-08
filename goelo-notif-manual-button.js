@@ -21,6 +21,13 @@
     return false;
   }
 
+  function currentPerm() {
+    if (typeof Notification === "undefined") return "";
+    var p = Notification.permission;
+    if (p === "granted" || p === "denied") return p;
+    return "default";
+  }
+
   function safariDeniedHint() {
     return "Ouvre Réglages → Safari (notifications ou paramètres des sites web), ou Réglages → Notifications si GoëloRides est sur l’écran d’accueil, puis autorise les notifications pour ce site.";
   }
@@ -34,7 +41,7 @@
       btn.textContent = "Non disponible";
       return;
     }
-    var p = Notification.permission;
+    var p = currentPerm();
     if (p === "granted") {
       btn.disabled = true;
       btn.textContent = "Notifications activées";
@@ -67,13 +74,14 @@
       window.alert("Le module notifications n’est pas chargé. Recharge la page.");
       return;
     }
-    if (Notification.permission === "denied") {
+    if (currentPerm() === "denied") {
       window.alert(isAppleMobileOrTablet() ? safariDeniedHint() : "Autorise les notifications pour ce site dans les réglages du navigateur (icône à gauche de l’adresse).");
       return;
     }
-
-    btn.disabled = true;
+    if (btn._goeloManualBusy) return;
+    btn._goeloManualBusy = true;
     btn.setAttribute("aria-busy", "true");
+    btn.textContent = "Ouverture du dialogue…";
     try {
       var res = await window.goeloRequestPushSubscription();
       if (res && res.ok) {
@@ -97,6 +105,11 @@
       window.alert("Une erreur est survenue. Réessaie ou recharge la page.");
     } finally {
       btn.removeAttribute("aria-busy");
+      try {
+        delete btn._goeloManualBusy;
+      } catch (e2) {
+        void e2;
+      }
       updateButtonUi(btn);
     }
   }
