@@ -106,3 +106,38 @@
 .goelo-enable-notifications-banner__btn--ghost:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* Bouton manuel hero (accueil) — 2ᵉ canal en plus du bandeau OneSignal */
+.goelo-notif-manual {
+  margin-top: 0.85rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.goelo-notif-manual__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.goelo-notif-manual__btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.goelo-notif-manual__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 720px) {
+  .goelo-notif-manual {
+    max-width: 26rem;
+  }
+}

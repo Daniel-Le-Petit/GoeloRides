@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="GoëloRides">
-  <link rel="stylesheet" href="goelo-pwa-notifications.css">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=2">
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
   <meta property="og:title" content="GoëloRides · Sorties vélo à Saint-Quay-Portrieux" />
   <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du « Kasino » de Saint-Quay — été 2026." />
@@ -4373,6 +4373,16 @@
         <a href="sorties.html" class="btn-ghost home-hero-sorties">Voir les sorties <span class="home-hero-arrow" aria-hidden="true">→</span></a>
         <a href="infos-pratiques.html" class="home-hero-infos">Infos pratiques</a>
       </div>
+      <div class="goelo-notif-manual" id="goelo-notif-manual-wrap" hidden>
+        <div class="goelo-notif-manual__inner">
+          <button type="button" class="btn-primary goelo-notif-manual__btn" id="goelo-notif-btn" aria-describedby="goelo-notif-manual-hint">
+            Activer les notifications
+          </button>
+          <p class="goelo-notif-manual__hint" id="goelo-notif-manual-hint">
+            Reçois les sorties, les changements et les annulations en temps réel sur cet appareil.
+          </p>
+        </div>
+      </div>
     </div>
     <div class="home-scroll-hint" aria-hidden="true">
       <span class="home-scroll-hint-track"></span>
@@ -4912,6 +4922,7 @@
   </script>
   <script src="goelo-onesignal.js?v=8" defer></script>
   <script src="goelo-enable-notifications-banner.js?v=8" defer></script>
+  <script src="goelo-notif-manual-button.js?v=1" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
   <script src="goelo-ride-updates.js" defer></script>

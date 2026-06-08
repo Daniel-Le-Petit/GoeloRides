@@ -22,9 +22,10 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 | `OneSignalSDKWorker.js` | **Seul** worker push ; servi en `https://…/OneSignalSDKWorker.js` (doit afficher du JS, pas du HTML ni 404) |
 | `goelo-onesignal.js` | Charge le SDK page v16, `OneSignal.init({ appId })` **sans** `serviceWorkerPath` (défaut = racine) |
 | `goelo-enable-notifications-banner.js` | Bandeau **v2** : bouton explicite « Activer les notifications » (geste → demande native) ; si **refus** (`denied`), bandeau ambre avec consignes **Safari / iOS** ou navigateur desktop ; « Plus tard » / masquage = **session** (fermeture onglet) |
-| `goelo-pwa-notifications.css` | Styles du bandeau (safe area mobile) |
+| `goelo-pwa-notifications.css` | Styles du bandeau + bloc **bouton manuel** hero (accueil) |
+| `goelo-notif-manual-button.js` | **2ᵉ canal** : bouton visible (`#goelo-notif-btn` / `[data-goelo-notif-manual]`) — feedback tout de suite, puis `goeloRequestPushSubscription()` ; libellé iPhone si refus |
 
-**Accueil (`index.html`)** : init OneSignal peut être dans le `<head>` (snippet dashboard) + `GOELO_ONESIGNAL_APP_ID` pour le bandeau. Les autres pages utilisent en général `goelo-onesignal.js` + variables `window.GOELO_ONESIGNAL_*`.
+**Accueil (`index.html`)** : bloc hero « Activer les notifications » + `goelo-notif-manual-button.js` (en plus du bandeau). Les autres pages utilisent en général `goelo-onesignal.js` + variables `window.GOELO_ONESIGNAL_*` (sans bouton manuel tant que l’App ID n’y est pas renseigné).
 
 ## Configuration OneSignal (100 % frontend)
 
