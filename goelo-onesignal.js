@@ -103,17 +103,10 @@
    */
   function goeloUnsupportedNotificationMessage() {
     if (isLikelyIOSDevice()) {
-      var host = "";
-      try {
-        host = location.hostname || "";
-      } catch (e) {
-        void e;
-      }
       return (
-        "Sur cet iPhone ou iPad, les notifications web ne sont pas disponibles dans cet écran : le site tourne dans un navigateur intégré (Instagram, Messenger, Gmail…) qui ne fournit pas l’API Notifications.\n\n" +
-        "Ouvre le même lien dans Safari (icône bleue), en HTTPS, puis réessaie. iOS 16.4 minimum pour les push web. " +
-        "Tu peux aussi ajouter GoëloRides à l’écran d’accueil depuis Safari puis activer depuis cette icône." +
-        (host ? "\n\nSite : " + host : "")
+        "Tu ouvres probablement le site depuis une app (Instagram, Messenger, Mail…) : ce navigateur intégré ne propose pas les notifications web.\n\n" +
+        "Ouvre le même lien dans Safari (icône bleue), en HTTPS. iOS 16.4 minimum pour les push. " +
+        "Tu peux aussi ajouter GoëloRides à l’écran d’accueil depuis Safari, puis activer les notifications depuis cette icône."
       );
     }
     return (
@@ -443,15 +436,4 @@
   }
 
   void goeloOneSignalInitPromise();
-
-  /* TEMP DEBUG — retirer après diagnostic (notifications / iOS / in-app) */
-  setTimeout(function () {
-    if (typeof console !== "undefined" && console.log) {
-      console.log("UA:", navigator.userAgent);
-      console.log(
-        "Notification:",
-        typeof Notification !== "undefined" ? Notification.permission : "(API absente)"
-      );
-    }
-  }, 3000);
 })();

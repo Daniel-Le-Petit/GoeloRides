@@ -1,6 +1,7 @@
 /**
  * Bouton principal notifications (#goelo-notif-btn) + aide (#goelo-notif-help).
- * Complément au bandeau OneSignal : pas d’appel permission / SDK si déjà refusé (évite popups « fantômes » sur iOS).
+ * iOS in-app (Instagram, etc.) : pas d’API Notification — rangée #goelo-notif-inapp-actions
+ * (lien Safari nouvel onglet, copier, partager) pour sortir du WebView.
  *
  * API : window.goeloInitNotifications() — ré-exécute le câblage (ex. contenu injecté après coup).
  */
@@ -9,17 +10,21 @@
 
   var WRAP_ID = "goelo-notif-manual-wrap";
   var HELP_ID = "goelo-notif-help";
+  var INAPP_ROW_ID = "goelo-notif-inapp-actions";
   var STORAGE_DISMISS = "goelo_notify_banner_dismiss_v1";
 
   var HELP_DESKTOP =
     "Reçois les sorties, les changements et les annulations en temps réel.";
-  /** iPhone / iPad / iPod (UA classique). */
   var HELP_IOS_ONBOARD =
     "Appareil iOS : si tu as déjà refusé, aucune nouvelle fenêtre ne s’ouvrira — passe par Réglages → Safari (sites web / notifications), puis réessaie.";
   var HELP_DENIED_IOS =
     "Notifications bloquées pour ce site. Ouvre Réglages → Safari (ou Réglages → Notifications si GoëloRides est sur l’écran d’accueil), autorise ce site, puis recharge la page.";
   var HELP_DENIED_DESKTOP =
     "Notifications bloquées pour ce site. Autorise-les dans les réglages du navigateur (icône à gauche de l’adresse), puis recharge la page.";
+  var HELP_IOS_NO_API =
+    "Ce navigateur intégré ne permet pas les notifications web. Utilise les boutons sous ce texte pour ouvrir dans Safari ou copier le lien.";
+
+  var inAppEscapeWired = false;
 
   function getAppId() {
     var id = window.GOELO_ONESIGNAL_APP_ID;
@@ -31,7 +36,6 @@
     return /iPhone|iPad|iPod/.test(ua);
   }
 
-  /** iPad « desktop » + iPhone / iPod — pour messages réglages / Safari. */
   function isAppleMobileOrTablet() {
     var ua = navigator.userAgent || "";
     if (/iPad|iPhone|iPod/.test(ua)) return true;
@@ -39,9 +43,16 @@
     return false;
   }
 
-  /** Aide sous le bouton : texte iOS si pertinent (conversion + clarté). */
   function isIOSLikeForHelp() {
     return isIOSClassicUa() || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+
+  function getAbsolutePageUrl() {
+    try {
+      return String(location.href || "");
+    } catch (e) {
+      return "";
+    }
   }
 
   function currentPerm() {
@@ -98,39 +109,113 @@
     );
   }
 
+  async function copyPageUrlToClipboard() {
+    var u = getAbsolutePageUrl();
+    if (!u) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(u);
+        window.alert(
+          "Lien copié.\n\nOuvre Safari, colle dans la barre d’adresse, valide, puis touche « Activer les notifications » sur la page."
+        );
+        return;
+      }
+    } catch (e) {
+      void e;
+    }
+    try {
+      window.prompt("Copie ce lien puis ouvre-le dans Safari :", u);
+    } catch (e2) {
+      window.alert(u);
+    }
+  }
+
+  async function sharePageUrlSheet() {
+    var u = getAbsolutePageUrl();
+    if (!u || typeof navigator.share !== "function") return;
+    try {
+      await navigator.share({
+        title: document.title || "GoëloRides",
+        text: "Ouvre dans Safari pour activer les notifications.",
+        url: u
+      });
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      void e;
+    }
+  }
+
+  function wireInAppEscapeOnce() {
+    if (inAppEscapeWired) return;
+    var copyBtn = document.getElementById("goelo-notif-copy-link");
+    var shareBtn = document.getElementById("goelo-notif-share-link");
+    if (!copyBtn && !shareBtn) return;
+    inAppEscapeWired = true;
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        void copyPageUrlToClipboard();
+      });
+    }
+    if (shareBtn) {
+      shareBtn.addEventListener("click", function () {
+        void sharePageUrlSheet();
+      });
+    }
+  }
+
+  function syncInAppEscapeUi() {
+    var row = document.getElementById(INAPP_ROW_ID);
+    if (!row) return;
+    wireInAppEscapeOnce();
+    var show = typeof Notification === "undefined" && isAppleMobileOrTablet() && !!getAppId();
+    row.hidden = !show;
+    if (!show) return;
+    var u = getAbsolutePageUrl();
+    var a = document.getElementById("goelo-notif-open-safari");
+    if (a && u) {
+      a.href = u;
+    }
+    var shareBtn = document.getElementById("goelo-notif-share-link");
+    if (shareBtn) {
+      shareBtn.hidden = typeof navigator.share !== "function";
+    }
+  }
+
   function updateButtonUi(btn) {
     if (!btn || btn.getAttribute("data-goelo-notif-wired") !== "1") return;
     if (typeof Notification === "undefined") {
-      /* Ne pas désactiver : sinon aucun clic → l’utilisateur ne voit pas l’explication (in-app, etc.). */
       btn.disabled = false;
       btn.removeAttribute("aria-busy");
       btn.classList.add("goelo-notif-manual__btn--needs-safari");
-      btn.textContent = isAppleMobileOrTablet() ? "Ouvre dans Safari" : "Notifications : navigateur limité";
+      btn.textContent = isAppleMobileOrTablet() ? "Aide : Safari requis" : "Notifications : navigateur limité";
       var help0 = findHelpForButton(btn);
       if (help0) {
         help0.hidden = false;
-        help0.textContent = isAppleMobileOrTablet()
-          ? "Sur iPhone : si tu ouvres le site depuis une autre app, les notifications ne sont pas disponibles. Copie le lien ou ouvre-le dans Safari (iOS 16.4+), puis réessaie."
-          : "Ce navigateur ne fournit pas l’API notifications pour les sites web. Essaie Safari, Chrome ou Firefox récent.";
+        help0.textContent = isAppleMobileOrTablet() ? HELP_IOS_NO_API : "Ce navigateur ne fournit pas l’API notifications pour les sites web. Essaie Safari, Chrome ou Firefox récent.";
       }
+      syncInAppEscapeUi();
       return;
     }
     btn.classList.remove("goelo-notif-manual__btn--needs-safari");
+    var p = currentPerm();
     if (p === "granted") {
       btn.disabled = true;
       btn.textContent = "✔ Notifications activées";
       applyHelpLine(btn, "granted");
+      syncInAppEscapeUi();
       return;
     }
     if (p === "denied") {
       btn.disabled = false;
       btn.textContent = isAppleMobileOrTablet() ? "Réglages Safari / iOS" : "Réglages du navigateur";
       applyHelpLine(btn, "denied");
+      syncInAppEscapeUi();
       return;
     }
     btn.disabled = false;
     btn.textContent = btn.getAttribute("data-goelo-default-label") || "🚴 Activer les notifications";
     applyHelpLine(btn, "default");
+    syncInAppEscapeUi();
   }
 
   function refreshAllWired() {
@@ -139,11 +224,33 @@
 
   async function onManualClick(btn) {
     if (typeof Notification === "undefined") {
-      window.alert(
-        typeof window.goeloUnsupportedNotificationMessage === "function"
-          ? window.goeloUnsupportedNotificationMessage()
-          : "Ce navigateur ne gère pas les notifications pour les sites web."
-      );
+      if (isAppleMobileOrTablet()) {
+        syncInAppEscapeUi();
+        var rowEl = document.getElementById(INAPP_ROW_ID);
+        if (rowEl && !rowEl.hidden) {
+          try {
+            rowEl.scrollIntoView({ block: "center", behavior: "smooth" });
+          } catch (se) {
+            void se;
+          }
+          window.alert(
+            "Les notifications web ne fonctionnent pas dans ce navigateur intégré.\n\n" +
+              "Utilise les boutons juste en dessous : « Ouvrir dans Safari » (souvent ouvre Safari) ou « Copier le lien » puis colle dans Safari."
+          );
+        } else {
+          window.alert(
+            typeof window.goeloUnsupportedNotificationMessage === "function"
+              ? window.goeloUnsupportedNotificationMessage()
+              : "Ce navigateur ne gère pas les notifications pour les sites web."
+          );
+        }
+      } else {
+        window.alert(
+          typeof window.goeloUnsupportedNotificationMessage === "function"
+            ? window.goeloUnsupportedNotificationMessage()
+            : "Ce navigateur ne gère pas les notifications pour les sites web."
+        );
+      }
       return;
     }
     if (typeof window.goeloRequestPushSubscription !== "function") {
@@ -151,7 +258,6 @@
       return;
     }
 
-    /* Refus antérieur : aucune relance native possible (surtout iOS) — pas d’appel SDK / pas de popup fantôme. */
     if (currentPerm() === "denied") {
       if (isAppleMobileOrTablet()) {
         alertIOSDeniedDetailed();
@@ -226,6 +332,7 @@
         wireOne(el);
       }
     });
+    syncInAppEscapeUi();
   }
 
   window.goeloInitNotifications = function goeloInitNotifications() {

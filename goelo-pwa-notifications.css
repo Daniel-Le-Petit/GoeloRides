@@ -161,6 +161,53 @@
   width: 100%;
 }
 
+/* Sortir du navigateur in-app (Instagram, etc.) — iOS sans API Notification */
+.goelo-notif-manual__inapp-actions {
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.goelo-notif-manual__inapp-title {
+  margin: 0 0 0.45rem;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.goelo-notif-manual__inapp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.goelo-notif-manual__inapp-link,
+.goelo-notif-manual__inapp-btn {
+  flex: 1 1 auto;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.goelo-notif-manual__inapp-link:hover,
+.goelo-notif-manual__inapp-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 @media (min-width: 720px) {
   .goelo-notif-manual {
     max-width: 26rem;
