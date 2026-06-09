@@ -573,11 +573,48 @@
         return {};
       }
 
+      function goeloTryStrConfigVal(v) {
+        if (typeof v === "string" && v.trim()) return v.trim();
+        if (typeof v === "number" && Number.isFinite(v) && v !== 0) return String(v);
+        return "";
+      }
+
+      /** Clés alternatives (anciens brouillons / exports) pour capitaine Team Rider. */
+      function goeloRideLeaderFromFc(fc) {
+        if (!fc || typeof fc !== "object") return "";
+        const t = goeloTryStrConfigVal;
+        return (
+          t(fc.rideLeader) ||
+          t(fc.ride_leader) ||
+          t(fc.capitaine) ||
+          t(fc.captain) ||
+          t(fc.leader) ||
+          t(fc.teamRider) ||
+          t(fc.team_rider) ||
+          ""
+        );
+      }
+
+      /** Lieu de départ précis : alias JSON possibles. */
+      function goeloMeetPlaceDetailFromFc(fc) {
+        if (!fc || typeof fc !== "object") return "";
+        const t = goeloTryStrConfigVal;
+        return (
+          t(fc.meetPlaceDetail) ||
+          t(fc.meet_place_detail) ||
+          t(fc.meet_detail) ||
+          t(fc.departure_detail) ||
+          t(fc.lieu_depart_precis) ||
+          ""
+        );
+      }
+
       function dbRowToRoute(row) {
         const fc = parseRouteFrontConfig(row && row.front_config);
         const so = row.sort_order;
         return {
           id: row.id,
+          raw_front_config: row != null ? row.front_config : null,
           file: String(fc.file || "").trim(),
           embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : undefined,
           raceType: fc.raceType || "",
@@ -591,24 +628,14 @@
           levelLabel: fc.levelLabel || (row.group_label || "—"),
           vibe: fc.vibe || "",
           shortDesc: fc.shortDesc || "",
-          rideLeader:
-            typeof fc.rideLeader === "string" && fc.rideLeader.trim()
-              ? fc.rideLeader.trim()
-              : typeof fc.ride_leader === "string" && fc.ride_leader.trim()
-                ? fc.ride_leader.trim()
-                : "",
+          rideLeader: goeloRideLeaderFromFc(fc),
           meetPlace:
             typeof fc.meetPlace === "string" && fc.meetPlace.trim()
               ? fc.meetPlace.trim()
               : typeof fc.meet_place === "string" && fc.meet_place.trim()
                 ? fc.meet_place.trim()
                 : "",
-          meetPlaceDetail:
-            typeof fc.meetPlaceDetail === "string" && fc.meetPlaceDetail.trim()
-              ? fc.meetPlaceDetail.trim()
-              : typeof fc.meet_place_detail === "string" && fc.meet_place_detail.trim()
-                ? fc.meet_place_detail.trim()
-                : "",
+          meetPlaceDetail: goeloMeetPlaceDetailFromFc(fc),
           estimatedDurationHm:
             typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
               ? String(fc.estimatedDurationHm).trim()
@@ -618,7 +645,8 @@
           estimatedDurationMinutes: (function () {
             const nRaw = fc.estimatedDurationMinutes != null ? fc.estimatedDurationMinutes : fc.estimated_duration_minutes;
             if (typeof nRaw === "number" && Number.isFinite(nRaw)) {
-              return Math.max(0, Math.round(nRaw));
+              const rounded = Math.round(nRaw);
+              return rounded > 0 ? Math.min(rounded, 36 * 60) : null;
             }
             if (typeof nRaw === "string" && /^\d+$/.test(nRaw.trim())) {
               const n = parseInt(nRaw.trim(), 10);
@@ -636,12 +664,26 @@
             }
             return null;
           })(),
-          maxParticipants:
-            typeof fc.maxParticipants === "number" && Number.isFinite(fc.maxParticipants) && fc.maxParticipants > 0
-              ? Math.round(fc.maxParticipants)
-              : typeof fc.maxParticipants === "string" && String(fc.maxParticipants).trim()
-                ? Math.max(0, parseInt(String(fc.maxParticipants).replace(/\D/g, ""), 10) || 0) || null
-                : null,
+          maxParticipants: (function () {
+            const raw =
+              fc.maxParticipants != null
+                ? fc.maxParticipants
+                : fc.max_participants != null
+                  ? fc.max_participants
+                  : fc.max_places != null
+                    ? fc.max_places
+                    : fc.capacity != null
+                      ? fc.capacity
+                      : null;
+            if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+              return Math.round(raw);
+            }
+            if (typeof raw === "string" && String(raw).trim()) {
+              const n = Math.max(0, parseInt(String(raw).replace(/\D/g, ""), 10) || 0);
+              return n > 0 ? n : null;
+            }
+            return null;
+          })(),
           sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
           visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
           rideDateIso: typeof fc.rideDateIso === "string" ? fc.rideDateIso : "",
@@ -725,6 +767,34 @@
           if (idx >= 0) loadedRoutesCache[idx] = r;
           else loadedRoutesCache.push(r);
         });
+      }
+
+      /**
+       * Recharge une sortie custom depuis Supabase au moment du clic « Charger »
+       * (évite un cache public incomplet vs front_config admin).
+       */
+      async function fetchFreshCustomRouteForEdit(routeId) {
+        if (!isSupabaseEnabled() || !routeId) return null;
+        const forAdmin = isAdminSessionUsable();
+        const adm = forAdmin ? getAdminSession() : null;
+        const raw = await supabaseRpc(
+          "routes_list",
+          forAdmin && adm && adm.access_token
+            ? { p_filter: { includeNonPublic: true } }
+            : { p_filter: {} },
+          forAdmin && adm && adm.access_token ? { accessToken: adm.access_token } : undefined
+        );
+        const rows = normalizeRoutesListRows(raw);
+        const row = rows.find(function (r) {
+          return r && String(r.id) === String(routeId);
+        });
+        if (!row) return null;
+        const rk = row.route_kind != null ? row.route_kind : row.routeKind;
+        if (rk !== "custom") return null;
+        const cfg = dbRowToRoute(row);
+        const profile = await loadRouteProfile(cfg);
+        if (!profile || !profile.points || profile.points.length < 2) return null;
+        return Object.assign({}, cfg, { profile: profile });
       }
 
       function formatKm(km) {
@@ -1708,12 +1778,41 @@
         });
       }
 
-      function showNewRouteAfterSaveOverlay(panelMountEl, kitRoute, wasEdit, changeLine) {
+      function goeloShareMessengerOpenUrl() {
+        if (typeof window !== "undefined" && window.GOELO_SHARE_MESSENGER_URL) {
+          const u = String(window.GOELO_SHARE_MESSENGER_URL).trim();
+          if (u) return u;
+        }
+        return "https://www.messenger.com/";
+      }
+
+      function goeloShareInstagramOpenUrl() {
+        if (typeof window !== "undefined" && window.GOELO_SHARE_INSTAGRAM_URL) {
+          const u = String(window.GOELO_SHARE_INSTAGRAM_URL).trim();
+          if (u) return u;
+        }
+        return "https://www.instagram.com/goelo.rides/";
+      }
+
+      /**
+       * @param {HTMLElement} panelMountEl
+       * @param {object} kitRoute
+       * @param {{ wasEdit?: boolean, changeLine?: string, cancelled?: boolean }} overlayOpts
+       */
+      function showNewRouteAfterSaveOverlay(panelMountEl, kitRoute, overlayOpts) {
         if (!panelMountEl || !kitRoute) return;
         removeNewRouteAdminOverlays();
-        const build =
+        const opts = overlayOpts || {};
+        const wasEdit = !!opts.wasEdit;
+        const changeLine = String(opts.changeLine || "").trim();
+        const cancelled = !!opts.cancelled;
+        const buildStory =
           typeof window.goeloRideUpdatesBuildInstagramStoryText === "function"
             ? window.goeloRideUpdatesBuildInstagramStoryText
+            : null;
+        const buildGroup =
+          typeof window.goeloRideUpdatesBuildGroupAnnouncementText === "function"
+            ? window.goeloRideUpdatesBuildGroupAnnouncementText
             : null;
         const pick =
           typeof window.goeloRideUpdatesPickVisualIdea === "function" ? window.goeloRideUpdatesPickVisualIdea : null;
@@ -1721,55 +1820,111 @@
           typeof window.goeloRideUpdatesCopyToClipboard === "function"
             ? window.goeloRideUpdatesCopyToClipboard
             : null;
-        const story = build
-          ? build(kitRoute, {
-              wasEdit: wasEdit,
-              changeLine: String(changeLine || "").trim(),
-              origin: window.location.origin
-            })
-          : "";
-        const visual = pick ? pick(kitRoute) : "";
+        const commonOpts = {
+          wasEdit: wasEdit,
+          changeLine: changeLine,
+          cancelled: cancelled,
+          origin: window.location.origin
+        };
+        const story = buildStory ? buildStory(kitRoute, commonOpts) : "";
+        const groupText = buildGroup ? buildGroup(kitRoute, commonOpts) : story || "";
+        const visual = cancelled
+          ? "Story ou post sobre (annulation) : titre, date, mention « annulé », fond neutre — format 9:16."
+          : pick
+            ? pick(kitRoute)
+            : "";
         const wrap = document.createElement("div");
         wrap.className = "new-route-after-save-overlay";
         wrap.setAttribute("role", "region");
-        wrap.setAttribute("aria-label", "Après enregistrement — partage Instagram");
+        wrap.setAttribute(
+          "aria-label",
+          cancelled ? "Sortie retirée — annonce réseaux" : "Après enregistrement — annonce réseaux"
+        );
+        const titleBlock = cancelled
+          ? '<h3 class="new-route-after-save-title">Sortie retirée du site</h3>' +
+            '<p class="new-route-after-save-ok">La sortie a été <strong>supprimée ou masquée</strong> dans Supabase.</p>'
+          : '<h3 class="new-route-after-save-title">Sortie enregistrée</h3>' +
+            (wasEdit
+              ? '<p class="new-route-after-save-ok">La sortie a été <strong>mise à jour</strong> dans Supabase.</p>'
+              : '<p class="new-route-after-save-ok">La sortie a été <strong>créée</strong> dans Supabase.</p>');
+        const detailsOpen = cancelled ? "" : " open";
         wrap.innerHTML =
           '<div class="new-route-after-save-inner">' +
-          "<h3 class=\"new-route-after-save-title\">Sortie enregistrée</h3>" +
-          (wasEdit
-            ? '<p class="new-route-after-save-ok">La sortie a été <strong>mise à jour</strong> dans Supabase.</p>'
-            : '<p class="new-route-after-save-ok">La sortie a été <strong>créée</strong> dans Supabase.</p>') +
-          '<p class="new-route-after-save-intro">Étape suivante : texte et idée visuelle pour une story Instagram (publication <strong>manuelle</strong> — rien n’est envoyé automatiquement).</p>' +
+          titleBlock +
+          "<p class=\"new-route-after-save-intro\">Les groupes Messenger ou Instagram <strong>ne reçoivent rien automatiquement</strong> depuis ce site (pas d’API Meta côté GoëloRides). Copie le message ci-dessous, ouvre l’app avec les boutons, puis colle dans la conversation du groupe (Messenger, DM Insta, WhatsApp…).</p>" +
+          '<h4 class="new-route-after-save-sub">Message groupe</h4>' +
+          '<label class="new-route-after-save-label" for="new-route-after-save-group">Texte à copier</label>' +
+          '<textarea id="new-route-after-save-group" class="new-route-after-save-textarea new-route-after-save-textarea--mid" rows="9" readonly></textarea>' +
+          '<div class="new-route-after-save-actions new-route-after-save-actions--spread">' +
+          '<button type="button" class="btn-primary" id="new-route-after-save-copy-group">Copier le message</button>' +
+          '<button type="button" class="btn-app-outline new-route-after-save-btn-messenger" id="new-route-after-save-open-messenger">Messenger</button>' +
+          '<button type="button" class="btn-app-outline new-route-after-save-btn-instagram" id="new-route-after-save-open-instagram">Instagram</button>' +
+          "</div>" +
+          '<details class="new-route-after-save-details"' +
+          detailsOpen +
+          ">" +
+          '<summary class="new-route-after-save-summary">Texte pour story Instagram (plus détaillé)</summary>' +
           '<label class="new-route-after-save-label" for="new-route-after-save-story">Texte à copier</label>' +
-          '<textarea id="new-route-after-save-story" class="new-route-after-save-textarea" rows="12" readonly></textarea>' +
+          '<textarea id="new-route-after-save-story" class="new-route-after-save-textarea" rows="9" readonly></textarea>' +
           '<div class="new-route-after-save-actions">' +
-          '<button type="button" class="btn-primary" id="new-route-after-save-copy">Copier le texte</button>' +
-          '<button type="button" class="btn-app-outline" id="new-route-after-save-reload">Recharger la page</button>' +
+          '<button type="button" class="btn-app-outline" id="new-route-after-save-copy">Copier le texte story</button>' +
           "</div>" +
           '<h4 class="new-route-after-save-sub">Idée visuelle (Canva, Stories…)</h4>' +
           '<p class="new-route-after-save-visual" id="new-route-after-save-visual"></p>' +
+          "</details>" +
+          '<div class="new-route-after-save-actions new-route-after-save-actions--footer">' +
+          '<button type="button" class="btn-primary" id="new-route-after-save-reload">Recharger la page</button>' +
+          "</div>" +
           "</div>";
         panelMountEl.appendChild(wrap);
+        const taGroup = wrap.querySelector("#new-route-after-save-group");
+        if (taGroup) taGroup.value = groupText;
         const ta = wrap.querySelector("#new-route-after-save-story");
         if (ta) ta.value = story;
         const visEl = wrap.querySelector("#new-route-after-save-visual");
         if (visEl) visEl.textContent = visual;
-        const copyBtn = wrap.querySelector("#new-route-after-save-copy");
-        if (copyBtn && copyFn) {
-          copyBtn.addEventListener("click", function () {
-            copyFn(
-              story,
-              function () {
-                window.alert("Texte copié dans le presse-papiers.");
-              },
-              function () {
-                window.alert("Sélectionne le texte dans la zone si la copie est refusée.");
-              }
-            );
+        function bindCopy(btn, text) {
+          if (!btn) return;
+          if (copyFn) {
+            btn.addEventListener("click", function () {
+              copyFn(
+                text,
+                function () {
+                  window.alert("Texte copié dans le presse-papiers.");
+                },
+                function () {
+                  window.alert("Sélectionne le texte dans la zone si la copie est refusée.");
+                }
+              );
+            });
+          } else {
+            btn.addEventListener("click", function () {
+              window.alert("Copie : sélectionne le texte dans la zone puis Ctrl+C (ou Cmd+C).");
+            });
+          }
+        }
+        bindCopy(wrap.querySelector("#new-route-after-save-copy-group"), groupText);
+        bindCopy(wrap.querySelector("#new-route-after-save-copy"), story);
+        const btnMsg = wrap.querySelector("#new-route-after-save-open-messenger");
+        if (btnMsg) {
+          btnMsg.addEventListener("click", function () {
+            try {
+              window.open(goeloShareMessengerOpenUrl(), "_blank", "noopener,noreferrer");
+            } catch (err) {
+              void err;
+              window.location.href = goeloShareMessengerOpenUrl();
+            }
           });
-        } else if (copyBtn) {
-          copyBtn.addEventListener("click", function () {
-            window.alert("Copie : sélectionne le texte dans la zone puis Ctrl+C (ou Cmd+C).");
+        }
+        const btnIg = wrap.querySelector("#new-route-after-save-open-instagram");
+        if (btnIg) {
+          btnIg.addEventListener("click", function () {
+            try {
+              window.open(goeloShareInstagramOpenUrl(), "_blank", "noopener,noreferrer");
+            } catch (err) {
+              void err;
+              window.location.href = goeloShareInstagramOpenUrl();
+            }
           });
         }
         const rel = wrap.querySelector("#new-route-after-save-reload");
@@ -1778,9 +1933,10 @@
             window.location.reload();
           });
         }
-        if (ta) {
+        const focusEl = taGroup || ta;
+        if (focusEl) {
           try {
-            ta.focus();
+            focusEl.focus();
           } catch (err) {
             void err;
           }
@@ -1801,14 +1957,13 @@
         const timeIn = document.getElementById("new-route-time");
         if (timeIn) timeIn.value = "08:30";
         /* Après reset(), certains navigateurs réappliquent l’état initial des boutons du formulaire :
-           on resynchronise l’assistant (ex. masquer « Créer la sortie » hors étape 5). */
+           on resynchronise l’assistant (ex. masquer « Créer la sortie » hors dernière étape). */
         if (typeof modal.__goeloSetWizardStep === "function") {
           modal.__goeloSetWizardStep(1);
         }
         modal.hidden = false;
         modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
-        setNewRouteModalTab("access");
         syncNewRouteAdminUi();
         if (isSupabaseEnabled()) {
           await hydrateCustomRoutesForToolbarEdit();
@@ -1911,7 +2066,25 @@
         const modal = document.getElementById("new-route-modal");
         if (!modal) return;
         const tabBtns = modal.querySelectorAll("[data-new-route-tab]");
-        if (!tabBtns.length) return;
+        if (!tabBtns.length) {
+          if (tab === "create" && typeof modal.__goeloSetWizardStep === "function") {
+            const s =
+              typeof modal.__goeloWizardStep === "number" && modal.__goeloWizardStep >= 1 && modal.__goeloWizardStep <= 5
+                ? modal.__goeloWizardStep
+                : 1;
+            modal.__goeloSetWizardStep(s);
+            setTimeout(function () {
+              if (newRoutePreviewMapInst && typeof newRoutePreviewMapInst.invalidateSize === "function") {
+                try {
+                  newRoutePreviewMapInst.invalidateSize(false);
+                } catch (err) {
+                  void err;
+                }
+              }
+            }, 120);
+          }
+          return;
+        }
         const t = tab === "edit" || tab === "create" ? tab : "access";
         tabBtns.forEach(function (btn) {
           const id = btn.getAttribute("data-new-route-tab");
@@ -1947,13 +2120,17 @@
 
       function focusFirstInNewRouteActivePanel() {
         const modal = document.getElementById("new-route-modal");
-        if (!modal) return;
-        const panel = modal.querySelector(".new-route-tabpanel.is-active");
-        if (!panel || panel.hidden) return;
+        if (!modal || modal.hidden) return;
+        const body = document.getElementById("new-route-modal-body");
+        const panel =
+          (body && !body.classList.contains("is-locked") && body.querySelector("#new-route-panel-" + (modal.__goeloWizardStep || 1))) ||
+          modal.querySelector(".new-route-tabpanel.is-active");
+        const root = panel && !panel.hidden ? panel : body;
+        if (!root) return;
         const cand =
-          panel.querySelector(
+          root.querySelector(
             "input:not([type=\"hidden\"]):not([disabled]), select:not([disabled]), textarea:not([disabled])"
-          ) || panel.querySelector("button:not([disabled])");
+          ) || root.querySelector("button:not([disabled])");
         if (cand && typeof cand.focus === "function") {
           try {
             cand.focus();
@@ -1968,40 +2145,28 @@
         const toolbar = document.getElementById("new-route-admin-toolbar");
         const body = document.getElementById("new-route-modal-body");
         const errEl = document.getElementById("new-route-admin-error");
-        const tabEdit = document.getElementById("new-route-tab-edit");
-        const tabCreate = document.getElementById("new-route-tab-create");
-        const disTitle = "Identifie-toi dans l’onglet « Accès Team Rider »";
-        if (!gate || !body) return;
         if (errEl) {
           errEl.textContent = "";
           errEl.hidden = true;
+        }
+        if (!body) return;
+        if (!gate) {
+          if (isAdminSessionUsable()) {
+            body.classList.remove("is-locked");
+          } else {
+            body.classList.add("is-locked");
+          }
+          return;
         }
         if (isAdminSessionUsable()) {
           gate.hidden = true;
           if (toolbar) toolbar.hidden = false;
           body.classList.remove("is-locked");
-          if (tabEdit) {
-            tabEdit.disabled = false;
-            tabEdit.removeAttribute("title");
-          }
-          if (tabCreate) {
-            tabCreate.disabled = false;
-            tabCreate.removeAttribute("title");
-          }
         } else {
           clearAdminSession();
           gate.hidden = false;
           if (toolbar) toolbar.hidden = true;
           body.classList.add("is-locked");
-          if (tabEdit) {
-            tabEdit.disabled = true;
-            tabEdit.setAttribute("title", disTitle);
-          }
-          if (tabCreate) {
-            tabCreate.disabled = true;
-            tabCreate.setAttribute("title", disTitle);
-          }
-          setNewRouteModalTab("access");
         }
       }
 
@@ -2016,6 +2181,7 @@
         const coverBtn = document.getElementById("new-route-cover-btn");
         const coverInput = document.getElementById("new-route-cover-input");
         const coverPreview = document.getElementById("new-route-cover-preview");
+        const GOELO_EXAMPLE_STORY_PNG_URL = "assets/gestion-sorties-story-exemple.png";
 
         if (btn) btn.hidden = !isSupabaseEnabled();
         const hdrNew = document.getElementById("sorties-header-new-route");
@@ -2191,6 +2357,7 @@
         }
 
         let wizardStep = 1;
+        var WIZARD_LAST = 5;
         let newRouteProfile = null;
         let newRouteGpxName = "";
         let newRouteCoverDataUrl = null;
@@ -2200,7 +2367,7 @@
         function setNewRouteModalTitle(isEdit) {
           const h2 = document.getElementById("new-route-modal-title");
           if (!h2) return;
-          h2.textContent = isEdit ? "Modifier la sortie" : "Gérer les sorties";
+          h2.textContent = isEdit ? "Modifier la sortie" : "Nouvelle sortie";
         }
 
         function refreshEditRouteSelect() {
@@ -2277,11 +2444,39 @@
           drawNewRoutePreview(prof);
         }
 
+        function goeloFrontStr(fc, camel, snake) {
+          if (!fc || typeof fc !== "object") return "";
+          const tryStr = function (v) {
+            if (typeof v === "string" && v.trim()) return v.trim();
+            if (typeof v === "number" && Number.isFinite(v) && v !== 0) return String(v);
+            return "";
+          };
+          let x = tryStr(fc[camel]);
+          if (x) return x;
+          x = tryStr(fc[snake]);
+          if (x) return x;
+          if (camel === "rideLeader" || snake === "ride_leader") {
+            x =
+              tryStr(fc.capitaine) ||
+              tryStr(fc.captain) ||
+              tryStr(fc.leader) ||
+              tryStr(fc.teamRider) ||
+              tryStr(fc.team_rider);
+            if (x) return x;
+          }
+          if (camel === "meetPlaceDetail" || snake === "meet_place_detail") {
+            x = tryStr(fc.meet_detail) || tryStr(fc.departure_detail) || tryStr(fc.lieu_depart_precis);
+            if (x) return x;
+          }
+          return "";
+        }
+
         function applyRouteIntoWizard(route) {
           if (!route || !route.profile || !route.profile.points || route.profile.points.length < 2) {
             window.alert("Impossible de charger cette sortie (trace absente ou trop courte).");
             return;
           }
+          const fcRaw = parseRouteFrontConfig(route.raw_front_config);
           newRouteEditId = route.id;
           newRouteEditSortOrder =
             typeof route.sortOrder === "number" && Number.isFinite(route.sortOrder) ? route.sortOrder : 40;
@@ -2303,9 +2498,20 @@
           const pEl = document.getElementById("new-route-pace");
           if (pEl) pEl.value = route.pace && route.pace !== "—" ? route.pace : "";
           const rlEl = document.getElementById("new-route-ride-leader");
-          if (rlEl) rlEl.value = route.rideLeader && String(route.rideLeader).trim() ? String(route.rideLeader).trim() : "";
+          if (rlEl) {
+            rlEl.value =
+              (route.rideLeader && String(route.rideLeader).trim()) ||
+              goeloFrontStr(fcRaw, "rideLeader", "ride_leader") ||
+              goeloRideLeaderFromFc(fcRaw) ||
+              "";
+          }
           const dEl = document.getElementById("new-route-desc");
-          if (dEl) dEl.value = route.shortDesc || "";
+          if (dEl) {
+            dEl.value =
+              (route.shortDesc && String(route.shortDesc).trim()) ||
+              goeloFrontStr(fcRaw, "shortDesc", "short_desc") ||
+              "";
+          }
           const dateIn = document.getElementById("new-route-date");
           const timeIn = document.getElementById("new-route-time");
           if (dateIn) {
@@ -2337,30 +2543,64 @@
           const meetD = document.getElementById("new-route-meet-detail");
           if (meetD) {
             meetD.value =
-              route.meetPlaceDetail && String(route.meetPlaceDetail).trim()
-                ? String(route.meetPlaceDetail).trim()
-                : "";
+              (route.meetPlaceDetail && String(route.meetPlaceDetail).trim()) ||
+              goeloFrontStr(fcRaw, "meetPlaceDetail", "meet_place_detail") ||
+              goeloMeetPlaceDetailFromFc(fcRaw) ||
+              "";
           }
           const durM = document.getElementById("new-route-duration-min");
           if (durM) {
-            const hm =
-              route.estimatedDurationHm && String(route.estimatedDurationHm).trim()
-                ? String(route.estimatedDurationHm).trim()
-                : "";
+            let hm =
+              (route.estimatedDurationHm && String(route.estimatedDurationHm).trim()) ||
+              goeloFrontStr(fcRaw, "estimatedDurationHm", "estimated_duration_hm") ||
+              "";
+            let mins =
+              route.estimatedDurationMinutes != null && Number(route.estimatedDurationMinutes) > 0
+                ? route.estimatedDurationMinutes
+                : null;
+            if (mins == null) {
+              const nR =
+                fcRaw.estimatedDurationMinutes != null ? fcRaw.estimatedDurationMinutes : fcRaw.estimated_duration_minutes;
+              if (typeof nR === "number" && Number.isFinite(nR) && nR > 0) {
+                mins = Math.round(nR);
+              } else if (typeof nR === "string" && /^\d+$/.test(String(nR).trim())) {
+                const n = parseInt(String(nR).trim(), 10);
+                if (Number.isFinite(n) && n > 0) mins = Math.min(n, 36 * 60);
+              }
+            }
             if (hm) {
               durM.value = hm;
-            } else if (route.estimatedDurationMinutes != null && Number(route.estimatedDurationMinutes) > 0) {
-              durM.value = String(route.estimatedDurationMinutes);
+            } else if (mins != null) {
+              durM.value = String(mins);
             } else {
               durM.value = "";
             }
           }
           const maxPIn = document.getElementById("new-route-max-p");
           if (maxPIn) {
-            maxPIn.value =
+            let maxP =
               route.maxParticipants != null && Number(route.maxParticipants) > 0
-                ? String(route.maxParticipants)
-                : "0";
+                ? Number(route.maxParticipants)
+                : null;
+            if (maxP == null) {
+              const raw =
+                fcRaw.maxParticipants != null
+                  ? fcRaw.maxParticipants
+                  : fcRaw.max_participants != null
+                    ? fcRaw.max_participants
+                    : fcRaw.max_places != null
+                      ? fcRaw.max_places
+                      : fcRaw.capacity != null
+                        ? fcRaw.capacity
+                        : null;
+              if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+                maxP = Math.round(raw);
+              } else if (typeof raw === "string" && String(raw).trim()) {
+                const n = Math.max(0, parseInt(String(raw).replace(/\D/g, ""), 10) || 0);
+                if (n > 0) maxP = n;
+              }
+            }
+            maxPIn.value = maxP != null ? String(maxP) : "";
           }
           const stEl = document.getElementById("new-route-status");
           if (stEl) stEl.value = route.sortieStatus || "open";
@@ -2388,6 +2628,17 @@
             }
           }
           setNewRouteModalTitle(true);
+          const modalSnap = document.getElementById("new-route-modal");
+          if (modalSnap && newRouteEditId) {
+            modalSnap.__goeloStep3Restore = {
+              routeId: newRouteEditId,
+              rideLeader: rlEl ? rlEl.value : "",
+              meetDetail: meetD ? meetD.value : "",
+              duration: durM ? durM.value : ""
+            };
+          } else if (modalSnap) {
+            modalSnap.__goeloStep3Restore = null;
+          }
           setWizardStep(1);
           setNewRouteModalTab("create");
           requestAnimationFrame(function () {
@@ -2433,7 +2684,7 @@
           const durEl = document.getElementById("new-route-duration-min");
           const durStr = durEl ? durEl.value.trim() : "";
           const maxEl = document.getElementById("new-route-max-p");
-          const maxStr = maxEl ? maxEl.value.trim() : "0";
+          const maxStr = maxEl ? maxEl.value.trim() : "";
           const stEl = document.getElementById("new-route-status");
           const stVal = stEl ? stEl.value : "open";
           const visEl = document.getElementById("new-route-visibility");
@@ -2469,9 +2720,513 @@
             "</ul>";
         }
 
+        function formatDateFrNewRoute(iso) {
+          if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "—";
+          const p = iso.split("-");
+          const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+          if (Number.isNaN(d.getTime())) return iso;
+          try {
+            return d.toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric"
+            });
+          } catch (e) {
+            void e;
+            return iso;
+          }
+        }
+
+        /** Ex. « 14 JUILLET » pour encarts type flyer. */
+        function formatDateFlyerShort(iso) {
+          if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "—";
+          const p = iso.split("-");
+          const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+          if (Number.isNaN(d.getTime())) return "—";
+          try {
+            const day = d.toLocaleDateString("fr-FR", { day: "numeric" });
+            const mon = d.toLocaleDateString("fr-FR", { month: "long" });
+            return (day + " " + mon).toUpperCase();
+          } catch (e) {
+            void e;
+            return iso;
+          }
+        }
+
+        function niveauLabelNewRoute(code) {
+          if (code === "bleu") return "Bleu";
+          if (code === "rouge") return "Rouge";
+          return "Vert";
+        }
+
+        function readNewRoutePublishSnapshot() {
+          const trackEl = document.getElementById("new-route-track");
+          const dateEl = document.getElementById("new-route-date");
+          const timeEl = document.getElementById("new-route-time");
+          const meetDEl = document.getElementById("new-route-meet-detail");
+          const descEl = document.getElementById("new-route-desc");
+          const nom = trackEl ? trackEl.value.trim() : "";
+          const dateStr = dateEl ? dateEl.value.trim() : "";
+          const heure = timeEl ? timeEl.value.trim() : "";
+          const detailRaw = meetDEl ? meetDEl.value.trim() : "";
+          const detail = detailRaw.length <= 1 ? "" : detailRaw;
+          const defMeet =
+            typeof SHARED !== "undefined" && SHARED && SHARED.meetPlace
+              ? String(SHARED.meetPlace).trim()
+              : "";
+          const lieu = detail ? detail + (defMeet ? " — " + defMeet : "") : defMeet || "—";
+          let kmStr = "—";
+          if (newRouteProfile && typeof newRouteProfile.totalKm === "number" && Number.isFinite(newRouteProfile.totalKm)) {
+            kmStr = formatKm(newRouteProfile.totalKm);
+          }
+          const lvRaw = (form.querySelector('input[name="new-route-level"]:checked') || {}).value || "level-vert";
+          const niveau =
+            lvRaw === "level-bleu" ? "bleu" : lvRaw === "level-rouge" ? "rouge" : "vert";
+          const com = descEl ? descEl.value.trim() : "";
+          const dateL = formatDateFrNewRoute(dateStr);
+          const dateFlyerShort = formatDateFlyerShort(dateStr);
+          const nivLab = niveauLabelNewRoute(niveau);
+          const infos = com ? com : "—";
+          return { nom, dateStr, heure, lieu, kmStr, niveau, nivLab, infos, dateL, dateFlyerShort };
+        }
+
+        function updateNewRoutePublishPreviews() {
+          /* Anciens blocs Facebook / Instagram retirés : le flyer (étape 5) utilise readNewRoutePublishSnapshot côté génération. */
+        }
+
+        function splitCanvasLinesByWidth(ctx, text, maxW) {
+          const t = String(text || "").trim() || "—";
+          const words = t.split(/\s+/);
+          const lines = [];
+          let cur = "";
+          words.forEach(function (w) {
+            const test = cur ? cur + " " + w : w;
+            if (ctx.measureText(test).width <= maxW) {
+              cur = test;
+            } else {
+              if (cur) lines.push(cur);
+              cur = w;
+            }
+          });
+          if (cur) lines.push(cur);
+          return lines.length ? lines : [t];
+        }
+
+        function buildNewRouteFlyerDataUrl(done) {
+          const snap = readNewRoutePublishSnapshot();
+          if (!snap.nom || !snap.dateStr || !snap.heure) {
+            done("Indique au minimum le titre, la date et l’heure (étapes 1 et 3).", null);
+            return;
+          }
+          const flyerBgCustom =
+            typeof window !== "undefined" && window.GOELO_FLYER_BG_URL && String(window.GOELO_FLYER_BG_URL).trim()
+              ? String(window.GOELO_FLYER_BG_URL).trim()
+              : "";
+          const flyerBgChain = flyerBgCustom
+            ? [flyerBgCustom]
+            : ["assets/goelo-flyer-bg.jpg", "assets/goelo-flyer-bg.png", GOELO_EXAMPLE_STORY_PNG_URL];
+
+          function fetchFlyerBg(i) {
+            if (i >= flyerBgChain.length) {
+              return Promise.reject(new Error("nobg"));
+            }
+            return fetch(flyerBgChain[i]).then(function (res) {
+              if (res.ok) {
+                return res.blob();
+              }
+              return fetchFlyerBg(i + 1);
+            });
+          }
+
+          function niveauFlyerSub(code) {
+            if (code === "rouge") return "RYTHME SOUTENU";
+            if (code === "bleu") return "GROUPE À JALON";
+            return "TOUS NIVEAUX";
+          }
+
+          function drawRoundRect(ctx, x, y, rw, rh, r, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + rw, y, x + rw, y + rh, r);
+            ctx.arcTo(x + rw, y + rh, x, y + rh, r);
+            ctx.arcTo(x, y + rh, x, y, r);
+            ctx.arcTo(x, y, x + rw, y, r);
+            ctx.closePath();
+            if (fill) {
+              ctx.fillStyle = fill;
+              ctx.fill();
+            }
+            if (stroke) {
+              ctx.strokeStyle = stroke;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+            }
+          }
+
+          function drawIconCalendar(ctx, cx, cy, s) {
+            ctx.strokeStyle = "rgba(255,255,255,0.95)";
+            ctx.lineWidth = Math.max(2, s * 0.08);
+            const x = cx - s * 0.35;
+            const y = cy - s * 0.3;
+            const w = s * 0.7;
+            const h = s * 0.55;
+            ctx.beginPath();
+            ctx.moveTo(x, y + s * 0.12);
+            ctx.lineTo(x + w, y + s * 0.12);
+            ctx.lineTo(x + w, y + h);
+            ctx.lineTo(x, y + h);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y + s * 0.12);
+            ctx.lineTo(x, y);
+            ctx.lineTo(x + w, y);
+            ctx.lineTo(x + w, y + s * 0.12);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + w * 0.35, y + s * 0.22);
+            ctx.lineTo(x + w * 0.65, y + s * 0.22);
+            ctx.stroke();
+          }
+
+          function drawIconPin(ctx, cx, cy, s) {
+            ctx.strokeStyle = "rgba(255,255,255,0.95)";
+            ctx.lineWidth = Math.max(2, s * 0.08);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - s * 0.32);
+            ctx.bezierCurveTo(
+              cx - s * 0.28,
+              cy - s * 0.32,
+              cx - s * 0.32,
+              cy + s * 0.02,
+              cx,
+              cy + s * 0.36
+            );
+            ctx.bezierCurveTo(
+              cx + s * 0.32,
+              cy + s * 0.02,
+              cx + s * 0.28,
+              cy - s * 0.32,
+              cx,
+              cy - s * 0.32
+            );
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx, cy - s * 0.08, s * 0.1, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          function drawIconBike(ctx, cx, cy, s) {
+            ctx.strokeStyle = "rgba(255,255,255,0.95)";
+            ctx.lineWidth = Math.max(2, s * 0.08);
+            const r = s * 0.14;
+            ctx.beginPath();
+            ctx.arc(cx - s * 0.22, cy + s * 0.12, r, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx + s * 0.22, cy + s * 0.12, r, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx - s * 0.22, cy + s * 0.12);
+            ctx.lineTo(cx - s * 0.05, cy - s * 0.18);
+            ctx.lineTo(cx + s * 0.12, cy - s * 0.18);
+            ctx.lineTo(cx + s * 0.22, cy + s * 0.12);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx - s * 0.05, cy - s * 0.18);
+            ctx.lineTo(cx + s * 0.02, cy - s * 0.28);
+            ctx.stroke();
+          }
+
+          function drawLogoMountains(ctx, x, y, s) {
+            ctx.fillStyle = "rgba(255,255,255,0.95)";
+            ctx.beginPath();
+            ctx.moveTo(x, y + s);
+            ctx.lineTo(x + s * 0.42, y + s * 0.32);
+            ctx.lineTo(x + s * 0.68, y + s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x + s * 0.32, y + s);
+            ctx.lineTo(x + s * 0.72, y + s * 0.38);
+            ctx.lineTo(x + s * 1.05, y + s);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          function drawFooterWaves(ctx, cx, cy, s) {
+            ctx.strokeStyle = "rgba(255,255,255,0.9)";
+            ctx.lineWidth = 2;
+            for (let i = -1; i <= 1; i++) {
+              ctx.beginPath();
+              const ox = cx + i * s * 0.22;
+              ctx.moveTo(ox - s * 0.2, cy);
+              ctx.quadraticCurveTo(ox - s * 0.1, cy - s * 0.12, ox, cy);
+              ctx.quadraticCurveTo(ox + s * 0.1, cy + s * 0.12, ox + s * 0.2, cy);
+              ctx.stroke();
+            }
+          }
+
+          function drawFooterPeople(ctx, cx, cy, s) {
+            ctx.fillStyle = "rgba(255,255,255,0.9)";
+            for (let i = -1; i <= 1; i++) {
+              const px = cx + i * s * 0.2;
+              ctx.beginPath();
+              ctx.arc(px, cy - s * 0.08, s * 0.08, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillRect(px - s * 0.1, cy + s * 0.02, s * 0.2, s * 0.22);
+            }
+          }
+
+          function drawFooterMountain(ctx, cx, cy, s) {
+            ctx.fillStyle = "rgba(255,255,255,0.9)";
+            ctx.beginPath();
+            ctx.moveTo(cx - s * 0.28, cy + s * 0.18);
+            ctx.lineTo(cx - s * 0.08, cy - s * 0.12);
+            ctx.lineTo(cx + s * 0.1, cy + s * 0.05);
+            ctx.lineTo(cx + s * 0.28, cy - s * 0.18);
+            ctx.lineTo(cx + s * 0.38, cy + s * 0.18);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          function drawIconDistance(ctx, cx, cy, s) {
+            ctx.strokeStyle = "rgba(255,255,255,0.95)";
+            ctx.lineWidth = Math.max(2, s * 0.08);
+            ctx.beginPath();
+            ctx.moveTo(cx - s * 0.26, cy + s * 0.06);
+            ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.14, cx + s * 0.05, cy + s * 0.08);
+            ctx.quadraticCurveTo(cx + s * 0.18, cy - s * 0.1, cx + s * 0.28, cy + s * 0.04);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx + s * 0.28, cy + s * 0.1, s * 0.07, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          function drawInfoRow(ctx, y, iconDraw, line1, line2) {
+            const box = 56;
+            const ix = 22;
+            const iy = y;
+            drawRoundRect(ctx, ix, iy, box, box, 8, "rgba(42, 92, 88, 0.95)", "rgba(255,255,255,0.2)");
+            ctx.save();
+            ctx.translate(ix + box / 2, iy + box / 2);
+            iconDraw(ctx, 0, 0, 44);
+            ctx.restore();
+            const tx = ix + box + 14;
+            ctx.textBaseline = "top";
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "800 20px system-ui, -apple-system, 'Segoe UI', sans-serif";
+            ctx.fillText(line1, tx, iy + 6);
+            const sub = line2 != null ? String(line2).trim() : "";
+            if (sub) {
+              ctx.font = "600 13px system-ui, -apple-system, 'Segoe UI', sans-serif";
+              ctx.fillStyle = "rgba(255,255,255,0.88)";
+              ctx.fillText(sub, tx, iy + 30);
+            }
+          }
+
+          fetchFlyerBg(0)
+            .then(function (blob) {
+              return new Promise(function (resolve, reject) {
+                const u = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = function () {
+                  URL.revokeObjectURL(u);
+                  try {
+                    const iw = img.naturalWidth;
+                    const ih = img.naturalHeight;
+                    if (!iw || !ih) {
+                      reject(new Error("img"));
+                      return;
+                    }
+                    const OUT_W = 720;
+                    const OUT_H = 1280;
+                    const targetAspect = 9 / 16;
+                    let sx;
+                    let sy;
+                    let sw;
+                    let sh;
+                    if (iw / ih > targetAspect) {
+                      sh = ih;
+                      sw = Math.round(ih * targetAspect);
+                      sx = Math.round((iw - sw) / 2);
+                      sy = 0;
+                    } else {
+                      sw = iw;
+                      sh = Math.round(iw / targetAspect);
+                      sx = 0;
+                      sy = Math.round((ih - sh) / 2);
+                    }
+                    const canvas = document.createElement("canvas");
+                    canvas.width = OUT_W;
+                    canvas.height = OUT_H;
+                    const ctx = canvas.getContext("2d");
+                    if (!ctx) {
+                      reject(new Error("canvas"));
+                      return;
+                    }
+                    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, OUT_W, OUT_H);
+                    /* Voile vert : zone haute + assez de hauteur pour couvrir le bloc infos (dont niveau / couleur) et le texte éventuel sur la photo. */
+                    const overlayH = OUT_H * 0.62;
+                    const overlayW = OUT_W * 0.72;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(0, 0, overlayW, overlayH);
+                    ctx.clip();
+                    const grad = ctx.createLinearGradient(0, 0, overlayW * 0.92, 0);
+                    grad.addColorStop(0, "rgba(16, 52, 50, 0.91)");
+                    grad.addColorStop(0.45, "rgba(16, 52, 50, 0.62)");
+                    grad.addColorStop(0.75, "rgba(16, 52, 50, 0.22)");
+                    grad.addColorStop(1, "rgba(16, 52, 50, 0)");
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, overlayW, overlayH);
+                    const gradV = ctx.createLinearGradient(0, 0, 0, overlayH);
+                    gradV.addColorStop(0, "rgba(12, 44, 42, 0.35)");
+                    gradV.addColorStop(0.45, "rgba(12, 44, 42, 0.14)");
+                    gradV.addColorStop(0.78, "rgba(12, 44, 42, 0.06)");
+                    gradV.addColorStop(1, "rgba(12, 44, 42, 0)");
+                    ctx.fillStyle = gradV;
+                    ctx.fillRect(0, 0, overlayW, overlayH);
+                    ctx.restore();
+
+                    const words = snap.nom.split(/\s+/).filter(Boolean);
+                    let titleLine1;
+                    let titleLine2;
+                    if (words.length >= 2) {
+                      titleLine1 = words[0].toUpperCase();
+                      titleLine2 = words.slice(1).join(" ").toUpperCase();
+                    } else {
+                      titleLine1 = "SORTIE";
+                      titleLine2 = snap.nom.toUpperCase();
+                    }
+
+                    drawLogoMountains(ctx, 20, 22, 22);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.textBaseline = "top";
+                    ctx.font = "800 17px system-ui, -apple-system, 'Segoe UI', sans-serif";
+                    ctx.fillText("GOËLORIDES", 54, 28);
+
+                    ctx.fillStyle = "rgba(200, 230, 232, 0.95)";
+                    ctx.font = "800 26px system-ui, -apple-system, 'Segoe UI', sans-serif";
+                    ctx.fillText(titleLine1, 20, 72);
+                    ctx.fillStyle = "#ffffff";
+                    let ty = 100;
+                    const titleMaxW = OUT_W * 0.52;
+                    const titleMaxLines = 4;
+                    let titleFs = 46;
+                    let titleStep = 50;
+                    let title2Lines = [];
+                    for (titleFs = 46; titleFs >= 32; titleFs -= 2) {
+                      ctx.font = "800 " + titleFs + "px system-ui, -apple-system, 'Segoe UI', sans-serif";
+                      title2Lines = splitCanvasLinesByWidth(ctx, titleLine2, titleMaxW);
+                      if (title2Lines.length <= titleMaxLines) {
+                        break;
+                      }
+                    }
+                    title2Lines = title2Lines.slice(0, titleMaxLines);
+                    if (title2Lines.length >= 4) {
+                      titleStep = 42;
+                    } else if (title2Lines.length === 3) {
+                      titleStep = 46;
+                    } else {
+                      titleStep = 50;
+                    }
+                    ctx.font = "800 " + titleFs + "px system-ui, -apple-system, 'Segoe UI', sans-serif";
+                    title2Lines.forEach(function (ln) {
+                      ctx.fillText(ln, 20, ty);
+                      ty += titleStep;
+                    });
+                    ty += 4;
+                    ctx.font = "600 11px system-ui, -apple-system, 'Segoe UI', sans-serif";
+                    ctx.fillStyle = "rgba(255,255,255,0.82)";
+                    ctx.fillText("ROULER   ·   DÉCOUVRIR   ·   PARTAGER", 20, ty);
+
+                    const rowY0 = ty + 36;
+                    const lieuOne =
+                      splitCanvasLinesByWidth(ctx, snap.lieu, OUT_W * 0.48)[0] ||
+                      String(snap.lieu || "—").slice(0, 28);
+                    drawInfoRow(ctx, rowY0, drawIconCalendar, snap.dateFlyerShort, snap.heure);
+                    drawInfoRow(ctx, rowY0 + 84, drawIconPin, lieuOne, "");
+                    drawInfoRow(ctx, rowY0 + 168, drawIconDistance, snap.kmStr, "Distance (GPX)");
+                    drawInfoRow(ctx, rowY0 + 252, drawIconBike, snap.nivLab.toUpperCase(), niveauFlyerSub(snap.niveau));
+
+                    const fy = OUT_H - 118;
+                    const colW = OUT_W / 3;
+                    const foot = [
+                      { draw: drawFooterWaves, t2: "BORD DE MER" },
+                      { draw: drawFooterPeople, t2: "ALLURE COLLECTIVE" },
+                      { draw: drawFooterMountain, t2: "PAS UNE COURSE" }
+                    ];
+                    ctx.textAlign = "center";
+                    foot.forEach(function (col, idx) {
+                      const cx = colW * idx + colW * 0.5;
+                      ctx.save();
+                      col.draw(ctx, cx, fy + 8, 26);
+                      ctx.restore();
+                      ctx.font = "700 9px system-ui, -apple-system, 'Segoe UI', sans-serif";
+                      ctx.fillStyle = "rgba(255,255,255,0.78)";
+                      ctx.fillText(col.t2, cx, fy + 38);
+                    });
+                    ctx.textAlign = "left";
+
+                    const sealR = 34;
+                    const scx = OUT_W - sealR - 16;
+                    const scy = sealR + 16;
+                    ctx.beginPath();
+                    ctx.arc(scx, scy, sealR, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(35, 78, 74, 0.92)";
+                    ctx.fill();
+                    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.save();
+                    drawLogoMountains(ctx, scx - 18, scy - 14, 14);
+                    ctx.restore();
+                    ctx.fillStyle = "rgba(255,255,255,0.88)";
+                    ctx.font = "600 6px system-ui, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText("GOËLO", scx, scy + 8);
+                    ctx.textAlign = "left";
+
+                    let q = 0.88;
+                    let dataUrl = canvas.toDataURL("image/jpeg", q);
+                    let guard = 0;
+                    while (dataUrl.length > 520000 && guard < 12 && q > 0.45) {
+                      q -= 0.06;
+                      dataUrl = canvas.toDataURL("image/jpeg", q);
+                      guard += 1;
+                    }
+                    if (dataUrl.length > 600000) {
+                      reject(new Error("big"));
+                      return;
+                    }
+                    resolve(dataUrl);
+                  } catch (e) {
+                    reject(e);
+                  }
+                };
+                img.onerror = function () {
+                  URL.revokeObjectURL(u);
+                  reject(new Error("img"));
+                };
+                img.src = u;
+              });
+            })
+            .then(function (dataUrl) {
+              done(null, dataUrl);
+            })
+            .catch(function () {
+              done(
+                "Image de fond introuvable. Ajoute assets/goelo-flyer-bg.jpg (ou .png) dans le dossier assets, ou définis window.GOELO_FLYER_BG_URL vers ta photo paysage.",
+                null
+              );
+            });
+        }
+
         function setWizardStep(s) {
-          wizardStep = Math.max(1, Math.min(5, s));
-          for (let i = 1; i <= 5; i++) {
+          wizardStep = Math.max(1, Math.min(WIZARD_LAST, s));
+          for (let i = 1; i <= WIZARD_LAST; i++) {
             const p = document.getElementById("new-route-panel-" + i);
             if (p) p.hidden = i !== wizardStep;
           }
@@ -2482,14 +3237,31 @@
           const nextBtn = document.getElementById("new-route-next");
           const submitBtn = document.getElementById("new-route-submit");
           if (prevBtn) prevBtn.hidden = wizardStep <= 1;
-          if (nextBtn) nextBtn.hidden = wizardStep >= 5;
+          if (nextBtn) nextBtn.hidden = wizardStep >= WIZARD_LAST;
           if (submitBtn) {
-            submitBtn.hidden = wizardStep < 5;
+            submitBtn.hidden = wizardStep < WIZARD_LAST;
             if (!submitBtn.hidden) {
               submitBtn.textContent = newRouteEditId ? "Enregistrer les modifications" : "Créer la sortie";
             }
           }
           modal.__goeloWizardStep = wizardStep;
+          if (wizardStep === 3) {
+            const snap = modal.__goeloStep3Restore;
+            if (snap && newRouteEditId && snap.routeId === newRouteEditId) {
+              const rl = document.getElementById("new-route-ride-leader");
+              const md = document.getElementById("new-route-meet-detail");
+              const du = document.getElementById("new-route-duration-min");
+              if (rl && !String(rl.value || "").trim() && String(snap.rideLeader || "").trim()) {
+                rl.value = snap.rideLeader;
+              }
+              if (md && !String(md.value || "").trim() && String(snap.meetDetail || "").trim()) {
+                md.value = snap.meetDetail;
+              }
+              if (du && !String(du.value || "").trim() && String(snap.duration || "").trim()) {
+                du.value = snap.duration;
+              }
+            }
+          }
           if (wizardStep === 5) fillRecap();
           setTimeout(function () {
             if (newRoutePreviewMapInst && typeof newRoutePreviewMapInst.invalidateSize === "function") {
@@ -2503,6 +3275,19 @@
         }
 
         modal.__goeloSetWizardStep = setWizardStep;
+
+        function goeloPublishOpenUrl(key, fallback) {
+          var u =
+            typeof window !== "undefined" && window[key] && String(window[key]).trim()
+              ? String(window[key]).trim()
+              : fallback;
+          try {
+            window.open(u, "_blank", "noopener,noreferrer");
+          } catch (err) {
+            void err;
+            window.location.href = u;
+          }
+        }
 
         function resetDraft() {
           newRouteEditId = null;
@@ -2532,7 +3317,9 @@
           const durM = document.getElementById("new-route-duration-min");
           if (durM) durM.value = "";
           const maxPIn = document.getElementById("new-route-max-p");
-          if (maxPIn) maxPIn.value = "0";
+          if (maxPIn) maxPIn.value = "";
+          const mSnap = document.getElementById("new-route-modal");
+          if (mSnap) mSnap.__goeloStep3Restore = null;
           const stEl = document.getElementById("new-route-status");
           if (stEl) stEl.value = "open";
           const visEl = document.getElementById("new-route-visibility");
@@ -2655,29 +3442,136 @@
           });
         }
 
+        async function loadSelectedEditRouteIntoWizard() {
+          const sel = document.getElementById("new-route-edit-select");
+          const id = sel && sel.value ? sel.value.trim() : "";
+          if (!id) {
+            if (typeof modal.__goeloResetNewRouteDraft === "function") {
+              modal.__goeloResetNewRouteDraft();
+            }
+            form.reset();
+            const timeIn = document.getElementById("new-route-time");
+            if (timeIn) timeIn.value = "08:30";
+            return false;
+          }
+          const btnEl = document.getElementById("new-route-edit-load");
+          if (btnEl) btnEl.disabled = true;
+          let route = loadedRoutesCache.find(function (r) {
+            return r.id === id;
+          });
+          try {
+            const fresh = await fetchFreshCustomRouteForEdit(id);
+            if (fresh) {
+              route = fresh;
+              const idx = loadedRoutesCache.findIndex(function (r) {
+                return r && r.id === id;
+              });
+              if (idx >= 0) loadedRoutesCache[idx] = fresh;
+              else loadedRoutesCache.push(fresh);
+            }
+          } catch (err) {
+            void err;
+          } finally {
+            if (btnEl) btnEl.disabled = false;
+          }
+          if (!route) {
+            window.alert("Sortie introuvable. Recharge la page si tu viens d’en créer une.");
+            return false;
+          }
+          applyRouteIntoWizard(route);
+          return true;
+        }
+
+        async function openNewRouteModalFromListForEdit(routeId) {
+          var rid = routeId != null ? String(routeId).trim() : "";
+          if (!rid) return;
+          await openNewRouteModal();
+          var sel = document.getElementById("new-route-edit-select");
+          if (sel) {
+            sel.value = rid;
+          }
+          if (!isAdminSessionUsable()) {
+            syncNewRouteAdminUi();
+            return;
+          }
+          await loadSelectedEditRouteIntoWizard();
+        }
+
+        async function quickCancelSortieFromList(routeId) {
+          var rid = routeId != null ? String(routeId).trim() : "";
+          if (!rid) return;
+          if (!isSupabaseEnabled()) {
+            window.alert("Connecte Supabase (clé anon) pour modifier une sortie.");
+            return;
+          }
+          if (!isAdminSessionUsable()) {
+            window.alert(
+              "Connexion Team Rider requise : sur la page Sorties, déplie « Équipe organisatrice », identifie-toi, puis réessaie."
+            );
+            await openNewRouteModal();
+            syncNewRouteAdminUi();
+            return;
+          }
+          if (
+            !window.confirm(
+              "Marquer cette sortie comme annulée sur le site ?\n\nLes inscriptions restent en base ; la fiche indiquera que la sortie est annulée."
+            )
+          ) {
+            return;
+          }
+          const fresh = await fetchFreshCustomRouteForEdit(rid);
+          if (!fresh || String(fresh.routeKind || "") !== "custom") {
+            window.alert("Sortie introuvable ou parcours intégré : annulation impossible depuis la liste.");
+            return;
+          }
+          const fc = parseRouteFrontConfig(fresh.raw_front_config);
+          const merged = Object.assign({}, fc, { sortieStatus: "cancelled" });
+          const admTok = getAdminSession();
+          let data = await supabaseRpc(
+            "route_update",
+            {
+              p_route_id: rid,
+              p_track_name: String(fresh.track || "Sortie").trim() || "Sortie",
+              p_group_label: String(fresh.name || "").trim(),
+              p_pace_label: String(fresh.pace || "—").trim() || "—",
+              p_front_config: merged,
+              p_sort_order:
+                typeof fresh.sortOrder === "number" && Number.isFinite(fresh.sortOrder) ? fresh.sortOrder : 40
+            },
+            { accessToken: admTok && admTok.access_token ? admTok.access_token : "" }
+          );
+          if (Array.isArray(data)) data = data[0];
+          if (!data || !data.ok) {
+            const fail = goeloLastRpcFailure;
+            if (fail && fail.httpStatus === 401) {
+              clearAdminSession();
+              syncNewRouteAdminUi();
+              window.alert("Session expirée ou refusée. Reconnecte-toi en administrateur.");
+              return;
+            }
+            if (data && data.error === "forbidden") {
+              window.alert("Ce compte n’a pas le droit d’enregistrer.");
+              return;
+            }
+            const code = fail ? fail.code : 40;
+            window.alert(
+              goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName, fail && fail.body)
+            );
+            return;
+          }
+          try {
+            window.dispatchEvent(new CustomEvent("goelo-routes-need-refresh"));
+          } catch (e) {
+            void e;
+          }
+          window.alert("La sortie est marquée comme annulée sur le site.");
+        }
+
         const editLoadBtn = document.getElementById("new-route-edit-load");
         if (editLoadBtn && !editLoadBtn.dataset.goeloBound) {
           editLoadBtn.dataset.goeloBound = "1";
           editLoadBtn.addEventListener("click", function () {
-            const sel = document.getElementById("new-route-edit-select");
-            const id = sel && sel.value ? sel.value.trim() : "";
-            if (!id) {
-              if (typeof modal.__goeloResetNewRouteDraft === "function") {
-                modal.__goeloResetNewRouteDraft();
-              }
-              form.reset();
-              const timeIn = document.getElementById("new-route-time");
-              if (timeIn) timeIn.value = "08:30";
-              return;
-            }
-            const route = loadedRoutesCache.find(function (r) {
-              return r.id === id;
-            });
-            if (!route) {
-              window.alert("Sortie introuvable. Recharge la page si tu viens d’en créer une.");
-              return;
-            }
-            applyRouteIntoWizard(route);
+            void loadSelectedEditRouteIntoWizard();
           });
         }
 
@@ -2703,6 +3597,10 @@
             const route = loadedRoutesCache.find(function (r) {
               return r.id === id;
             });
+            if (!route) {
+              window.alert("Sortie introuvable. Recharge la page si tu viens d’en créer une.");
+              return;
+            }
             const label = route && route.track ? String(route.track) : id;
             const safe = label.replace(/"/g, "″");
             const builtinIds = { falaises: true, brehec: true, boucle: true };
@@ -2758,12 +3656,43 @@
               );
               return;
             }
-            window.alert(
-              data && data.kind === "builtin_hidden"
-                ? "Parcours intégré masqué sur le site. La page va se recharger."
-                : "Sortie supprimée. La page va se recharger."
-            );
-            window.location.reload();
+            const dlg = document.querySelector("#new-route-modal .signup-modal-dialog");
+            const kitRouteCancel = {
+              id: route.id,
+              track: route.track || label,
+              name: route.name || "",
+              depart: route.depart && typeof route.depart === "object" ? route.depart : { dateLabel: "" },
+              meetPlace: route.meetPlace || "",
+              meetPlaceDetail: route.meetPlaceDetail || "",
+              pace: route.pace || "",
+              raceType: route.raceType || "",
+              color: route.color || "#3d8b8b",
+              profile: route.profile && typeof route.profile === "object" ? route.profile : {}
+            };
+            if (dlg) {
+              try {
+                showNewRouteAfterSaveOverlay(dlg, kitRouteCancel, {
+                  wasEdit: false,
+                  changeLine: "",
+                  cancelled: true
+                });
+              } catch (err) {
+                void err;
+                window.alert(
+                  data && data.kind === "builtin_hidden"
+                    ? "Parcours intégré masqué sur le site. La page va se recharger."
+                    : "Sortie supprimée. La page va se recharger."
+                );
+                window.location.reload();
+              }
+            } else {
+              window.alert(
+                data && data.kind === "builtin_hidden"
+                  ? "Parcours intégré masqué sur le site. La page va se recharger."
+                  : "Sortie supprimée. La page va se recharger."
+              );
+              window.location.reload();
+            }
           });
         }
 
@@ -2908,6 +3837,23 @@
           });
         }
 
+        function applyNewRouteCoverDataUrl(dataUrl) {
+          if (!coverPreview) return;
+          if (!dataUrl) {
+            newRouteCoverDataUrl = null;
+            coverPreview.hidden = true;
+            coverPreview.innerHTML = "";
+            return;
+          }
+          newRouteCoverDataUrl = dataUrl;
+          coverPreview.innerHTML = "";
+          const im = document.createElement("img");
+          im.alt = "Aperçu couverture";
+          im.src = dataUrl;
+          coverPreview.appendChild(im);
+          coverPreview.hidden = false;
+        }
+
         if (coverBtn && coverInput && coverPreview) {
           coverBtn.addEventListener("click", function () {
             coverInput.click();
@@ -2918,21 +3864,194 @@
             shrinkImageToDataUrl(f, 960, 0.82, function (dataUrl) {
               if (!dataUrl) {
                 window.alert("Image trop lourde après compression — choisis une photo plus petite.");
-                newRouteCoverDataUrl = null;
-                coverPreview.hidden = true;
-                coverPreview.innerHTML = "";
+                applyNewRouteCoverDataUrl(null);
                 return;
               }
-              newRouteCoverDataUrl = dataUrl;
-              coverPreview.innerHTML = "";
-              const im = document.createElement("img");
-              im.alt = "Aperçu couverture";
-              im.src = dataUrl;
-              coverPreview.appendChild(im);
-              coverPreview.hidden = false;
+              applyNewRouteCoverDataUrl(dataUrl);
             });
           });
         }
+
+        const coverFromExampleBtn = document.getElementById("new-route-cover-from-example");
+        if (coverFromExampleBtn && coverPreview && !coverFromExampleBtn.dataset.goeloBound) {
+          coverFromExampleBtn.dataset.goeloBound = "1";
+          coverFromExampleBtn.addEventListener("click", function () {
+            const exUrl = GOELO_EXAMPLE_STORY_PNG_URL;
+            coverFromExampleBtn.disabled = true;
+            fetch(exUrl)
+              .then(function (res) {
+                if (!res.ok) throw new Error("bad");
+                return res.blob();
+              })
+              .then(function (blob) {
+                const f = new File([blob], "gestion-sorties-story-exemple.png", {
+                  type: blob.type && /^image\//.test(blob.type) ? blob.type : "image/png"
+                });
+                shrinkImageToDataUrl(f, 960, 0.82, function (dataUrl) {
+                  coverFromExampleBtn.disabled = false;
+                  if (!dataUrl) {
+                    window.alert(
+                      "Le modèle est trop lourd après compression. Utilise « Choisir une image » avec le fichier PNG local, ou une version plus légère."
+                    );
+                    return;
+                  }
+                  applyNewRouteCoverDataUrl(dataUrl);
+                });
+              })
+              .catch(function () {
+                coverFromExampleBtn.disabled = false;
+                window.alert(
+                  "Impossible de charger « " +
+                    exUrl +
+                    " ». Vérifie que le fichier est bien présent dans le dossier assets du site (déploiement)."
+                );
+              });
+          });
+        }
+
+        (function bindNewRoutePublishStep6Flyer() {
+          let lastGeneratedFlyerDataUrl = null;
+          const flyerGen = document.getElementById("new-route-publish-generate-flyer");
+          const flyerWrap = document.getElementById("new-route-publish-flyer-wrap");
+          const flyerImg = document.getElementById("new-route-publish-flyer-preview");
+          const flyerDl = document.getElementById("new-route-publish-download-flyer");
+          const flyerCp = document.getElementById("new-route-publish-copy-flyer");
+
+          function dataUrlToBlob(dataUrl) {
+            const parts = String(dataUrl).split(",");
+            if (parts.length < 2) return null;
+            const mimeMatch = parts[0].match(/:(.*?);/);
+            const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+            const bin = atob(parts[1]);
+            const len = bin.length;
+            const arr = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+              arr[i] = bin.charCodeAt(i);
+            }
+            return new Blob([arr], { type: mime });
+          }
+
+          /** PNG pour le presse-papiers : Chrome / Edge refusent souvent image/jpeg dans ClipboardItem. */
+          function dataUrlToPngBlob(dataUrl) {
+            return new Promise(function (resolve) {
+              const img = new Image();
+              img.onload = function () {
+                try {
+                  const w = img.naturalWidth;
+                  const h = img.naturalHeight;
+                  if (!w || !h) {
+                    resolve(null);
+                    return;
+                  }
+                  const c = document.createElement("canvas");
+                  c.width = w;
+                  c.height = h;
+                  const x = c.getContext("2d");
+                  if (!x) {
+                    resolve(null);
+                    return;
+                  }
+                  x.drawImage(img, 0, 0);
+                  c.toBlob(function (b) {
+                    resolve(b || null);
+                  }, "image/png");
+                } catch (e) {
+                  void e;
+                  resolve(null);
+                }
+              };
+              img.onerror = function () {
+                resolve(null);
+              };
+              img.src = dataUrl;
+            });
+          }
+
+          function showGeneratedFlyer(dataUrl) {
+            lastGeneratedFlyerDataUrl = dataUrl;
+            if (flyerImg) {
+              flyerImg.src = dataUrl;
+            }
+            if (flyerWrap) {
+              flyerWrap.hidden = false;
+            }
+          }
+
+          if (flyerGen && !flyerGen.dataset.goeloBound) {
+            flyerGen.dataset.goeloBound = "1";
+            flyerGen.addEventListener("click", function () {
+              flyerGen.disabled = true;
+              buildNewRouteFlyerDataUrl(function (err, dataUrl) {
+                flyerGen.disabled = false;
+                if (err || !dataUrl) {
+                  window.alert(err || "Génération flyer impossible.");
+                  return;
+                }
+                showGeneratedFlyer(dataUrl);
+              });
+            });
+          }
+
+          if (flyerDl && !flyerDl.dataset.goeloBound) {
+            flyerDl.dataset.goeloBound = "1";
+            flyerDl.addEventListener("click", function () {
+              if (!lastGeneratedFlyerDataUrl) return;
+              const snap = readNewRoutePublishSnapshot();
+              const base =
+                (snap.nom || "goelorides-flyer")
+                  .replace(/[^\w\-\s\u00C0-\u024f]+/gi, "_")
+                  .replace(/\s+/g, "-")
+                  .slice(0, 40) || "goelorides-flyer";
+              const a = document.createElement("a");
+              a.href = lastGeneratedFlyerDataUrl;
+              a.download = base + "-flyer.jpg";
+              a.rel = "noopener";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            });
+          }
+
+          if (flyerCp && !flyerCp.dataset.goeloBound) {
+            flyerCp.dataset.goeloBound = "1";
+            flyerCp.addEventListener("click", function () {
+              void (async function () {
+                if (!lastGeneratedFlyerDataUrl) return;
+                if (!navigator.clipboard || typeof navigator.clipboard.write !== "function") {
+                  window.alert(
+                    "Copie d’image non disponible (navigateur ou page non sécurisée). Utilise « Télécharger (JPEG) » puis envoie le fichier."
+                  );
+                  return;
+                }
+                if (typeof window.ClipboardItem === "undefined") {
+                  window.alert("Copie d’image non supportée par ce navigateur. Utilise « Télécharger (JPEG) ».");
+                  return;
+                }
+                try {
+                  const pngBlob = await dataUrlToPngBlob(lastGeneratedFlyerDataUrl);
+                  const jpegBlob = dataUrlToBlob(lastGeneratedFlyerDataUrl);
+                  const itemDict = {};
+                  if (pngBlob && pngBlob.size) {
+                    itemDict["image/png"] = pngBlob;
+                  }
+                  if (jpegBlob && jpegBlob.size && !itemDict["image/png"]) {
+                    itemDict["image/jpeg"] = jpegBlob;
+                  }
+                  if (!Object.keys(itemDict).length) {
+                    throw new Error("blob");
+                  }
+                  await navigator.clipboard.write([new ClipboardItem(itemDict)]);
+                  window.alert("Flyer copié — colle-le dans ton réseau social.");
+                } catch (err) {
+                  void err;
+                  window.alert(
+                    "Impossible de copier le flyer dans le presse-papiers. Utilise « Télécharger (JPEG) » puis importe le fichier dans ton appli (souvent plus fiable)."
+                  );
+                }
+              })();
+            });
+          }
+        })();
 
         form.addEventListener("submit", async function (e) {
           e.preventDefault();
@@ -2949,9 +4068,11 @@
             if (loginEl) loginEl.focus();
             return;
           }
-          if (wizardStep !== 5) {
-            window.alert("Va jusqu’à l’étape « Confirmation » avec « Suivant », puis valide.");
-            setWizardStep(5);
+          if (wizardStep !== WIZARD_LAST) {
+            window.alert(
+              "Va jusqu’à la dernière étape (« Récapitulatif et flyer ») avec « Suivant », puis valide avec « Créer la sortie » ou « Enregistrer les modifications »."
+            );
+            setWizardStep(WIZARD_LAST);
             return;
           }
           const editSelectGuard = document.getElementById("new-route-edit-select");
@@ -2959,11 +4080,8 @@
             editSelectGuard && editSelectGuard.value ? String(editSelectGuard.value).trim() : "";
           if (pickedListRouteId && !newRouteEditId) {
             window.alert(
-              "Tu as sélectionné une sortie dans « Modifier une sortie » mais tu n’as pas cliqué sur **Charger**.\n\n" +
-                "Sans « Charger », Supabase enregistre une **nouvelle** sortie (route_create) au lieu de mettre à jour celle de la liste (route_update).\n\n" +
-                "Ouvre l’onglet « Modifier une sortie », clique **Charger**, puis reviens valider à l’étape 5."
+              "Le brouillon n’est pas lié à une sortie existante. Ferme cette fenêtre, puis rouvre « Modifier » depuis la carte de la sortie."
             );
-            setNewRouteModalTab("edit");
             return;
           }
           const track = document.getElementById("new-route-track").value.trim();
@@ -3104,6 +4222,7 @@
             estimatedDurationHm: durParsed ? durParsed.hm : "",
             estimatedDurationMinutes: durParsed ? durParsed.minutes : null,
             maxParticipants: maxPRaw,
+            max_participants: maxPRaw,
             sortieStatus: sortieStatusVal,
             visibility: visibilityVal,
             ride_leader: rideLeaderStr,
@@ -3197,7 +4316,10 @@
           const dlg = document.querySelector("#new-route-modal .signup-modal-dialog");
           if (dlg) {
             try {
-              showNewRouteAfterSaveOverlay(dlg, kitRoute, wasEdit, kitPayload.changeLine);
+              showNewRouteAfterSaveOverlay(dlg, kitRoute, {
+                wasEdit: wasEdit,
+                changeLine: kitPayload.changeLine
+              });
             } catch (err) {
               void err;
               console.warn("showNewRouteAfterSaveOverlay", err);
@@ -3219,6 +4341,9 @@
             window.location.reload();
           }
         });
+
+        window.__goeloOpenNewRouteEditorFromList = openNewRouteModalFromListForEdit;
+        window.__goeloQuickCancelSortieFromList = quickCancelSortieFromList;
 
         refreshEditRouteSelect();
       }
@@ -3933,10 +5058,8 @@
         updateRoutePickerLayout();
         await refreshJoinButtons();
 
-        if (window.goeloRideUpdatesProcessList && window.goeloRideUpdatesMountBanner) {
-          const bannerEl = document.getElementById("goelo-site-updates-banner");
-          const upd = window.goeloRideUpdatesProcessList(loadedRoutesCache.filter(routeVisibleOnPublicSite));
-          window.goeloRideUpdatesMountBanner(bannerEl, upd);
+        if (window.goeloRideUpdatesProcessList) {
+          window.goeloRideUpdatesProcessList(loadedRoutesCache.filter(routeVisibleOnPublicSite));
         }
 
         if (mapLoading) mapLoading.classList.add("is-hidden");

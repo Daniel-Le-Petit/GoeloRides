@@ -1,9 +1,9 @@
 /**
- * Bouton principal notifications (#goelo-notif-btn) + aide (#goelo-notif-help).
- * iOS in-app (Instagram, etc.) : pas d’API Notification — rangée #goelo-notif-inapp-actions
- * (lien Safari nouvel onglet, copier, partager) pour sortir du WebView.
+ * Notifications navigateur (OneSignal) — bouton pied de page `#goelo-footer-notify`
+ * + rangée Safari / copier lien sur iPhone hors Safari (`#goelo-footer-notify-inapp`).
+ * Le bloc hero `#goelo-notif-manual-wrap` n’est plus affiché (reste masqué si présent).
  *
- * API : window.goeloInitNotifications() — ré-exécute le câblage (ex. contenu injecté après coup).
+ * API : window.goeloInitNotifications() — re-exécute le câblage après injection DOM.
  */
 (function () {
   "use strict";
@@ -171,21 +171,58 @@
     }
   }
 
-  function syncInAppEscapeUi() {
-    var row = document.getElementById(INAPP_ROW_ID);
-    if (!row) return;
-    wireInAppEscapeOnce();
-    var show = typeof Notification === "undefined" && isAppleMobileOrTablet() && !!getAppId();
-    row.hidden = !show;
-    if (!show) return;
-    var u = getAbsolutePageUrl();
-    var a = document.getElementById("goelo-notif-open-safari");
-    if (a && u) {
-      a.href = u;
+  var footerInAppWired = false;
+
+  function wireFooterInAppOnce() {
+    if (footerInAppWired) return;
+    var copyBtn = document.getElementById("goelo-footer-notif-copy-link");
+    var shareBtn = document.getElementById("goelo-footer-notif-share-link");
+    if (!copyBtn && !shareBtn) return;
+    footerInAppWired = true;
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        void copyPageUrlToClipboard();
+      });
     }
-    var shareBtn = document.getElementById("goelo-notif-share-link");
     if (shareBtn) {
-      shareBtn.hidden = typeof navigator.share !== "function";
+      shareBtn.addEventListener("click", function () {
+        void sharePageUrlSheet();
+      });
+    }
+  }
+
+  function syncInAppEscapeUi() {
+    var show = typeof Notification === "undefined" && isAppleMobileOrTablet() && !!getAppId();
+    var u = getAbsolutePageUrl();
+    var row = document.getElementById(INAPP_ROW_ID);
+    var footerInapp = document.getElementById("goelo-footer-notify-inapp");
+    if (row) {
+      wireInAppEscapeOnce();
+      row.hidden = !show;
+      if (show && u) {
+        var a = document.getElementById("goelo-notif-open-safari");
+        if (a) {
+          a.href = u;
+        }
+      }
+      var shareBtn = document.getElementById("goelo-notif-share-link");
+      if (shareBtn) {
+        shareBtn.hidden = typeof navigator.share !== "function";
+      }
+    }
+    if (footerInapp) {
+      wireFooterInAppOnce();
+      footerInapp.hidden = !show;
+      if (show && u) {
+        var af = document.getElementById("goelo-footer-notif-open-safari");
+        if (af) {
+          af.href = u;
+        }
+      }
+      var shareF = document.getElementById("goelo-footer-notif-share-link");
+      if (shareF) {
+        shareF.hidden = typeof navigator.share !== "function";
+      }
     }
   }
 
@@ -243,9 +280,16 @@
       if (isAppleMobileOrTablet()) {
         syncInAppEscapeUi();
         var rowEl = document.getElementById(INAPP_ROW_ID);
-        if (rowEl && !rowEl.hidden) {
+        var footerInapp = document.getElementById("goelo-footer-notify-inapp");
+        var scrollEl =
+          rowEl && !rowEl.hidden
+            ? rowEl
+            : footerInapp && !footerInapp.hidden
+              ? footerInapp
+              : null;
+        if (scrollEl) {
           try {
-            rowEl.scrollIntoView({ block: "center", behavior: "smooth" });
+            scrollEl.scrollIntoView({ block: "center", behavior: "smooth" });
           } catch (se) {
             void se;
           }
@@ -341,12 +385,15 @@
 
   function mount() {
     var wrap = document.getElementById(WRAP_ID);
+    var footerBar = document.getElementById("goelo-footer-notify-bar");
     if (!getAppId()) {
       if (wrap) wrap.hidden = true;
+      if (footerBar) footerBar.hidden = true;
       return;
     }
-    if (wrap) wrap.removeAttribute("hidden");
-    document.querySelectorAll("#goelo-notif-btn, [data-goelo-notif-manual]").forEach(function (el) {
+    if (wrap) wrap.hidden = true;
+    if (footerBar) footerBar.hidden = false;
+    document.querySelectorAll("#goelo-notif-btn, #goelo-footer-notify, [data-goelo-notif-manual]").forEach(function (el) {
       if (el.tagName === "BUTTON" || el.getAttribute("role") === "button") {
         wireOne(el);
       }

@@ -298,6 +298,7 @@
     const fc = parseRouteFrontConfig(row && row.front_config);
     return {
       id: row.id,
+      raw_front_config: row != null ? row.front_config : null,
       file: String(fc.file || "").trim(),
       embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : undefined,
       raceType: fc.raceType || "",
@@ -351,19 +352,34 @@
             : "",
       estimatedDurationMinutes: (function () {
         const nRaw = fc.estimatedDurationMinutes != null ? fc.estimatedDurationMinutes : fc.estimated_duration_minutes;
-        if (typeof nRaw === "number" && Number.isFinite(nRaw)) return Math.max(0, Math.round(nRaw));
+        if (typeof nRaw === "number" && Number.isFinite(nRaw)) {
+          const rounded = Math.round(nRaw);
+          return rounded > 0 ? Math.min(rounded, 36 * 60) : null;
+        }
         if (typeof nRaw === "string" && /^\d+$/.test(String(nRaw).trim())) {
           const v = parseInt(String(nRaw).trim(), 10);
           return Number.isFinite(v) && v > 0 ? Math.min(v, 36 * 60) : null;
         }
         return null;
       })(),
-      maxParticipants:
-        typeof fc.maxParticipants === "number" && Number.isFinite(fc.maxParticipants) && fc.maxParticipants > 0
-          ? Math.round(fc.maxParticipants)
-          : typeof fc.maxParticipants === "string" && String(fc.maxParticipants).trim()
-            ? Math.max(0, parseInt(String(fc.maxParticipants).replace(/\D/g, ""), 10) || 0) || null
-            : null,
+      maxParticipants: (function () {
+        const raw =
+          fc.maxParticipants != null
+            ? fc.maxParticipants
+            : fc.max_participants != null
+              ? fc.max_participants
+              : fc.max_places != null
+                ? fc.max_places
+                : fc.capacity != null
+                  ? fc.capacity
+                  : null;
+        if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) return Math.round(raw);
+        if (typeof raw === "string" && String(raw).trim()) {
+          const n = Math.max(0, parseInt(String(raw).replace(/\D/g, ""), 10) || 0);
+          return n > 0 ? n : null;
+        }
+        return null;
+      })(),
       sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
       visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
       rideDateIso:
@@ -749,6 +765,24 @@
   function renderCards(routes, activeFilter, activeLevel, activeStatus, regState) {
     const host = document.getElementById("sorties-list");
     if (!host) return;
+    const cardBadges =
+      typeof window.__goeloLastCardBadges === "object" && window.__goeloLastCardBadges != null
+        ? window.__goeloLastCardBadges
+        : {};
+    function cardEncartHtml(route) {
+      const st = String((route.sortieStatus != null ? route.sortieStatus : "") || "open").toLowerCase();
+      if (st === "cancelled") {
+        return '<span class="sorties-card-encart sorties-card-encart--cancelled" role="status">Annulée</span>';
+      }
+      const bid = String(route.id);
+      if (cardBadges[bid] === "new") {
+        return '<span class="sorties-card-encart sorties-card-encart--new" role="status">New</span>';
+      }
+      if (cardBadges[bid] === "updated") {
+        return '<span class="sorties-card-encart sorties-card-encart--change" role="status">Changement</span>';
+      }
+      return "";
+    }
     const now = Date.now();
     const filtered = routes.filter(function (r) {
       if (activeLevel !== "tous" && r.levelClass !== activeLevel) return false;
@@ -803,8 +837,10 @@
         const timeDisp = escapeHtml(departTimeDisplay(route));
         const shortDescEsc = route.shortDesc ? escapeHtml(route.shortDesc) : "";
         const registered = isUserRegistered(route.id, regState);
+        const encart = cardEncartHtml(route);
         const titleRow =
           '<div class="sorties-card-title-row">' +
+          encart +
           '<h3 class="sorties-card-title">' +
           escapeHtml(route.track) +
           "</h3>" +
@@ -815,19 +851,34 @@
         const typeLine =
           '<span class="sorties-pill sorties-pill--type' + typeExtra + '">' + escapeHtml(meta.label) + "</span>" +
           (shortDescEsc ? '<span class="sorties-type-desc"> · ' + shortDescEsc + "</span>" : "");
+        const sortieHref = "sortie.html?id=" + encodeURIComponent(String(route.id));
+        const isCustom = route.routeKind === "custom";
+        const adminRow =
+          isSupabaseEnabled() && isCustom
+            ? '<div class="sorties-card-admin-actions">' +
+              '<button type="button" class="sorties-card-act sorties-card-act--edit" data-goelo-edit-route-id="' +
+              escapeAttr(String(route.id)) +
+              '">Modifier</button>' +
+              '<button type="button" class="sorties-card-act sorties-card-act--cancel" data-goelo-cancel-route-id="' +
+              escapeAttr(String(route.id)) +
+              '">Annuler</button>' +
+              "</div>"
+            : "";
         const voirBlock =
-          '<span class="sorties-card-voir" role="presentation">' +
+          '<a class="sorties-card-voir" href="' +
+          escapeAttr(sortieHref) +
+          '">' +
           '<svg class="sorties-card-voir-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
           '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>' +
           '<circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="3"/>' +
           "</svg>" +
-          '<span class="sorties-card-voir-text">Voir le parcours →</span></span>';
-        const sortieHref = "sortie.html?id=" + encodeURIComponent(String(route.id));
+          '<span class="sorties-card-voir-text">Voir le parcours →</span></a>';
         html +=
           '<li>' +
-          '<a class="sorties-card sorties-card--' +
+          '<div class="sorties-card sorties-card--' +
           railMod +
-          '" href="' +
+          '">' +
+          '<a class="sorties-card-link" href="' +
           escapeAttr(sortieHref) +
           '">' +
           '<div class="sorties-card-thumb-col">' +
@@ -874,13 +925,14 @@
           '" aria-hidden="true"></span>' +
           '<span class="sorties-level-text">· ' +
           escapeHtml(route.levelLabel || "—") +
-          "</span></p></div></div></div>" +
+          "</span></p></div></div></div></a>" +
           '<div class="sorties-card-aside sorties-card-aside--' +
           railMod +
           '">' +
           voirBlock +
+          adminRow +
           '<span class="sorties-card-chev" aria-hidden="true">›</span></div>' +
-          "</a></li>";
+          "</div></li>";
       });
       html += "</ul>";
     });
@@ -998,6 +1050,8 @@
       return;
     }
 
+    refreshFingerprintBadges();
+
     function readFilterState() {
       return {
         activeFilter: (typeSel && typeSel.value) || "toutes",
@@ -1010,6 +1064,57 @@
       const st = readFilterState();
       renderCards(routesAll, st.activeFilter, st.activeLevel, st.activeStatus, regState);
     }
+
+    function refreshFingerprintBadges() {
+      if (window.goeloRideUpdatesProcessList) {
+        const upd = window.goeloRideUpdatesProcessList(routesAll);
+        window.__goeloLastCardBadges = (upd && upd.cardBadges) || {};
+      } else {
+        window.__goeloLastCardBadges = {};
+      }
+    }
+
+    if (!listEl.dataset.goeloSortiesActionsBound) {
+      listEl.dataset.goeloSortiesActionsBound = "1";
+      listEl.addEventListener("click", function (e) {
+        const ed = e.target.closest("[data-goelo-edit-route-id]");
+        if (ed) {
+          e.preventDefault();
+          e.stopPropagation();
+          const rid = ed.getAttribute("data-goelo-edit-route-id");
+          if (rid && typeof window.__goeloOpenNewRouteEditorFromList === "function") {
+            void window.__goeloOpenNewRouteEditorFromList(rid);
+          } else if (rid) {
+            window.alert("Patiente une seconde puis réessaie (chargement du module).");
+          }
+          return;
+        }
+        const cx = e.target.closest("[data-goelo-cancel-route-id]");
+        if (cx) {
+          e.preventDefault();
+          e.stopPropagation();
+          const rid2 = cx.getAttribute("data-goelo-cancel-route-id");
+          if (rid2 && typeof window.__goeloQuickCancelSortieFromList === "function") {
+            void window.__goeloQuickCancelSortieFromList(rid2);
+          } else if (rid2) {
+            window.alert("Patiente une seconde puis réessaie (chargement du module).");
+          }
+        }
+      });
+    }
+
+    window.addEventListener("goelo-routes-need-refresh", function () {
+      if (loadFailed) return;
+      void (async function () {
+        try {
+          routesAll = await loadAllRoutes();
+          refreshFingerprintBadges();
+          redraw();
+        } catch (err) {
+          console.warn("Sorties : rafraîchissement", err);
+        }
+      })();
+    });
 
     [typeSel, levelSel, statusSel].forEach(function (el) {
       if (el) el.addEventListener("change", redraw);
@@ -1024,12 +1129,6 @@
     window.addEventListener("goelo-user-session-updated", function () {
       refreshRegState().then(redraw);
     });
-
-    if (window.goeloRideUpdatesProcessList && window.goeloRideUpdatesMountBanner) {
-      const bannerMount = document.getElementById("goelo-site-updates-banner");
-      const upd = window.goeloRideUpdatesProcessList(routesAll);
-      window.goeloRideUpdatesMountBanner(bannerMount, upd);
-    }
 
     redraw();
   });

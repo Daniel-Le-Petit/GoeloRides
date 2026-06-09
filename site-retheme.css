@@ -555,8 +555,7 @@ html.site-retheme .btn-primary:not(.home-hero-groupes),
 html.site-retheme .btn-sea,
 html.site-retheme .btn-je-participe,
 html.site-retheme #new-route-admin-submit,
-html.site-retheme #new-route-team-submit,
-html.site-retheme #new-route-edit-load {
+html.site-retheme #new-route-team-submit {
   padding: 0.85rem 2rem;
   border-radius: 999px;
   background: var(--sand) !important;
@@ -572,10 +571,26 @@ html.site-retheme .btn-primary:not(.home-hero-groupes):hover,
 html.site-retheme .btn-sea:hover,
 html.site-retheme .btn-je-participe:hover,
 html.site-retheme #new-route-admin-submit:hover,
-html.site-retheme #new-route-team-submit:hover,
-html.site-retheme #new-route-edit-load:hover {
+html.site-retheme #new-route-team-submit:hover {
   background: var(--warm) !important;
   transform: translateY(-2px);
+}
+
+/* « Charger » (modifier une sortie) : le thème sable s’applique à tous les .btn-primary ;
+   forcer fond clair + texte foncé pour rester lisible (évite blanc sur beige). */
+html.site-retheme #new-route-modal.new-route-modal--goelo-app #new-route-edit-load {
+  background: #fff !important;
+  color: var(--ocean) !important;
+  border: 2px solid var(--ocean) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transform: none;
+}
+
+html.site-retheme #new-route-modal.new-route-modal--goelo-app #new-route-edit-load:hover {
+  background: #f0f7ff !important;
+  color: var(--ocean) !important;
+  filter: none;
+  transform: none;
 }
 
 html.site-retheme .btn-ghost,
@@ -1957,7 +1972,57 @@ html.site-retheme .sortie-parcours-immersif #sortie-comments-section .sortie-sig
   user-select: text !important;
 }
 
-/* —— Modale Gérer les sorties (ids conservés) —— */
+/* Équipe organisatrice (connexion Team Rider + droits) — hors modale */
+html.site-retheme .sorties-team-rider {
+  margin: 1.25rem 0 1.75rem;
+  max-width: 52rem;
+}
+
+html.site-retheme .sorties-team-rider__box {
+  border: 1px solid rgba(26, 58, 74, 0.2);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 28px rgba(15, 35, 45, 0.08);
+}
+
+html.site-retheme .sorties-team-rider__box > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ocean, #1a3a4a);
+}
+
+html.site-retheme .sorties-team-rider__box > summary::-webkit-details-marker {
+  display: none;
+}
+
+html.site-retheme .sorties-team-rider__inner {
+  padding: 0 1rem 1.1rem;
+}
+
+html.site-retheme #goelo-team-rider .new-route-admin-gate {
+  background: linear-gradient(
+    165deg,
+    rgba(26, 58, 74, 0.12) 0%,
+    rgba(15, 35, 45, 0.06) 50%,
+    rgba(26, 58, 74, 0.1) 100%
+  );
+  border: 1px solid rgba(26, 58, 74, 0.2);
+  border-radius: 0.65rem;
+  padding: 1rem 1.1rem;
+}
+
+html.site-retheme #goelo-team-rider .new-route-admin-toolbar {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(26, 58, 74, 0.18);
+  background: rgba(26, 58, 74, 0.06);
+}
+
+/* —— Modale création / édition sortie (ids conservés) —— */
 html.site-retheme #new-route-modal.signup-modal {
   align-items: center;
   justify-content: center;

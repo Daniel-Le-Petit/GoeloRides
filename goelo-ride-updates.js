@@ -1,6 +1,7 @@
 /**
- * GoëloRides — alertes « nouvelles / mises à jour » (localStorage) + kit texte Instagram (manuel).
- * Aucune publication automatique ; pas de push.
+ * GoëloRides — alertes « nouvelles / mises à jour » (localStorage) + kits texte
+ * (Instagram + message court pour Messenger / Insta — toujours manuel).
+ * Aucune publication automatique ; pas de push ; pas d’envoi API Messenger.
  */
 (function () {
   "use strict";
@@ -140,79 +141,29 @@
 
     writeStore(next);
 
+    var cardBadges = {};
+    newRides.forEach(function (x) {
+      cardBadges[x.id] = "new";
+    });
+    updatedRides.forEach(function (x) {
+      if (!cardBadges[x.id]) cardBadges[x.id] = "updated";
+    });
+
     return {
       hadBaseline: hadBaseline,
       newRides: newRides,
-      updatedRides: updatedRides
+      updatedRides: updatedRides,
+      cardBadges: cardBadges
     };
   }
 
+  /** Ancienne bannière globale : désactivée — les nouveautés / changements s’affichent sur chaque carte. */
   function goeloRideUpdatesMountBanner(mountEl, result) {
+    void result;
     var el = mountEl || document.getElementById("goelo-site-updates-banner");
-    if (!el || !result) return;
-    var nr = result.newRides || [];
-    var ur = result.updatedRides || [];
-    if (!nr.length && !ur.length) {
-      el.innerHTML = "";
-      el.hidden = true;
-      return;
-    }
-    el.hidden = false;
-    var bits = [];
-    if (nr.length) {
-      bits.push(
-        "<strong>" +
-          nr.length +
-          " nouvelle" +
-          (nr.length > 1 ? "s" : "") +
-          " sortie" +
-          (nr.length > 1 ? "s" : "") +
-          "</strong> : " +
-          nr
-            .map(function (x) {
-              return escapeHtml(x.track) + (x.dateLabel ? " · " + escapeHtml(x.dateLabel) : "");
-            })
-            .join(" · ")
-      );
-    }
-    if (ur.length) {
-      bits.push(
-        "<strong>" +
-          ur.length +
-          " sortie" +
-          (ur.length > 1 ? "s" : "") +
-          " mise" +
-          (ur.length > 1 ? "s" : "") +
-          " à jour</strong> — " +
-          ur
-            .map(function (x) {
-              return (
-                '<span class="goelo-site-updates-banner__item">' +
-                escapeHtml(x.track) +
-                " : " +
-                escapeHtml(x.summary) +
-                "</span>"
-              );
-            })
-            .join(" ")
-      );
-    }
-    el.innerHTML =
-      '<div class="goelo-site-updates-banner" role="region" aria-label="Actualités sorties">' +
-      '<div class="goelo-site-updates-banner__inner">' +
-      '<p class="goelo-site-updates-banner__text">' +
-      bits.join(" ") +
-      "</p>" +
-      '<div class="goelo-site-updates-banner__actions">' +
-      '<a class="goelo-site-updates-banner__link" href="sorties.html">Voir les sorties</a>' +
-      '<button type="button" class="goelo-site-updates-banner__close">Fermer</button>' +
-      "</div></div></div>";
-    var btn = el.querySelector(".goelo-site-updates-banner__close");
-    if (btn)
-      btn.addEventListener("click", function () {
-        el.innerHTML = "";
-        el.hidden = true;
-      });
+    if (!el) return;
+    el.innerHTML = "";
+    el.hidden = true;
   }
 
   function mergeRouteFingerprint(route) {
@@ -265,10 +216,61 @@
     if (rt === "vtt") return "Sentier et relief, silhouettes VTT, ambiance forêt — format 9:16.";
     if (rt === "famille") return "Famille et côte douce, couleurs ensoleillées, ton convivial — format 9:16.";
     return (
-      "Grande ligne de côte, carte minimaliste, date et horaire très lisibles en story — accent " +
-      color +
-      " — 9:16."
+      "Grande ligne de côte, carte minimaliste, date et horaire très lisibles en story — accent #1565a8 — format 9:16."
     );
+  }
+
+  /**
+   * Texte court pour groupe Messenger / DM Instagram / WhatsApp (copier-coller).
+   * opts.cancelled : sortie retirée du calendrier (suppression / masquage).
+   */
+  function buildGroupAnnouncementText(route, opts) {
+    var o = opts || {};
+    var title = String((route && route.track) || "GoëloRides").trim();
+    var dep = route && route.depart && typeof route.depart === "object" ? route.depart : {};
+    var dateLine = String(dep.dateLabel || "").trim() || "—";
+    var meet =
+      String((route && route.meetPlaceDetail) || "").trim() ||
+      String((route && route.meetPlace) || "").trim();
+    var origin = String(o.origin || window.location.origin || "").replace(/\/$/, "");
+    var id = route && route.id != null ? String(route.id) : "";
+    var url = id ? origin + "/sortie.html?id=" + encodeURIComponent(id) : origin + "/sorties.html";
+    if (o.cancelled) {
+      return [
+        "❌ Sortie retirée du calendrier GoëloRides",
+        "",
+        title,
+        "📅 " + dateLine,
+        "",
+        "La sortie n’est plus proposée sur le site. Préviens les inscrit·e·s si besoin (mail, liste, etc.).",
+        "",
+        url,
+        "",
+        "— GoëloRides"
+      ].join("\n");
+    }
+    var wasEdit = !!o.wasEdit;
+    var head = wasEdit ? "📣 Mise à jour — sortie GoëloRides" : "🚴 Nouvelle sortie GoëloRides";
+    var lines = [
+      head,
+      "",
+      title,
+      "📅 " + dateLine,
+      meet ? "📍 " + meet : "",
+      "",
+      wasEdit
+        ? "Vérifie horaire, lieu et détails sur la fiche (lien ci-dessous)."
+        : "Inscriptions et détail sur la fiche.",
+      "",
+      url,
+      "",
+      "— GoëloRides"
+    ];
+    return lines
+      .filter(function (x) {
+        return x != null && String(x).length > 0;
+      })
+      .join("\n");
   }
 
   function buildInstagramStoryText(route, opts) {
@@ -283,6 +285,24 @@
     var origin = String(o.origin || window.location.origin || "").replace(/\/$/, "");
     var id = route && route.id != null ? String(route.id) : "";
     var url = id ? origin + "/sortie.html?id=" + encodeURIComponent(id) : origin + "/sorties.html";
+    if (o.cancelled) {
+      var clines = [
+        "❌ Sortie retirée du calendrier",
+        title,
+        dateLine,
+        "",
+        "Plus d’inscription sur cette sortie depuis le site.",
+        "",
+        "→ " + url,
+        "",
+        "#GoëloRides #SaintQuayPortrieux"
+      ];
+      return clines
+        .filter(function (x) {
+          return x != null && String(x).length > 0;
+        })
+        .join("\n");
+    }
     var wasEdit = !!o.wasEdit;
     var lines = [
       title,
@@ -336,6 +356,7 @@
   window.goeloRideUpdatesProcessList = goeloRideUpdatesProcessList;
   window.goeloRideUpdatesMountBanner = goeloRideUpdatesMountBanner;
   window.goeloRideUpdatesApplySortieStrip = goeloRideUpdatesApplySortieStrip;
+  window.goeloRideUpdatesBuildGroupAnnouncementText = buildGroupAnnouncementText;
   window.goeloRideUpdatesBuildInstagramStoryText = buildInstagramStoryText;
   window.goeloRideUpdatesPickVisualIdea = pickVisualIdea;
   window.goeloRideUpdatesCopyToClipboard = copyTextToClipboard;

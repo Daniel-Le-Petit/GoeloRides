@@ -1,9 +1,9 @@
 /**
- * Bandeau notifications (équivalent EnableNotificationsBanner) — site statique.
- * v2 : bouton explicite « Activer les notifications », mode refus (Safari / iOS) avec consignes,
- * pas d’alert sur simple refus — bascule vers le bandeau « réglages ».
+ * Notifications OneSignal — site statique.
+ * Le bandeau flottant n’est plus affiché automatiquement : préférer le lien / bouton du pied de page
+ * (`#goelo-footer-notify`, câblé par goelo-notif-manual-button.js).
  *
- * API : EnableNotificationsBanner.mount({ container?: HTMLElement })
+ * API : EnableNotificationsBanner.mount({ container?: HTMLElement }) — bandeau optionnel (support / debug).
  */
 (function () {
   "use strict";
@@ -173,7 +173,7 @@
     }
   }
 
-  /** Réaffiche le bandeau (console / support) : efface masquage définitif et snooze session. */
+  /** Réinitialise l’état local (console / support) : efface masquage définitif et snooze session ; utile après succès ou si un ancien bandeau avait été masqué. */
   window.GoeloNotificationsClearBannerState = function () {
     try {
       localStorage.removeItem(STORAGE_DISMISS);
@@ -425,12 +425,4 @@
     mount: mount,
     unmount: unmount
   };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      mount();
-    });
-  } else {
-    mount();
-  }
 })();

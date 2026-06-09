@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="GoëloRides">
-  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=6">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=7">
   <title>Les groupes · Goëlo Rides</title>
   <meta property="og:title" content="Les groupes · GoëloRides" />
   <meta property="og:description" content="Blanc, Vert, Bleu ou Rouge — trouve ton groupe et ta vitesse." />
@@ -396,8 +396,19 @@
           <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span aria-hidden="true">📸</span> @goelo.rides</a>
           <a href="mailto:goelo.rides@gmail.com"><span aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
           <a href="sorties.html">Sorties</a>
+          <a href="gestion-sorties.html" target="_blank" rel="noopener noreferrer">Gestion sorties</a>
           <a href="infos-pratiques.html">Infos pratiques</a>
           <a href="index.html">Accueil</a>
+        </div>
+        <div class="goelo-footer-notify-bar" id="goelo-footer-notify-bar" hidden>
+          <button type="button" class="goelo-footer-notify-bar__btn" id="goelo-footer-notify">Notifications sorties (navigateur)</button>
+          <span class="goelo-footer-notify-bar__hint">En complément d’Instagram et Facebook — sur cet appareil, si tu le souhaites.</span>
+          <div class="goelo-footer-notify-bar__inapp" id="goelo-footer-notify-inapp" hidden>
+            <span class="goelo-footer-notify-bar__inapp-lead">Hors Safari (Instagram, Messenger…) :</span>
+            <a class="goelo-footer-notify-bar__inapp-link" id="goelo-footer-notif-open-safari" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans Safari</a>
+            <button type="button" class="goelo-footer-notify-bar__inapp-btn" id="goelo-footer-notif-copy-link">Copier le lien</button>
+            <button type="button" class="goelo-footer-notify-bar__inapp-btn" id="goelo-footer-notif-share-link" hidden>Partager</button>
+          </div>
         </div>
         <p class="footer-legal">
           Initiative locale et indépendante · Pas d'adhésion · Pas de fédération<br>
@@ -422,7 +433,8 @@
     window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
   </script>
   <script src="goelo-onesignal.js?v=16" defer></script>
-  <script src="goelo-enable-notifications-banner.js?v=10" defer></script>
+  <script src="goelo-enable-notifications-banner.js?v=11" defer></script>
+  <script src="goelo-notif-manual-button.js?v=11" defer></script>
   <script>window.GOELO_DEBUG = false;</script>
   <script src="goelo-debug-panel.js?v=1" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>

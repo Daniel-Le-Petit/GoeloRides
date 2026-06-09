@@ -262,6 +262,47 @@ body {
       color: var(--app-muted);
     }
 
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-textarea--mid {
+      min-height: 7.5rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions--spread {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 1.1rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions--footer {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--app-border);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-details {
+      margin: 0 0 1rem;
+      padding: 0.65rem 0 0;
+      border-top: 1px solid var(--app-border);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-summary {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--app-sea-hover);
+      cursor: pointer;
+      padding: 0.35rem 0;
+      list-style: none;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-details[open] .new-route-after-save-summary {
+      margin-bottom: 0.75rem;
+    }
+
     #new-route-modal.new-route-modal--goelo-app .signup-modal-close {
       z-index: 40;
       color: var(--app-muted);
@@ -591,6 +632,14 @@ body {
       color: var(--app-sea);
     }
 
+    .new-route-steps-help {
+      margin: -0.35rem 0 0.55rem;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      color: var(--app-muted);
+      font-weight: 600;
+    }
+
     .new-route-steps-list {
       list-style: none;
       margin: 0;
@@ -666,6 +715,144 @@ body {
 
     .new-route-recap-list li {
       margin: 0.35rem 0;
+    }
+
+    /* Étape 6 — textes publication (même logique que gestion-sorties.html) */
+    .new-route-publish-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+
+    @media (max-width: 720px) {
+      .new-route-publish-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .new-route-publish-block {
+      border-radius: 10px;
+      border: 1px solid var(--app-border);
+      background: #f6f9fc;
+      overflow: hidden;
+    }
+
+    .new-route-publish-block header {
+      display: block;
+      padding: 0.5rem 0.7rem;
+      background: #fff;
+      border-bottom: 1px solid var(--app-border);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--app-sea);
+    }
+
+    .new-route-publish-block pre {
+      margin: 0;
+      padding: 0.65rem 0.7rem;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+      color: var(--app-text);
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .new-route-publish-block .btn-primary {
+      margin: 0 0.65rem 0.65rem;
+      width: calc(100% - 1.3rem);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-form .new-route-publish-block .btn-primary {
+      width: calc(100% - 1.3rem);
+      margin-left: 0.65rem;
+      margin-right: 0.65rem;
+    }
+
+    .new-route-publish-social-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .new-route-publish-btn-fb {
+      border-color: rgba(24, 119, 242, 0.35) !important;
+      color: #1877f2 !important;
+    }
+
+    .new-route-publish-btn-ig {
+      border: none !important;
+      background: linear-gradient(135deg, #fdf497 0%, #fd5949 45%, #d6249f 72%, #285aeb 100%) !important;
+      color: #fff !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .new-route-publish-example-box {
+      margin-bottom: 0.85rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--app-border);
+      background: #fff;
+      font-size: 0.88rem;
+    }
+
+    .new-route-publish-example-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+      align-items: flex-start;
+      margin-top: 0.5rem;
+    }
+
+    .new-route-publish-example-thumb {
+      border-radius: 8px;
+      border: 1px solid var(--app-border);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .new-route-publish-example-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .new-route-publish-example-caption {
+      margin: 0;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: var(--app-text-muted, #5a6570);
+    }
+
+    .new-route-publish-example-actions .btn-app-outline,
+    .new-route-publish-example-actions a.btn-app-outline {
+      align-self: flex-start;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .new-route-publish-example-caption--gen {
+      margin-bottom: 0.35rem;
+    }
+
+    .new-route-publish-generated-wrap {
+      margin: 0.65rem 0;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      border: 1px dashed rgba(0, 80, 120, 0.35);
+      background: rgba(246, 249, 252, 0.9);
+    }
+
+    .new-route-publish-flyer-box {
+      margin-top: 0.75rem;
     }
 
     .new-route-wizard-nav {
@@ -784,8 +971,7 @@ body {
       filter: brightness(0.99);
     }
 
-    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit,
-    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load {
+    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit {
       width: auto;
       min-width: 7.5rem;
       background: var(--app-sea);
@@ -794,9 +980,24 @@ body {
       box-shadow: 0 3px 12px rgba(21, 101, 168, 0.28);
     }
 
-    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit:hover,
-    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load:hover {
+    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit:hover {
       background: var(--app-sea-hover);
+    }
+
+    /* « Charger » : lisible sur fond crème (évite blanc sur beige si autre feuille gagne le fond). */
+    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load {
+      width: auto;
+      min-width: 7.5rem;
+      background: #fff !important;
+      color: var(--app-sea) !important;
+      border: 2px solid var(--app-sea) !important;
+      box-shadow: 0 2px 10px rgba(21, 101, 168, 0.12);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load:hover {
+      background: #f0f7ff !important;
+      color: var(--app-sea-hover) !important;
+      border-color: var(--app-sea-hover) !important;
     }
 
     .new-route-field-label {
@@ -1123,6 +1324,19 @@ body {
       font-size: 0.72rem;
       line-height: 1.45;
       color: var(--app-muted);
+    }
+
+    .new-route-cover-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.55rem;
+      align-items: center;
+    }
+
+    .new-route-cover-actions .btn-app-outline {
+      font-size: 0.78rem;
+      padding: 0.45rem 0.7rem;
     }
 
     .signup-modal .map-options {

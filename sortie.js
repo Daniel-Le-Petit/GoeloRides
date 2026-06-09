@@ -460,6 +460,7 @@
     const fc = parseRouteFrontConfig(row && row.front_config);
     return {
       id: row.id,
+      raw_front_config: row != null ? row.front_config : null,
       file: String(fc.file || "").trim(),
       embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : undefined,
       raceType: fc.raceType || "",
@@ -532,12 +533,20 @@
         }
         return null;
       })(),
-      maxParticipants:
-        typeof fc.maxParticipants === "number" && Number.isFinite(fc.maxParticipants) && fc.maxParticipants > 0
-          ? Math.round(fc.maxParticipants)
-          : typeof fc.maxParticipants === "string" && String(fc.maxParticipants).trim()
-            ? Math.max(0, parseInt(String(fc.maxParticipants).replace(/\D/g, ""), 10) || 0) || null
-            : null,
+      maxParticipants: (function () {
+        const raw =
+          fc.maxParticipants != null
+            ? fc.maxParticipants
+            : fc.max_participants != null
+              ? fc.max_participants
+              : null;
+        if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) return Math.round(raw);
+        if (typeof raw === "string" && String(raw).trim()) {
+          const n = Math.max(0, parseInt(String(raw).replace(/\D/g, ""), 10) || 0);
+          return n > 0 ? n : null;
+        }
+        return null;
+      })(),
       sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
       visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
       rideDateIso:

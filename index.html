@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="GoëloRides">
-  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=6">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=7">
   <title>Goëlo Rides · Saint-Quay-Portrieux</title>
   <meta property="og:title" content="GoëloRides · Sorties vélo à Saint-Quay-Portrieux" />
   <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du « Kasino » de Saint-Quay — été 2026." />
@@ -2290,8 +2290,7 @@
       filter: brightness(0.99);
     }
 
-    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit,
-    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load {
+    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit {
       width: auto;
       min-width: 7.5rem;
       background: var(--app-sea);
@@ -2300,9 +2299,31 @@
       box-shadow: 0 3px 12px rgba(21, 101, 168, 0.28);
     }
 
-    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit:hover,
-    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load:hover {
+    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit:hover {
       background: var(--app-sea-hover);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load {
+      width: auto;
+      min-width: 7.5rem;
+      background: #fff !important;
+      color: var(--app-sea) !important;
+      border: 2px solid var(--app-sea) !important;
+      box-shadow: 0 2px 10px rgba(21, 101, 168, 0.12);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load:hover {
+      background: #f0f7ff !important;
+      color: var(--app-sea-hover) !important;
+      border-color: var(--app-sea-hover) !important;
+    }
+
+    .new-route-steps-help {
+      margin: 0 0 0.5rem;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      color: var(--app-muted);
+      font-weight: 600;
     }
 
     .new-route-field-label {
@@ -2508,6 +2529,131 @@
 
     #new-route-preview-map.leaflet-container {
       font-family: var(--font-sans);
+    }
+
+    /* Après création / mise à jour / suppression : message groupe + story (aligné parcours.css) */
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      box-sizing: border-box;
+      padding: 1.25rem 1.5rem 1.5rem;
+      background: var(--app-surface);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: inherit;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-inner {
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-title {
+      margin: 0 0 0.65rem;
+      font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+      font-weight: 800;
+      color: var(--app-sea-hover);
+      letter-spacing: -0.02em;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-ok,
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-intro {
+      margin: 0 0 0.85rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--app-text);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-intro {
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-label {
+      display: block;
+      margin: 0.35rem 0 0.35rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-textarea {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0 0 1rem;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.8125rem;
+      line-height: 1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--app-text);
+      background: #f8fafc;
+      border: 1px solid var(--app-border);
+      border-radius: 10px;
+      resize: vertical;
+      min-height: 10rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-textarea--mid {
+      min-height: 7.5rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-bottom: 1.15rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions--spread {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 1.1rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions--footer {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--app-border);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-sub {
+      margin: 0 0 0.45rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--app-sea-hover);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-visual {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-details {
+      margin: 0 0 1rem;
+      padding: 0.65rem 0 0;
+      border-top: 1px solid var(--app-border);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-summary {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--app-sea-hover);
+      cursor: pointer;
+      padding: 0.35rem 0;
+      list-style: none;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-details[open] .new-route-after-save-summary {
+      margin-bottom: 0.75rem;
     }
 
     .gpx-upload-pop {
@@ -4373,24 +4519,6 @@
         <a href="sorties.html" class="btn-ghost home-hero-sorties">Voir les sorties <span class="home-hero-arrow" aria-hidden="true">→</span></a>
         <a href="infos-pratiques.html" class="home-hero-infos">Infos pratiques</a>
       </div>
-      <div class="goelo-notif-manual" id="goelo-notif-manual-wrap" hidden>
-        <div class="goelo-notif-manual__inner">
-          <button type="button" class="btn-primary goelo-btn goelo-notif-manual__btn" id="goelo-notif-btn" aria-describedby="goelo-notif-help">
-            🚴 Activer les notifications
-          </button>
-          <p class="goelo-notif-manual__hint goelo-notif-help" id="goelo-notif-help">
-            Sorties et alertes sur ton téléphone : sur iPhone, ouvre le site dans Safari — souvent « Partager » puis « Ouvrir dans Safari », ou le bouton du même nom sur cette page.
-          </p>
-          <div class="goelo-notif-manual__inapp-actions" id="goelo-notif-inapp-actions" hidden>
-            <p class="goelo-notif-manual__inapp-title">Tu n’es pas dans Safari ?</p>
-            <div class="goelo-notif-manual__inapp-row">
-              <a class="btn-ghost goelo-notif-manual__inapp-link" id="goelo-notif-open-safari" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans Safari</a>
-              <button type="button" class="btn-ghost goelo-notif-manual__inapp-btn" id="goelo-notif-share-link" hidden>Partager → Safari</button>
-              <button type="button" class="btn-ghost goelo-notif-manual__inapp-btn" id="goelo-notif-copy-link">Si besoin : copier</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
     <div class="home-scroll-hint" aria-hidden="true">
       <span class="home-scroll-hint-track"></span>
@@ -4539,6 +4667,53 @@
     </div>
   </section>
 
+  <section class="sorties-team-rider" id="goelo-team-rider" aria-labelledby="goelo-team-rider-title">
+    <details class="sorties-team-rider__box">
+      <summary><span id="goelo-team-rider-title">Équipe organisatrice</span> · connexion Team Rider &amp; droits de publication</summary>
+      <div class="sorties-team-rider__inner">
+        <div class="new-route-admin-gate" id="new-route-admin-gate">
+          <p class="new-route-admin-intro">
+            Réservé aux <strong>personnes habilitées</strong> à publier ou retirer des sorties. Connecte-toi avec l’<strong>e-mail</strong> (ou <strong>pseudo</strong>) et le <strong>mot de passe</strong> communiqués par l’organisation.
+          </p>
+          <label class="new-route-admin-field">
+            <span>E-mail ou pseudo</span>
+            <input type="text" id="new-route-admin-login" name="goelo-admin-login" autocomplete="username" maxlength="120">
+          </label>
+          <label class="new-route-admin-field">
+            <span>Mot de passe</span>
+            <input type="password" id="new-route-admin-password" name="goelo-admin-password" autocomplete="current-password">
+          </label>
+          <p class="new-route-admin-error" id="new-route-admin-error" hidden role="alert"></p>
+          <div class="new-route-admin-actions">
+            <button type="button" class="btn-primary" id="new-route-admin-submit">Se connecter</button>
+          </div>
+        </div>
+        <div class="new-route-admin-toolbar" id="new-route-admin-toolbar" hidden>
+          <div class="new-route-admin-toolbar-top">
+            <span class="new-route-admin-toolbar-label">Session Team Rider</span>
+            <button type="button" class="btn-app-outline" id="new-route-admin-logout-toolbar">Se déconnecter</button>
+          </div>
+          <details class="new-route-team-rider-details">
+            <summary>Donner ou retirer le droit de créer une sortie</summary>
+            <p class="signup-hint" style="margin-top:0.5rem;text-align:left;">
+              L’e-mail doit correspondre à un utilisateur <strong>Authentication → Users</strong>. Coche pour donner le droit <code>goelo_admin</code>, décoche pour le retirer, puis <strong>Appliquer</strong>. La personne doit se reconnecter pour rafraîchir son jeton.
+            </p>
+            <label class="new-route-admin-field">
+              <span>E-mail du compte</span>
+              <input type="email" id="new-route-team-email" autocomplete="email" maxlength="120" placeholder="cycliste@exemple.com">
+            </label>
+            <label class="new-route-team-grant-row">
+              <input type="checkbox" id="new-route-team-grant" checked>
+              <span>Donner le droit créateur (<code>goelo_admin</code>)</span>
+            </label>
+            <button type="button" class="btn-primary" id="new-route-team-submit">Appliquer</button>
+            <p class="new-route-team-msg" id="new-route-team-msg" hidden role="status"></p>
+          </details>
+        </div>
+      </div>
+    </details>
+  </section>
+
   <footer class="site-footer" role="contentinfo">
     <p class="footer-logo">GoëloRides</p>
     <p class="footer-loc">Saint-Quay-Portrieux · Côtes-d'Armor · 22410</p>
@@ -4546,8 +4721,19 @@
       <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span aria-hidden="true">📸</span> @goelo.rides</a>
       <a href="mailto:goelo.rides@gmail.com"><span aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
       <a href="sorties.html">Sorties</a>
+      <a href="gestion-sorties.html" target="_blank" rel="noopener noreferrer">Gestion sorties</a>
       <a href="infos-pratiques.html">Infos pratiques</a>
       <a href="index.html">Accueil</a>
+    </div>
+    <div class="goelo-footer-notify-bar" id="goelo-footer-notify-bar" hidden>
+      <button type="button" class="goelo-footer-notify-bar__btn" id="goelo-footer-notify">Notifications sorties (navigateur)</button>
+      <span class="goelo-footer-notify-bar__hint">En complément d’Instagram et Facebook — sur cet appareil, si tu le souhaites.</span>
+      <div class="goelo-footer-notify-bar__inapp" id="goelo-footer-notify-inapp" hidden>
+        <span class="goelo-footer-notify-bar__inapp-lead">Hors Safari (Instagram, Messenger…) :</span>
+        <a class="goelo-footer-notify-bar__inapp-link" id="goelo-footer-notif-open-safari" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans Safari</a>
+        <button type="button" class="goelo-footer-notify-bar__inapp-btn" id="goelo-footer-notif-copy-link">Copier le lien</button>
+        <button type="button" class="goelo-footer-notify-bar__inapp-btn" id="goelo-footer-notif-share-link" hidden>Partager</button>
+      </div>
     </div>
     <p class="footer-legal">
       Initiative locale et indépendante · Pas d'adhésion · Pas de fédération<br>
@@ -4569,90 +4755,20 @@
     <div class="signup-modal-dialog new-route-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="new-route-modal-title">
       <button type="button" class="signup-modal-close" data-close-new-route aria-label="Fermer">×</button>
       <div class="new-route-modal-head">
-        <h2 id="new-route-modal-title" tabindex="-1">Gérer les sorties</h2>
-        <p class="new-route-sub" id="new-route-modal-sub">Accès Team Rider, correction ou création d’une sortie personnalisée.</p>
+        <h2 id="new-route-modal-title" tabindex="-1">Nouvelle sortie</h2>
+        <p class="new-route-sub" id="new-route-modal-sub">Assistant en 5 étapes · dernière étape : récapitulatif et <strong>flyer</strong> pour les réseaux sociaux.</p>
       </div>
-      <div class="new-route-tabs" role="tablist" aria-label="Sections administrateur">
-        <button type="button" role="tab" class="new-route-tab is-active" id="new-route-tab-access" aria-selected="true" aria-controls="new-route-panel-access" data-new-route-tab="access">Accès Team Rider</button>
-        <button type="button" role="tab" class="new-route-tab" id="new-route-tab-edit" aria-selected="false" aria-controls="new-route-panel-edit" data-new-route-tab="edit" disabled title="Identifie-toi dans l’onglet « Accès Team Rider »">Modifier une sortie</button>
-        <button type="button" role="tab" class="new-route-tab" id="new-route-tab-create" aria-selected="false" aria-controls="new-route-panel-create" data-new-route-tab="create" disabled title="Identifie-toi dans l’onglet « Accès Team Rider »">Créer une nouvelle sortie</button>
-      </div>
-      <div class="new-route-tabpanels">
-        <div id="new-route-panel-access" class="new-route-tabpanel is-active" role="tabpanel" aria-labelledby="new-route-tab-access" data-tabpanel="access">
-      <div class="new-route-admin-gate" id="new-route-admin-gate">
-        <p class="new-route-admin-intro">
-          Cet espace est réservé aux <strong>personnes habilitées</strong> à publier ou à retirer des sorties sur le site.
-          Connecte-toi avec l’<strong>adresse e-mail</strong> (ou le <strong>pseudo</strong>) et le <strong>mot de passe</strong> du compte qui t’a été communiqué par l’organisation.
-          Après connexion, les onglets <strong>Modifier une sortie</strong> et <strong>Créer une nouvelle sortie</strong> deviennent disponibles.
-        </p>
-        <label class="new-route-admin-field">
-          <span>E-mail ou pseudo</span>
-          <input type="text" id="new-route-admin-login" name="goelo-admin-login" autocomplete="username" maxlength="120">
-        </label>
-        <label class="new-route-admin-field">
-          <span>Mot de passe</span>
-          <input type="password" id="new-route-admin-password" name="goelo-admin-password" autocomplete="current-password">
-        </label>
-        <p class="new-route-admin-error" id="new-route-admin-error" hidden role="alert"></p>
-        <div class="new-route-admin-actions">
-          <button type="button" class="btn-primary" id="new-route-admin-submit">Se connecter</button>
-        </div>
-      </div>
-      <div class="new-route-admin-toolbar" id="new-route-admin-toolbar" hidden>
-        <div class="new-route-admin-toolbar-top">
-          <span class="new-route-admin-toolbar-label">Session admin</span>
-          <button type="button" class="btn-app-outline" id="new-route-admin-logout-toolbar">Se déconnecter</button>
-        </div>
-        <details class="new-route-team-rider-details">
-          <summary>Team Riders — donner ou retirer le droit de créer une sortie</summary>
-          <p class="signup-hint" style="margin-top:0.5rem;text-align:left;">
-            L’e-mail doit correspondre à un utilisateur déjà créé dans <strong>Authentication → Users</strong>. Coche pour donner le droit, décoche pour le retirer, puis <strong>Appliquer</strong>. La personne doit se reconnecter ici pour que son jeton soit à jour.
-          </p>
-          <label class="new-route-admin-field">
-            <span>E-mail du compte</span>
-            <input type="email" id="new-route-team-email" autocomplete="email" maxlength="120" placeholder="cycliste@exemple.com">
-          </label>
-          <label class="new-route-team-grant-row">
-            <input type="checkbox" id="new-route-team-grant" checked>
-            <span>Donner le droit créateur (<code>goelo_admin</code>)</span>
-          </label>
-          <button type="button" class="btn-primary" id="new-route-team-submit">Appliquer</button>
-          <p class="new-route-team-msg" id="new-route-team-msg" hidden role="status"></p>
-        </details>
-      </div>
-        </div>
-        <div id="new-route-panel-edit" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-edit" hidden data-tabpanel="edit">
-          <p class="signup-hint" style="margin:0 0 0.75rem;text-align:left;">
-            Choisis une sortie <strong>personnalisée</strong>, puis <strong>Charger</strong>. Le formulaire s’ouvre dans l’onglet <strong>Créer une nouvelle sortie</strong> pour corriger et valider à l’étape 5.
-          </p>
-        <div class="new-route-edit-pick" id="new-route-edit-pick">
-          <div class="new-route-edit-pick-row">
-            <label class="new-route-admin-field new-route-edit-pick-field">
-              <span>Sortie à modifier</span>
-              <select id="new-route-edit-select" aria-label="Choisir une sortie à modifier"></select>
-            </label>
-            <div class="new-route-edit-pick-actions">
-              <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
-              <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
-            </div>
-          </div>
-          <p class="signup-hint new-route-edit-empty-hint" id="new-route-edit-empty-hint" hidden style="margin-top:0.45rem;text-align:left;">
-            Aucune sortie personnalisée pour l’instant : crée-en une avec l’onglet <strong>Créer une nouvelle sortie</strong>, valide, puis rouvre cette fenêtre — la liste se met à jour automatiquement.
-          </p>
-        </div>
-        </div>
-        <div id="new-route-panel-create" class="new-route-tabpanel" role="tabpanel" aria-labelledby="new-route-tab-create" hidden data-tabpanel="create">
-          <p class="signup-hint new-route-create-tab-intro" id="new-route-create-tab-intro" style="margin:0 0 0.65rem;text-align:left;">Formulaire en 5 étapes — <strong>Suivant</strong> / <strong>Précédent</strong> ; le bouton <strong>Créer la sortie</strong> n’apparaît qu’à l’étape <strong>Confirmation</strong> (étape 5).</p>
       <div id="new-route-modal-body" class="new-route-modal-body is-locked">
       <div class="new-route-modal-grid">
         <aside class="new-route-steps" aria-label="Étapes de création">
           <p class="new-route-steps-title">Étapes</p>
+          <p class="new-route-steps-help">Liste des étapes (1 → 5) : progression du formulaire — rien à remplir dans cette colonne.</p>
           <ol class="new-route-steps-list">
             <li class="is-active" data-wizard-li="1">Informations</li>
             <li data-wizard-li="2">Parcours</li>
             <li data-wizard-li="3">Détails</li>
-            <li data-wizard-li="4">Participants</li>
-            <li data-wizard-li="5">Confirmation</li>
+            <li data-wizard-li="4">Capacité</li>
+            <li data-wizard-li="5">Récap &amp; flyer</li>
           </ol>
         </aside>
         <div class="new-route-main">
@@ -4760,10 +4876,12 @@
               </p>
               <p class="new-route-panel-hint">
                 Après création, les inscriptions se font sur la page Sorties puis la fiche sortie. Tu peux limiter le nombre de places : au-delà, file d’attente automatique.
+                Sur ordinateur, la <strong>liste numérotée à gauche</strong> indique seulement l’étape en cours (ce n’est pas liée au menu « Visibilité » ci-dessous).
+                <strong>Visibilité</strong> : « Publique » = visible et inscriptible pour tout le monde ; « Sur invitation » = la fiche existe mais pas d’inscription web ; « Privée » = masquée des listes (lien direct ou admin).
               </p>
               <label>
                 <span class="new-route-field-label">Places max (peloton principal)</span>
-                <input type="number" id="new-route-max-p" min="0" max="500" step="1" placeholder="0 = sans limite" value="0" title="0 = illimité">
+                <input type="number" id="new-route-max-p" min="0" max="500" step="1" placeholder="0 = sans limite" value="" title="0 ou vide = illimité">
               </label>
               <label>
                 <span class="new-route-field-label">Statut des inscriptions</span>
@@ -4785,15 +4903,48 @@
 
             <div class="new-route-panel" id="new-route-panel-5" data-wizard-step="5" hidden>
               <p class="signup-hint new-route-panel-intro">
-                <strong>Étape 5 — Confirmation</strong>
+                <strong>Étape 5 — Récapitulatif &amp; flyer</strong> · Vérifie les informations, puis génère le flyer 9:16 pour les réseaux sociaux (rien n’est posté automatiquement).
               </p>
               <span class="new-route-field-label">Récapitulatif</span>
               <div id="new-route-recap" class="new-route-recap" aria-live="polite"></div>
+              <div class="new-route-publish-example-box new-route-publish-flyer-box" style="margin-top:1rem;">
+                <strong>Flyer (réseaux sociaux)</strong>
+                <p class="new-route-publish-example-caption">
+                  Image <strong>9:16</strong> avec infos à gauche (titre, date, lieu, distance, niveau). Photo de fond :
+                  <code>assets/goelo-flyer-bg.jpg</code> ou <code>.png</code>, ou <code>window.GOELO_FLYER_BG_URL</code>.
+                  Sinon repli sur le modèle Story du site.
+                </p>
+                <button type="button" class="btn-primary" id="new-route-publish-generate-flyer">
+                  Générer le flyer
+                </button>
+                <div id="new-route-publish-flyer-wrap" class="new-route-publish-generated-wrap" hidden>
+                  <p class="new-route-publish-example-caption new-route-publish-example-caption--gen">
+                    Aperçu — régénère si tu modifies le formulaire.
+                  </p>
+                  <div class="new-route-publish-example-row">
+                    <img
+                      id="new-route-publish-flyer-preview"
+                      alt="Flyer généré"
+                      width="90"
+                      height="160"
+                      class="new-route-publish-example-thumb"
+                    />
+                    <div class="new-route-publish-example-actions">
+                      <button type="button" class="btn-app-outline" id="new-route-publish-download-flyer">
+                        Télécharger (JPEG)
+                      </button>
+                      <button type="button" class="btn-app-outline" id="new-route-publish-copy-flyer">
+                        Copier le flyer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <p class="new-route-wizard-flow-hint" aria-hidden="true">
               <strong>Étapes 1 → 5 :</strong> d’abord <strong>Suivant</strong>, puis <strong>Précédent</strong> si besoin.
-              <strong>Créer la sortie</strong> n’apparaît qu’à la dernière étape.
+              <strong>Créer la sortie</strong> / <strong>Enregistrer</strong> n’apparaît qu’à la dernière étape (récap &amp; flyer).
             </p>
             <div class="new-route-wizard-nav" id="new-route-wizard-nav">
               <button type="button" class="btn-app-outline" id="new-route-prev" hidden>Précédent</button>
@@ -4809,15 +4960,31 @@
           <div id="new-route-preview-map" aria-label="Carte du GPX importé"></div>
           <div class="new-route-aside-card">
             <p class="new-route-aside-title">Photo de couverture</p>
-            <p class="new-route-aside-text">Optionnel · JPEG recommandé.</p>
+            <p class="new-route-aside-text">Optionnel · JPEG recommandé. Tu peux aussi charger le <strong>modèle Story</strong> GoëloRides (PNG 9:16) comme base pour la fiche.</p>
             <input type="file" id="new-route-cover-input" accept="image/*" class="sr-only" aria-hidden="true">
-            <button type="button" class="btn-app-outline" id="new-route-cover-btn">Choisir une image</button>
+            <div class="new-route-cover-actions">
+              <button type="button" class="btn-app-outline" id="new-route-cover-btn">Choisir une image</button>
+              <button type="button" class="btn-app-outline" id="new-route-cover-from-example" title="Charge assets/gestion-sorties-story-exemple.png comme couverture">Modèle Story (exemple)</button>
+            </div>
             <div class="new-route-cover-preview" id="new-route-cover-preview" hidden></div>
           </div>
         </aside>
       </div>
-      </div>
+      <div class="new-route-edit-pick" id="new-route-edit-pick" hidden aria-hidden="true">
+        <div class="new-route-edit-pick-row">
+          <label class="new-route-admin-field new-route-edit-pick-field">
+            <span>Sortie à modifier (chargement depuis la liste)</span>
+            <select id="new-route-edit-select" aria-label="Choisir une sortie à modifier"></select>
+          </label>
+          <div class="new-route-edit-pick-actions">
+            <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
+            <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+          </div>
         </div>
+        <p class="signup-hint new-route-edit-empty-hint" id="new-route-edit-empty-hint" hidden style="margin-top:0.45rem;text-align:left;">
+          Aucune sortie personnalisée pour l’instant : crée une sortie avec <strong>Nouvelle sortie</strong>, valide, puis rouvre cette fenêtre — la liste se met à jour automatiquement.
+        </p>
+      </div>
       </div>
     </div>
   </div>
@@ -4927,10 +5094,13 @@
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
     window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";
     window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
+    /* Optionnel : URLs ouvertes par les boutons « Messenger » / « Instagram » après enregistrement d’une sortie (admin). */
+    /* window.GOELO_SHARE_MESSENGER_URL = "https://m.me/…"; */
+    /* window.GOELO_SHARE_INSTAGRAM_URL = "https://www.instagram.com/goelo.rides/"; */
   </script>
   <script src="goelo-onesignal.js?v=16" defer></script>
-  <script src="goelo-enable-notifications-banner.js?v=10" defer></script>
-  <script src="goelo-notif-manual-button.js?v=10" defer></script>
+  <script src="goelo-enable-notifications-banner.js?v=11" defer></script>
+  <script src="goelo-notif-manual-button.js?v=11" defer></script>
   <script>window.GOELO_DEBUG = false;</script>
   <script src="goelo-debug-panel.js?v=1" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>

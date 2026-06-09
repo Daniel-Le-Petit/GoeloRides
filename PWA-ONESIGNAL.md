@@ -21,12 +21,12 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 | `manifest.json` | Web App Manifest (`display: standalone`, icônes, thème) — « Ajouter à l’écran d’accueil » |
 | `OneSignalSDKWorker.js` | **Seul** worker push ; servi en `https://…/OneSignalSDKWorker.js` (doit afficher du JS, pas du HTML ni 404) |
 | `goelo-onesignal.js` | Charge le SDK page v16, `OneSignal.init({ appId })` **sans** `serviceWorkerPath` (défaut = racine) |
-| `goelo-enable-notifications-banner.js` | Bandeau **v2** : bouton explicite « Activer les notifications » (geste → demande native) ; si **refus** (`denied`), bandeau ambre avec consignes **Safari / iOS** ou navigateur desktop ; « Plus tard » / masquage = **session** (fermeture onglet) |
-| `goelo-pwa-notifications.css` | Styles du bandeau + bloc **bouton manuel** hero (accueil) |
-| `goelo-notif-manual-button.js` | **Canal principal accueil** : `#goelo-notif-btn` + `#goelo-notif-help` ; si permission **déjà refusée**, pas d’appel `requestPermission` / OneSignal (pas de popup fantôme). **In-app iOS** : bloc `#goelo-notif-inapp-actions` (lien `target=_blank` vers l’URL courante, copier, partager) car Apple ne fournit pas `Notification` dans le WebView — il faut Safari. `window.goeloInitNotifications()`. |
+| `goelo-enable-notifications-banner.js` | Définit `window.goeloRequestPushSubscription` ; **bandeau flottant** : plus monté automatiquement — `EnableNotificationsBanner.mount()` reste pour support / debug. |
+| `goelo-pwa-notifications.css` | Styles du bandeau (si monté) + **pied de page** `.goelo-footer-notify-bar` |
+| `goelo-notif-manual-button.js` | **Entrée principale** : `#goelo-footer-notify` + `#goelo-footer-notify-inapp` (Safari, copier, partager sur iPhone hors Safari). Le bloc hero `#goelo-notif-manual-wrap` reste masqué. `window.goeloInitNotifications()`. |
 | `goelo-debug-panel.js` | **Debug temporaire** (désactivé par défaut) : overlay bas d’écran si `window.GOELO_DEBUG === true` ; `showGoeloDebugPanel()` ; clic = fermer. Ne modifie pas OneSignal ni le SW. |
 
-**Accueil (`index.html`)** : bloc hero « Activer les notifications » + `goelo-notif-manual-button.js` (en plus du bandeau). Les autres pages utilisent en général `goelo-onesignal.js` + variables `window.GOELO_ONESIGNAL_*` (sans bouton manuel tant que l’App ID n’y est pas renseigné).
+**Pages publiques** : `goelo-onesignal.js` + `goelo-enable-notifications-banner.js` + `goelo-notif-manual-button.js` ; le pied de page affiche l’option seulement si `window.GOELO_ONESIGNAL_APP_ID` est renseigné.
 
 ## Configuration OneSignal (100 % frontend)
 
@@ -39,7 +39,7 @@ window.GOELO_ONESIGNAL_APP_ID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
 window.GOELO_ONESIGNAL_SAFARI_WEB_ID = ""; // optionnel
 ```
 
-Sans `GOELO_ONESIGNAL_APP_ID`, le chargement conditionnel du SDK / le bandeau peuvent rester inactifs selon la page.
+Sans `GOELO_ONESIGNAL_APP_ID`, le chargement conditionnel du SDK / le **lien pied de page** notifications restent inactifs selon la page.
 
 ### Render (site statique)
 
@@ -58,13 +58,13 @@ Chrome → **Application → Service Workers** : un seul worker lié à OneSigna
 
 - `window.GOELO_NOTIFICATION_TYPES` — `NEW_RIDE`, `RIDE_UPDATE`, `RIDE_CANCELLED`
 - `window.goeloSendNotification(type, payload)` — enveloppe / log ; envoi réel = dashboard ou **API REST** (clé jamais côté navigateur).
-- `window.goeloOneSignalInitPromise()`, `window.goeloRequestPushSubscription()` — boîte **native** en premier ; dès **Autoriser**, retour **`ok` immédiat** (`pendingFinalize`) et **init + optIn** OneSignal **en arrière-plan** (le bandeau ne attend plus le service worker). Plafond init ~120 s ; tâche de fond ~60 s + `optIn` ~20 s. En cas d’échec silencieux en arrière-plan : message dans la **console** + recharger la page si besoin.
+- `window.goeloOneSignalInitPromise()`, `window.goeloRequestPushSubscription()` — boîte **native** en premier ; dès **Autoriser**, retour **`ok` immédiat** (`pendingFinalize`) et **init + optIn** OneSignal **en arrière-plan** (le flux du bouton ne bloque plus sur le service worker). Plafond init ~120 s ; tâche de fond ~60 s + `optIn` ~20 s. En cas d’échec silencieux en arrière-plan : message dans la **console** + recharger la page si besoin.
 - **Safari / WebKit** : `Notification.permission` peut être vide ou non standard tant que la Promise de `requestPermission()` n’a pas reflété le choix — le code normalise tout sauf `granted` / `denied` en `default`, et si la Promise renvoie **`granted`**, on ne repasse **pas** par le flux lent OneSignal (évite l’impression « rien ne se passe » / longue attente).
-- **iPhone in-app** (Instagram, Messenger, etc.) : souvent **`typeof Notification === "undefined"`** — Apple ne permet pas les notifications web dans ce WebView ; il faut **Safari** (ou copier le lien). Sur l’accueil, le bloc **`#goelo-notif-inapp-actions`** propose ouvrir l’URL en `target=_blank`, copier et partager. **Pas besoin d’ajouter le site à l’écran d’accueil** pour activer les push dans Safari sur iPhone récent ; c’est seulement un plus.
-- Les balises `<script src="goelo-onesignal.js?v=…">` / `goelo-enable-notifications-banner.js?v=…` : **incrémente `?v=`** à chaque changement de ces fichiers pour éviter un vieux JS en cache.
-- `window.EnableNotificationsBanner.mount({ container })`
-- `window.GoeloNotificationsClearBannerState()` — en console : réaffiche le bandeau (efface masquage définitif après succès, snooze session, ancienne clé snooze 7 jours si présente) et **réactive le bouton** s’il était resté grisé.
-- `window.goeloInitNotifications()` — accueil : re-exécute le câblage du bouton `#goelo-notif-btn` et l’aide `#goelo-notif-help` (utile si le bloc est injecté après chargement).
+- **iPhone in-app** (Instagram, Messenger, etc.) : souvent **`typeof Notification === "undefined"`** — Apple ne permet pas les notifications web dans ce WebView ; il faut **Safari** (ou copier le lien). Le **pied de page** propose **Ouvrir dans Safari**, **Copier le lien** et **Partager** quand c’est pertinent. **Pas besoin d’ajouter le site à l’écran d’accueil** pour activer les push dans Safari sur iPhone récent ; c’est seulement un plus.
+- Les balises `<script src="goelo-onesignal.js?v=…">` / `goelo-enable-notifications-banner.js?v=…` / `goelo-notif-manual-button.js?v=…` : **incrémente `?v=`** à chaque changement de ces fichiers pour éviter un vieux JS en cache.
+- `window.EnableNotificationsBanner.mount({ container })` — bandeau flottant (optionnel ; plus monté automatiquement).
+- `window.GoeloNotificationsClearBannerState()` — en console : efface masquage définitif après succès, snooze session, ancienne clé snooze 7 jours si présente ; utile si un ancien bandeau avait été masqué.
+- `window.goeloInitNotifications()` — re-exécute le câblage du bouton **`#goelo-footer-notify`** (utile si le pied de page est injecté après chargement).
 - **Debug mobile** : dans le HTML, passer `window.GOELO_DEBUG = true` **avant** `goelo-debug-panel.js`, recharger ; panneau bas d’écran après 2 s, ou `showGoeloDebugPanel()` en console (avec le flag à `true`). Clic sur le panneau = fermer.
 
 ## Icônes PWA
