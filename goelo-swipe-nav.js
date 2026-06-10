@@ -129,4 +129,19 @@
     },
     { passive: true }
   );
+
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+      RING: RING,
+      MAX_WIDTH: MAX_WIDTH,
+      EDGE: EDGE,
+      MIN_DX: MIN_DX,
+      MIN_HORIZ: MIN_HORIZ,
+      isMobile: isMobile,
+      pathBase: pathBase,
+      ringIndex: ringIndex,
+      shouldIgnoreTarget: shouldIgnoreTarget,
+      blockingModal: blockingModal
+    };
+  }
 })();

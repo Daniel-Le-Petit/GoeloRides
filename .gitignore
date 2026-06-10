@@ -8,3 +8,5 @@ Thumbs.db
 .cursor/
 .idea/
 .vscode/
+node_modules/
+coverage/
