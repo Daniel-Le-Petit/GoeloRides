@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Détail de la sortie GoëloRides : parcours, carte GPX, dénivelé, participants et inscription.">
+  <meta name="theme-color" content="#0D0D0D">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GoëloRides">
+  <title>Détail de la sortie · Goëlo Rides</title>
+  <meta property="og:title" content="Détail de la sortie · GoëloRides" />
+  <meta property="og:description" content="Parcours, carte GPX, participants et inscription." />
+  <meta property="og:image" content="https://goelorides.onrender.com/assets/hero-accueil.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/parcours.css">
+</head>
+<body>
+
+  <!-- ── NAV (identique pages Sorties / Groupes) ── -->
+  <nav class="gr-nav" role="navigation" aria-label="Navigation principale">
+    <a href="index.html" class="gr-nav__logo">GOËLO<span>RIDES</span></a>
+    <ul class="gr-nav__links">
+      <li><a href="sorties.html" aria-current="page">Sorties</a></li>
+      <li><a href="groupes.html">Groupes</a></li>
+      <li><a href="infos-pratiques.html">Clubs</a></li>
+      <li><a href="sorties.html">Parcours</a></li>
+      <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">Actualités</a></li>
+    </ul>
+    <a class="gr-nav__cta" href="sorties.html">← Toutes les sorties</a>
+  </nav>
+
+  <main class="pd-main" id="main-content" role="main">
+
+    <!-- ── HERO SORTIE ── -->
+    <header class="pd-hero" id="pd-hero">
+      <div class="pd-hero__badges">
+        <span class="pd-badge pd-badge--type" id="pd-type">Route</span>
+        <span class="pd-badge pd-badge--group" id="pd-group">Groupe Blanc · 15–18 km/h</span>
+      </div>
+      <h1 class="pd-title" id="pd-title">Chargement…</h1>
+      <p class="pd-date" id="pd-date"></p>
+      <p class="pd-captain" id="pd-captain"></p>
+
+      <!-- Grille de cartes infos -->
+      <div class="pd-stats" id="pd-stats">
+        <div class="pd-stat">
+          <span class="pd-stat__icon" aria-hidden="true">📏</span>
+          <span class="pd-stat__label">Distance (trace GPX)</span>
+          <span class="pd-stat__value" id="pd-km">—</span>
+        </div>
+        <div class="pd-stat">
+          <span class="pd-stat__icon" aria-hidden="true">⛰️</span>
+          <span class="pd-stat__label">Dénivelée</span>
+          <span class="pd-stat__value" id="pd-dplus">—</span>
+        </div>
+        <div class="pd-stat">
+          <span class="pd-stat__icon" aria-hidden="true">⏱️</span>
+          <span class="pd-stat__label">Durée estimée</span>
+          <span class="pd-stat__value" id="pd-duration">—</span>
+        </div>
+        <div class="pd-stat">
+          <span class="pd-stat__icon" aria-hidden="true">🤝</span>
+          <span class="pd-stat__label">Rendez-vous</span>
+          <span class="pd-stat__value" id="pd-meet">—</span>
+        </div>
+        <div class="pd-stat">
+          <span class="pd-stat__icon" aria-hidden="true">🚴</span>
+          <span class="pd-stat__label">Départ roulant</span>
+          <span class="pd-stat__value" id="pd-start">—</span>
+        </div>
+        <div class="pd-stat pd-stat--wide">
+          <span class="pd-stat__icon" aria-hidden="true">📍</span>
+          <span class="pd-stat__label">Point de départ</span>
+          <span class="pd-stat__value" id="pd-place">—</span>
+        </div>
+      </div>
+
+      <!-- Participation -->
+      <div class="pd-join">
+        <button type="button" class="pd-join__btn" id="pd-join-btn">Je participe !</button>
+        <p class="pd-join__count" id="pd-join-count"></p>
+      </div>
+
+      <!-- Message important -->
+      <p class="pd-notice">
+        <span class="pd-notice__icon" aria-hidden="true">ℹ️</span>
+        Merci de bien lire la description avant de t'inscrire.
+      </p>
+    </header>
+
+    <!-- ── CARTE DU PARCOURS ── -->
+    <section class="pd-section" aria-labelledby="pd-map-title">
+      <h2 class="pd-section__title" id="pd-map-title">Carte du parcours</h2>
+
+      <div class="pd-map-wrap">
+        <div id="pd-map" class="pd-map" aria-label="Carte du parcours"></div>
+        <button type="button" class="pd-map-fit" id="pd-map-fit" title="Recentrer le parcours">⛶ Recentrer</button>
+      </div>
+
+      <!-- Légende pente -->
+      <ul class="pd-legend" aria-label="Couleurs du tracé selon la pente">
+        <li><span class="pd-legend__dot" style="background:#22c55e"></span> Descente</li>
+        <li><span class="pd-legend__dot" style="background:#3b82f6"></span> Plat</li>
+        <li><span class="pd-legend__dot" style="background:#f59e0b"></span> Montée</li>
+        <li><span class="pd-legend__dot" style="background:#ef4444"></span> Montée raide</li>
+      </ul>
+
+      <!-- Villes traversées -->
+      <div class="pd-cities">
+        <h3 class="pd-cities__title">Villes traversées</h3>
+        <ul class="pd-cities__list" id="pd-cities"></ul>
+      </div>
+
+      <!-- Téléchargement GPX -->
+      <div class="pd-gpx">
+        <a class="pd-gpx__btn" id="pd-gpx-btn" href="#" download>
+          <span aria-hidden="true">⬇</span> Télécharger la trace GPX
+        </a>
+        <p class="pd-gpx__text">
+          Même trace que sur la carte. À ouvrir dans ton appli vélo ou ton GPS
+          pour rouler avec le bon itinéraire.
+        </p>
+      </div>
+    </section>
+
+    <!-- ── INFORMATIONS IMPORTANTES (accordéons) ── -->
+    <section class="pd-section" aria-labelledby="pd-infos-title">
+      <h2 class="pd-section__title" id="pd-infos-title">Informations importantes</h2>
+
+      <div class="pd-acc" id="pd-accordions">
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Météo et maintien de la sortie</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <p>La sortie pourra être annulée ou décalée selon les conditions météorologiques.
+              En cas de doute, suis les messages sur
+              <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">@goelo.rides</a>
+              ou contacte-nous par e-mail.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Allure du groupe</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <p>Allure visée sur le plat : <strong>15–18 km/h</strong> pour que chacun puisse suivre.</p>
+              <p>Merci de ne pas augmenter le rythme sans l'accord du groupe : on roule ensemble.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Esprit du Groupe Blanc</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <p>La philosophie du Groupe Blanc : on roule à un rythme raisonnable pour que
+              tout le monde prenne du plaisir.</p>
+              <p><strong>On part ensemble, on roule ensemble, on rentre ensemble.</strong></p>
+              <p>C'est une sortie sociale et conviviale. Chacun roule à son rythme.
+              Regroupement en haut des bosses pour repartir groupés.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Préparation avant la sortie</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <p>Aie la trace GPS du parcours sur ton téléphone ou GPS pour pouvoir rentrer
+              en autonomie en cas de problème.</p>
+              <p>Sois autonome :</p>
+              <ul>
+                <li>outillage</li>
+                <li>chambre à air</li>
+                <li>alimentation</li>
+                <li>eau adaptée à la durée</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Règles de sécurité</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <p>Participation réservée aux personnes <strong>majeures</strong>.</p>
+              <p>Sur routes larges : file à deux maximum.<br>
+              Sur portions étroites : file indienne.</p>
+              <p>Dépassements : uniquement par la gauche, en annonçant son intention.</p>
+              <p>Signaler : poteaux, nids-de-poule, dos-d'âne.</p>
+              <p>Garder sa ligne. Signaler les changements utiles au groupe.</p>
+              <p>Respect du code de la route. Comportement dangereux = exclusion possible.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Équipement obligatoire</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <ul>
+                <li><strong>Casque obligatoire</strong></li>
+                <li>Éclairage conforme si nécessaire</li>
+                <li>Avertisseur conforme si nécessaire</li>
+                <li>Prolongateurs type clip-on interdits</li>
+                <li>Équipement adapté à la météo</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Responsabilité et assurance</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <p><strong>Phase de lancement — cadre et assurance :</strong></p>
+              <p>Goëlo Rides n'a pas encore de structure associative ni d'assurance collective
+              pour encadrer les sorties. Les sorties se déroulent dans un cadre informel.</p>
+              <p>Chaque participant reste responsable :</p>
+              <ul>
+                <li>de sa personne</li>
+                <li>de son matériel</li>
+                <li>des risques liés à la route</li>
+              </ul>
+              <p>Lorsqu'une association sera créée, cette page sera mise à jour.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc__item">
+          <button type="button" class="pd-acc__head" aria-expanded="false">
+            <span>Inscription et participation</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel">
+            <div class="pd-acc__body">
+              <p>Pas de cotisation annuelle pour l'instant.</p>
+              <p>L'inscription via le bouton « Je participe ! » permet simplement d'anticiper
+              le nombre de participants.</p>
+              <p>Préviens-nous si tu ne peux finalement pas venir.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── PARTICIPANTS ── -->
+    <section class="pd-section" aria-labelledby="pd-participants-title">
+      <h2 class="pd-section__title" id="pd-participants-title">
+        Participants <span class="pd-participants-count" id="pd-participants-count"></span>
+      </h2>
+      <ul class="pd-participants" id="pd-participants"></ul>
+    </section>
+
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer class="gr-footer" role="contentinfo">
+    <p>
+      <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">@goelo.rides</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:goelo.rides@gmail.com">goelo.rides@gmail.com</a>
+      &nbsp;·&nbsp;
+      Saint-Quay-Portrieux · Côtes-d'Armor
+    </p>
+    <p>Initiative locale et indépendante · Pas d'adhésion · Été 2026 · GoëloRides</p>
+  </footer>
+
+  <!-- ── MOBILE NAV ── -->
+  <nav class="goelo-mobile-tabbar" role="navigation" aria-label="Navigation principale" data-no-swipe-nav>
+    <a href="index.html">Accueil</a>
+    <a href="groupes.html">Groupes</a>
+    <a href="sorties.html" aria-current="page">Sorties</a>
+    <a href="infos-pratiques.html">Infos</a>
+  </nav>
+
+  <!-- Supabase (mêmes variables que les autres pages — utilisé au raccordement) -->
+  <script>
+    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
+    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+  </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="js/parcours.js" defer></script>
+  <script src="goelo-swipe-nav.js" defer></script>
+  <script src="goelo-auth.js" defer></script>
+
+</body>
+</html>

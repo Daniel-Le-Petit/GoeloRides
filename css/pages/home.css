@@ -1,0 +1,433 @@
+/* ──────────────────────────────────────────────
+   GoëloRides — Homepage (Accueil) v2
+   Design tokens + layout for header, hero,
+   stats strip and sticky Team Rider banner.
+   ────────────────────────────────────────────── */
+
+:root {
+  --color-bg: #0D0D0D;
+  --color-surface: #1A1A1A;
+  --color-accent: #C8F135;
+  --color-accent-hover: #b8e02a;
+  --color-white: #ffffff;
+  --color-muted: rgba(255, 255, 255, 0.65);
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* Override existing app-shell layout for the new homepage hero */
+html.site-retheme {
+  background: var(--color-bg);
+}
+
+.app-shell:has(.app-main--home) {
+  background: var(--color-bg);
+}
+
+.app-main--home {
+  background: var(--color-bg);
+  padding: 0 !important;
+  max-width: 100% !important;
+  width: 100%;
+}
+
+.app-main--home .gr-hero {
+  margin: 0;
+  width: 100%;
+  max-width: none !important;
+  padding: 0 !important;
+  background: var(--color-bg) !important;
+  color: var(--color-white) !important;
+}
+
+.app-main--home .gr-header {
+  max-width: none !important;
+}
+
+/* ── HEADER / NAV ───────────────────────────── */
+
+.gr-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(180deg, rgba(13, 13, 13, 0.65) 0%, transparent 100%);
+}
+
+.gr-header-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gr-header-logo-main {
+  color: var(--color-accent);
+}
+
+.gr-header-logo-sub {
+  color: var(--color-white);
+  font-weight: 400;
+  font-size: 0.95rem;
+  font-style: italic;
+  letter-spacing: 0.06em;
+}
+
+.gr-nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gr-nav a {
+  color: var(--color-white);
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 400;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+.gr-nav a:hover {
+  opacity: 1;
+}
+
+.gr-header-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem;
+  text-decoration: none;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.gr-header-connect:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.gr-header-connect svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* Hamburger (mobile) */
+.gr-header-burger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-white);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.gr-header-burger svg {
+  width: 28px;
+  height: 28px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* ── HERO ───────────────────────────────────── */
+
+.gr-hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.gr-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.gr-hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  display: block;
+}
+
+.gr-hero-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 13, 13, 0.55) 0%,
+    rgba(13, 13, 13, 0.25) 40%,
+    rgba(13, 13, 13, 0.5) 75%,
+    rgba(13, 13, 13, 0.85) 100%
+  );
+}
+
+.gr-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 52rem;
+  padding: 8rem 2.5rem 2rem;
+}
+
+.gr-hero-headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  line-height: 1.05;
+  color: var(--color-white);
+  text-transform: uppercase;
+  margin: 0 0 1.25rem;
+}
+
+.gr-hero-subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+  color: var(--color-muted);
+  max-width: 30rem;
+  line-height: 1.6;
+  margin: 0 0 2rem;
+}
+
+.gr-hero-ctas {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+
+.gr-btn--accent {
+  background: rgba(200, 241, 53, 0.12);
+  color: var(--color-accent);
+  border: 1.5px solid var(--color-accent);
+}
+
+.gr-btn--accent:hover {
+  background: rgba(200, 241, 53, 0.22);
+}
+
+.gr-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.gr-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.gr-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ── STATS STRIP ────────────────────────────── */
+
+.gr-stats {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  background: rgba(13, 13, 13, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.5rem 2.5rem;
+  margin-top: auto;
+}
+
+.gr-stat {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0 1rem;
+}
+
+.gr-stat + .gr-stat {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gr-stat-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  color: var(--color-accent);
+}
+
+.gr-stat-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.gr-stat-title {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin: 0 0 0.15rem;
+}
+
+.gr-stat-desc {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+/* ── STICKY BANNER ──────────────────────────── */
+
+.gr-sticky-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.85rem 2rem;
+  background: var(--color-surface);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.gr-sticky-banner[hidden] {
+  display: none;
+}
+
+.gr-sticky-banner-text {
+  margin: 0;
+}
+
+.gr-sticky-banner-text strong {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.gr-sticky-banner .gr-btn {
+  font-size: 0.8rem;
+  padding: 0.45rem 1rem;
+}
+
+.gr-sticky-banner-close {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.gr-sticky-banner-close:hover {
+  color: var(--color-white);
+}
+
+.gr-sticky-banner-close svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* ── RESPONSIVE ─────────────────────────────── */
+
+@media (max-width: 768px) {
+  .gr-header {
+    padding: 0.85rem 1.25rem;
+  }
+
+  .gr-header .gr-nav {
+    display: none;
+  }
+
+  .gr-header-connect {
+    display: none;
+  }
+
+  .gr-header-burger {
+    display: block;
+  }
+
+  .gr-hero-content {
+    padding: 7rem 1.25rem 1.5rem;
+  }
+
+  .gr-hero-headline {
+    font-size: clamp(2.2rem, 9vw, 3.2rem);
+  }
+
+  .gr-stats {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 1.25rem;
+  }
+
+  .gr-stat {
+    padding: 0.75rem 0;
+  }
+
+  .gr-stat + .gr-stat {
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .gr-sticky-banner {
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    gap: 0.5rem;
+  }
+}

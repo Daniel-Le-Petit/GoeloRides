@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html lang="fr" class="site-retheme">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Les groupes GoëloRides : Blanc, Vert, Bleu ou Rouge — trouve ton niveau à Saint-Quay-Portrieux.">
-  <meta name="theme-color" content="#eef2f6">
+  <meta name="theme-color" content="#0D0D0D">
   <link rel="manifest" href="/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="GoëloRides">
-  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=7">
   <title>Les groupes · Goëlo Rides</title>
   <meta property="og:title" content="Les groupes · GoëloRides" />
   <meta property="og:description" content="Blanc, Vert, Bleu ou Rouge — trouve ton groupe et ta vitesse." />
@@ -22,416 +21,237 @@
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Nunito:wght@700;800&family=Outfit:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="parcours.css">
-  <link rel="stylesheet" href="app-chrome.css">
-  <link rel="stylesheet" href="site-retheme.css">
-  <style>
-    :root {
-      --app-sea: #1565a8;
-      --app-sea-hover: #0e4d80;
-      --app-bg: #eef2f6;
-      --app-surface: #ffffff;
-      --app-text: #15232d;
-      --app-muted: #5a6b78;
-      --app-border: #dce6ee;
-      --sidebar-w: 15.5rem;
-      --font-sans: "DM Sans", system-ui, sans-serif;
-      --font-logo: "Outfit", "DM Sans", system-ui, sans-serif;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; background: var(--app-bg); overflow-x: hidden; max-width: 100%; }
-    body {
-      font-family: var(--font-sans);
-      background: var(--app-bg);
-      color: var(--app-text);
-      min-height: 100dvh;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      max-width: 100%;
-    }
-    a { color: var(--app-sea); }
-    .app-main {
-      flex: 1;
-      min-width: 0;
-      max-width: 100%;
-      padding: 1.35rem 1.75rem 2.5rem;
-      background: var(--app-bg);
-    }
-    .groupes-header { margin-bottom: 1.75rem; max-width: 40rem; }
-    .groupes-header h1 {
-      font-size: clamp(1.5rem, 3vw, 1.9rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 0.45rem;
-    }
-    .groupes-lead {
-      font-size: 1.05rem;
-      color: var(--app-muted);
-      font-weight: 500;
-    }
-    .groupes-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 44rem;
-    }
-    .groupe-card {
-      scroll-margin-top: 1rem;
-      background: var(--app-surface);
-      border: 1px solid var(--app-border);
-      border-radius: 12px;
-      padding: 0;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(15, 30, 45, 0.06);
-      border-left-width: 5px;
-    }
-    .groupe-card-visual {
-      position: relative;
-      /* Bandeau un peu plus haut : sinon object-fit:cover ne garde qu’une fine lamelle au milieu du corps. */
-      height: clamp(168px, 32vw, 230px);
-      background: #e2e8f0;
-    }
-    .groupe-card-visual img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center 42%;
-      display: block;
-    }
-
-    .groupe-card--vert .groupe-card-visual img {
-      object-position: center top;
-    }
-
-    .groupe-card-body {
-      padding: 1.1rem 1.2rem 1.2rem;
-    }
-    .groupe-card--blanc { border-left-color: #9ca3af; }
-    .groupe-card--vert { border-left-color: #16a34a; }
-    .groupe-card--bleu { border-left-color: #2563eb; }
-    .groupe-card--rouge { border-left-color: #dc2626; }
-    .groupe-card h2 {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      font-size: 1.15rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin: 0 0 0.55rem;
-    }
-
-    /* Pastille niveau devant le titre (blanc = rond blanc lisible sur carte claire). */
-    .groupe-card h2::before {
-      content: "";
-      width: 0.72rem;
-      height: 0.72rem;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .groupe-card--blanc h2::before {
-      background: #ffffff;
-      box-shadow:
-        0 0 0 2px #cbd5e1,
-        0 1px 3px rgba(15, 23, 42, 0.12);
-    }
-
-    .groupe-card--vert h2::before {
-      background: #22c55e;
-      box-shadow: 0 0 0 1px rgba(21, 101, 84, 0.25);
-    }
-
-    .groupe-card--bleu h2::before {
-      background: #2563eb;
-      box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.35);
-    }
-
-    .groupe-card--rouge h2::before {
-      background: #dc2626;
-      box-shadow: 0 0 0 1px rgba(127, 29, 29, 0.35);
-    }
-    .groupe-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.65rem 1.1rem;
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--app-text);
-      margin-bottom: 0.55rem;
-    }
-    .groupe-stats span { color: var(--app-muted); font-weight: 600; }
-    .groupe-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-bottom: 0.65rem;
-    }
-    .groupe-pill {
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 0.22rem 0.55rem;
-      border-radius: 6px;
-      background: #f0f4f8;
-      color: var(--app-text);
-    }
-    .groupe-card--blanc .groupe-pill { background: #f3f4f6; color: #374151; }
-    .groupe-card--vert .groupe-pill { background: #dcfce7; color: #14532d; }
-    .groupe-card--bleu .groupe-pill { background: #dbeafe; color: #1e3a8a; }
-    .groupe-card--rouge .groupe-pill { background: #fee2e2; color: #991b1b; }
-    .groupe-desc {
-      font-size: 0.92rem;
-      color: var(--app-text);
-      margin-bottom: 0.75rem;
-    }
-    .groupe-parcours {
-      font-size: 0.86rem;
-      font-weight: 600;
-      padding-top: 0.65rem;
-      border-top: 1px solid var(--app-border);
-    }
-    .groupe-parcours a {
-      font-weight: 700;
-      text-decoration: none;
-    }
-    .groupe-parcours a:hover { text-decoration: underline; }
-    .groupes-footnote {
-      margin-top: 1.75rem;
-      max-width: 44rem;
-      padding: 1rem 1.15rem;
-      background: rgba(21, 101, 168, 0.08);
-      border: 1px solid rgba(21, 101, 168, 0.2);
-      border-radius: 10px;
-      font-size: 0.92rem;
-      color: var(--app-text);
-    }
-    .groupes-footnote strong { color: var(--app-sea-hover); }
-    .groupes-photo-credit {
-      margin: 0.65rem 0 0;
-      max-width: 44rem;
-      font-size: 0.72rem;
-      line-height: 1.45;
-      color: var(--app-muted);
-    }
-    .groupes-photo-credit a {
-      color: var(--app-sea);
-      font-weight: 600;
-    }
-    @media (max-width: 640px) {
-      .app-main { padding: 1rem 0.85rem 2rem; }
-      .groupe-card-body { padding: 0.95rem 1rem 1.05rem; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/groupes.css">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=7">
 </head>
 <body>
-  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
-  <a href="index.html" class="back-link">← Accueil</a>
-  <div class="sorties-auth-top"><div data-goelo-auth-home></div></div>
-  <div class="app-shell">
-    <main class="app-main" id="main-content" role="main">
-      <header class="groupes-header">
-        <h1>Les groupes <span class="goelorides-mark"><span class="app-logo-part app-logo-part--go">Goëlo</span><span class="app-logo-part app-logo-part--rides">Rides</span></span></h1>
-        <p class="groupes-lead">Choisis ton niveau, rejoins la route</p>
-      </header>
 
-      <ul class="groupes-list">
-        <li>
-          <article class="groupe-card groupe-card--blanc" id="groupe-blanc">
-            <div class="groupe-card-visual">
-              <img src="assets/groupe-blanc-cyclistes.jpg" alt="Quatre cyclistes en tenue sur route au bord de la mer, journée ensoleillée" width="336" height="178" loading="lazy" decoding="async">
-            </div>
-            <div class="groupe-card-body">
-              <span class="groupe-level-pill groupe-level-pill--blanc">Blanc</span>
-              <h2>Groupe Blanc</h2>
-              <p class="groupe-profile-line">Rouleur tranquille</p>
-              <div class="groupe-stats groupe-stats-grid" role="group" aria-label="Allure, distance et niveau">
-                <div class="groupe-stat">
-                  <span class="stat-val">15–18</span>
-                  <span class="stat-label">km/h</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">42,6</span>
-                  <span class="stat-label">km</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">Découverte</span>
-                  <span class="stat-label">niveau</span>
-                </div>
-              </div>
-              <p class="groupe-desc">
-                Tu reprends le vélo ou tu veux juste profiter du paysage. On roule tranquille, on s’arrête, on profite.
-              </p>
-              <div class="groupe-pills">
-                <span class="groupe-pill">Tranquille</span>
-                <span class="groupe-pill">Découverte</span>
-              </div>
-              <p class="groupe-parcours">
-                Parcours · <a href="sorties.html">Voir les sorties</a> (niveau Blanc)
-              </p>
-            </div>
-          </article>
-        </li>
-        <li>
-          <article class="groupe-card groupe-card--vert" id="groupe-vert">
-            <div class="groupe-card-visual">
-              <img src="assets/groupe-vert-cyclistes.png" alt="Peloton de cyclistes en passage dans un village" width="707" height="433" loading="lazy" decoding="async">
-            </div>
-            <div class="groupe-card-body">
-              <span class="groupe-level-pill groupe-level-pill--vert">Vert</span>
-              <h2>Groupe Vert</h2>
-              <p class="groupe-profile-line">Convivial · On attend tout le monde</p>
-              <div class="groupe-stats groupe-stats-grid" role="group" aria-label="Allure, distance et niveau">
-                <div class="groupe-stat">
-                  <span class="stat-val">18–22</span>
-                  <span class="stat-label">km/h</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">66,0</span>
-                  <span class="stat-label">km</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">Intermédiaire</span>
-                  <span class="stat-label">niveau</span>
-                </div>
-              </div>
-              <p class="groupe-desc">
-                Tu roules régulièrement mais l’ambiance compte autant que la performance. On attend tout le monde.
-              </p>
-              <div class="groupe-pills">
-                <span class="groupe-pill">Convivial</span>
-                <span class="groupe-pill">On attend tout le monde</span>
-              </div>
-              <p class="groupe-parcours">
-                Parcours · <a href="sortie.html?id=brehec">Vers Bréhec</a>
-              </p>
-            </div>
-          </article>
-        </li>
-        <li>
-          <article class="groupe-card groupe-card--bleu" id="groupe-bleu">
-            <div class="groupe-card-visual">
-              <img src="assets/groupe-bleu-cyclistes.png" alt="Peloton sur la route, rythme soutenu" width="1024" height="581" loading="lazy" decoding="async">
-            </div>
-            <div class="groupe-card-body">
-              <span class="groupe-level-pill groupe-level-pill--bleu">Bleu</span>
-              <h2>Groupe Bleu</h2>
-              <p class="groupe-profile-line">Rouleur · Relais</p>
-              <div class="groupe-stats groupe-stats-grid" role="group" aria-label="Allure, distance et niveau">
-                <div class="groupe-stat">
-                  <span class="stat-val">22–26</span>
-                  <span class="stat-label">km/h</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">84,5</span>
-                  <span class="stat-label">km</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">Confirmé</span>
-                  <span class="stat-label">niveau</span>
-                </div>
-              </div>
-              <p class="groupe-desc">
-                Tu maîtrises le peloton, tu fais des relais. Parcours structuré avec un bon groupe.
-              </p>
-              <div class="groupe-pills">
-                <span class="groupe-pill">Rouleur</span>
-                <span class="groupe-pill">Relais</span>
-              </div>
-              <p class="groupe-parcours">
-                Parcours · <a href="sortie.html?id=boucle">La Grande Boucle du Goëlo</a>
-              </p>
-            </div>
-          </article>
-        </li>
-        <li>
-          <article class="groupe-card groupe-card--rouge" id="groupe-rouge">
-            <div class="groupe-card-visual">
-              <img src="assets/groupe-rouge-cyclistes.png" alt="Peloton de cyclistes sur route humide, allure course" width="859" height="548" loading="lazy" decoding="async">
-            </div>
-            <div class="groupe-card-body">
-              <span class="groupe-level-pill groupe-level-pill--rouge">Rouge</span>
-              <h2>Groupe Rouge</h2>
-              <p class="groupe-profile-line">Compétiteur</p>
-              <div class="groupe-stats groupe-stats-grid" role="group" aria-label="Allure, distance et niveau">
-                <div class="groupe-stat">
-                  <span class="stat-val">26+</span>
-                  <span class="stat-label">km/h</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">110+</span>
-                  <span class="stat-label">km</span>
-                </div>
-                <div class="groupe-stat">
-                  <span class="stat-val">Expert</span>
-                  <span class="stat-label">niveau</span>
-                </div>
-              </div>
-              <p class="groupe-desc">
-                Pour les jambes solides. Rythme élevé. Si tu te reconnais ici, tu sais ce qui t’attend.
-              </p>
-              <div class="groupe-pills">
-                <span class="groupe-pill">Compétiteur</span>
-              </div>
-              <p class="groupe-parcours">
-                Parcours annoncés sur les <a href="sorties.html">sorties</a> — consulte les dates prévues.
-              </p>
-            </div>
-          </article>
-        </li>
-      </ul>
+  <!-- ── BANDEAU ── -->
+  <p class="gr-topstrip">Vos groupes, vos niveaux, votre communauté</p>
 
-      <p class="groupes-footnote">
-        <strong>Pas sûr de ton groupe ?</strong> Viens en Blanc ou Vert pour la première fois — on t’aide à te placer, sans pression.
-      </p>
-      <p class="groupes-photo-credit">
-        Photo « groupe Blanc » : cliché fourni pour le site Goëlo Rides (cyclistes en balade, mer en arrière-plan).
-      </p>
-
-      <footer class="site-footer" role="contentinfo">
-        <p class="footer-logo">GoëloRides</p>
-        <p class="footer-loc">Saint-Quay-Portrieux · Côtes-d'Armor · 22410</p>
-        <div class="footer-links">
-          <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener"><span aria-hidden="true">📸</span> @goelo.rides</a>
-          <a href="mailto:goelo.rides@gmail.com"><span aria-hidden="true">✉</span> goelo.rides@gmail.com</a>
-          <a href="sorties.html">Sorties</a>
-          <a href="gestion-sorties.html" target="_blank" rel="noopener noreferrer">Gestion sorties</a>
-          <a href="infos-pratiques.html">Infos pratiques</a>
-          <a href="index.html">Accueil</a>
-        </div>
-        <div class="goelo-footer-notify-bar" id="goelo-footer-notify-bar" hidden>
-          <button type="button" class="goelo-footer-notify-bar__btn" id="goelo-footer-notify">Notifications sorties (navigateur)</button>
-          <span class="goelo-footer-notify-bar__hint">En complément d’Instagram et Facebook — sur cet appareil, si tu le souhaites.</span>
-          <div class="goelo-footer-notify-bar__inapp" id="goelo-footer-notify-inapp" hidden>
-            <span class="goelo-footer-notify-bar__inapp-lead">Hors Safari (Instagram, Messenger…) :</span>
-            <a class="goelo-footer-notify-bar__inapp-link" id="goelo-footer-notif-open-safari" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans Safari</a>
-            <button type="button" class="goelo-footer-notify-bar__inapp-btn" id="goelo-footer-notif-copy-link">Copier le lien</button>
-            <button type="button" class="goelo-footer-notify-bar__inapp-btn" id="goelo-footer-notif-share-link" hidden>Partager</button>
-          </div>
-        </div>
-        <p class="footer-legal">
-          Initiative locale et indépendante · Pas d'adhésion · Pas de fédération<br>
-          Été 2026 · GoëloRides
-        </p>
-      </footer>
-    </main>
-  </div>
-
-  <nav class="goelo-mobile-tabbar" role="navigation" aria-label="Navigation principale" data-no-swipe-nav>
-    <a href="index.html" class="goelo-mobile-tabbar__link">Accueil</a>
-    <a href="groupes.html" class="goelo-mobile-tabbar__link" aria-current="page">Groupes</a>
-    <a href="sorties.html" class="goelo-mobile-tabbar__link">Sorties</a>
-    <a href="infos-pratiques.html" class="goelo-mobile-tabbar__link">Infos</a>
+  <!-- ── NAV ── -->
+  <nav class="gr-nav" role="navigation" aria-label="Navigation principale">
+    <a href="index.html" class="gr-nav__logo">GOËLO<span>RIDES</span></a>
+    <ul class="gr-nav__links">
+      <li><a href="sorties.html">Sorties</a></li>
+      <li><a href="groupes.html" aria-current="page">Groupes</a></li>
+      <li><a href="infos-pratiques.html">Clubs</a></li>
+      <li><a href="sorties.html">Parcours</a></li>
+      <li><a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">Actualités</a></li>
+    </ul>
+    <div style="position:relative;">
+      <button type="button" class="gr-nav__cta" id="nav-create-group" aria-haspopup="dialog" aria-expanded="false">
+        <span aria-hidden="true">🔒</span> Créer un groupe
+      </button>
+      <!-- Popup contextuel « Mode Team Rider requis » (composant components.css) -->
+      <div class="gr-popover" id="popover-create-group" hidden role="dialog" aria-label="Mode Team Rider requis">
+        <span class="gr-popover__lock" aria-hidden="true">🔒</span>
+        <p class="gr-popover__title">Mode Team Rider requis</p>
+        <p class="gr-popover__text">Créer et gérer un groupe est réservé aux Team Riders. Connecte-toi pour continuer.</p>
+        <button type="button" class="gr-popover__btn" data-goelo-auth-trigger>Se connecter</button>
+      </div>
+    </div>
   </nav>
-  <!-- Mêmes variables Supabase que index.html / sorties.html / sortie.html -->
+
+  <!-- ── EN-TÊTE ── -->
+  <header class="gr-page-header">
+    <h1>Groupes</h1>
+    <p>Roulez à votre rythme, avec des groupes adaptés à votre niveau.</p>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="gr-main" id="main-content" role="main">
+
+    <!-- Cartes groupes (données statiques) -->
+    <div class="gr-cards">
+
+      <!-- BLANC -->
+      <article class="gr-card gr-card--blanc" id="groupe-blanc">
+        <p class="gr-card__eyebrow">Groupe</p>
+        <div class="gr-card__header">
+          <div>
+            <h2 class="gr-card__title">BLANC</h2>
+            <p class="gr-card__subtitle">Découverte <em>Allure tranquille</em></p>
+          </div>
+          <span class="gr-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="26" r="5"/><circle cx="27" cy="26" r="5"/>
+              <path d="M9 26l5-10 4 4 5-8h4M18 10l2-2a2 2 0 0 1 3 0l2 2"/>
+              <circle cx="27" cy="8" r="2"/>
+            </svg>
+          </span>
+        </div>
+        <ul class="gr-card__stats" aria-label="Caractéristiques du groupe Blanc">
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">⏱</span> 50 – 70 km</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">△</span> &lt; 700 m D+</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">👤</span> Ouvert à tous</li>
+        </ul>
+        <a href="sorties.html?groupe=blanc" class="gr-card__btn">Voir les sorties</a>
+      </article>
+
+      <!-- VERT -->
+      <article class="gr-card gr-card--vert" id="groupe-vert">
+        <p class="gr-card__eyebrow">Groupe</p>
+        <div class="gr-card__header">
+          <div>
+            <h2 class="gr-card__title">VERT</h2>
+            <p class="gr-card__subtitle">Endurance <em>Allure modérée</em></p>
+          </div>
+          <span class="gr-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="26" r="5"/><circle cx="27" cy="26" r="5"/>
+              <path d="M9 26l5-10 4 4 5-8h4M18 10l2-2a2 2 0 0 1 3 0l2 2"/>
+              <circle cx="27" cy="8" r="2"/>
+            </svg>
+          </span>
+        </div>
+        <ul class="gr-card__stats" aria-label="Caractéristiques du groupe Vert">
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">⏱</span> 70 – 100 km</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">△</span> 700 – 1 200 m D+</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">👤</span> Ouvert à tous</li>
+        </ul>
+        <a href="sorties.html?groupe=vert" class="gr-card__btn">Voir les sorties</a>
+      </article>
+
+      <!-- BLEU -->
+      <article class="gr-card gr-card--bleu" id="groupe-bleu">
+        <p class="gr-card__eyebrow">Groupe</p>
+        <div class="gr-card__header">
+          <div>
+            <h2 class="gr-card__title">BLEU</h2>
+            <p class="gr-card__subtitle">Sportif <em>Allure soutenue</em></p>
+          </div>
+          <span class="gr-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="26" r="5"/><circle cx="27" cy="26" r="5"/>
+              <path d="M9 26l5-10 4 4 5-8h4M18 10l2-2a2 2 0 0 1 3 0l2 2"/>
+              <circle cx="27" cy="8" r="2"/>
+            </svg>
+          </span>
+        </div>
+        <ul class="gr-card__stats" aria-label="Caractéristiques du groupe Bleu">
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">⏱</span> 90 – 130 km</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">△</span> 1 200 – 1 800 m D+</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">👤</span> Bon niveau requis</li>
+        </ul>
+        <a href="sorties.html?groupe=bleu" class="gr-card__btn">Voir les sorties</a>
+      </article>
+
+      <!-- ROUGE -->
+      <article class="gr-card gr-card--rouge" id="groupe-rouge">
+        <p class="gr-card__eyebrow">Groupe</p>
+        <div class="gr-card__header">
+          <div>
+            <h2 class="gr-card__title">ROUGE</h2>
+            <p class="gr-card__subtitle">Compétition <em>Allure élevée</em></p>
+          </div>
+          <span class="gr-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="26" r="5"/><circle cx="27" cy="26" r="5"/>
+              <path d="M9 26l5-10 4 4 5-8h4M18 10l2-2a2 2 0 0 1 3 0l2 2"/>
+              <circle cx="27" cy="8" r="2"/>
+            </svg>
+          </span>
+        </div>
+        <ul class="gr-card__stats" aria-label="Caractéristiques du groupe Rouge">
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">⏱</span> 100 – 160 km</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">△</span> 1 800 m D+ et +</li>
+          <li class="gr-card__stat"><span class="gr-card__stat-icon" aria-hidden="true">👤</span> Niveau expert</li>
+        </ul>
+        <a href="sorties.html?groupe=rouge" class="gr-card__btn">Voir les sorties</a>
+      </article>
+
+    </div><!-- /gr-cards -->
+
+    <!-- Bloc bas : avantages + CTA Team Riders -->
+    <div class="gr-bottom">
+
+      <div class="gr-benefits">
+        <p class="gr-benefits__title">Appartenir à un groupe vous permet de :</p>
+        <ul class="gr-benefits__list">
+          <li><span class="gr-benefits__check" aria-hidden="true">✓</span> Accéder aux sorties réservées</li>
+          <li><span class="gr-benefits__check" aria-hidden="true">✓</span> Participer aux événements du groupe</li>
+          <li><span class="gr-benefits__check" aria-hidden="true">✓</span> Échanger avec les membres</li>
+        </ul>
+      </div>
+
+      <div class="gr-cta-block">
+        <div class="gr-cta-block__lock" aria-hidden="true">🔒</div>
+        <p class="gr-cta-block__title">Accès complet réservé<br>aux Team Riders</p>
+        <button type="button" class="gr-cta-block__btn" data-goelo-auth-trigger>
+          <span aria-hidden="true">🔒</span> Se connecter
+        </button>
+      </div>
+
+    </div><!-- /gr-bottom -->
+
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer class="gr-footer" role="contentinfo">
+    <p>
+      <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener">@goelo.rides</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:goelo.rides@gmail.com">goelo.rides@gmail.com</a>
+      &nbsp;·&nbsp;
+      Saint-Quay-Portrieux · Côtes-d'Armor
+    </p>
+    <p>Initiative locale et indépendante · Pas d'adhésion · Été 2026 · GoëloRides</p>
+  </footer>
+
+  <!-- ── MOBILE NAV ── -->
+  <nav class="goelo-mobile-tabbar" role="navigation" aria-label="Navigation principale" data-no-swipe-nav>
+    <a href="index.html">Accueil</a>
+    <a href="groupes.html" aria-current="page">Groupes</a>
+    <a href="sorties.html">Sorties</a>
+    <a href="infos-pratiques.html">Infos</a>
+  </nav>
+
+  <!-- Supabase (mêmes variables que index.html / sorties.html) -->
   <script>
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
-    /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
     window.GOELO_ONESIGNAL_APP_ID = "";
     window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
   </script>
+
+  <!-- Popover « Créer un groupe » : toggle + fermeture extérieur / Échap -->
+  <script>
+    (function () {
+      "use strict";
+      var btn = document.getElementById("nav-create-group");
+      var pop = document.getElementById("popover-create-group");
+      if (!btn || !pop) return;
+
+      function setOpen(open) {
+        pop.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        setOpen(pop.hidden);
+      });
+
+      document.addEventListener("click", function (e) {
+        if (pop.hidden) return;
+        if (!pop.contains(e.target) && e.target !== btn) setOpen(false);
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") setOpen(false);
+      });
+
+      /* « Se connecter » dans le popover : js/auth.js ouvre la modale Team Rider ;
+         on referme juste le popover. */
+      pop.querySelector("[data-goelo-auth-trigger]").addEventListener("click", function () {
+        setOpen(false);
+      });
+    })();
+  </script>
+
   <script src="goelo-onesignal.js?v=16" defer></script>
   <script src="goelo-enable-notifications-banner.js?v=11" defer></script>
   <script src="goelo-notif-manual-button.js?v=11" defer></script>
@@ -439,5 +259,6 @@
   <script src="goelo-debug-panel.js?v=1" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
   <script src="goelo-auth.js" defer></script>
+
 </body>
 </html>

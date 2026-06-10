@@ -1,0 +1,469 @@
+/* ══════════════════════════════════════════════════════════════
+   GoëloRides — Page Groupes v2
+   4 cartes (Blanc / Vert / Bleu / Rouge) + bloc avantages
+   + CTA Team Riders. Données statiques dans groupes.html.
+   Popups contextuels « Mode Team Rider requis » : css/components.css
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── Design tokens ─────────────────────────────────────────── */
+:root {
+  --bg:           #0D0D0D;
+  --surface:      #1A1A1A;
+  --surface-2:    #242424;
+  --border:       #2E2E2E;
+  --accent:       #C8F135;
+  --accent-dim:   #9ABF20;
+  --text:         #F0F0F0;
+  --muted:        #888888;
+
+  --c-blanc-bg:   #F5F5F5;
+  --c-blanc-text: #111111;
+  --c-vert:       #3A7D44;
+  --c-bleu:       #1E3A8A;
+  --c-rouge:      #8B1A1A;
+
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --radius:       12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── Bandeau fin au-dessus de la nav ───────────────────────── */
+.gr-topstrip {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* ─── Nav ───────────────────────────────────────────────────── */
+.gr-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 0 2rem;
+  height: 56px;
+}
+
+.gr-nav__logo {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.gr-nav__logo span {
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.gr-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  list-style: none;
+  flex: 1;
+}
+
+.gr-nav__links a {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.gr-nav__links a:hover {
+  color: var(--text);
+}
+
+.gr-nav__links a[aria-current="page"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.gr-nav__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.38rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.gr-nav__cta:hover {
+  background: var(--accent);
+  color: #000;
+}
+
+/* ─── En-tête de page ───────────────────────────────────────── */
+.gr-page-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.25rem 2rem 0.5rem;
+}
+
+.gr-page-header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.gr-page-header p {
+  font-size: 0.98rem;
+  color: var(--muted);
+}
+
+/* ─── Layout principal ──────────────────────────────────────── */
+.gr-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.75rem 2rem 4rem;
+}
+
+/* ─── Grille de cartes ──────────────────────────────────────── */
+.gr-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.gr-card {
+  border-radius: var(--radius);
+  padding: 1.25rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.gr-card--blanc { background: var(--c-blanc-bg); color: var(--c-blanc-text); }
+.gr-card--vert  { background: var(--c-vert);  color: #fff; }
+.gr-card--bleu  { background: var(--c-bleu);  color: #fff; }
+.gr-card--rouge { background: var(--c-rouge); color: #fff; }
+
+.gr-card__eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.gr-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gr-card__title {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.gr-card__subtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-top: 0.2rem;
+}
+
+.gr-card__subtitle em {
+  font-style: italic;
+  font-weight: 400;
+  opacity: 0.8;
+  display: block;
+}
+
+.gr-card__icon {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.gr-card__icon svg {
+  width: 34px;
+  height: 34px;
+}
+
+/* Stats (3 lignes : km / D+ / niveau) */
+.gr-card__stats {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  opacity: 0.92;
+}
+
+.gr-card__stat {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gr-card__stat-icon {
+  width: 16px;
+  text-align: center;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+/* Bouton « Voir les sorties » */
+.gr-card__btn {
+  margin-top: auto;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.58rem 1rem;
+  border-radius: 6px;
+  border: none;
+  transition: filter 0.15s, transform 0.12s;
+}
+
+.gr-card__btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.gr-card--blanc .gr-card__btn { background: #111; color: #fff; }
+.gr-card--vert  .gr-card__btn { background: #fff; color: var(--c-vert); }
+.gr-card--bleu  .gr-card__btn { background: #fff; color: var(--c-bleu); }
+.gr-card--rouge .gr-card__btn { background: #fff; color: var(--c-rouge); }
+
+/* ─── Bloc bas : avantages + CTA Team Riders ────────────────── */
+.gr-bottom {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.gr-benefits {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.75rem;
+}
+
+.gr-benefits__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.gr-benefits__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gr-benefits__list li {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.9rem;
+  color: rgba(240, 240, 240, 0.92);
+}
+
+.gr-benefits__check {
+  color: var(--accent);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.gr-cta-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.9rem;
+}
+
+.gr-cta-block__lock {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.gr-cta-block__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.gr-cta-block__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  background: var(--accent);
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.5rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.12s;
+}
+
+.gr-cta-block__btn:hover {
+  background: var(--accent-dim);
+  transform: translateY(-1px);
+}
+
+/* ─── Footer ────────────────────────────────────────────────── */
+.gr-footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+}
+
+.gr-footer p {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.gr-footer a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.gr-footer a:hover {
+  color: var(--text);
+}
+
+/* ─── Tabbar mobile ─────────────────────────────────────────── */
+.goelo-mobile-tabbar {
+  display: none;
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .gr-nav__links { display: none; }
+
+  .gr-nav { justify-content: space-between; }
+
+  .gr-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gr-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .gr-topstrip { font-size: 0.68rem; }
+  .gr-nav { padding: 0 1rem; }
+  .gr-page-header { padding: 1.5rem 1rem 0.25rem; }
+  .gr-main { padding: 1.25rem 1rem 5.5rem; }
+
+  /* Cartes empilées pleine largeur (maquette mobile) */
+  .gr-cards {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .goelo-mobile-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+  }
+
+  .goelo-mobile-tabbar a {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .goelo-mobile-tabbar a[aria-current],
+  .goelo-mobile-tabbar a:hover {
+    color: var(--accent);
+  }
+}

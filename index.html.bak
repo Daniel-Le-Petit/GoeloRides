@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr" class="site-retheme">
 <head>
-  <link rel="stylesheet" href="goelo-modals.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Rejoins un groupe à ton rythme. Départ parking du Kasino à Saint-Quay-Portrieux — sorties vélo été 2026.">
@@ -24,11 +23,10 @@
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lato:wght@400;700&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lato:wght@400;700&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="site-retheme.css">
-  <link rel="stylesheet" href="css/pages/home.css">
   <style>
     :root {
       --ocean: #0d1820;
@@ -4393,93 +4391,147 @@
 
   <div class="app-shell">
     <main class="app-main app-main--home" id="main-content" role="main">
-  <!-- ── HEADER NAV ── -->
-  <header class="gr-header" id="accueil" role="banner">
-    <a href="index.html" class="gr-header-logo" aria-label="GoëloRides — Accueil">
-      <span class="gr-header-logo-main">GOËLO</span>
-      <span class="gr-header-logo-sub">RIDES</span>
-    </a>
-    <nav>
-      <ul class="gr-nav">
-        <li><a href="sorties.html" style="color:#fff;">Sorties</a></li>
-        <li><a href="groupes.html" style="color:#fff;">Groupes</a></li>
-      </ul>
-    </nav>
-    <a href="#" class="gr-header-connect" data-goelo-auth-trigger>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
-      Se connecter
-    </a>
-    <button class="gr-header-burger" aria-label="Menu" type="button">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
+  <header class="home-landing" id="accueil" role="banner">
+    <div class="home-landing-visual">
+      <img
+        src="assets/hero-accueil.png"
+        alt="Mer turquoise et côte verte sous un ciel clair"
+        width="546"
+        height="580"
+        loading="eager"
+        decoding="async"
+        fetchpriority="high">
+    </div>
+    <div class="home-landing-scrim" aria-hidden="true"></div>
+    <div class="home-landing-inner">
+      <h1 class="visually-hidden">GoëloRides — Sorties vélo à Saint-Quay-Portrieux</h1>
+      <div class="home-landing-topbar">
+        <p class="home-landing-topbar-loc">Saint-Quay-Portrieux <span class="home-landing-topbar-dot" aria-hidden="true">·</span> Côte du Goëlo</p>
+        <div class="home-landing-topbar-actions">
+          <span class="home-landing-topbar-season">Été 2026</span>
+          <div class="goelo-auth-home-slot" data-goelo-auth-home></div>
+        </div>
+      </div>
+      <div class="home-landing-bike-motif" role="img" aria-label="Illustration : piste en couleurs, petits arbres et quatre cyclistes sur la côte">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 472 56" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="home-landing-road" x1="0" y1="42" x2="472" y2="42" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff" />
+              <stop offset="30%" stop-color="#22c55e" />
+              <stop offset="62%" stop-color="#3b82f6" />
+              <stop offset="100%" stop-color="#ef4444" />
+            </linearGradient>
+          </defs>
+          <path
+            class="home-landing-bike-horizon"
+            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S392 34 472 40"
+            stroke="url(#home-landing-road)"
+            stroke-width="2.35"
+            stroke-linecap="round" />
+          <path
+            class="home-landing-bike-horizon-accent"
+            d="M0 45 C48 26 96 50 152 32 S264 18 324 38 S392 34 472 40"
+            stroke="url(#home-landing-road)"
+            stroke-opacity="0.42"
+            stroke-width="1.05"
+            stroke-linecap="round"
+            transform="translate(0 1.5)" />
+          <g class="home-landing-bike-tree" aria-hidden="true">
+            <line x1="112" y1="44" x2="112" y2="37" stroke="rgba(34, 55, 45, 0.55)" stroke-width="1.25" stroke-linecap="round" />
+            <path
+              d="M112 37 L107 40.5 L112 33.5 L117 40.5 Z"
+              fill="rgba(34, 197, 94, 0.42)"
+              stroke="rgba(255, 255, 255, 0.35)"
+              stroke-width="0.85"
+              stroke-linejoin="round" />
+          </g>
+          <g class="home-landing-bike-tree" aria-hidden="true">
+            <line x1="242" y1="44" x2="242" y2="36.5" stroke="rgba(34, 55, 45, 0.55)" stroke-width="1.25" stroke-linecap="round" />
+            <path
+              d="M242 36.5 L236.5 40.5 L242 32.5 L247.5 40.5 Z"
+              fill="rgba(59, 130, 246, 0.38)"
+              stroke="rgba(255, 255, 255, 0.32)"
+              stroke-width="0.85"
+              stroke-linejoin="round" />
+          </g>
+          <g class="home-landing-bike-tree" aria-hidden="true">
+            <line x1="378" y1="44" x2="378" y2="37" stroke="rgba(55, 34, 34, 0.5)" stroke-width="1.25" stroke-linecap="round" />
+            <path
+              d="M378 37 L373 40.5 L378 33.5 L383 40.5 Z"
+              fill="rgba(248, 113, 113, 0.4)"
+              stroke="rgba(255, 255, 255, 0.3)"
+              stroke-width="0.85"
+              stroke-linejoin="round" />
+          </g>
+          <g class="home-landing-bike--1" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M38 33 L26 33 M38 29 L28 29 M38 25 L30 25" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="50" cy="43" r="5.5" fill="none" />
+            <circle cx="66" cy="43" r="5.5" fill="none" />
+            <path d="M50 43 L55 29 L62 33 L66 43 M55 29 L58 23 M58 23 L61 21" fill="none" />
+          </g>
+          <g class="home-landing-bike--2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M168 26 L154 26 M168 22 L156 22 M168 18 L158 18" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="182" cy="36" r="6" fill="none" />
+            <circle cx="200" cy="36" r="6" fill="none" />
+            <path d="M182 36 L188 20 L196 25 L200 36 M188 20 L191 13 M191 13 L194 11" fill="none" />
+          </g>
+          <g class="home-landing-bike--3" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M302 33 L290 33 M302 29 L292 29 M302 25 L294 25" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="314" cy="43" r="5.5" fill="none" />
+            <circle cx="330" cy="43" r="5.5" fill="none" />
+            <path d="M314 43 L319 29 L326 33 L330 43 M319 29 L322 23 M322 23 L325 21" fill="none" />
+          </g>
+          <g class="home-landing-bike--4" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" transform="translate(128, 0)">
+            <path d="M302 33 L290 33 M302 29 L292 29 M302 25 L294 25" stroke-opacity="0.4" stroke-width="1.15" />
+            <circle cx="314" cy="43" r="5.5" fill="none" />
+            <circle cx="330" cy="43" r="5.5" fill="none" />
+            <path d="M314 43 L319 29 L326 33 L330 43 M319 29 L322 23 M322 23 L325 21" fill="none" />
+          </g>
+        </svg>
+      </div>
+      <div class="home-landing-brand-wrap">
+        <div class="home-brand home-brand--hero" lang="fr">
+          <span class="home-brand-go">Goëlo</span><span class="home-brand-rides">Rides</span>
+        </div>
+        <div class="home-brand-line" aria-hidden="true"></div>
+      </div>
+      <div class="home-landing-hero-stage">
+        <p class="home-landing-kicker" id="home-landing-lead">Tu es de passage ou du coin ?</p>
+        <h2 class="home-landing-display">
+          <span class="home-landing-display-l1">Rejoins un groupe</span>
+          <span class="home-landing-display-l2">à ton rythme</span>
+        </h2>
+        <div class="home-landing-message" role="region" aria-labelledby="home-landing-lead">
+          <p class="home-landing-body-text">Le point de rencontre de ceux qui aiment rouler sans pression — débutant·e, amateur·e ou confirmé·e.</p>
+          <p class="home-landing-body-text home-landing-body-philosophy">
+            Notre philosophie reste la même&nbsp;:
+            <span class="home-landing-philosophy-line">Partager la route, découvrir la côte, la campagne et créer des liens forts.</span>
+          </p>
+        </div>
+        <ul class="home-landing-values" aria-label="L’esprit Goëlo Rides">
+          <li>Pas d’adhésion</li>
+          <li>Pas de chronomètre</li>
+          <li>Rouler ensemble</li>
+        </ul>
+      </div>
+      <div class="home-landing-hero-ctas">
+        <a href="#groupes" class="btn-primary home-hero-groupes">Voir les groupes <span class="home-hero-arrow" aria-hidden="true">↓</span></a>
+        <a href="sorties.html" class="btn-ghost home-hero-sorties">Voir les sorties <span class="home-hero-arrow" aria-hidden="true">→</span></a>
+        <a href="infos-pratiques.html" class="home-hero-infos">Infos pratiques</a>
+      </div>
+    </div>
+    <div class="home-scroll-hint" aria-hidden="true">
+      <span class="home-scroll-hint-track"></span>
+      <span class="home-scroll-hint-label">Défiler</span>
+    </div>
   </header>
-
-  <!-- ── HERO ── -->
-  <section class="gr-hero">
-    <div class="gr-hero-bg">
-      <img src="assets/goeloRidesHomePage.jpg" alt="Cyclistes sur une route de la côte du Goëlo" width="1920" height="1080" loading="eager" fetchpriority="high" decoding="async">
-    </div>
-    <div class="gr-hero-content">
-      <h1 class="gr-hero-headline">Sorties vélo.<br>Esprit club.<br>Goëlo.</h1>
-      <p class="gr-hero-subtitle">Découvre, partage et participe aux plus belles sorties du Goëlo.</p>
-      <div class="gr-hero-ctas">
-      <a href="sorties.html" class="gr-btn gr-btn--accent" style="color:#fff;">
-  Explorer les sorties
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-      </a>
-      <a href="#" class="gr-btn gr-btn--ghost" data-goelo-auth-trigger style="color:#fff;">
-        Rejoindre en Team Rider
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-      </a>
-      </div>
-    </div>
-    <!-- Stats strip -->
-    <div class="gr-stats">
-      <div class="gr-stat">
-        <span class="gr-stat-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        </span>
-        <div>
-          <p class="gr-stat-title">Des sorties chaque semaine</p>
-          <p class="gr-stat-desc">Route, gravel, VTT, tous niveaux</p>
-        </div>
-      </div>
-      <div class="gr-stat">
-        <span class="gr-stat-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 1-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </span>
-        <div>
-          <p class="gr-stat-title">Une communauté passionnée</p>
-          <p class="gr-stat-desc">Clubs, riders et bénévoles</p>
-        </div>
-      </div>
-      <div class="gr-stat">
-        <span class="gr-stat-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </span>
-        <div>
-          <p class="gr-stat-title">Mode Team Rider</p>
-          <p class="gr-stat-desc">Organisez. Partagez. Inspirez.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── STICKY BANNER ── -->
-  <div class="gr-sticky-banner" id="gr-sticky-banner">
-    <p class="gr-sticky-banner-text"><strong>Mode Team Rider</strong> : organisez, modifiez et partagez vos sorties.</p>
-    <a href="#" class="gr-btn gr-btn--accent" data-goelo-auth-trigger style="font-size:0.8rem;padding:0.45rem 1rem;">Se connecter</a>
-    <button class="gr-sticky-banner-close" data-banner-close aria-label="Fermer la bannière" type="button">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
 
   <div id="goelo-site-updates-banner" class="goelo-site-updates-banner-root" hidden></div>
 
   <section id="groupes" aria-labelledby="groupes-heading">
     <div class="groupes-retheme-header">
       <p class="groupes-retheme-eyebrow">4 niveaux · 1 philosophie</p>
-      <h2 id="groupes-heading">Groupes</h2>
+      <h2 id="groupes-heading">Choisis ton groupe</h2>
       <p class="groupes-retheme-sub">Roule à ton rythme — on s’adapte à toi.</p>
     </div>
     <div class="groupes-retheme-grid">
@@ -5032,8 +5084,6 @@
     </div>
   </div>
 
-  <!-- Modales Team Rider / Connexion : injectées par js/auth.js (styles css/components.css) -->
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
@@ -5054,12 +5104,8 @@
   <script>window.GOELO_DEBUG = false;</script>
   <script src="goelo-debug-panel.js?v=1" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
-  <!-- script src="goelo-supabase-client.js" defer></script> -->
-  <!-- script src="goelo-routes-data.js" defer></script> -->
-  <!-- script src="goelo-gpx-utils.js" defer></script> -->
   <script src="goelo-auth.js" defer></script>
   <script src="goelo-ride-updates.js" defer></script>
   <script src="parcours.js" defer></script>
-  <script src="js/ui.js" defer></script>
 </body>
 </html>
