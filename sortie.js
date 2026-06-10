@@ -1,384 +1,31 @@
+/**
+ * Page « Sortie » — fiche détaillée d'une sortie.
+ *
+ * Shared utilities live in goelo-supabase-client.js, goelo-routes-data.js,
+ * and goelo-gpx-utils.js (loaded earlier via <script> tags).
+ */
 (function () {
-  const GPX_MAX_POINTS = 6000;
+  /* ── Import shared utilities from GoeloShared ── */
+  var S = window.GoeloShared;
 
-  const ROUTES_BUILTIN = [
-    {
-      id: "falaises",
-      thumbSrc: "assets/groupe-blanc-cyclistes.jpg",
-      file: "La Route des Falaises.gpx",
-      color: "#e8e8e8",
-      casingColor: "#4b5563",
-      name: "Groupe Blanc",
-      track: "La Route des Falaises",
-      pace: "15–18 km/h",
-      levelClass: "level-blanc",
-      levelLabel: "Découverte",
-      vibe: "Convivial",
-      shortDesc: "Falaises et villages côtiers · rythme tranquille",
-      depart: {
-        day: "7",
-        month: "JUILLET",
-        year: "2026",
-        weekday: "Mar",
-        dateLabel: "7 juillet 2026 · 8h30"
-      },
-      meetPlace: "Devant le Kasino",
-      cities: [
-        { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
-        { name: "Plouha", lat: 48.6728, lon: -2.903 },
-        { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
-        { name: "Binic", lat: 48.6077, lon: -2.8296 }
-      ]
-    },
-    {
-      id: "brehec",
-      thumbSrc: "assets/groupe-vert-cyclistes.png",
-      file: "Bréhec.gpx",
-      color: "#2e7d52",
-      casingColor: "#14532d",
-      name: "Groupe Vert",
-      track: "Vers Bréhec",
-      pace: "18–22 km/h",
-      levelClass: "level-vert",
-      levelLabel: "Intermédiaire",
-      vibe: "Convivial",
-      shortDesc: "Littoral et Bréhec · rythme régulier sans pression",
-      depart: {
-        day: "21",
-        month: "JUILLET",
-        year: "2026",
-        weekday: "Mar",
-        dateLabel: "21 juillet 2026 · 8h30"
-      },
-      meetPlace: "Devant le Kasino",
-      cities: [
-        { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
-        { name: "Plouha", lat: 48.6728, lon: -2.903 },
-        { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
-        { name: "Binic", lat: 48.6077, lon: -2.8296 }
-      ]
-    },
-    {
-      id: "boucle",
-      thumbSrc: "assets/groupe-bleu-cyclistes.png",
-      file: "La Grande Boucle du Goëlo.gpx",
-      color: "#2563eb",
-      name: "Groupe Bleu",
-      track: "La Grande Boucle du Goëlo",
-      pace: "22–26 km/h",
-      levelClass: "level-bleu",
-      levelLabel: "Confirmé",
-      vibe: "Rouleur",
-      shortDesc: "Grande boucle du Goëlo · parcours long et soutenu",
-      depart: {
-        day: "14",
-        month: "JUILLET",
-        year: "2026",
-        weekday: "Mar",
-        dateLabel: "14 juillet 2026 · 8h30"
-      },
-      meetPlace: "Devant le Kasino",
-      cities: [
-        { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true },
-        { name: "Lantic", lat: 48.5976, lon: -2.899 },
-        { name: "Plélo", lat: 48.5333, lon: -2.932 },
-        { name: "Goudelin", lat: 48.6025, lon: -3.0194 },
-        { name: "Pléguien", lat: 48.6218, lon: -2.9349 },
-        { name: "Binic", lat: 48.6077, lon: -2.8296 }
-      ]
-    }
-  ];
-
-  var serverHiddenBuiltinIds = [];
-
-  function mergeHiddenBuiltinIdsSet() {
-    const hide = {};
-    serverHiddenBuiltinIds.forEach(function (id) {
-      hide[String(id).trim()] = true;
-    });
-    if (
-      typeof window !== "undefined" &&
-      window.GOELO_SKIP_BUILTIN_IDS &&
-      Array.isArray(window.GOELO_SKIP_BUILTIN_IDS)
-    ) {
-      window.GOELO_SKIP_BUILTIN_IDS.forEach(function (id) {
-        hide[String(id).trim()] = true;
-      });
-    }
-    return hide;
-  }
-
-  function builtinsVisibleOnSite() {
-    const hide = mergeHiddenBuiltinIdsSet();
-    return ROUTES_BUILTIN.filter(function (r) {
-      return !hide[String(r.id)];
-    });
-  }
-
-  const DEFAULT_MEET_PLACE = "Devant le Kasino";
-  const LOCAL_SIGNUPS_KEY = "goeloRides_inscriptions_v1";
-
-  const FR_MONTHS = {
-    janvier: 1,
-    février: 2,
-    fevrier: 2,
-    mars: 3,
-    avril: 4,
-    mai: 5,
-    juin: 6,
-    juillet: 7,
-    août: 8,
-    aout: 8,
-    septembre: 9,
-    octobre: 10,
-    novembre: 11,
-    décembre: 12,
-    decembre: 12
-  };
-
-  const FR_MONTH_NAMES_UPPER = [
-    "",
-    "JANVIER",
-    "FÉVRIER",
-    "MARS",
-    "AVRIL",
-    "MAI",
-    "JUIN",
-    "JUILLET",
-    "AOÛT",
-    "SEPTEMBRE",
-    "OCTOBRE",
-    "NOVEMBRE",
-    "DÉCEMBRE"
-  ];
-
-  function normalizeMonthWordForDisplay(monthWord) {
-    const lower = String(monthWord || "")
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    const idx = FR_MONTHS[lower];
-    if (!idx) return String(monthWord || "").trim().toUpperCase();
-    return FR_MONTH_NAMES_UPPER[idx] || String(monthWord || "").trim().toUpperCase();
-  }
-
-  /** Ex. « 7 juillet 2026 · 8h30 » ou « 1er juillet 2026 » */
-  function parseFrenchDateLabelParts(label) {
-    const raw = String(label || "").trim();
-    if (!raw) return null;
-    const rx = /(\d{1,2})(?:er)?\s+([a-zéèêëàâùûôîïçA-ZÉÈÊËÀÂÙÛÔÎÏÇ]+)\s+(\d{4})/;
-    const m = raw.match(rx);
-    if (!m) return null;
-    const day = String(parseInt(m[1], 10));
-    const year = String(parseInt(m[3], 10));
-    const month = normalizeMonthWordForDisplay(m[2]);
-    if (!month) return null;
-    return { day: day, month: month, year: year };
-  }
-
-  function enrichDepartObject(depart, dateLabelFallback) {
-    const d =
-      depart && typeof depart === "object"
-        ? Object.assign({}, depart)
-        : { day: "", month: "", year: "", weekday: "", dateLabel: "" };
-    const label = String(d.dateLabel || dateLabelFallback || "").trim();
-    if (!d.dateLabel && label) d.dateLabel = label;
-    const hasDay = String(d.day || "").trim() !== "";
-    const hasMonth = String(d.month || "").trim() !== "";
-    if (hasDay && hasMonth) return d;
-    const p = parseFrenchDateLabelParts(label);
-    if (!p) return d;
-    if (!hasDay) d.day = p.day;
-    if (!hasMonth) d.month = p.month;
-    if (!String(d.year || "").trim()) d.year = p.year;
-    return d;
-  }
-
-  function normalizeApiKey(raw) {
-    let k = raw == null ? "" : String(raw).trim().replace(/\s/g, "");
-    if (k.indexOf("sb_publishedable_") === 0) {
-      console.warn("Goëlo : préfixe de clé Supabase à corriger (publishable).");
-    }
-    return k;
-  }
-
-  function getSupabaseConfig() {
-    const url =
-      typeof window !== "undefined"
-        ? String(window.GOELO_SUPABASE_URL || "")
-            .trim()
-            .replace(/\s/g, "")
-        : "";
-    const anonKey =
-      typeof window !== "undefined" ? normalizeApiKey(window.GOELO_SUPABASE_ANON_KEY) : "";
-    return { url: url, anonKey: anonKey };
-  }
-
-  function isSupabaseEnabled() {
-    const c = getSupabaseConfig();
-    return !!(c.url && c.anonKey);
-  }
-
-  /** Dernier échec transport / HTTP (codes 36–39). Réinitialisé à chaque appel RPC. */
-  var goeloLastRpcFailure = null;
-
-  function goeloFormatDbFailureAlert(code, httpStatus, fnName, failBody) {
-    if (code === 41) {
-      return (
-        "Impossible d’enregistrer dans la mémoire de ce navigateur (quota plein, navigation privée ou blocage).\n\n" +
-        "Erreur 41 — contacter l’administrateur ou réessaie après avoir libéré de l’espace."
-      );
-    }
-    if (
-      code === 37 &&
-      httpStatus === 400 &&
-      fnName === "signup_register" &&
-      failBody &&
-      (String(failBody).indexOf("PGRST202") !== -1 ||
-        String(failBody).toLowerCase().indexOf("could not find") !== -1 ||
-        String(failBody).indexOf("signup_register") !== -1 ||
-        (String(failBody).toLowerCase().indexOf("column") !== -1 &&
-          String(failBody).toLowerCase().indexOf("does not exist") !== -1))
-    ) {
-      const b = String(failBody);
-      return (
-        "Inscription impossible : la base Supabase du site n’est pas alignée avec le formulaire actuel (fonction RPC ou colonnes manquantes — HTTP 400).\n\n" +
-        "Pour l’administrateur : sur ce projet Supabase, exécuter dans l’ordre les migrations du dépôt :\n" +
-        "• supabase/migrations/20250623120000_signups_cyclist_level.sql\n" +
-        "• supabase/migrations/20250624120000_signups_participant_city.sql\n\n" +
-        "(ou `supabase db push` depuis la machine de développement), puis réessayer.\n\n" +
-        "Détail technique : " +
-        (b.length > 320 ? b.slice(0, 320) + "…" : b)
-      );
-    }
-    if (
-      code === 37 &&
-      httpStatus === 404 &&
-      (fnName === "sortie_comment_add" || fnName === "sortie_comment_list")
-    ) {
-      return (
-        "Fil de discussion indisponible : les fonctions « sortie_comment_list » et « sortie_comment_add » sont introuvables sur le projet Supabase (HTTP 404).\n\n" +
-        "Pour l’administrateur : exécuter le SQL du dépôt :\n" +
-        "• supabase/migrations/20250620120000_sortie_route_comments.sql\n\n" +
-        "Ensuite, pour rester aligné avec le site (inscriptions, visibilité, commentaires si sortie annulée…), enchaîner les migrations du dossier `supabase/migrations/` dans l’ordre des dates, au minimum jusqu’à `20250621130000_signup_waitlist_route_visibility.sql`.\n\n" +
-        "(Ou `supabase db push`.)"
-      );
-    }
-    var ref = "Erreur " + code;
-    if (httpStatus) ref += " (HTTP " + httpStatus + ")";
-    ref += " — contacter l’administrateur en communiquant ce code exact.";
-    return (
-      "La demande n’a pas pu être enregistrée sur le serveur de données (réseau, serveur occupé ou refus).\n\n" +
-      ref +
-      "\n\nRéessaie plus tard si la connexion semble instable."
-    );
-  }
-
-  async function supabaseRpc(fnName, payload) {
-    goeloLastRpcFailure = null;
-    const { url, anonKey } = getSupabaseConfig();
-    if (!url || !anonKey) return null;
-    if (url.indexOf("xxxxxxxx.supabase.co") !== -1) return null;
-    const base = url.replace(/\/?$/, "");
-    let res;
-    try {
-      res = await fetch(base + "/rest/v1/rpc/" + encodeURIComponent(fnName), {
-        method: "POST",
-        headers: {
-          apikey: anonKey,
-          Authorization: "Bearer " + anonKey,
-          "Content-Type": "application/json",
-          Prefer: "return=representation"
-        },
-        body: JSON.stringify(payload || {})
-      });
-    } catch (err) {
-      goeloLastRpcFailure = { code: 36, httpStatus: 0, fnName: fnName };
-      console.warn("Supabase RPC", fnName, err);
-      return null;
-    }
-    if (!res.ok) {
-      var errTxt = "";
-      try {
-        errTxt = await res.text();
-      } catch (e0) {
-        void e0;
-      }
-      goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName, body: errTxt };
-      console.warn("Supabase RPC", fnName, res.status, errTxt);
-      return null;
-    }
-    if (res.status === 204) {
-      goeloLastRpcFailure = { code: 38, httpStatus: res.status, fnName: fnName };
-      return null;
-    }
-    const ct = res.headers.get("content-type") || "";
-    if (!ct.includes("application/json")) {
-      goeloLastRpcFailure = { code: 38, httpStatus: res.status, fnName: fnName };
-      return null;
-    }
-    try {
-      return await res.json();
-    } catch (e) {
-      goeloLastRpcFailure = { code: 39, httpStatus: res.status, fnName: fnName };
-      return null;
-    }
-  }
-
-  function formatMinutesToHm(totalMin) {
-    const h = Math.floor(totalMin / 60);
-    const mm = totalMin % 60;
-    return String(h) + ":" + String(mm).padStart(2, "0");
-  }
-
-  /** « H:MM » seul → minutes ; plage « 2:30 - 3:00 » (tiret – ou —) → minutes = moyenne, hm = libellé normalisé. */
-  function parseSingleHmFragment(frag) {
-    const m = String(frag || "")
-      .trim()
-      .match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
-    if (!m) return null;
-    const hh = parseInt(m[1], 10);
-    const mm = parseInt(m[2], 10);
-    if (!Number.isFinite(hh) || !Number.isFinite(mm) || mm < 0 || mm > 59 || hh > 36) return null;
-    const minutes = hh * 60 + mm;
-    if (minutes <= 0) return null;
-    return { minutes: minutes, hm: formatMinutesToHm(minutes) };
-  }
-
-  /** Saisie admin : minutes entières ou « H:MM » ou « H:MM - H:MM » → { minutes, hm, isRange? } ou null. */
-  function parseDurationInputToStore(raw) {
-    const s = String(raw || "").trim();
-    if (!s) return null;
-    if (/^\d+$/.test(s)) {
-      const n = parseInt(s, 10);
-      if (!Number.isFinite(n) || n <= 0 || n > 36 * 60) return null;
-      return { minutes: n, hm: formatMinutesToHm(n) };
-    }
-    const rm = s.match(
-      /^(\d{1,2}\s*:\s*\d{1,2})\s*[-–—]\s*(\d{1,2}\s*:\s*\d{1,2})$/
-    );
-    if (rm) {
-      const a = parseSingleHmFragment(rm[1]);
-      const b = parseSingleHmFragment(rm[2]);
-      if (!a || !b) return null;
-      if (b.minutes < a.minutes) return null;
-      if (b.minutes === a.minutes) {
-        return { minutes: a.minutes, hm: a.hm };
-      }
-      const avg = Math.round((a.minutes + b.minutes) / 2);
-      return {
-        minutes: avg,
-        hm: a.hm + " - " + b.hm,
-        isRange: true,
-        minMinutes: a.minutes,
-        maxMinutes: b.minutes
-      };
-    }
-    const one = parseSingleHmFragment(s);
-    if (one) return { minutes: one.minutes, hm: one.hm };
-    return null;
-  }
+  var ROUTES_BUILTIN        = S.ROUTES_BUILTIN;
+  var DEFAULT_MEET_PLACE     = S.DEFAULT_MEET_PLACE;
+  var LOCAL_SIGNUPS_KEY      = S.LOCAL_SIGNUPS_KEY;
+  var FR_MONTHS              = S.FR_MONTHS;
+  var FR_MONTH_NAMES_UPPER   = S.FR_MONTH_NAMES_UPPER;
+  var isSupabaseEnabled      = S.isSupabaseEnabled;
+  var supabaseRpc            = S.supabaseRpc;
+  var enrichDepartObject     = S.enrichDepartObject;
+  var builtinsVisibleOnSite  = S.builtinsVisibleOnSite;
+  var dbRowToRoute           = S.dbRowToRoute;
+  var normalizeRoutesListRows = S.normalizeRoutesListRows;
+  var loadRouteProfile       = S.loadRouteProfile;
+  var loadGpxTrack           = S.loadGpxTrack;
+  var goeloFormatDbFailureAlert = S.goeloFormatDbFailureAlert;
+  var parseDurationInputToStore = S.parseDurationInputToStore;
+  var formatMinutesToHm      = S.formatMinutesToHm;
+  var normalizeMonthWordForDisplay = S.normalizeMonthWordForDisplay;
+  var parseRouteFrontConfig  = S.parseRouteFrontConfig;
 
   function routeEffectiveDurationMinutes(route) {
     let min =
@@ -441,128 +88,6 @@
     return "≈ " + formatMinutesToHm(min);
   }
 
-  function parseRouteFrontConfig(raw) {
-    if (raw == null) return {};
-    if (typeof raw === "string") {
-      try {
-        const p = JSON.parse(raw);
-        return p && typeof p === "object" && !Array.isArray(p) ? p : {};
-      } catch (err) {
-        void err;
-        return {};
-      }
-    }
-    if (typeof raw === "object" && !Array.isArray(raw)) return raw;
-    return {};
-  }
-
-  function dbRowToRoute(row) {
-    const fc = parseRouteFrontConfig(row && row.front_config);
-    return {
-      id: row.id,
-      raw_front_config: row != null ? row.front_config : null,
-      file: String(fc.file || "").trim(),
-      embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : undefined,
-      raceType: fc.raceType || "",
-      coverImageDataUrl: typeof fc.coverImageDataUrl === "string" ? fc.coverImageDataUrl : "",
-      coverImageUrl: typeof fc.coverImageUrl === "string" ? String(fc.coverImageUrl).trim() : "",
-      thumbSrc: typeof fc.thumbSrc === "string" ? String(fc.thumbSrc).trim() : "",
-      color: fc.color || "#3d8b8b",
-      casingColor: fc.casingColor || "#2d6b6b",
-      name: row.group_label || "Sortie",
-      track: row.track_name,
-      pace: row.pace_label || "—",
-      levelClass: fc.levelClass || "level-bleu",
-      levelLabel: fc.levelLabel || (row.group_label || "—"),
-      vibe: fc.vibe || "",
-      shortDesc: fc.shortDesc || "",
-      rideLeader:
-        typeof fc.rideLeader === "string" && fc.rideLeader.trim()
-          ? fc.rideLeader.trim()
-          : typeof fc.ride_leader === "string" && fc.ride_leader.trim()
-            ? fc.ride_leader.trim()
-            : "",
-      depart: enrichDepartObject(
-        fc.depart && typeof fc.depart === "object"
-          ? fc.depart
-          : {
-              day: "",
-              month: "",
-              year: "2026",
-              weekday: "",
-              dateLabel: String(fc.dateLabel || row.track_name || "")
-            },
-        String(fc.dateLabel || "").trim()
-      ),
-      meetPlace:
-        typeof fc.meetPlace === "string" && fc.meetPlace.trim()
-          ? fc.meetPlace.trim()
-          : typeof fc.meet_place === "string" && fc.meet_place.trim()
-            ? fc.meet_place.trim()
-            : DEFAULT_MEET_PLACE,
-      meetPlaceDetail:
-        typeof fc.meetPlaceDetail === "string" && fc.meetPlaceDetail.trim()
-          ? fc.meetPlaceDetail.trim()
-          : typeof fc.meet_place_detail === "string" && fc.meet_place_detail.trim()
-            ? fc.meet_place_detail.trim()
-            : "",
-      estimatedDurationHm:
-        typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
-          ? String(fc.estimatedDurationHm).trim()
-          : typeof fc.estimated_duration_hm === "string" && fc.estimated_duration_hm.trim()
-            ? String(fc.estimated_duration_hm).trim()
-            : "",
-      estimatedDurationMinutes: (function () {
-        const nRaw = fc.estimatedDurationMinutes != null ? fc.estimatedDurationMinutes : fc.estimated_duration_minutes;
-        if (typeof nRaw === "number" && Number.isFinite(nRaw)) {
-          return Math.max(0, Math.round(nRaw));
-        }
-        if (typeof nRaw === "string" && /^\d+$/.test(String(nRaw).trim())) {
-          const n = parseInt(String(nRaw).trim(), 10);
-          if (Number.isFinite(n) && n > 0) return Math.min(n, 36 * 60);
-        }
-        const hmStr =
-          typeof fc.estimatedDurationHm === "string" && fc.estimatedDurationHm.trim()
-            ? fc.estimatedDurationHm.trim()
-            : typeof fc.estimated_duration_hm === "string" && fc.estimated_duration_hm.trim()
-              ? fc.estimated_duration_hm.trim()
-              : "";
-        if (hmStr) {
-          const p = parseDurationInputToStore(hmStr);
-          return p ? p.minutes : null;
-        }
-        return null;
-      })(),
-      maxParticipants: (function () {
-        const raw =
-          fc.maxParticipants != null
-            ? fc.maxParticipants
-            : fc.max_participants != null
-              ? fc.max_participants
-              : null;
-        if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) return Math.round(raw);
-        if (typeof raw === "string" && String(raw).trim()) {
-          const n = Math.max(0, parseInt(String(raw).replace(/\D/g, ""), 10) || 0);
-          return n > 0 ? n : null;
-        }
-        return null;
-      })(),
-      sortieStatus: typeof fc.sortieStatus === "string" && fc.sortieStatus.trim() ? fc.sortieStatus.trim() : "open",
-      visibility: typeof fc.visibility === "string" && fc.visibility.trim() ? fc.visibility.trim() : "public",
-      rideDateIso:
-        typeof fc.rideDateIso === "string" && /^\d{4}-\d{2}-\d{2}$/.test(String(fc.rideDateIso).trim())
-          ? String(fc.rideDateIso).trim()
-          : "",
-      rideTime:
-        typeof fc.rideTime === "string" && /^\d{2}:\d{2}$/.test(String(fc.rideTime).trim())
-          ? String(fc.rideTime).trim()
-          : "",
-      cities: Array.isArray(fc.cities) && fc.cities.length
-        ? fc.cities
-        : [{ name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true }],
-      routeKind: row.route_kind || "custom"
-    };
-  }
 
   async function fetchCustomRoutesFromSupabase() {
     if (!isSupabaseEnabled()) return [];
@@ -581,164 +106,6 @@
     return out;
   }
 
-  function haversine(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const p = Math.PI / 180;
-    const a =
-      Math.pow(Math.sin((lat2 - lat1) * p / 2), 2) +
-      Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.pow(Math.sin((lon2 - lon1) * p / 2), 2);
-    return 2 * R * Math.asin(Math.sqrt(a));
-  }
-
-  function parseGpxTrack(xmlText) {
-    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
-    if (doc.querySelector("parsererror")) return [];
-    const points = [];
-    const nodes = doc.getElementsByTagName("*");
-    for (let i = 0; i < nodes.length; i++) {
-      const el = nodes[i];
-      const tag = el.localName || el.nodeName.split(":").pop();
-      if (tag !== "trkpt" && tag !== "rtept") continue;
-      const lat = parseFloat(el.getAttribute("lat"));
-      const lon = parseFloat(el.getAttribute("lon"));
-      if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
-      let ele = null;
-      for (let c = el.firstElementChild; c; c = c.nextElementSibling) {
-        const n = c.localName || c.nodeName.split(":").pop();
-        if (n === "ele" && c.textContent) {
-          const v = parseFloat(c.textContent.trim());
-          if (!Number.isNaN(v)) ele = v;
-          break;
-        }
-      }
-      if (ele !== null) points.push({ lat: lat, lon: lon, ele: ele });
-      else points.push({ lat: lat, lon: lon });
-    }
-    return points;
-  }
-
-  function fillElevationGaps(points) {
-    const n = points.length;
-    if (!n) return [];
-    const hasAny = points.some(function (p) {
-      return typeof p.ele === "number" && !Number.isNaN(p.ele);
-    });
-    if (!hasAny) {
-      return points.map(function (p) {
-        return { lat: p.lat, lon: p.lon };
-      });
-    }
-    const out = points.map(function (p) {
-      return {
-        lat: p.lat,
-        lon: p.lon,
-        ele: typeof p.ele === "number" && !Number.isNaN(p.ele) ? p.ele : null
-      };
-    });
-    let first = -1;
-    let last = -1;
-    for (let i = 0; i < n; i++) {
-      if (out[i].ele !== null) {
-        if (first < 0) first = i;
-        last = i;
-      }
-    }
-    if (first < 0) {
-      return out.map(function (p) {
-        return { lat: p.lat, lon: p.lon };
-      });
-    }
-    for (let i = 0; i < first; i++) out[i].ele = out[first].ele;
-    for (let i = last + 1; i < n; i++) out[i].ele = out[last].ele;
-    let i = first;
-    while (i < last) {
-      let j = i + 1;
-      while (j <= last && out[j].ele === null) j++;
-      if (j > last) break;
-      const e0 = out[i].ele;
-      const e1 = out[j].ele;
-      const steps = j - i;
-      for (let k = 1; k < steps; k++) {
-        out[i + k].ele = e0 + (e1 - e0) * (k / steps);
-      }
-      i = j;
-    }
-    return out;
-  }
-
-  function simplifyTrack(points, maxPoints) {
-    if (points.length <= maxPoints) return points.slice();
-    const step = Math.ceil(points.length / maxPoints);
-    const out = [points[0]];
-    for (let i = step; i < points.length - 1; i += step) out.push(points[i]);
-    out.push(points[points.length - 1]);
-    return out;
-  }
-
-  function computeElevationGainM(points) {
-    if (!points || points.length < 2) return null;
-    let gain = 0;
-    let any = false;
-    for (let i = 1; i < points.length; i++) {
-      const e0 = points[i - 1].ele;
-      const e1 = points[i].ele;
-      if (typeof e0 !== "number" || typeof e1 !== "number" || Number.isNaN(e0) || Number.isNaN(e1)) continue;
-      any = true;
-      const d = e1 - e0;
-      if (d > 0) gain += d;
-    }
-    return any ? Math.round(gain) : null;
-  }
-
-  function buildTrack(points) {
-    const filled = fillElevationGaps(points);
-    let distM = 0;
-    for (let i = 1; i < filled.length; i++) {
-      distM += haversine(filled[i - 1].lat, filled[i - 1].lon, filled[i].lat, filled[i].lon);
-    }
-    return {
-      points: filled,
-      totalKm: distM / 1000,
-      elevGainM: computeElevationGainM(filled)
-    };
-  }
-
-  function deserializeEmbeddedPointRow(r) {
-    if (!Array.isArray(r) || r.length < 2) return null;
-    const lat = r[0];
-    const lon = r[1];
-    const ele = r.length > 2 && r[2] != null && !Number.isNaN(Number(r[2])) ? Number(r[2]) : undefined;
-    return { lat: lat, lon: lon, ele: ele };
-  }
-
-  function profileFromEmbeddedRows(rows) {
-    if (!rows || !rows.length) return null;
-    const pts = rows.map(deserializeEmbeddedPointRow).filter(Boolean);
-    if (pts.length < 2) return null;
-    return buildTrack(pts);
-  }
-
-  async function loadGpxTrack(url) {
-    try {
-      const res = await fetch(encodeURI(url));
-      if (!res.ok) return null;
-      const pts = simplifyTrack(parseGpxTrack(await res.text()), GPX_MAX_POINTS);
-      return pts.length ? buildTrack(pts) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  async function loadRouteProfile(cfg) {
-    const emb = cfg && cfg.embeddedPoints;
-    if (emb && Array.isArray(emb) && emb.length >= 2) {
-      const prof = profileFromEmbeddedRows(emb);
-      if (prof && prof.points && prof.points.length) return prof;
-    }
-    const file = cfg && cfg.file != null ? String(cfg.file).trim() : "";
-    if (file) return loadGpxTrack(file);
-    return null;
-  }
   function formatKm(km) {
     return km.toFixed(1).replace(".", ",") + " km";
   }
@@ -1325,7 +692,7 @@
           window.alert("Inscription sur invitation uniquement — contacte l’organisation.");
           return { ok: false, error: "invitation_only" };
         }
-        var fail = goeloLastRpcFailure;
+        var fail = S.goeloLastRpcFailure;
         var code = fail ? fail.code : 40;
         window.alert(
           goeloFormatDbFailureAlert(code, fail && fail.httpStatus, fail && fail.fnName, fail && fail.body)
@@ -1379,7 +746,7 @@
       var data = await supabaseRpc("signup_unregister", { p_route_id: route.id, p_email: e });
       if (Array.isArray(data)) data = data[0];
       if (!(data && data.ok)) {
-        var failU = goeloLastRpcFailure;
+        var failU = S.goeloLastRpcFailure;
         var codeU = failU ? failU.code : 40;
         window.alert(
           goeloFormatDbFailureAlert(codeU, failU && failU.httpStatus, failU && failU.fnName, failU && failU.body)
@@ -1862,7 +1229,7 @@
       if (statusEl) {
         statusEl.hidden = false;
         statusEl.dataset.sortieHadError = "1";
-        const fail = goeloLastRpcFailure;
+        const fail = S.goeloLastRpcFailure;
         if (fail && fail.httpStatus === 404 && fail.fnName === "sortie_comment_list") {
           statusEl.textContent =
             "Fil indisponible : migration SQL « sortie_route_comments » non appliquée sur Supabase (HTTP 404) — voir supabase/SUPABASE.md.";
@@ -1963,13 +1330,13 @@
         } else if (err === "invalid_pseudo" || err === "invalid_body") {
           window.alert("Pseudo ou message invalide. Vérifie les longueurs autorisées.");
         } else {
-          const code = goeloLastRpcFailure && goeloLastRpcFailure.code ? goeloLastRpcFailure.code : 37;
+          const code = S.goeloLastRpcFailure && S.goeloLastRpcFailure.code ? S.goeloLastRpcFailure.code : 37;
           window.alert(
             goeloFormatDbFailureAlert(
               code,
-              goeloLastRpcFailure && goeloLastRpcFailure.httpStatus,
-              goeloLastRpcFailure && goeloLastRpcFailure.fnName,
-              goeloLastRpcFailure && goeloLastRpcFailure.body
+              S.goeloLastRpcFailure && S.goeloLastRpcFailure.httpStatus,
+              S.goeloLastRpcFailure && S.goeloLastRpcFailure.fnName,
+              S.goeloLastRpcFailure && S.goeloLastRpcFailure.body
             )
           );
         }
@@ -2533,11 +1900,11 @@
 
     if (isSupabaseEnabled()) {
       const hid = await supabaseRpc("goelo_hidden_builtin_ids", {});
-      serverHiddenBuiltinIds = Array.isArray(hid)
+      S.serverHiddenBuiltinIds = Array.isArray(hid)
         ? hid.map(function (x) { return String(x).trim(); }).filter(Boolean)
         : [];
     } else {
-      serverHiddenBuiltinIds = [];
+      S.serverHiddenBuiltinIds = [];
     }
     const extra = await fetchCustomRoutesFromSupabase();
     const merged = builtinsVisibleOnSite().concat(extra);
