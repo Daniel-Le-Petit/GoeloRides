@@ -303,7 +303,7 @@
       try {
         errTxt = await res.text();
       } catch (e0) {
-        void e0;
+        console.warn("[GoëloRides] Supabase RPC", fnName, ": impossible de lire le corps d'erreur.", e0 && e0.message ? e0.message : e0);
       }
       goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName, body: errTxt };
       console.warn("Supabase RPC", fnName, res.status, errTxt);
@@ -322,6 +322,7 @@
       return await res.json();
     } catch (e) {
       goeloLastRpcFailure = { code: 39, httpStatus: res.status, fnName: fnName };
+      console.warn("[GoëloRides] Supabase RPC", fnName, ": réponse JSON invalide.", e && e.message ? e.message : e);
       return null;
     }
   }
@@ -724,7 +725,8 @@
       if (!res.ok) return null;
       const pts = simplifyTrack(parseGpxTrack(await res.text()), GPX_MAX_POINTS);
       return pts.length ? buildTrack(pts) : null;
-    } catch {
+    } catch (err) {
+      console.warn("[GoëloRides] loadGpxTrack :", url, err && err.message ? err.message : err);
       return null;
     }
   }
