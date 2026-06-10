@@ -79,7 +79,7 @@
                 })
               ]);
             } catch (optErr) {
-              void optErr;
+              console.warn("[GoëloRides] optIn (banner fallback) :", optErr && optErr.message ? optErr.message : optErr);
             }
           }
           return { ok: true, permission: "granted" };

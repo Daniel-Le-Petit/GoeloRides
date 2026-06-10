@@ -301,7 +301,7 @@
         void e;
       }
     } catch (err) {
-      void err;
+      console.warn("[GoëloRides] refreshSessionPseudo : échec réseau ou lecture.", err && err.message ? err.message : err);
     } finally {
       pseudoUserFetch.inFlight = false;
       pseudoUserFetch.completedForToken = token;
@@ -375,14 +375,14 @@
         body: JSON.stringify(bodyObj || {})
       });
     } catch (err) {
-      void err;
+      console.warn("[GoëloRides] authFetch", path, ": réseau ou CORS.", err && err.message ? err.message : err);
       return { ok: false, message: "Réseau indisponible ou CORS bloqué." };
     }
     var j;
     try {
       j = await res.json();
     } catch (e) {
-      void e;
+      console.warn("[GoëloRides] authFetch", path, ": réponse JSON illisible (HTTP " + res.status + ").", e && e.message ? e.message : e);
       return { ok: false, message: "Réponse illisible (HTTP " + res.status + ")." };
     }
     if (!res.ok) {
@@ -414,14 +414,14 @@
         body: JSON.stringify({ data: dataPatch || {} })
       });
     } catch (err) {
-      void err;
+      console.warn("[GoëloRides] authUserPutMetadata : réseau.", err && err.message ? err.message : err);
       return { ok: false, message: "Réseau indisponible." };
     }
     var j;
     try {
       j = await res.json();
     } catch (e) {
-      void e;
+      console.warn("[GoëloRides] authUserPutMetadata : réponse JSON illisible.", e && e.message ? e.message : e);
       return { ok: false, message: "Réponse illisible." };
     }
     if (!res.ok) {
@@ -534,7 +534,7 @@
         signal: ctrl ? ctrl.signal : undefined
       });
     } catch (err) {
-      void err;
+      console.warn("[GoëloRides] tryRefreshSession : réseau.", err && err.message ? err.message : err);
       if (timer) clearTimeout(timer);
       return;
     }
@@ -543,7 +543,7 @@
     try {
       body = await res.json();
     } catch (e) {
-      void e;
+      console.warn("[GoëloRides] tryRefreshSession : réponse JSON illisible — session effacée.", e && e.message ? e.message : e);
       clearSession();
       return;
     }

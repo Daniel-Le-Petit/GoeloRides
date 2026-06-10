@@ -337,7 +337,7 @@
         if (onOk) onOk();
       } else if (onErr) onErr();
     } catch (e) {
-      void e;
+      console.warn("[GoëloRides] fallbackCopy :", e && e.message ? e.message : e);
       if (onErr) onErr();
     }
     document.body.removeChild(ta);

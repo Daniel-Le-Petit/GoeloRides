@@ -222,14 +222,14 @@
             body: JSON.stringify({ email: email, password: password })
           });
         } catch (err) {
-          void err;
+          console.warn("[GoëloRides] admin login : réseau ou CORS.", err && err.message ? err.message : err);
           return { ok: false, message: "Réseau indisponible ou CORS bloqué." };
         }
         let body;
         try {
           body = await res.json();
         } catch (e) {
-          void e;
+          console.warn("[GoëloRides] admin login : réponse JSON illisible.", e && e.message ? e.message : e);
           return { ok: false, message: "Réponse du serveur illisible." };
         }
         if (!res.ok) {
@@ -344,7 +344,7 @@
           try {
             errTxt = await res.text();
           } catch (eRead) {
-            void eRead;
+            console.warn("[GoëloRides] Supabase RPC", fnName, ": impossible de lire le corps d'erreur.", eRead && eRead.message ? eRead.message : eRead);
           }
           goeloLastRpcFailure = { code: 37, httpStatus: res.status, fnName: fnName, body: errTxt };
           console.warn("Supabase RPC", fnName, res.status, errTxt);
@@ -3470,7 +3470,7 @@
               else loadedRoutesCache.push(fresh);
             }
           } catch (err) {
-            void err;
+            console.warn("[GoëloRides] fetchFreshCustomRouteForEdit :", err && err.message ? err.message : err);
           } finally {
             if (btnEl) btnEl.disabled = false;
           }
@@ -3677,7 +3677,7 @@
                   cancelled: true
                 });
               } catch (err) {
-                void err;
+                console.warn("[GoëloRides] showNewRouteAfterSaveOverlay (annulation) :", err && err.message ? err.message : err);
                 window.alert(
                   data && data.kind === "builtin_hidden"
                     ? "Parcours intégré masqué sur le site. La page va se recharger."
@@ -4043,7 +4043,7 @@
                   await navigator.clipboard.write([new ClipboardItem(itemDict)]);
                   window.alert("Flyer copié — colle-le dans ton réseau social.");
                 } catch (err) {
-                  void err;
+                  console.warn("[GoëloRides] Copie flyer presse-papiers :", err && err.message ? err.message : err);
                   window.alert(
                     "Impossible de copier le flyer dans le presse-papiers. Utilise « Télécharger (JPEG) » puis importe le fichier dans ton appli (souvent plus fiable)."
                   );
@@ -4598,7 +4598,8 @@
           if (!res.ok) return null;
           const pts = simplifyTrack(parseGpxTrack(await res.text()), GPX_MAX_POINTS);
           return pts.length ? buildTrack(pts) : null;
-        } catch {
+        } catch (err) {
+          console.warn("[GoëloRides] loadGpxTrack :", url, err && err.message ? err.message : err);
           return null;
         }
       }

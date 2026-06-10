@@ -367,7 +367,7 @@
           try {
             await raceTimeout(OneSignalSlow.User.PushSubscription.optIn(), 20000, "optin_timeout");
           } catch (optErr) {
-            void optErr;
+            console.warn("[GoëloRides] OneSignal optIn (flux lent) :", optErr && optErr.message ? optErr.message : optErr);
           }
         }
         return { ok: true, permission: "granted" };
@@ -392,7 +392,7 @@
           try {
             await raceTimeout(O.User.PushSubscription.optIn(), 20000, "optin_timeout");
           } catch (optErr2) {
-            void optErr2;
+            console.warn("[GoëloRides] OneSignal optIn (arrière-plan) :", optErr2 && optErr2.message ? optErr2.message : optErr2);
           }
         }
       } catch (bgErr) {
