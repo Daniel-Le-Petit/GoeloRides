@@ -1,0 +1,36 @@
+Tu es un développeur vanilla HTML/CSS/JS.
+Je te partage une maquette. Reproduis EXACTEMENT ce que tu vois.
+
+PROJET : GoëloRides — site statique + Supabase, PAS de framework.
+
+FICHIERS À MODIFIER : index.html + css/pages/home.css
+
+CE QUE JE VEUX :
+Regarde la maquette, section "1. ACCUEIL (HOMEPAGE)" en haut à gauche.
+Reproduis exactement :
+- Le header avec logo GOËLO RIDES + navigation (Sorties, Groupes, Clubs,
+  Parcours, Actualités) + bouton "Se connecter"
+- Le hero : photo de fond (assets/hero-accueil.png), overlay sombre,
+  headline "Roulez ensemble. Partagez plus que des kilomètres." avec
+  "kilomètres" en vert acide #C8F135, sous-titre, 2 boutons
+  ("Explorer les sorties" et "Rejoindre en Team Rider")
+- La bannière sticky en bas : fond sombre, texte "Mode Team Rider :
+  organisez, modifiez et partagez vos sorties." + bouton "Se connecter"
+  + croix pour fermer
+- Les 3 icônes/stats sous le hero (sorties chaque jour / communauté
+  locale / Mode Team Rider)
+
+AUSSI : regarde la version MOBILE dans la maquette (le téléphone au centre
+de l'image 1). Le layout doit être identique en responsive.
+
+DESIGN TOKENS :
+--color-bg: #0D0D0D
+--color-surface: #1A1A1A
+--color-accent: #C8F135
+--font-display: 'Barlow Condensed', sans-serif
+--font-body: 'Inter', sans-serif
+
+RÈGLES :
+- Zéro JS inline dans le HTML
+- La bannière sticky est gérée dans js/ui.js (fermeture au clic sur la croix)
+- Code complet, rien à compléter moi-même

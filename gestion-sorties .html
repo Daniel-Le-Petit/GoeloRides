@@ -387,23 +387,39 @@ body {
 .num-input:focus { border-color: var(--accent); }
 
 /* ── FLYER ── */
+.flyer-photo-pick {
+  border: 2px dashed var(--border-2); border-radius: var(--r);
+  padding: 2rem; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+}
+.flyer-photo-pick__icon { font-size: 2rem; opacity: 0.4; }
+.flyer-photo-pick__title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.flyer-photo-pick__sub { font-size: 0.75rem; color: var(--muted); }
+.flyer-photo-pick__btn { cursor: pointer; }
+
+.flyer-ready {
+  margin-top: 0.75rem;
+  background: var(--surface-2); border: 1px solid var(--border-2);
+  border-radius: var(--r-sm); padding: 0.65rem 1rem;
+}
+.flyer-ready__bar {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+}
+.flyer-ready__file {
+  font-size: 0.8rem; color: var(--accent); font-weight: 600;
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 .flyer-wrap {
+  margin-top: 1rem;
   display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
   align-items: start;
 }
 .flyer-preview-wrap {
   background: var(--surface-2); border: 1px solid var(--border-2);
   border-radius: var(--r); overflow: hidden; aspect-ratio: 4/5;
-  position: relative; display: flex; align-items: center; justify-content: center;
 }
-#flyer-canvas { width: 100%; height: 100%; object-fit: contain; }
-.flyer-placeholder {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0.5rem; color: var(--muted);
-}
-.flyer-placeholder__icon { font-size: 2.5rem; opacity: 0.3; }
-.flyer-placeholder__txt { font-size: 0.78rem; }
+#flyer-canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
 .flyer-actions { display: flex; flex-direction: column; gap: 0.75rem; }
 .flyer-actions .btn { width: 100%; justify-content: center; }
 
@@ -843,16 +859,34 @@ body {
 
       <div class="field">
         <label class="field__label">Flyer Instagram <span>(1080×1350)</span></label>
-        <div class="flyer-wrap">
+
+        <!-- Étape 1 : choisir la photo de fond -->
+        <div class="flyer-photo-pick" id="flyer-photo-pick">
+          <div class="flyer-photo-pick__icon">🏔</div>
+          <p class="flyer-photo-pick__title">Photo de fond du flyer</p>
+          <p class="flyer-photo-pick__sub">Choisis <code>goeloRidesHomePage.jpg</code> ou n'importe quelle photo</p>
+          <label class="btn btn--ghost flyer-photo-pick__btn">
+            📂 Choisir la photo
+            <input type="file" id="flyer-bg-input" accept="image/*" style="display:none" onchange="onFlyerBgSelected(this)">
+          </label>
+        </div>
+
+        <!-- Aperçu photo sélectionnée + bouton générer -->
+        <div class="flyer-ready" id="flyer-ready" style="display:none">
+          <div class="flyer-ready__bar">
+            <span class="flyer-ready__file" id="flyer-bg-name">—</span>
+            <button class="btn btn--ghost btn--sm" onclick="document.getElementById('flyer-bg-input').click()">Changer</button>
+            <button class="btn btn--accent" onclick="generateFlyer()">🎨 Générer le flyer</button>
+          </div>
+        </div>
+
+        <!-- Canvas + actions -->
+        <div class="flyer-wrap" id="flyer-wrap" style="display:none">
           <div class="flyer-preview-wrap">
             <canvas id="flyer-canvas" width="1080" height="1350"></canvas>
-            <div class="flyer-placeholder" id="flyer-placeholder">
-              <div class="flyer-placeholder__icon">🖼</div>
-              <div class="flyer-placeholder__txt">Génère le flyer ci-dessous</div>
-            </div>
           </div>
           <div class="flyer-actions">
-            <button class="btn btn--ghost" onclick="generateFlyer()">🎨 Générer le flyer</button>
+            <button class="btn btn--ghost" onclick="generateFlyer()">🔄 Regénérer</button>
             <button class="btn btn--ghost" onclick="copyFlyer()">📋 Copier l'image</button>
             <button class="btn btn--accent" onclick="downloadFlyer()">⬇ Télécharger PNG</button>
           </div>
@@ -1277,102 +1311,223 @@ function drawElevation(coords) {
 }
 
 /* ── FLYER GENERATOR ── */
+let _flyerBgImage = null;
+
+function onFlyerBgSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      _flyerBgImage = img;
+      document.getElementById('flyer-bg-name').textContent = file.name;
+      document.getElementById('flyer-photo-pick').style.display = 'none';
+      document.getElementById('flyer-ready').style.display = 'block';
+      showToast('Photo chargée — clique sur Générer le flyer');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function generateFlyer() {
-  const canvas  = document.getElementById('flyer-canvas');
-  const ctx     = canvas.getContext('2d');
+  if (!_flyerBgImage) {
+    showToast('Choisis d\'abord la photo de fond', 'error');
+    return;
+  }
+
+  const canvas = document.getElementById('flyer-canvas');
+  const ctx    = canvas.getContext('2d');
   const W = 1080, H = 1350;
   canvas.width = W; canvas.height = H;
 
-  const titre   = document.getElementById('titre').value || 'Sortie GoëloRides';
-  const date    = document.getElementById('date').value;
-  const dist    = document.getElementById('gpx-dist').textContent;
-  const dplus   = document.getElementById('gpx-dplus').textContent;
-  const groupe  = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
-  const groupeColors = { blanc: '#E5E7EB', vert: '#3A7D44', bleu: '#1E3A8A', rouge: '#8B1A1A' };
+  // Données du formulaire
+  const titre  = document.getElementById('titre').value || 'Sortie GoëloRides';
+  const date   = document.getElementById('date').value;
+  const dist   = document.getElementById('gpx-dist').textContent;
+  const dplus  = document.getElementById('gpx-dplus').textContent;
+  const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
+  const lieu   = document.getElementById('lieu').value || 'Saint-Quay-Portrieux';
+  const hrdv   = document.getElementById('heure-rdv').value || '08:00';
+  const niveau = document.getElementById('niveau');
+  const niveauLabel = niveau.options[niveau.selectedIndex]?.text || 'Tous niveaux';
 
-  // BG
-  ctx.fillStyle = '#0D0D0D';
+  const groupeColors = { blanc: '#9CA3AF', vert: '#3A7D44', bleu: '#1E3A8A', rouge: '#8B1A1A' };
+  const gc = groupeColors[groupe] || '#3A7D44';
+
+  // ── 1. PHOTO DE FOND (cover) ──────────────────────────────────
+  const imgRatio = _flyerBgImage.width / _flyerBgImage.height;
+  const canvRatio = W / H;
+  let sx = 0, sy = 0, sw = _flyerBgImage.width, sh = _flyerBgImage.height;
+  if (imgRatio > canvRatio) {
+    sw = _flyerBgImage.height * canvRatio;
+    sx = (_flyerBgImage.width - sw) / 2;
+  } else {
+    sh = _flyerBgImage.width / canvRatio;
+    sy = (_flyerBgImage.height - sh) / 2;
+  }
+  ctx.drawImage(_flyerBgImage, sx, sy, sw, sh, 0, 0, W, H);
+
+  // ── 2. OVERLAY GRADIENT sombre (bas → haut + haut) ───────────
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0,   'rgba(0,0,0,0.55)');
+  grad.addColorStop(0.3, 'rgba(0,0,0,0.15)');
+  grad.addColorStop(0.6, 'rgba(0,0,0,0.25)');
+  grad.addColorStop(1,   'rgba(0,0,0,0.80)');
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  // Accent stripe
-  ctx.fillStyle = groupeColors[groupe] || '#3A7D44';
-  ctx.fillRect(0, 0, 14, H);
+  // ── 3. BANDE VERTE EN HAUT (semi-transparente) ────────────────
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(0, 0, W, 130);
 
-  // Header band
-  ctx.fillStyle = '#1A1A1A';
-  ctx.fillRect(0, 0, W, 140);
-
-  // Logo
-  ctx.fillStyle = '#F0F0F0';
-  ctx.font = 'bold 52px "Arial Black", sans-serif';
-  ctx.fillText('GOËLO', 60, 85);
-  ctx.fillStyle = '#C8F135';
-  ctx.font = 'bold 28px Arial, sans-serif';
-  ctx.fillText('RIDES', 60, 118);
-
-  // Badge groupe
-  const gc = groupeColors[groupe];
-  ctx.fillStyle = gc;
-  roundRect(ctx, W - 220, 40, 160, 60, 10);
-  ctx.fill();
-  ctx.fillStyle = groupe === 'blanc' ? '#111' : '#fff';
-  ctx.font = 'bold 30px Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(groupe.toUpperCase(), W - 140, 79);
+  // ── 4. LOGO GOËLORIDES ───────────────────────────────────────
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '700 48px Arial, sans-serif';
   ctx.textAlign = 'left';
-
-  // Titre
-  ctx.fillStyle = '#F0F0F0';
-  ctx.font = 'bold 90px "Arial Black", sans-serif';
-  wrapText(ctx, titre, 60, 280, W - 120, 100);
-
-  // Accent line
+  // Icône vélo stylisée (chevron)
   ctx.fillStyle = '#C8F135';
-  ctx.fillRect(60, 380, 120, 6);
+  ctx.font = '700 40px Arial';
+  ctx.fillText('≋', 48, 88);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '700 42px Arial, sans-serif';
+  ctx.fillText('GOËLORIDES', 110, 88);
 
-  // Stats
-  const stats = [
-    { label: 'DISTANCE', val: dist !== '—' ? dist + ' km' : '—' },
-    { label: 'DÉNIVELÉ', val: dplus !== '—' ? dplus + ' m' : '—' },
-    { label: 'GROUPE',   val: groupe.toUpperCase() },
-  ];
-  stats.forEach((s, i) => {
-    const x = 60 + i * 340;
-    ctx.fillStyle = '#888';
-    ctx.font = '24px Arial, sans-serif';
-    ctx.fillText(s.label, x, 460);
-    ctx.fillStyle = '#F0F0F0';
-    ctx.font = 'bold 60px "Arial Black", sans-serif';
-    ctx.fillText(s.val, x, 530);
+  // ── 5. BADGE ROND EN HAUT À DROITE ───────────────────────────
+  const badgeCx = W - 110, badgeCy = 100, badgeR = 90;
+  ctx.beginPath();
+  ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(badgeCx, badgeCy, badgeR - 12, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2);
+  ctx.fill();
+  // Texte badge
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.font = '700 18px Arial';
+  ctx.fillText('COMMUNITY', badgeCx, badgeCy - 18);
+  ctx.font = '700 13px Arial';
+  ctx.fillText('▲', badgeCx, badgeCy + 2);
+  ctx.font = '700 18px Arial';
+  ctx.fillText('RIDE', badgeCx, badgeCy + 26);
+
+  // ── 6. GRAND TITRE (style flyer de référence) ────────────────
+  ctx.textAlign = 'left';
+  const titreUpper = titre.toUpperCase();
+  // Taille adaptée
+  let titreSize = 165;
+  ctx.font = `900 ${titreSize}px "Arial Black", Impact, sans-serif`;
+  while (ctx.measureText(titreUpper.split(' ')[0]).width > W - 60 && titreSize > 80) {
+    titreSize -= 5;
+    ctx.font = `900 ${titreSize}px "Arial Black", Impact, sans-serif`;
+  }
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 12;
+  const mots = titreUpper.split(' ');
+  let ty = 310;
+  mots.forEach(mot => {
+    ctx.fillText(mot, 40, ty);
+    ty += titreSize * 0.95;
+  });
+  ctx.shadowBlur = 0;
+
+  // ── 7. TAGLINE ───────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '400 30px Arial';
+  ctx.fillText('DISCOVER. CONNECT.', 48, ty + 10);
+
+  // ── 8. BLOCS D'INFOS (style référence) ──────────────────────
+  const infoY0 = ty + 70;
+  const infoLineH = 110;
+  const infos = [];
+
+  if (date) {
+    const d = new Date(date + 'T00:00:00');
+    const jour = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }).toUpperCase();
+    infos.push({ main: jour, sub: hrdv.replace(':', 'H') });
+  }
+  infos.push({ main: lieu.toUpperCase(), sub: null });
+  infos.push({ main: niveauLabel.toUpperCase(), sub: 'ALL LEVELS WELCOME' });
+
+  infos.forEach((info, i) => {
+    const y = infoY0 + i * infoLineH;
+
+    // Barre verte à gauche
+    ctx.fillStyle = '#C8F135';
+    ctx.fillRect(0, y - 36, 8, info.sub ? 75 : 55);
+
+    // Fond léger
+    ctx.fillStyle = 'rgba(0,0,0,0.40)';
+    ctx.fillRect(8, y - 38, 560, info.sub ? 78 : 58);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 46px "Arial Black", sans-serif';
+    ctx.fillText(info.main, 30, y);
+
+    if (info.sub) {
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '400 24px Arial';
+      ctx.fillText(info.sub, 30, y + 30);
+    }
   });
 
-  // Date
-  if (date) {
-    const d = new Date(date);
-    const fmt = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    ctx.fillStyle = '#C8F135';
-    ctx.font = 'bold 38px Arial, sans-serif';
-    ctx.fillText('📅  ' + fmt.charAt(0).toUpperCase() + fmt.slice(1), 60, 640);
-  }
+  // ── 9. STATS EN BAS (distance / D+ / groupe) ─────────────────
+  const statsY = H - 220;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, statsY - 10, W, 120);
 
-  // Départ
-  const lieu = document.getElementById('lieu').value || 'Saint-Quay-Portrieux';
-  ctx.fillStyle = '#888';
-  ctx.font = '28px Arial, sans-serif';
-  ctx.fillText('📍  ' + lieu, 60, 710);
-
-  // Bottom bar
-  ctx.fillStyle = '#C8F135';
-  ctx.fillRect(0, H - 140, W, 140);
-  ctx.fillStyle = '#000';
-  ctx.font = 'bold 44px "Arial Black", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('goelorides.onrender.com', W / 2, H - 78);
-  ctx.font = '26px Arial, sans-serif';
-  ctx.fillText('@goelo.rides', W / 2, H - 38);
+  const statsData = [
+    { icon: '≋', label: 'TOTAL', val: dist !== '—' ? dist + ' km' : '—' },
+    { icon: '◎', label: 'COMMUNITY PACE', val: groupe.toUpperCase() },
+    { icon: '△', label: 'NO RACE JUST RIDE', val: dplus !== '—' ? dplus + ' m' : '' },
+  ];
+  statsData.forEach((s, i) => {
+    const x = 80 + i * 340;
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '400 22px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.icon, x, statsY + 28);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 26px Arial';
+    ctx.fillText(s.label, x, statsY + 58);
+    if (s.val) {
+      ctx.fillStyle = '#C8F135';
+      ctx.font = '700 30px Arial';
+      ctx.fillText(s.val, x, statsY + 92);
+    }
+  });
   ctx.textAlign = 'left';
 
-  document.getElementById('flyer-placeholder').style.display = 'none';
+  // ── 10. FOOTER VERT ─────────────────────────────────────────
+  ctx.fillStyle = '#C8F135';
+  ctx.fillRect(0, H - 110, W, 110);
+  ctx.fillStyle = '#000000';
+  ctx.font = '700 44px "Arial Black", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('goelorides.onrender.com', W / 2, H - 62);
+  ctx.font = '400 26px Arial';
+  ctx.fillText('@goelo.rides', W / 2, H - 26);
+
+  // ── 11. HASHTAG COIN BAS DROITE ──────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '400 22px Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText('#GoëloRides', W - 30, H - 120);
+  ctx.textAlign = 'left';
+
+  // Afficher le résultat
+  document.getElementById('flyer-wrap').style.display = 'grid';
   showToast('Flyer généré !');
 }
 

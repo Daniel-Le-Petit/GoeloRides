@@ -1,0 +1,27 @@
+FICHIERS À MODIFIER : sorties.html + js/sorties.js + css/pages/sorties.css
+
+Regarde l'image, sections en bas : "2. PAGE DES SORTIES" et
+"POPUPS CONTEXTUELLES".
+
+CE QUE JE VOIS :
+- Header identique aux autres pages
+- Bouton "Créer une sortie" en haut à droite (réservé Team Riders)
+- Filtres horizontaux : Tous / Route / Gravel / VTT / À venir / Aujourd'hui
+  + champ recherche
+- Liste de sorties : chaque ligne = date (jour + numéro en grand) + titre +
+  stats (km, D+, type) + lieu + heure + avatars participants + bouton "Voir"
+- La colonne de droite grisée avec cadenas : "Réservé aux Team Riders /
+  Se connecter" — pour les actions (créer, modifier, annuler)
+
+POPUPS CONTEXTUELLES (images à droite) :
+3 types de popup à reproduire comme composants réutilisables :
+1. "Mode Team Rider requis" pour créer/publier une sortie
+2. "Mode Team Rider requis" pour modifier/annuler
+3. "Connexion requise" pour rejoindre en tant que Team Rider
+Chaque popup : icône cadenas + titre + texte + 2 boutons
+("Se connecter" + "Demander l'accès")
+Ces popups s'affichent au survol des boutons grisés (tooltip)
+ET au clic (modale centrée).
+
+DONNÉES : fetch depuis Supabase table "sorties", tri par date DESC.
+Les boutons d'action sont disabled + cadenas si !isTeamRider.
