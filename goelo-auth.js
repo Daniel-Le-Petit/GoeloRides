@@ -42,25 +42,9 @@
     '<path d="M12.5 23c1.6 1.4 5.4 1.4 7 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
     "</svg>";
 
-  function normalizeApiKey(raw) {
-    var k = raw == null ? "" : String(raw).trim().replace(/\s/g, "");
-    if (k.indexOf("sb_publishedable_") === 0) {
-      console.warn("Goëlo : préfixe de clé Supabase à corriger (publishable).");
-    }
-    return k;
-  }
-
-  function getSupabaseConfig() {
-    var url =
-      typeof window !== "undefined"
-        ? String(window.GOELO_SUPABASE_URL || "")
-            .trim()
-            .replace(/\s/g, "")
-        : "";
-    var anonKey =
-      typeof window !== "undefined" ? normalizeApiKey(window.GOELO_SUPABASE_ANON_KEY) : "";
-    return { url: url, anonKey: anonKey };
-  }
+  /* Supabase config → goelo-supabase-client.js */
+  var _S = window.GoeloShared;
+  var getSupabaseConfig = _S.getSupabaseConfig;
 
   function isConfigured() {
     var c = getSupabaseConfig();
