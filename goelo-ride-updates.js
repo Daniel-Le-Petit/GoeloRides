@@ -360,4 +360,16 @@
   window.goeloRideUpdatesBuildInstagramStoryText = buildInstagramStoryText;
   window.goeloRideUpdatesPickVisualIdea = pickVisualIdea;
   window.goeloRideUpdatesCopyToClipboard = copyTextToClipboard;
+
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+      goeloRideRouteSnapshot: goeloRideRouteSnapshot,
+      snapsEqual: snapsEqual,
+      diffSnapshotsToSummaryFr: diffSnapshotsToSummaryFr,
+      escapeHtml: escapeHtml,
+      pickVisualIdea: pickVisualIdea,
+      buildGroupAnnouncementText: buildGroupAnnouncementText,
+      buildInstagramStoryText: buildInstagramStoryText
+    };
+  }
 })();

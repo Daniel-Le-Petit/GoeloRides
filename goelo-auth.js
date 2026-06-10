@@ -915,4 +915,23 @@
     },
     getCyclistLevelFromSession: getCyclistLevelFromSession
   };
+
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+      normalizeApiKey: normalizeApiKey,
+      getSupabaseConfig: getSupabaseConfig,
+      isConfigured: isConfigured,
+      readSession: readSession,
+      writeSession: writeSession,
+      clearSession: clearSession,
+      parseJwtPayload: parseJwtPayload,
+      normalizeUserMetadata: normalizeUserMetadata,
+      extractPseudoFromMetadata: extractPseudoFromMetadata,
+      unwrapAuthUser: unwrapAuthUser,
+      pseudoFromSupabaseUser: pseudoFromSupabaseUser,
+      normalizeTokenResponse: normalizeTokenResponse,
+      persistFromAuthResponse: persistFromAuthResponse,
+      humanizeAuthError: humanizeAuthError
+    };
+  }
 })();
