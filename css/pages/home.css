@@ -281,11 +281,37 @@ html.site-retheme {
   margin-top: auto;
 }
 
+<!--
 .gr-stat {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0 1rem;
+}
+-->
+.gr-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+}
+
+.gr-stat--link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.gr-stat-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .gr-stat + .gr-stat {
@@ -320,6 +346,45 @@ html.site-retheme {
   font-size: 0.75rem;
   color: var(--color-muted);
   margin: 0;
+}
+
+.gr-social {
+  margin-top: 16px;
+  display: flex;
+}
+
+.gr-social-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  color: #1877F2;
+}
+
+.gr-stat--link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+
+  /* 🔥 clé du fix */
+  width: 100%;
+}
+
+.gr-stats .gr-stat,
+.gr-stats .gr-stat--link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gr-stat-icon {
+  width: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ── STICKY BANNER ──────────────────────────── */
@@ -430,4 +495,38 @@ html.site-retheme {
     font-size: 0.78rem;
     gap: 0.5rem;
   }
+
+  .icon {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+  }
+
+  .icon--instagram {
+    color: #E1306C;
+  }
+
+/* BASE ICON SYSTEM */
+.icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+  color: currentColor;
+}
+
+/* FACEBOOK */
+.icon--facebook {
+  color: #1877F2;
+}
+
+/* INSTAGRAM */
+.icon--instagram {
+  color: #E1306C;
+}
+
+/* GMAIL */
+.icon--gmail {
+  color: #EA4335;
+}
 }
