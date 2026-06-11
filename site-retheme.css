@@ -1,4 +1,4 @@
-/**
+ 40%/**
  * GoëloRides — refonte visuelle (HTML + CSS uniquement).
  * Activé avec <html class="site-retheme">. Ne renomme pas les id/classes métier.
  */
@@ -72,11 +72,11 @@ html.site-retheme body {
   font-family: var(--font-sans);
   color: var(--text);
   background-color: #0f1f28;
-  background-image: url("assets/goeloRidesHomePage.jpg");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  <!-- background-image: url("assets/goeloRidesHomePage.jpg"); -->
+  <!-- background-size: cover; -->
+  <!-- background-position: center; -->
+  <!-- background-attachment: fixed; -->
+  <!-- background-repeat: no-repeat; -->
   min-height: 100dvh;
 }
 
