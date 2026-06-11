@@ -2,30 +2,29 @@
 
 echo "🚴 Déploiement GoëloRides (MAIN ONLY MODE)"
 
-# 1. Toujours basculer sur main
-echo "🔀 Switching to main..."
-git checkout main
-
-# 2. Synchroniser avec GitHub
-echo "⬇️ Pull latest main..."
-git pull origin main
-
-# 3. Ajouter les changements
-echo "📦 Adding files..."
+# 1. Toujours rester sur branche actuelle pour commit
+echo "📦 Staging changes..."
 git add .
 
-# 4. Vérifier s’il y a quelque chose à commit
 if git diff --cached --quiet; then
-  echo "⚠️ Rien à déployer sur main"
+  echo "⚠️ Rien à déployer"
   exit 0
 fi
 
-# 5. Commit
-echo "💾 Committing..."
+echo "💾 Commit sur branche courante..."
 git commit -m "deploy"
 
-# 6. Push strict sur main
-echo "🚀 Pushing to main..."
+# 2. Sauvegarde sécurité (rebase simple vers main)
+echo "🔀 Switching to main..."
+git checkout main
+
+echo "⬇️ Sync main..."
+git pull origin main
+
+echo "🚀 Merge changes..."
+git merge test-good-version
+
+echo "🚀 Push main..."
 git push origin main
 
-echo "✅ Deploy terminé sur main"
+echo "✅ Deploy terminé"
