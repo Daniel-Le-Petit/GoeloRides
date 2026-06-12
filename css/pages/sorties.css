@@ -611,9 +611,9 @@ body {
   .so-actions {
     width: 100%;
     justify-content: flex-end;
-  }
+}
 
-  .goelo-mobile-tabbar {
+.goelo-mobile-tabbar {
     display: flex;
     position: fixed;
     bottom: 0;
@@ -624,7 +624,7 @@ body {
     z-index: 200;
   }
 
-  .goelo-mobile-tabbar a {
+.goelo-mobile-tabbar a {
     flex: 1;
     text-align: center;
     padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
