@@ -636,4 +636,55 @@ body {
 
   .goelo-mobile-tabbar a[aria-current],
   .goelo-mobile-tabbar a:hover { color: var(--accent); }
+
+.so-card-thumb {
+  width: 56px !important;
+  height: 44px !important;
+  max-width: 56px !important;
+  max-height: 44px !important;
+  object-fit: cover !important;
+}
+
+:root {
+  --thumb-w: 48px;
+  --thumb-h: 36px;
+}
+
+.so-card-thumb-wrap {
+  width: 56px !important;
+  height: 42px !important;
+  flex: 0 0 56px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.so-card-thumb-wrap {
+  flex: 0 0 auto !important;
+  align-self: flex-start !important;
+
+  width: 56px !important;
+  height: 42px !important;
+
+  max-width: 56px !important;
+  max-height: 42px !important;
+
+  overflow: hidden !important;
+}
+
+.so-card {
+  display: flex;
+  align-items: flex-start; /* IMPORTANT */
+}
+
+.so-card-thumb-wrap {
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  flex-basis: 56px !important;
+
+  width: 56px !important;
+  height: 42px !important;
+
+  overflow: hidden;
 }

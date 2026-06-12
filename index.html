@@ -4385,7 +4385,75 @@
         font-size: 0.7rem;
       }
     }
-  </style>
+  
+/* ── MOBILE DRAWER ──────────────────────────── */
+.gr-mobile-drawer {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex;
+}
+.gr-mobile-drawer[hidden] { display: none !important; }
+.gr-mobile-drawer__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(3px);
+}
+.gr-mobile-drawer__panel {
+  position: relative; z-index: 1;
+  width: min(280px, 85vw);
+  background: #1A1A1A;
+  border-right: 1px solid #2E2E2E;
+  display: flex; flex-direction: column;
+  padding: 1.5rem;
+  animation: drawerIn 0.25s ease;
+}
+@keyframes drawerIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.gr-mobile-drawer__head {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.gr-mobile-drawer__logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.2rem; font-weight: 800;
+  letter-spacing: 0.05em; color: #F0F0F0;
+}
+.gr-mobile-drawer__logo span { color: #C8F135; }
+.gr-mobile-drawer__close {
+  background: none; border: none;
+  color: #888; font-size: 1rem; cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.15s;
+}
+.gr-mobile-drawer__close:hover { color: #F0F0F0; }
+.gr-mobile-drawer__links {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 0;
+  flex: 1;
+}
+.gr-mobile-drawer__links li a {
+  display: block; padding: 0.85rem 0;
+  border-bottom: 1px solid #2E2E2E;
+  font-size: 1rem; font-weight: 600;
+  color: #F0F0F0; text-decoration: none;
+  transition: color 0.15s;
+}
+.gr-mobile-drawer__links li a:hover { color: #C8F135; }
+.gr-mobile-drawer__cta { margin-top: 2rem; }
+.gr-mobile-drawer__btn {
+  display: block; width: 100%; text-align: center;
+  background: #C8F135; color: #000;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.75rem; border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.gr-mobile-drawer__btn:hover { background: #9ABF20; }
+</style>
 </head>
 <body>
 
@@ -4411,7 +4479,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
       Se connecter
     </a>
-    <button class="gr-header-burger" aria-label="Menu" type="button">
+    <button class="gr-header-burger" aria-label="Menu" type="button" onclick="openMobileMenu()">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
   </header>
@@ -4515,31 +4583,15 @@
         <p class="gr-footer-legal-text">Initiative locale et indépendante.<br>Pas d’adhésion. Pas de fédération.<br>Pas de course. Juste du vélo.<br><br>Été 2026 · GoëloRides</p>
       </div>
     </div>
-    <div class="gr-footer-bottom">
-      <span class="gr-footer-bottom-copy">© 2026 GoëloRides — Saint-Quay-Portrieux</span>
-      <nav class="gr-footer-bottom-nav" aria-label="Liens du footer">
-        <a href="sorties.html">Sorties</a>
-        <a href="groupes.html">Groupes</a>
-        <a href="infos-pratiques.html">Infos pratiques</a>
-        <a href="gestion-sorties.html">Espace Team Rider</a>
-      </nav>
-    </div>
   </footer>
     </main>
   </div>
 
   <nav class="goelo-mobile-tabbar" role="navigation" aria-label="Navigation principale" data-no-swipe-nav>
-    <a href="index.html">Accueil</a>
+    <a href="index.html" aria-current="page">Accueil</a>
     <a href="groupes.html">Groupes</a>
-    <a href="sorties.html" aria-current="page">Sorties</a> 
+    <a href="sorties.html">Sorties</a>
     <a href="infos-pratiques.html">Infos</a>
-
- <!-- banniere du bas
-    <a href="index.html" class="goelo-mobile-tabbar__link" aria-current="page">Accueil</a>
-    <a href="groupes.html" class="goelo-mobile-tabbar__link">Groupes</a>
-    <a href="sorties.html" class="goelo-mobile-tabbar__link">Sorties</a>
-    <a href="infos-pratiques.html" class="goelo-mobile-tabbar__link">Infos</a>
--->
   </nav>
 
   <div class="signup-modal new-route-modal new-route-modal--goelo-app" id="new-route-modal" hidden>
@@ -4905,5 +4957,40 @@
   <script src="goelo-ride-updates.js" defer></script>
   <script src="parcours.js" defer></script>
   <script src="js/ui.js" defer></script>
+
+  <!-- ── MOBILE DRAWER ── -->
+  <div id="gr-mobile-drawer" class="gr-mobile-drawer" hidden aria-modal="true" role="dialog">
+    <div class="gr-mobile-drawer__backdrop" onclick="closeMobileMenu()"></div>
+    <nav class="gr-mobile-drawer__panel">
+      <div class="gr-mobile-drawer__head">
+        <span class="gr-mobile-drawer__logo">GOËLO<span>RIDES</span></span>
+        <button class="gr-mobile-drawer__close" onclick="closeMobileMenu()" aria-label="Fermer">✕</button>
+      </div>
+      <ul class="gr-mobile-drawer__links">
+        <li><a href="sorties.html">Sorties</a></li>
+        <li><a href="groupes.html">Groupes</a></li>
+        <li><a href="infos-pratiques.html">Infos pratiques</a></li>
+      </ul>
+      <div class="gr-mobile-drawer__cta">
+        <a href="#" class="gr-mobile-drawer__btn" data-goelo-auth-trigger>Se connecter</a>
+      </div>
+    </nav>
+  </div>
+  <script>
+  function openMobileMenu()  {
+    const d = document.getElementById('gr-mobile-drawer');
+    d.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobileMenu() {
+    const d = document.getElementById('gr-mobile-drawer');
+    d.setAttribute('hidden','');
+    document.body.style.overflow = '';
+  }
+  // Fermer avec Échap
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeMobileMenu();
+  });
+  </script>
 </body>
 </html>
