@@ -499,3 +499,29 @@ html.site-retheme {
   .gr-footer-bottom { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
   .gr-footer-bottom-nav { flex-wrap: wrap; gap: 0.75rem; }
 }
+
+.goelo-mobile-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+}
+
+.goelo-mobile-tabbar a {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.goelo-mobile-tabbar a[aria-current],
+.goelo-mobile-tabbar a:hover { color: var(--accent); }
+
+}
