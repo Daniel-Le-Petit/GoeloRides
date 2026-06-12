@@ -6,93 +6,7 @@
 (function () {
   const GPX_MAX_POINTS = 6000;
 
-  const ROUTES_BUILTIN = [
-    {
-      id: "falaises",
-      thumbSrc: "assets/groupe-blanc-cyclistes.jpg",
-      file: "La Route des Falaises.gpx",
-      color: "#e8e8e8",
-      casingColor: "#4b5563",
-      name: "Groupe Blanc",
-      track: "La Route des Falaises",
-      pace: "15–18 km/h",
-      levelClass: "level-blanc",
-      levelLabel: "Découverte",
-      vibe: "Convivial",
-      shortDesc: "Falaises et villages côtiers · rythme tranquille",
-      depart: {
-        day: "7",
-        month: "JUILLET",
-        year: "2026",
-        weekday: "Mar",
-        dateLabel: "7 juillet 2026 · 8h30"
-      },
-      meetPlace: "Devant le Kasino",
-      cities: [
-        { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
-        { name: "Plouha", lat: 48.6728, lon: -2.903 },
-        { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
-        { name: "Binic", lat: 48.6077, lon: -2.8296 }
-      ]
-    },
-    {
-      id: "brehec",
-      thumbSrc: "assets/groupe-vert-cyclistes.png",
-      file: "Bréhec.gpx",
-      color: "#2e7d52",
-      casingColor: "#14532d",
-      name: "Groupe Vert",
-      track: "Vers Bréhec",
-      pace: "18–22 km/h",
-      levelClass: "level-vert",
-      levelLabel: "Intermédiaire",
-      vibe: "Convivial",
-      shortDesc: "Littoral et Bréhec · rythme régulier sans pression",
-      depart: {
-        day: "21",
-        month: "JUILLET",
-        year: "2026",
-        weekday: "Mar",
-        dateLabel: "21 juillet 2026 · 8h30"
-      },
-      meetPlace: "Devant le Kasino",
-      cities: [
-        { name: "Saint-Quay-Portrieux", lat: 48.6539, lon: -2.8384, start: true },
-        { name: "Plouha", lat: 48.6728, lon: -2.903 },
-        { name: "Bréhec", lat: 48.7276, lon: -2.9489 },
-        { name: "Binic", lat: 48.6077, lon: -2.8296 }
-      ]
-    },
-    {
-      id: "boucle",
-      thumbSrc: "assets/groupe-bleu-cyclistes.png",
-      file: "La Grande Boucle du Goëlo.gpx",
-      color: "#2563eb",
-      name: "Groupe Bleu",
-      track: "La Grande Boucle du Goëlo",
-      pace: "22–26 km/h",
-      levelClass: "level-bleu",
-      levelLabel: "Confirmé",
-      vibe: "Rouleur",
-      shortDesc: "Grande boucle du Goëlo · parcours long et soutenu",
-      depart: {
-        day: "14",
-        month: "JUILLET",
-        year: "2026",
-        weekday: "Mar",
-        dateLabel: "14 juillet 2026 · 8h30"
-      },
-      meetPlace: "Devant le Kasino",
-      cities: [
-        { name: "Saint-Quay-Portrieux", lat: 48.6536, lon: -2.8353, start: true },
-        { name: "Lantic", lat: 48.5976, lon: -2.899 },
-        { name: "Plélo", lat: 48.5333, lon: -2.932 },
-        { name: "Goudelin", lat: 48.6025, lon: -3.0194 },
-        { name: "Pléguien", lat: 48.6218, lon: -2.9349 },
-        { name: "Binic", lat: 48.6077, lon: -2.8296 }
-      ]
-    }
-  ];
+  const ROUTES_BUILTIN = [];
 
   var serverHiddenBuiltinIds = [];
 
@@ -123,40 +37,8 @@
 
   const DEFAULT_MEET_PLACE = "Devant le Kasino";
   const LOCAL_SIGNUPS_KEY = "goeloRides_inscriptions_v1";
-
-  const FR_MONTHS = {
-    janvier: 1,
-    février: 2,
-    fevrier: 2,
-    mars: 3,
-    avril: 4,
-    mai: 5,
-    juin: 6,
-    juillet: 7,
-    août: 8,
-    aout: 8,
-    septembre: 9,
-    octobre: 10,
-    novembre: 11,
-    décembre: 12,
-    decembre: 12
-  };
-
-  const FR_MONTH_NAMES_UPPER = [
-    "",
-    "JANVIER",
-    "FÉVRIER",
-    "MARS",
-    "AVRIL",
-    "MAI",
-    "JUIN",
-    "JUILLET",
-    "AOÛT",
-    "SEPTEMBRE",
-    "OCTOBRE",
-    "NOVEMBRE",
-    "DÉCEMBRE"
-  ];
+  const FR_MONTHS = {};
+  const FR_MONTH_NAMES_UPPER = [];
 
   function normalizeMonthWordForDisplay(monthWord) {
     const lower = String(monthWord || "")
