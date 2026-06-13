@@ -708,14 +708,3 @@ body {
   height: 18px;
   font-size: 0.55rem;
 }
-
-.so-row {
-  display: flex;
-  align-items: center;
-}
-
-.so-card-right {
-  width: 60px;
-  display: flex;
-  justify-content: flex-end;
-}

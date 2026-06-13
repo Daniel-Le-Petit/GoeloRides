@@ -496,14 +496,13 @@
     " · " + (s.dplus != null ? s.dplus + " m D+" : "— m D+") +
     " · " + escapeHtml(typeLabel(s.type));
 
+  var THUMB = {
+    route: "assets/groupe-vert-cyclistes.png",
+    gravel: "assets/groupe-blanc-cyclistes.jpg",
+    vtt: "assets/groupe-bleu-cyclistes.png"
+  };
 
-// ── Image (désactivée par défaut) ──
-var thumbSrc = null;
-
-// optionnel : si un jour tu as une vraie image liée à la sortie
-if (s.imageUrl) {
-  thumbSrc = s.imageUrl;
-}
+  var thumbSrc = THUMB[s.type] || "assets/goeloRidesHomePage.jpg";
 
   var joinBtn = state.isTeamRider
     ? '<a class="so-act" href="' + escapeAttr(detailHref) + '">Rejoindre</a>'
@@ -516,10 +515,6 @@ if (s.imageUrl) {
       '<button type="button" class="so-act is-locked" data-lock="manage" aria-disabled="true">🔒 Annuler</button>';
 
   var peopleHtml = avatarsHtml(s.participants || []);
-
-var imgHtml = thumbSrc
-  ? '<img class="so-thumb" src="' + escapeAttr(thumbSrc) + '" loading="lazy">'
-  : '';
 
   return (
     '<li><article class="so-row' + (cancelled ? " is-cancelled" : "") + '">' +
@@ -547,13 +542,11 @@ var imgHtml = thumbSrc
         '</div>' +
       '</div>' +
 
-
-'<div class="so-card-right">' +
-      imgHtml +
-      '<a class="so-btn-voir" href="' + escapeAttr(detailHref) + '">Voir</a>' +
-      (peopleHtml ? '<div class="so-people">' + peopleHtml + '</div>' : '') +
-    '</div>' +
-
+      '<div class="so-card-right">' +
+        '<img class="so-thumb" src="' + escapeAttr(thumbSrc) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' +
+        '<a class="so-btn-voir" href="' + escapeAttr(detailHref) + '">Voir</a>' +
+        (peopleHtml ? '<div class="so-people">' + peopleHtml + '</div>' : '') +
+      '</div>' +
 
     '</article></li>'
   );
