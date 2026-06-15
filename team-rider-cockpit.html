@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>GoëloRides – Team Rider</title>
+
+ <link rel="stylesheet" href="css/pages/team-rider-cockpit.css">
+</head>
+
+<body>
+
+<div class="app">
+
+ <!-- PROGRESS -->
+ <div class="progress">
+   <div class="bar" id="bar"></div>
+ </div>
+
+ <!-- SCREEN -->
+ <main class="screen">
+
+   <!-- STEP 1 -->
+   <section class="step active">
+     <h1>Bienvenue 👋</h1>
+     <p class="subtitle">Commençons simplement</p>
+
+     <input placeholder="Prénom">
+     <input placeholder="Nom">
+     <input placeholder="Email">
+
+     <button class="primary" onclick="next()">Continuer</button>
+   </section>
+
+   <!-- STEP 2 -->
+   <section class="step">
+     <h1>Ton profil cycliste</h1>
+     <p class="subtitle">Choisis ce qui te ressemble</p>
+
+     <div class="grid">
+       <div class="tile">🚴 Route</div>
+       <div class="tile">🚵 Gravel</div>
+       <div class="tile">🌲 VTT</div>
+       <div class="tile">🌊 Cyclo</div>
+     </div>
+
+     <div class="segmented">
+       <button>Débutant</button>
+       <button>Intermédiaire</button>
+       <button class="active">Confirmé</button>
+     </div>
+
+     <button class="primary" onclick="next()">Continuer</button>
+   </section>
+
+   <!-- STEP 3 -->
+   <section class="step">
+     <h1>Dernière étape</h1>
+     <p class="subtitle">Pourquoi rejoindre la Team Rider ?</p>
+
+     <textarea placeholder="Exprime ta motivation..."></textarea>
+
+     <label class="checkbox">
+       <input type="checkbox">
+       J’accepte d’être contacté par GoëloRides
+     </label>
+
+     <button class="primary glow" onclick="submit()">Envoyer la candidature</button>
+   </section>
+
+ </main>
+
+ <!-- SUCCESS -->
+ <div class="success hidden" id="success">
+   <div class="card">
+     <div class="check">✓</div>
+     <h2>Candidature envoyée</h2>
+     <p>On revient vers toi très vite 🚴‍♂️</p>
+   </div>
+ </div>
+
+</div>
+
+<script src="js/team-rider-cockpit.js"></script>
+</body>
+</html>

@@ -1070,21 +1070,19 @@ function updateStatusBadge(val) {
   badge.textContent = map[val]?.[1] || val;
 }
 
-/* ── SAVE / PUBLISH ── */
 async function saveDraft() {
-  const dot = document.getElementById('save-dot');
+  const dot   = document.getElementById('save-dot');
   const label = document.getElementById('save-status');
   dot.classList.remove('saved');
   label.textContent = 'Sauvegarde…';
   try {
     const sb = await getSb();
-    const payload = buildPayload('brouillon');
-    const { error } = await sb.from('sorties').upsert(payload);
+    const { error } = await sb.rpc('route_create', buildPayload('brouillon'));
     if (error) throw error;
     dot.classList.add('saved');
     label.textContent = 'Sauvegardé ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     showToast('Brouillon sauvegardé');
-  } catch(e) {
+  } catch (e) {
     label.textContent = 'Erreur';
     showToast('Erreur : ' + e.message, 'error');
   }
@@ -1093,42 +1091,70 @@ async function saveDraft() {
 async function publishSortie() {
   const titre = document.getElementById('titre').value.trim();
   const date  = document.getElementById('date').value;
-  if (!titre || !date) {
-    showToast('Titre et date requis pour publier', 'error'); return;
-  }
+  if (!titre || !date) { showToast('Titre et date requis pour publier', 'error'); return; }
   try {
     const sb = await getSb();
-    const payload = buildPayload('publiee');
-    const { error } = await sb.from('sorties').upsert(payload);
+    const { error } = await sb.rpc('route_create', buildPayload('publiee'));
     if (error) throw error;
     document.getElementById('statut').value = 'publiee';
     updateStatusBadge('publiee');
     document.getElementById('save-dot').classList.add('saved');
     document.getElementById('save-status').textContent = 'Publié';
     showToast('🚀 Sortie publiée avec succès !');
-  } catch(e) {
+  } catch (e) {
     showToast('Erreur : ' + e.message, 'error');
   }
 }
 
+// REMPLACE buildPayload() dans gestion-sorties.html
+
 function buildPayload(statut) {
-  const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
-  const type   = document.querySelector('input[name="type"]:checked')?.value   || 'route';
+  const groupe  = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
+  const type    = document.querySelector('input[name="type"]:checked')?.value   || 'route';
+  const titre   = document.getElementById('titre').value.trim();
+  const date    = document.getElementById('date').value;
+  const hRdv    = document.getElementById('heure-rdv').value;
+  const hDepart = document.getElementById('heure-depart').value;
+  const lieu    = document.getElementById('lieu').value.trim();
+  const ville   = document.getElementById('ville').value.trim();
+  const cp      = document.getElementById('cp').value.trim();
+  const cap     = document.getElementById('capitaine').value.trim();
+  const niveau  = document.getElementById('niveau').value;
+  const maxP    = document.getElementById('illimite').checked
+                    ? null
+                    : parseInt(document.getElementById('num-participants').value);
+  const desc    = document.getElementById('rte-desc').innerHTML;
+
+  // group_label = "Groupe Vert — Route des Falaises" (affiché dans sorties.html)
+  const groupLabel = `Groupe ${groupe.charAt(0).toUpperCase() + groupe.slice(1)}`;
+
+  // pace_label selon groupe (affiché dans les cartes)
+  const pace = { blanc: '18–22 km/h', vert: '22–25 km/h', bleu: '25–30 km/h', rouge: '30+ km/h' };
+
+  // front_config : tout ce que sorties.js lit pour afficher la carte
+  const front_config = {
+    visibility:   statut === 'publiee' ? 'public' : 'draft',
+    sortieStatus: statut === 'annulee' ? 'cancelled' : 'open',
+    raceType:     type,
+    levelClass:   `level-${groupe}`,
+    rideDateIso:  date,
+    rideTime:     hDepart,
+    meetTime:     hRdv,
+    meetPlace:    lieu || 'Parking du Kasino',
+    city:         ville,
+    cp:           cp,
+    captain:      cap,
+    niveau:       niveau,
+    maxParticipants: maxP,
+    description:  desc,
+  };
+
   return {
-    titre:        document.getElementById('titre').value.trim(),
-    date_sortie:  document.getElementById('date').value,
-    heure_rdv:    document.getElementById('heure-rdv').value,
-    heure_depart: document.getElementById('heure-depart').value,
-    lieu_depart:  document.getElementById('lieu').value.trim(),
-    ville:        document.getElementById('ville').value.trim(),
-    cp:           document.getElementById('cp').value.trim(),
-    groupe,
-    type_sortie:  type,
-    capitaine:    document.getElementById('capitaine').value.trim(),
-    niveau:       document.getElementById('niveau').value,
-    participants_max: document.getElementById('illimite').checked ? null : parseInt(document.getElementById('num-participants').value),
-    statut,
-    description:  document.getElementById('rte-desc').innerHTML,
+    p_track_name:   titre,
+    p_group_label:  groupLabel,
+    p_pace_label:   pace[groupe] || '22–25 km/h',
+    p_front_config: front_config,
+    p_sort_order:   50,
   };
 }
 
