@@ -227,7 +227,7 @@ if (e.target.closest("#mtr-go-login")) {
       try {
         window.dispatchEvent(new CustomEvent("goelo:auth-success", { detail: res.data.user }));
         if (!res.error) {
-          window.location.href = "team_rider.html";
+          window.location.href = "team-rider.html";
         }
         else showError("Erreur inattendue. Réessaie.");
 
