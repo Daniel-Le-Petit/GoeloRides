@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>GoëloRides – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/pil.css" />
+</head>
+<body>
+  <div class="dashboard">
+    <header class="header">
+      <div class="brand">GoëloRides</div>
+      <div class="team-pill">🚴‍♂️ Team Ride</div>
+      <div class="user-avatar">Do</div>
+    </header>
+
+<nav class="top-nav">
+  <a href="pil.html">Dashboard</a>
+  <a href="participants.html">Participants</a>
+  <a href="rides.html">Sorties</a>
+  <a href="settings.html">Réglages</a>
+</nav>
+
+    <main class="main">
+      <!-- Actions rapides -->
+      <section class="card actions">
+        <div class="action primary">➕ Nouvelle sortie</div>
+        <div class="action">🖼️ Créer un flyer</div>
+        <div class="action">📢 Message urgence</div>
+        <div class="action">📅 Dimanche</div>
+      </section>
+
+      <!-- Prochaine sortie publiée -->
+      <section class="card next-ride">
+        <div class="ride-header">
+          <h2>Route des Falaises</h2>
+          <span class="badge green">Publié</span>
+        </div>
+        <div class="ride-meta">
+          <span>Dim 13 juillet 2026</span>
+          <span>RDV 08h30 – Départ 09h00</span>
+          <span>Parking du Kasino</span>
+        </div>
+        <div class="ride-stats">
+          <div class="stat">85 km</div>
+          <div class="stat">950 m D+</div>
+          <div class="stat badge green">Vert</div>
+        </div>
+        <div class="ride-participants">
+          <span>8 / 15 inscrits</span>
+          <div class="avatars">
+            <span>😀</span><span>🚴‍♀️</span><span>😎</span><span>🧢</span>
+          </div>
+          <span class="muted">7 places restantes</span>
+        </div>
+        <div class="ride-actions">
+          <button class="btn ghost">🔔 Notifier</button>
+          <button class="btn ghost">📤 Partager</button>
+          <button class="btn ghost">🖼️ Flyer</button>
+          <button class="btn ghost">❌ Annuler</button>
+        </div>
+      </section>
+
+      <!-- Checklist avant sortie -->
+      <section class="card checklist">
+        <h2>Checklist avant sortie</h2>
+        <ul class="checklist-list">
+          <li class="ok">📍 Route des Falaises</li>
+          <li class="ok">📍 Route vérifiée</li>
+          <li class="todo">🖼️ Flyer Instagram posté</li>
+          <li class="todo">✅ Participants confirmés</li>
+          <li class="urgent">💬 Message Messenger veille J‑1</li>
+          <li class="urgent">🌦️ Météo vérifiée</li>
+          <li class="after">📸 Sortie clôturée après la ride</li>
+        </ul>
+      </section>
+
+      <!-- Mes sorties -->
+      <section class="card rides-list">
+        <h2>Mes sorties</h2>
+        <div class="ride-item">
+          <span>13</span> Route des Falaises <span class="badge green">Publiée</span>
+        </div>
+        <div class="ride-item">
+          <span>21</span> Vers Bréhec <span class="badge green">Publiée</span>
+        </div>
+        <div class="ride-item">
+          <span>04</span> Grande Boucle du Goëlo <span class="badge orange">Brouillon</span>
+        </div>
+        <div class="ride-item">
+          <span>09</span> Cap Fréhel en Gravel <span class="badge red">Brouillon</span>
+        </div>
+      </section>
+
+      <!-- Messages urgence -->
+      <section class="card emergency">
+        <h2>Messages urgence</h2>
+        <div class="emergency-grid">
+          <div class="emergency-item">🚨 Retard départ</div>
+          <div class="emergency-item red">❌ Annulation</div>
+          <div class="emergency-item orange">⚠️ Changement RDV</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/pilapp.js"></script>
+  <script src="js/pildashboard.js"></script>
+</body>
+</html>
+

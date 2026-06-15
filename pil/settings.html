@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Réglages – GoëloRides</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/pil.css" />
+</head>
+
+<body>
+  <div class="dashboard">
+
+    <header class="header">
+      <div class="brand">GoëloRides</div>
+      <div class="team-pill">⚙️ Réglages</div>
+      <div class="user-avatar">Do</div>
+    </header>
+
+    <main class="main">
+
+      <section class="card">
+        <h2>Affichage</h2>
+
+        <form id="ui-settings-form" class="form-grid">
+
+          <div class="form-field">
+            <label>Couleur d’accent</label>
+            <input type="text" name="accent_color" placeholder="#a3c64b" />
+          </div>
+
+          <div class="form-field">
+            <label>Arrondi des cartes (px)</label>
+            <input type="number" name="card_radius" min="8" max="32" />
+          </div>
+
+          <button class="btn primary" type="submit">Enregistrer</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Groupes & rythme</h2>
+
+        <form id="groups-settings-form" class="form-grid">
+
+          <div class="form-field">
+            <label>Groupes</label>
+            <input type="text" name="group_labels" placeholder="White, Green, Blue, Red" />
+          </div>
+
+          <div class="form-field">
+            <label>Rythmes</label>
+            <input type="text" name="pace_presets" placeholder="22–24, 25–27" />
+          </div>
+
+          <button class="btn primary" type="submit">Enregistrer</button>
+        </form>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/pilapp.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>
+

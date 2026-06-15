@@ -156,14 +156,14 @@
         return;
       }
 
-      /* Modale 1 « Se connecter » → Modale 2 */
-      if (e.target.closest("#mtr-go-login")) {
-        closeModal("modal-teamrider");
-        setTimeout(function () {
-          openModal("modal-login");
-        }, 200);
-        return;
-      }
+/* Modale 1 « Se connecter » → Modale 2 */
+if (e.target.closest("#mtr-go-login")) {
+  closeModal("modal-teamrider");
+  setTimeout(function () {
+    openModal("modal-login");
+  }, 200);
+  return;
+}
 
       /* « Demander l'accès » (liens mailto) : fermer les modales, laisser le mailto partir */
       if (e.target.closest("#mtr-go-access") || e.target.closest("#ml-go-access")) {
@@ -226,12 +226,14 @@
       closeAllModals();
       try {
         window.dispatchEvent(new CustomEvent("goelo:auth-success", { detail: res.data.user }));
+        if (!res.error) {
+          window.location.href = "team_rider.html";
+        }
+        else showError("Erreur inattendue. Réessaie.");
+
       } catch (e) {
         void e;
       }
-      setTimeout(function () {
-        window.location.reload();
-      }, 200);
     } catch (err) {
       console.error(err);
       showError("Erreur inattendue. Réessaie.");

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Participants – GoëloRides</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/pil.css" />
+</head>
+
+<body>
+  <div class="dashboard">
+
+    <header class="header">
+      <div class="brand">GoëloRides</div>
+      <div class="team-pill">👥 Participants</div>
+      <div class="user-avatar">Do</div>
+    </header>
+
+    <main class="main">
+
+      <section class="card">
+        <h2>Choisir une sortie</h2>
+        <select id="participants-ride-select" class="form-select"></select>
+      </section>
+
+      <section class="card">
+        <h2>Liste des participants</h2>
+        <div id="participants-list" class="list"></div>
+      </section>
+
+      <section class="card">
+        <h2>Ajouter un participant</h2>
+
+        <form id="add-signup-form" class="form-grid">
+          <input type="hidden" name="route_id" id="signup-route-id" />
+
+          <div class="form-field">
+            <label>Pseudo</label>
+            <input type="text" name="pseudo" required />
+          </div>
+
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" name="email" required />
+          </div>
+
+          <div class="form-field">
+            <label>Ville</label>
+            <input type="text" name="participant_city" />
+          </div>
+
+          <div class="form-field">
+            <label>Niveau</label>
+
