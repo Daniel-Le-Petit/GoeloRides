@@ -1,35 +1,20 @@
-console.log("🔥 JS VERSION 2026-06-16 LOADED");
-window.__DEBUG_JS__ = true;
-
+<script>
 /* ── SUPABASE ── */
 window.GOELO_SUPABASE_URL      = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
 window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
 
 let _sb = null;
-
 async function getSb() {
   if (_sb) return _sb;
-
   if (!window.supabase?.createClient) {
     await new Promise((res, rej) => {
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-      s.onload = () => {
-        console.log("Supabase script loaded");
-        res();
-      };
-      s.onerror = rej;
+      s.onload = res; s.onerror = rej;
       document.head.appendChild(s);
     });
   }
-
-  console.log("window.supabase =", window.supabase);
-
-  _sb = window.supabase.createClient(
-    window.GOELO_SUPABASE_URL,
-    window.GOELO_SUPABASE_ANON_KEY
-  );
-
+  _sb = window.supabase.createClient(window.GOELO_SUPABASE_URL, window.GOELO_SUPABASE_ANON_KEY);
   return _sb;
 }
 
@@ -122,7 +107,6 @@ function updateStatusBadge(val) {
   badge.textContent = map[val]?.[1] || val;
 }
 
-
 async function saveDraft() {
   const dot   = document.getElementById('save-dot');
   const label = document.getElementById('save-status');
@@ -130,36 +114,12 @@ async function saveDraft() {
   label.textContent = 'Sauvegarde…';
   try {
     const sb = await getSb();
-    const payload = buildPayload('brouillon');
-    console.log("MODE:", window.mode);
-    console.log("PAYLOAD:", payload);
-    let result;
-    if (window.mode === 'edit' && window.routeId) {
-      result = await sb.rpc('route_update', {
-        p_route_id: window.routeId,
-        p_track_name: payload.p_track_name,
-        p_group_label: payload.p_group_label,
-        p_pace_label: payload.p_pace_label,
-        p_front_config: payload.p_front_config,
-        p_sort_order: payload.p_sort_order
-      });
-    } else {
-      result = await sb.rpc('route_create', payload);
-      if (result?.data?.route_id) {
-        window.routeId = result.data.route_id;
-        window.mode = 'edit';
-        console.log("NEW ROUTE ID:", window.routeId);
-      }
-    }
-
-    if (result.error) throw result.error;
+    const { error } = await sb.rpc('route_create', buildPayload('brouillon'));
+    if (error) throw error;
     dot.classList.add('saved');
-    label.textContent =
-      'Sauvegardé ' +
-      new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    label.textContent = 'Sauvegardé ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     showToast('Brouillon sauvegardé');
   } catch (e) {
-    console.error(e);
     label.textContent = 'Erreur';
     showToast('Erreur : ' + e.message, 'error');
   }
@@ -171,20 +131,7 @@ async function publishSortie() {
   if (!titre || !date) { showToast('Titre et date requis pour publier', 'error'); return; }
   try {
     const sb = await getSb();
-    const payload = buildPayload('publiee');
-    let result;
-    if (window.mode === 'edit') {
-      result = await sb.rpc('route_update', {
-      p_route_id: window.routeId,
-      p_track_name: payload.p_track_name,
-      p_group_label: payload.p_group_label,
-      p_pace_label: payload.p_pace_label,
-      p_front_config: payload.p_front_config,
-      p_sort_order: payload.p_sort_order
-    });
-    } else {
-      result = await sb.rpc('route_create', payload);
-    }
+    const { error } = await sb.rpc('route_create', buildPayload('publiee'));
     if (error) throw error;
     document.getElementById('statut').value = 'publiee';
     updateStatusBadge('publiee');
@@ -223,32 +170,28 @@ function buildPayload(statut) {
 
   // front_config : tout ce que sorties.js lit pour afficher la carte
   const front_config = {
-    visibility: statut === 'publiee' ? 'public' : 'draft',
-    sortieStatus: statut,
-    raceType: type,
-    levelClass: `level-${groupe}`,
-    rideDateIso: date,
-    rideTime: hDepart,
-    meetTime: hRdv,
-    meetPlace: lieu,
-    city: ville,
-    cp: cp,
-    captain: cap,
-    niveau: niveau,
+    visibility:   statut === 'publiee' ? 'public' : 'draft',
+    sortieStatus: statut === 'annulee' ? 'cancelled' : 'open',
+    raceType:     type,
+    levelClass:   `level-${groupe}`,
+    rideDateIso:  date,
+    rideTime:     hDepart,
+    meetTime:     hRdv,
+    meetPlace:    lieu || 'Parking du Kasino',
+    city:         ville,
+    cp:           cp,
+    captain:      cap,
+    niveau:       niveau,
     maxParticipants: maxP,
-    description: desc,
-
-    // 🔥 AJOUT IMPORTANT
-    embeddedPoints: window.currentEmbeddedPoints || fc?.embeddedPoints || [],
-    coverImageDataUrl: window.currentCoverImage || fc?.coverImageDataUrl || ""
+    description:  desc,
   };
 
   return {
     p_track_name:   titre,
     p_group_label:  groupLabel,
-    p_pace_label:   pace[groupe],
+    p_pace_label:   pace[groupe] || '22–25 km/h',
     p_front_config: front_config,
-    p_sort_order:   50
+    p_sort_order:   50,
   };
 }
 
@@ -287,7 +230,7 @@ zone.addEventListener('drop', e => {
 });
 
 function loadGpx(file) {
-  const status  = document.getElementById('px-status');
+  const status  = document.getElementById('gpx-status');
   const dot     = document.getElementById('gpx-dot');
   const fname   = document.getElementById('gpx-filename');
   const msg     = document.getElementById('gpx-msg');
@@ -319,9 +262,6 @@ function parseGpx(xml, filename) {
     lng: parseFloat(p.getAttribute('lon')),
     ele: parseFloat(p.querySelector('ele')?.textContent || 0),
   }));
-
-  // 🔥 STOCKAGE GLOBAL POUR SUPABASE
-  window.currentEmbeddedPoints = coords.map(c => [c.lat, c.lng]);
 
   // Distance totale
   let dist = 0;
@@ -730,64 +670,6 @@ function copyText(id) {
   navigator.clipboard.writeText(txt).then(() => showToast('Texte copié'));
 }
 
-async function loadRoute(routeId) {
-  const sb = await getSb();
-
-  const { data, error } = await sb
-    .from('routes')
-    .select('*')
-    .eq('id', routeId)
-    .single();
-
-  if (error) {
-    showToast(error.message, 'error');
-    return;
-  }
-
-  populateForm(data);
-}
-
-function populateForm(route) {
-
-  const fc = route.front_config || {};
-
-  document.getElementById('titre').value = route.track_name || '';
-  document.getElementById('date').value = fc.rideDateIso || '';
-  document.getElementById('heure-rdv').value = fc.rideTime || '';
-  document.getElementById('lieu').value = fc.meetPlace || '';
-  document.getElementById('ville').value = fc.city || '';
-  document.getElementById('cp').value = fc.cp || '';
-  document.getElementById('capitaine').value = fc.captain || '';
-
-  document.getElementById('rte-desc').innerHTML =
-    fc.description || fc.shortDesc || '';
-
-  updateStatusBadge(fc.status || 'brouillon');
-
-  // stats GPX
-  document.getElementById('gpx-dist').textContent =
-    fc.stats?.totalKm?.toFixed(1) || '—';
-
-  document.getElementById('gpx-dplus').textContent =
-    fc.stats?.elevGainM || '—';
-
-  // GPX preview visible
-  document.getElementById('gpx-status')?.classList.add('visible');
-
-  // carte
-  if (fc.embeddedPoints?.length) {
-    const coords = fc.embeddedPoints.map(p => ({
-      lat: p[0],
-      lng: p[1],
-      ele: 0
-    }));
-
-    initMap(coords);
-  }
-
-  updateProgress();
-}
-
 /* ── ESCAPE to close confirm ── */
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('confirm-cancel').classList.remove('open');
@@ -803,20 +685,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   nextSat.setDate(now.getDate() + daysUntilSat);
   document.getElementById('date').value = nextSat.toISOString().split('T')[0];
 
-  // ── PARAMS URL (UNE SEULE FOIS) ──
-  const params = new URLSearchParams(window.location.search);
-
-  window.routeId = params.get('id');
-  window.mode = params.get('mode') || 'create';
-
-  console.log("MODE =", window.mode);
-  console.log("ROUTE ID =", window.routeId);
-
-  // ── LOAD MODE EDIT ──
-  if (window.mode === 'edit' && window.routeId) {
-    await loadRoute(window.routeId);
-  }
-
   // Récupération utilisateur connecté
   try {
     const sb = await getSb();
@@ -829,3 +697,4 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   updateProgress();
 });
+</script>

@@ -8,3 +8,43 @@ Thumbs.db
 .cursor/
 .idea/
 .vscode/
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Node / npm (si tu ajoutes un jour un build) ---
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# --- Build / dist ---
+dist/
+build/
+.cache/
+.tmp/
+
+# --- Logs ---
+*.log
+logs/
+*.tmp
+
+# --- Env / secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- VS Code ---
+.vscode/
+.history/
+
+# --- Supabase local ---
+supabase/.branches
+supabase/.temp
+supabase/.config
+
+# --- Misc ---
+*.swp
+*.swo
+

@@ -55,6 +55,9 @@
           <div class="step-sub">Horaires, lieu</div>
         </div>
       </li>
+
+
+
       <li class="step-item" data-step="3" onclick="scrollToSection('s3')">
         <div class="step-icon">3</div>
         <div class="step-info">
@@ -442,21 +445,6 @@
 <!-- TOASTS -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<!-- Dans gestion-sorties.html, AVANT tous les autres scripts -->
-<script>
-  console.log("HTML CONFIG  TO BE LOADED?");
-  if (!window.GOELO_SUPABASE_URL) {
-    console.log("yes. HTML CONFIG LOADED");
-    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
-    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
-  }
-  else {
-    console.log("yes. HTML CONFIG LOADED");
-  }
-</script>
-
-<script src="js/newclaudegestion-route.js" defer></script>
-
-
+<script src="js/gestion-sorties.js" defer></script>
 </body>
 </html>
