@@ -1,8 +1,0 @@
-/* ═══════════════════════════════════════════════════════════════
-   goelo-modals.css — pont de compatibilité
-   Les styles des modales Team Rider / Connexion vivent désormais
-   dans css/components.css (logique : js/auth.js).
-   Ce fichier reste lié sur toutes les pages : il ré-importe la
-   feuille canonique pour ne pas devoir éditer chaque <head>.
-   ═══════════════════════════════════════════════════════════════ */
-@import url("css/components.css");
