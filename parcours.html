@@ -26,6 +26,9 @@
 </head>
 <body>
 
+  <div id="loading" style="display:none;">Chargement...</div>
+  <div id="error"></div>
+
   <!-- ── NAV (identique pages Sorties / Groupes) ── -->
   <nav class="gr-nav" role="navigation" aria-label="Navigation principale">
     <a href="index.html" class="gr-nav__logo">GOËLO<span>RIDES</span></a>
@@ -332,10 +335,27 @@
     <a href="infos-pratiques.html">Infos</a>
   </nav>
 
+  <script>
+  const MOCK_SORTIES = {
+    falaises: { id: "falaises", title: "Falaises" },
+    colline: { id: "colline", title: "Colline" }
+  };
+  </script>
+
+
   <!-- Supabase (mêmes variables que les autres pages — utilisé au raccordement) -->
   <script>
-    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
-    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    console.log("HTML CONFIG  TO BE LOADED?");
+  </script>
+
+  <!-- 1. Initialise Supabase UNE fois -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+  window.supabase = supabase.createClient(
+      "https://iqxyiwnjwcepfgngkzsm.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA"
+  );
   </script>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>

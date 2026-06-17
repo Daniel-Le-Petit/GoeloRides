@@ -75,21 +75,6 @@
     .btn-sm.accent:hover{opacity:.85}
     .btn-sm.danger{border-color:rgba(248,113,113,.3);color:var(--red)}
     .btn-sm.danger:hover{background:rgba(248,113,113,.08)}
-    /* CHECKLIST */
-    .checklist{background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-    .ci{display:flex;align-items:center;gap:10px;padding:.6rem 1rem;border-bottom:1px solid var(--border);transition:background .15s;cursor:default}
-    .ci:last-child{border:none}
-    .ci:hover{background:var(--s2)}
-    .cbox{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s}
-    .cbox.done{background:var(--accent);border-color:var(--accent)}
-    .cbox.done::after{content:'✓';font-size:.6rem;font-weight:700;color:#0a1a0a}
-    .clabel{font-size:.82rem;flex:1}
-    .clabel.done{color:var(--muted);text-decoration:line-through}
-    .ctag{font-size:.6rem;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0}
-    .tag-urgent{background:rgba(248,113,113,.12);color:var(--red)}
-    .tag-ok{background:rgba(74,222,128,.10);color:var(--green)}
-    .tag-pending{background:rgba(245,158,11,.10);color:var(--orange)}
-    .tag-after{background:rgba(136,136,136,.10);color:var(--muted)}
     /* URGENCE */
     .urgence-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .urgence-btn{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:.85rem;cursor:pointer;transition:border-color .15s;text-align:left}
@@ -167,16 +152,13 @@
     </button>
   </div>
 
-  <!-- CHECKLIST -->
-  <p class="slabel">Checklist avant sortie</p>
-  <div class="checklist" id="checklist-wrap"></div>
-
   <!-- MES SORTIES avec inscrits + bouton Modifier -->
   <p class="slabel">Mes sorties</p>
   <div class="tabs">
     <button class="stab active" onclick="filterSorties('all',this)">Toutes</button>
     <button class="stab" onclick="filterSorties('publiee',this)">Publiées</button>
     <button class="stab" onclick="filterSorties('brouillon',this)">Brouillons</button>
+    <button class="stab" onclick="filterSorties('mine',this)">Mes sorties</button>
   </div>
   <div id="sorties-list">
     <p style="font-size:.82rem;color:var(--muted)">Chargement…</p>
@@ -245,16 +227,6 @@ const URGENCE_MSGS = {
   meteo:     '🌧 GOËLORIDES — Météo\n\nSortie maintenue ✅\nAverses possibles — coupe-vent recommandé.\n\n⏰ Horaire inchangé',
   rdv:       '📍 GOËLORIDES — Changement RDV\n\n⚠️ Nouveau point de départ :\nParking de la plage du Châtelet\n(et non le Kasino)\n\n⏰ Horaire inchangé'
 };
-
-const CHECKLIST = [
-  {label:'Sortie créée sur le site',      tag:'ok',      done:true},
-  {label:'Post Facebook publié',           tag:'ok',      done:true},
-  {label:'Flyer Instagram posté',          tag:'pending', done:false},
-  {label:'Participants confirmés',         tag:'pending', done:false},
-  {label:'Message Messenger veille J-1',  tag:'urgent',  done:false},
-  {label:'Météo vérifiée',                tag:'urgent',  done:false},
-  {label:'Sortie clôturée après le ride', tag:'after',   done:false},
-];
 
 /* MOCK — remplacer par routes_list() + signup_list_all_names() en prod */
 const MOCK_SORTIES = [
@@ -342,6 +314,7 @@ function boot(rider) {
   document.getElementById('dashboard').style.display  = 'block';
 
   document.getElementById('user-name').textContent   = rider.pseudo;
+  document.getElementById('user-name').textContent   = rider.role;
   document.getElementById('user-avatar').textContent = initials(rider.pseudo);
 
   const badge = document.getElementById('role-badge');
@@ -350,35 +323,8 @@ function boot(rider) {
     badge.classList.add('is-admin');
   }
 
-  renderChecklist();
   renderSorties(rider.role);
   if (rider.role === 'admin') renderDemands();
-}
-
-function renderChecklist() {
-  const wrap = document.getElementById('checklist-wrap');
-  wrap.innerHTML = CHECKLIST.map((item, i) => `
-    <div class="ci">
-      <div class="cbox${item.done?' done':''}" onclick="toggleCheck(this,${i})" role="checkbox" aria-checked="${item.done}" aria-label="${item.label}"></div>
-      <span class="clabel${item.done?' done':''}" id="cl-${i}">${item.label}</span>
-      <span class="ctag tag-${item.done?'ok':item.tag}" id="ct-${i}">${item.done?'OK':({ok:'OK',pending:'À faire',urgent:'Urgent',after:'Après'}[item.tag])}</span>
-    </div>
-  `).join('');
-}
-
-function toggleCheck(box, i) {
-  const done = !box.classList.contains('done');
-  box.classList.toggle('done', done);
-  box.setAttribute('aria-checked', done);
-  const lbl = document.getElementById('cl-'+i);
-  const tag = document.getElementById('ct-'+i);
-  lbl.classList.toggle('done', done);
-  if (done) { tag.textContent='OK'; tag.className='ctag tag-ok'; }
-  else {
-    const t = CHECKLIST[i].tag;
-    tag.textContent = {ok:'OK',pending:'À faire',urgent:'Urgent',after:'Après'}[t];
-    tag.className = 'ctag tag-'+t;
-  }
 }
 
 let _currentFilter = 'all';

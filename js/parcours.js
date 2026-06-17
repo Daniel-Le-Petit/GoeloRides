@@ -13,25 +13,22 @@
 (function () {
   "use strict";
 
-  /* ════════════════════════════════════════════════════════════
-     Données mock
-     ════════════════════════════════════════════════════════════ */
+  let sortie = null;
+  let loadError = null;
 
-
-  /**
-   * Point d'entrée des données.
-   * Raccordement Supabase : remplacer par RPC `routes_list` (filtre id)
-   * + `signup_list_all_names` pour les participants.
-   */
-  function getSortieById(id) {
-    return MOCK_SORTIES[id] || MOCK_SORTIES.falaises;
-  }
 
   /* ════════════════════════════════════════════════════════════
      Helpers
      ════════════════════════════════════════════════════════════ */
 
   var AVATAR_COLORS = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD", "#86EFAC"];
+
+  function setLoading(isLoading) {
+    const el = document.getElementById("loading");
+    if (!el) return;
+
+    el.style.display = isLoading ? "block" : "none";
+  }
 
   function escapeHtml(s) {
     return String(s == null ? "" : s)
@@ -54,19 +51,26 @@
     return AVATAR_COLORS[(String(name).length + i) % AVATAR_COLORS.length];
   }
 
-  function frenchDateLabel(dateIso, time) {
-    var p = dateIso.split("-");
-    var hhmm = time.split(":");
-    var d = new Date(+p[0], +p[1] - 1, +p[2], +hhmm[0], +hhmm[1]);
-    var label = new Intl.DateTimeFormat("fr-FR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    }).format(d);
-    label = label.charAt(0).toUpperCase() + label.slice(1);
-    return label + " · " + hhmm[0] + "h" + hhmm[1];
-  }
+ function frenchDateLabel(dateIso, time) {
+  if (!dateIso || !time) return "Date inconnue";
+
+  var p = dateIso.split("-");
+  var hhmm = time.split(":");
+
+  var d = new Date(+p[0], +p[1] - 1, +p[2], +hhmm[0], +hhmm[1]);
+
+  var label = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }).format(d);
+
+  return (
+    label.charAt(0).toUpperCase() + label.slice(1) +
+    " · " + hhmm[0] + "h" + hhmm[1]
+  );
+ }
 
   function formatKm(km) {
     if (km == null) return "—";
@@ -114,7 +118,6 @@
      Rendu hero + participants
      ════════════════════════════════════════════════════════════ */
 
-  var sortie = null;
 
   function setText(id, text) {
     var el = document.getElementById(id);
@@ -126,7 +129,12 @@
     setText("pd-type", sortie.type);
     setText("pd-group", sortie.group + " · " + sortie.pace);
     setText("pd-title", sortie.title);
-    setText("pd-date", frenchDateLabel(sortie.dateIso, sortie.time));
+    setText(
+      "pd-date",
+      sortie.dateIso && sortie.time
+        ? frenchDateLabel(sortie.dateIso, sortie.time)
+        : "Date à venir"
+    );
 
     var cap = document.getElementById("pd-captain");
     if (cap) {
@@ -134,19 +142,16 @@
         'Capitaine · Team Rider : <strong>' + escapeHtml(sortie.captain) + "</strong>";
     }
 
-    setText("pd-km", formatKm(sortie.kmFallback));
-    setText("pd-dplus", sortie.dplusFallback + " m D+");
+    setText("pd-km", (sortie.kmFallback ?? 0) + " km");
+    setText("pd-dplus", (sortie.dplusFallback ?? 0) + " m D+");
     setText("pd-duration", sortie.duration);
     setText("pd-meet", sortie.meetTime);
     setText("pd-start", sortie.rollingStart);
     setText("pd-place", sortie.place);
 
-    var citiesEl = document.getElementById("pd-cities");
-    if (citiesEl) {
-      citiesEl.innerHTML = sortie.cities
-        .map(function (c) { return "<li>" + escapeHtml(c) + "</li>"; })
-        .join("");
-    }
+    var cities = Array.isArray(sortie.cities)
+      ? sortie.cities
+      : JSON.parse(sortie.cities || "[]");
 
     var gpxBtn = document.getElementById("pd-gpx-btn");
     if (gpxBtn) {
@@ -155,10 +160,9 @@
     }
   }
 
-  function allParticipants() {
-    var list = sortie.participants.slice();
-    if (isJoined(sortie.id)) list.push({ name: "Toi", you: true });
-    return list;
+  function allParticipants(participants) {
+    const list = Array.isArray(participants) ? participants : [];
+    return list.slice();
   }
 
   function renderJoin() {
@@ -321,61 +325,113 @@
     return segments;
   }
 
-  async function initMap() {
-    var mapEl = document.getElementById("pd-map");
-    if (!mapEl || typeof L === "undefined") return;
 
-    var map = L.map(mapEl, { scrollWheelZoom: false });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-    map.setView([48.65, -2.84], 11);
+async function initMap() {
+  if (!sortie) return;
 
-    var points = [];
-    try {
-      var res = await fetch(encodeURI(sortie.gpx));
-      if (res.ok) points = parseGpxPoints(await res.text());
-    } catch (err) {
-      console.warn("GPX introuvable", sortie.gpx, err);
+  const mapEl = document.getElementById("pd-map");
+  if (!mapEl || typeof L === "undefined") return;
+
+  let map = L.map(mapEl, { scrollWheelZoom: false });
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+
+  map.setView([48.65, -2.84], 11);
+
+  let points = [];
+
+  try {
+    if (!sortie.gpx) {
+      console.warn("GPX manquant pour la sortie");
+    } else {
+      const res = await fetch(encodeURI(sortie.gpx));
+
+      if (res.ok) {
+        const gpxText = await res.text();
+        points = parseGpxPoints(gpxText) || [];
+      } else {
+        console.warn("GPX introuvable :", sortie.gpx);
+      }
     }
+  } catch (err) {
+    console.warn("Erreur GPX", sortie.gpx, err);
+  }
 
-    if (points.length < 2) return;
+  if (!Array.isArray(points) || points.length < 2) return;
 
-    /* Stats réelles depuis la trace (remplacent le mock) */
-    var st = computeStats(points);
-    setText("pd-km", formatKm(st.km));
-    if (st.dplus > 5) setText("pd-dplus", st.dplus + " m D+");
+  /* Stats réelles */
+  const st = computeStats(points);
 
-    /* Tracé colorisé selon la pente */
-    var group = L.featureGroup();
-    buildSlopeSegments(points).forEach(function (seg) {
+  setText("pd-km", formatKm(st.km));
+
+  if (st.dplus && st.dplus > 5) {
+    setText("pd-dplus", st.dplus + " m D+");
+  }
+
+  /* Tracé colorisé */
+  const group = L.featureGroup();
+
+  if (typeof buildSlopeSegments === "function" && typeof SLOPE_COLORS !== "undefined") {
+    buildSlopeSegments(points).forEach(seg => {
+      if (!seg?.latlngs) return;
+
       L.polyline(seg.latlngs, {
-        color: SLOPE_COLORS[seg.cat],
+        color: SLOPE_COLORS[seg.cat] || "#666",
         weight: 4,
         opacity: 0.9,
         lineJoin: "round"
       }).addTo(group);
     });
-    group.addTo(map);
+  }
 
-    /* Marqueurs départ / arrivée */
+  group.addTo(map);
+
+  /* Départ */
+  if (points[0]) {
     L.circleMarker([points[0].lat, points[0].lon], {
-      radius: 7, color: "#0D0D0D", weight: 2, fillColor: "#C8F135", fillOpacity: 1
-    }).addTo(map).bindTooltip("Départ");
-    var last = points[points.length - 1];
-    L.circleMarker([last.lat, last.lon], {
-      radius: 6, color: "#0D0D0D", weight: 2, fillColor: "#ef4444", fillOpacity: 1
-    }).addTo(map).bindTooltip("Arrivée");
+      radius: 7,
+      color: "#0D0D0D",
+      weight: 2,
+      fillColor: "#C8F135",
+      fillOpacity: 1
+    })
+      .addTo(map)
+      .bindTooltip("Départ");
+  }
 
-    function fit() {
+  /* Arrivée */
+  const last = points[points.length - 1];
+
+  if (last) {
+    L.circleMarker([last.lat, last.lon], {
+      radius: 6,
+      color: "#0D0D0D",
+      weight: 2,
+      fillColor: "#ef4444",
+      fillOpacity: 1
+    })
+      .addTo(map)
+      .bindTooltip("Arrivée");
+  }
+
+  /* Fit map */
+  const fit = () => {
+    if (group.getBounds && group.getBounds().isValid()) {
       map.fitBounds(group.getBounds(), { padding: [28, 28] });
     }
-    fit();
+  };
 
-    var fitBtn = document.getElementById("pd-map-fit");
-    if (fitBtn) fitBtn.addEventListener("click", fit);
+  fit();
+
+  const fitBtn = document.getElementById("pd-map-fit");
+  if (fitBtn) {
+    fitBtn.addEventListener("click", fit);
   }
+}
 
   /* ════════════════════════════════════════════════════════════
      Accordéons (un seul ouvert, animation max-height)
@@ -416,19 +472,91 @@
     });
   }
 
+function mapRouteToSortie(route) {
+  const fc = route.front_config || {};
+
+  return {
+    id: route.id,
+    title: route.track_name,
+    type: route.route_kind,
+    group: route.group_label,
+    pace: route.pace_label,
+
+    dateIso: fc.rideDateIso,
+    time: fc.rideTime,
+
+    captain: fc.rideLeader,
+
+    kmFallback: fc.stats?.totalKm,
+    dplusFallback: fc.stats?.elevGainM,
+
+    duration: fc.estimated_duration_hm,
+    meetTime: fc.rideTime,
+
+    place: fc.meetPlace,
+
+    cities: fc.embeddedPoints || [],
+
+    gpx: "gpx/" + fc.file
+  };
+}
+
+function renderError(message) {
+  console.error(message);
+
+  const el = document.getElementById("error");
+  if (el) el.textContent = message;
+}
+
+function renderAll() {
+  renderHero();
+  renderJoin();
+  renderParticipants();
+  bindJoin();
+  bindAccordions();
+}
+
   /* ════════════════════════════════════════════════════════════
      Init
      ════════════════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", async function () {
+  const id = new URLSearchParams(window.location.search).get("id");
 
-  document.addEventListener("DOMContentLoaded", function () {
-    var id = new URLSearchParams(window.location.search).get("id") || "falaises";
-    sortie = getSortieById(id);
+  if (!id) {
+    loadError = "ID manquant dans l’URL";
+    console.error(loadError);
+    return renderError();
+  }
 
-    renderHero();
-    renderJoin();
-    renderParticipants();
-    bindJoin();
-    bindAccordions();
+  try {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("routes")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error("Aucune sortie trouvée");
+    }
+
+    sortie = mapRouteToSortie(data);
+
+    renderAll();
+
+    console.log("SORTIE avant initMap=", sortie);
     initMap();
-  });
-})();
+   
+
+  } catch (err) {
+    console.error(err);
+    loadError = err.message;
+    renderError();
+  } finally {
+    setLoading(false);
+  }
+});
+
+})(); 
