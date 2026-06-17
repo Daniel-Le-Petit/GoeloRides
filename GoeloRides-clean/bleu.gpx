@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Goelo Rides" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Groupe Bleu</name>
+    <trkseg>
+      <trkpt lat="48.6536" lon="-2.8353"/>
+      <trkpt lat="48.6650" lon="-2.8100"/>
+      <trkpt lat="48.6800" lon="-2.7800"/>
+      <trkpt lat="48.6950" lon="-2.7600"/>
+      <trkpt lat="48.7100" lon="-2.7800"/>
+      <trkpt lat="48.7000" lon="-2.8200"/>
+      <trkpt lat="48.6850" lon="-2.8500"/>
+      <trkpt lat="48.6680" lon="-2.8600"/>
+      <trkpt lat="48.6536" lon="-2.8353"/>
+    </trkseg>
+  </trk>
+</gpx>

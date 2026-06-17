@@ -1,0 +1,721 @@
+/* ══════════════════════════════════════════════════════════════
+   GoëloRides — Page Sorties v2
+   Liste des sorties (date + titre + stats + lieu + avatars + Voir)
+   Filtres horizontaux + recherche. Actions Team Rider verrouillées.
+   Popups contextuels : css/components.css (.gr-popover / box--lock)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── Design tokens ─────────────────────────────────────────── */
+:root {
+  --bg:           #0D0D0D;
+  --surface:      #1A1A1A;
+  --surface-2:    #242424;
+  --border:       #2E2E2E;
+  --accent:       #C8F135;
+  --accent-dim:   #9ABF20;
+  --text:         #F0F0F0;
+  --muted:        #888888;
+
+  --c-blanc:      #E5E7EB;
+  --c-vert:       #3A7D44;
+  --c-bleu:       #1E3A8A;
+  --c-rouge:      #8B1A1A;
+
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --radius:       12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── Bandeau + nav (identiques page Groupes) ───────────────── */
+.gr-topstrip {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.gr-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 0 2rem;
+  height: 56px;
+}
+
+.gr-nav__logo {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.gr-nav__logo span {
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.gr-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  list-style: none;
+  flex: 1;
+}
+
+.gr-nav__links a {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.gr-nav__links a:hover { color: var(--text); }
+
+.gr-nav__links a[aria-current="page"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.gr-nav__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.38rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.gr-nav__cta:hover { background: var(--accent); color: #000; }
+
+/* Variante verrouillée (pas Team Rider) : grisée + cadenas */
+.gr-nav__cta.is-locked {
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.gr-nav__cta.is-locked:hover {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* ─── En-tête de page ───────────────────────────────────────── */
+.gr-page-header {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.25rem 2rem 0.5rem;
+}
+
+.gr-page-header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.gr-page-header p {
+  font-size: 0.98rem;
+  color: var(--muted);
+}
+
+/* ─── Layout ────────────────────────────────────────────────── */
+.so-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem 2rem 4rem;
+}
+
+/* ─── Barre de filtres + recherche ──────────────────────────── */
+.so-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.so-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.42rem 0.95rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.so-chip:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.so-chip.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.so-search {
+  margin-left: auto;
+  position: relative;
+}
+
+.so-search input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.9rem 0.45rem 2.1rem;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.15s, width 0.2s;
+}
+
+.so-search input:focus {
+  border-color: var(--accent);
+  width: 240px;
+}
+
+.so-search input::placeholder { color: var(--muted); }
+
+.so-search::before {
+  content: "🔍";
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ─── Layout : liste + colonne droite Team Rider ────────────── */
+.so-layout {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Colonne droite grisée : actions réservées aux Team Riders */
+.so-aside {
+  position: sticky;
+  top: 76px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  opacity: 0.92;
+}
+
+.so-aside__lock {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(200, 241, 53, 0.1);
+  border: 1px solid rgba(200, 241, 53, 0.35);
+  font-size: 1.1rem;
+}
+
+.so-aside__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.so-aside__text {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* État connecté Team Rider */
+.so-aside.is-unlocked {
+  border-style: solid;
+  border-color: rgba(200, 241, 53, 0.45);
+}
+
+.so-aside.is-unlocked .so-aside__lock { font-size: 1.05rem; }
+
+/* ─── Liste des sorties ─────────────────────────────────────── */
+.so-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.so-row {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  transition: border-color 0.15s, transform 0.12s;
+}
+
+.so-row:hover {
+  border-color: #3d3d3d;
+  transform: translateY(-1px);
+}
+
+.so-row.is-cancelled { opacity: 0.55; }
+
+/* Bloc date (jour + numéro en grand + mois) */
+.so-date {
+  flex-shrink: 0;
+  width: 56px;
+  text-align: center;
+  border-radius: 8px;
+  padding: 0.45rem 0.25rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+}
+
+.so-date--blanc  { border-left-color: var(--c-blanc); }
+.so-date--vert   { border-left-color: var(--c-vert); }
+.so-date--bleu   { border-left-color: #3b82f6; }
+.so-date--rouge  { border-left-color: #ef4444; }
+
+.so-date__wd {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.so-date__num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--text);
+}
+
+.so-date__mo {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Corps : titre + stats + lieu/heure */
+.so-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.so-title {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.so-title .so-badge {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 4px;
+  margin-left: 0.45rem;
+  vertical-align: 2px;
+}
+
+.so-badge--cancelled { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+
+.so-stats {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.so-stats strong { color: rgba(240, 240, 240, 0.85); font-weight: 600; }
+
+.so-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.so-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* Avatars participants */
+.so-people {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.so-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #000;
+  margin-left: -8px;
+}
+
+.so-avatar:first-child { margin-left: 0; }
+
+.so-avatar--more {
+  background: var(--surface-2);
+  color: var(--muted);
+  border-color: var(--border);
+  font-size: 0.6rem;
+}
+
+/* Actions à droite : Voir + actions Team Rider */
+.so-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.so-btn-voir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.12s;
+}
+
+.so-btn-voir:hover {
+  background: var(--accent-dim);
+  transform: translateY(-1px);
+}
+
+/* Boutons d'action (modifier / annuler / rejoindre) */
+.so-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.so-act:hover { border-color: var(--muted); }
+
+/* Grisé + cadenas : réservé Team Riders (popup au survol / clic) */
+.so-act.is-locked {
+  color: var(--muted);
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.so-act.is-locked:hover { border-color: var(--border); }
+
+/* États liste */
+.so-empty,
+.so-loading {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 3rem 1rem;
+}
+
+/* ─── Footer + tabbar (identiques page Groupes) ─────────────── */
+.gr-footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+}
+
+.gr-footer p { font-size: 0.8rem; color: var(--muted); line-height: 1.7; }
+.gr-footer a { color: var(--muted); text-decoration: none; }
+.gr-footer a:hover { color: var(--text); }
+
+    .footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem 2rem;
+    }
+    .footer-inner {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 2.5rem; align-items: start;
+    }
+    .footer-logo {
+      font-family: var(--font-d); font-size: 1.4rem; font-weight: 800;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-loc { font-size: 0.78rem; color: var(--muted); line-height: 1.65; }
+    .footer-col-title {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 0.9rem;
+    }
+    .footer-links { display: flex; flex-direction: column; gap: 0.6rem; }
+    .footer-link {
+      display: inline-flex; align-items: center; gap: 0.55rem;
+      font-size: 0.83rem; color: rgba(255,255,255,0.7); text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-link:hover { color: var(--text); }
+    .footer-link svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; opacity: 0.6; }
+    .footer-legal-text {
+      font-size: 0.75rem; color: rgba(255,255,255,0.3); line-height: 1.7;
+    }
+    .footer-bottom {
+      max-width: 900px; margin: 2rem auto 0;
+      padding-top: 1.25rem; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .footer-copy { font-size: 0.72rem; color: rgba(255,255,255,0.25); }
+    .footer-nav { display: flex; gap: 1.25rem; }
+    .footer-nav a { font-size: 0.72rem; color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.15s; }
+    .footer-nav a:hover { color: var(--text); }
+
+
+.goelo-mobile-tabbar { display: none; }
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .gr-nav__links { display: none; }
+  .gr-nav { justify-content: space-between; }
+
+  .so-search { margin-left: 0; width: 100%; }
+  .so-search input { width: 100%; }
+  .so-search input:focus { width: 100%; }
+
+  .footer { padding: 2rem 1rem 1.5rem; }
+  .footer-inner { grid-template-columns: 1fr; gap: 1.75rem; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+
+}
+
+@media (max-width: 980px) {
+  .so-layout { grid-template-columns: 1fr; }
+  .so-aside { position: static; }
+}
+
+@media (max-width: 680px) {
+  .gr-page-header { padding: 1.5rem 1rem 0.25rem; }
+  .so-main { padding: 1rem 1rem 5.5rem; }
+
+  .so-row {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .so-body { flex: 1 1 calc(100% - 72px); }
+
+  .so-people { margin-left: 68px; }
+
+  .so-actions {
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.goelo-mobile-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+  }
+
+.goelo-mobile-tabbar a {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .goelo-mobile-tabbar a[aria-current],
+  .goelo-mobile-tabbar a:hover { color: var(--accent); }
+
+/* ═══════════════════════════════════════
+   PATCH CLEAN — cartes sorties v2 photo
+   ═══════════════════════════════════════ */
+
+.so-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+.so-date {
+  flex-shrink: 0;
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.so-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.so-card-right {
+  flex-shrink: 0;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.so-thumb {
+  width: 80px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #1A1A1A;
+}
+
+.so-btn-voir {
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #000;
+  background: var(--accent);
+  border-radius: 4px;
+  padding: 0.3rem 0;
+  text-decoration: none;
+}
+
+.so-card-right .so-people {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.so-card-right .so-avatar {
+  width: 18px;
+  height: 18px;
+  font-size: 0.55rem;
+}
+
+.so-row {
+  display: flex;
+  align-items: center;
+}
+
+.so-card-right {
+  width: 60px;
+  display: flex;
+  justify-content: flex-end;
+}

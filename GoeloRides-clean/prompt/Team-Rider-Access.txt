@@ -1,0 +1,37 @@
+FICHIERS À MODIFIER : team-rider-access.html + js/team-rider-access.js
++ css/pages/team-rider-access.css
+
+Les 4 images montrent UNE SEULE PAGE avec 3 onglets. Reproduis exactement.
+
+ONGLET 1 — FORMULAIRE (image 3) :
+- Header : logo + "GOËLORIDES · PREVIEW" + tabs "1·FORMULAIRE /
+  2·CONFIRMATION / 3·ADMIN"
+- Champs : PRÉNOM + NOM (côte à côte), E-MAIL, TÉLÉPHONE (optionnel),
+  NIVEAU HABITUEL (4 boutons radio visuels : BLANC/VERT/BLEU/ROUGE avec
+  point coloré — VERT sélectionné par défaut avec fond vert),
+  POURQUOI REJOINDRE L'ÉQUIPE ? (textarea optionnel)
+- Bouton "ENVOYER LA DEMANDE" vert
+- Lien "Déjà Team Rider ? Se connecter →"
+- À la soumission : INSERT dans table Supabase "team_rider_requests"
+  (prenom, nom, email, telephone, niveau, message, statut='en_attente')
+  puis basculer sur l'onglet 2
+
+ONGLET 2 — CONFIRMATION (image 4) :
+- Icône checkmark vert
+- Titre "Demande envoyée !"
+- Texte avec email goelo.rides@gmail.com en gras
+- Récapitulatif dans un encadré (Nom / Email / Niveau / Statut "EN ATTENTE")
+- 3 étapes numérotées (soumis / examen 48h / email confirmation)
+- Bouton "← RETOUR À L'ACCUEIL"
+
+ONGLET 3 — ADMIN (images 5 et 6) :
+- 4 compteurs : TOTAL / EN ATTENTE / APPROUVÉES / REFUSÉES
+- Filtres : TOUTES / EN ATTENTE / APPROUVÉES / REFUSÉES
+- Liste de demandes : chaque carte = nom + badge niveau (couleur groupe) +
+  badge statut + email + date + message entre guillemets
+- Actions : bouton "APPROUVER" (vert) + "REFUSER" (rouge) pour les
+  "EN ATTENTE", bouton "DÉTAILS" pour les autres
+- Cet onglet est accessible UNIQUEMENT si l'utilisateur connecté a le rôle
+  'admin' dans Supabase (vérifier via supabase.auth.getUser() +
+  table profiles)
+- Approuver = UPDATE statut='approuvée' dans Supabase

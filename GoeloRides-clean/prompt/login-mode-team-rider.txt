@@ -1,0 +1,30 @@
+FICHIERS À MODIFIER : js/auth.js + css/components.css
+
+Image 2 = le formulaire de connexion (popup/modale).
+Image 1 haut-droite = la modale "Passez en mode Team Rider".
+
+Crée 2 modales en HTML/CSS/JS :
+
+MODALE 1 — "Mode Team Rider" (déclenchée au clic sur "Se connecter" depuis
+le hero ou la bannière sticky) :
+- Fond sombre avec photo cycliste à gauche (assets/hero-accueil.png en bg)
+- Badge "MODE TEAM RIDER" en haut
+- Titre "Passez en mode Team Rider" avec "Team Rider" en vert acide
+- Texte descriptif
+- 2 boutons : "Se connecter" (noir) et "Demander l'accès" (outline)
+- Mention "Accès réservé aux Team Riders" avec cadenas
+- Croix fermeture en haut à droite
+
+MODALE 2 — Connexion (déclenchée au clic sur "Se connecter" dans la modale 1) :
+- Fond #1A1A1A, badge "ESPACE TEAM RIDER" vert
+- Titre "Connexion", sous-titre
+- Champ E-MAIL + champ MOT DE PASSE (avec icône œil)
+- Lien "Mot de passe oublié ?"
+- Bouton vert "→ SE CONNECTER"
+- Séparateur "ou"
+- Bouton outline "DEMANDER L'ACCÈS TEAM RIDER"
+- Lien "Rejoindre l'équipe →" en vert
+
+La logique : clic "Se connecter" partout → Modale 1 → clic "Se connecter"
+dans modale 1 → Modale 2. Les deux modales se ferment avec Échap ou la croix.
+Connexion réelle via Supabase Auth (supabase.auth.signInWithPassword).

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Goelo Rides" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Groupe Rouge</name>
+    <trkseg>
+      <trkpt lat="48.6536" lon="-2.8353"/>
+      <trkpt lat="48.6700" lon="-2.8000"/>
+      <trkpt lat="48.6900" lon="-2.7600"/>
+      <trkpt lat="48.7150" lon="-2.7300"/>
+      <trkpt lat="48.7350" lon="-2.7500"/>
+      <trkpt lat="48.7250" lon="-2.8000"/>
+      <trkpt lat="48.7050" lon="-2.8400"/>
+      <trkpt lat="48.6800" lon="-2.8700"/>
+      <trkpt lat="48.6536" lon="-2.8353"/>
+    </trkseg>
+  </trk>
+</gpx>

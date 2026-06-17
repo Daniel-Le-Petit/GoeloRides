@@ -1,0 +1,4996 @@
+<!DOCTYPE html>
+<html lang="fr" class="site-retheme">
+<head>
+  <link rel="stylesheet" href="goelo-modals.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Rejoins un groupe à ton rythme. Départ parking du Kasino à Saint-Quay-Portrieux — sorties vélo été 2026.">
+  <meta name="theme-color" content="#eef2f6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GoëloRides">
+  <link rel="stylesheet" href="goelo-pwa-notifications.css?v=7">
+  <title>Goëlo Rides · Saint-Quay-Portrieux</title>
+  <meta property="og:title" content="GoëloRides · Sorties vélo à Saint-Quay-Portrieux" />
+  <meta property="og:description" content="Rejoins un groupe à ton rythme. Départ parking du « Kasino » de Saint-Quay — été 2026." />
+  <meta property="og:image" content="https://goelorides.onrender.com/assets/hero-accueil.png" />
+  <meta property="og:url" content="https://goelorides.onrender.com" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Lato:wght@400;700&family=Lexend:wght@600;700;800&family=Nunito:wght@700;800;900&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="app-chrome.css">
+  <link rel="stylesheet" href="site-retheme.css">
+  <link rel="stylesheet" href="css/pages/home.css">
+  <style>
+    :root {
+      --ocean: #0d1820;
+      --teal: #3d8b8b;
+      --teal-dark: #2d6b6b;
+      --gold: #f4a43a;
+      --gold-dark: #d9892f;
+      --white: #ffffff;
+      --muted: rgba(255, 255, 255, 0.72);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --font-serif: "Playfair Display", Georgia, serif;
+      --font-sans: "DM Sans", system-ui, sans-serif;
+      --font-brand: "Outfit", "DM Sans", system-ui, sans-serif;
+      --font-display: "Outfit", "DM Sans", system-ui, sans-serif;
+      --font-logo: "Outfit", "DM Sans", system-ui, sans-serif;
+      /* Chapô accueil « Sorties en vélo » */
+      --font-accent-tag: "Lexend", "Outfit", system-ui, sans-serif;
+      /* Saint-Quay-Portrieux (drapeau / identité locale) */
+      --sq-yellow: #f9d71c;
+      --sq-yellow-hover: #e8cd18;
+      --sq-yellow-ink: #14222d;
+      --sq-yellow-soft: rgba(249, 215, 28, 0.24);
+      --sq-blue: #0055a4;
+      --sq-rule: rgba(5, 26, 48, 0.42);
+      /* Maquette « app » (nouvelle sortie, CTA) — bleu mer */
+      --app-sea: #1565a8;
+      --app-sea-hover: #0e4d80;
+      --app-sea-muted: #5a7d96;
+      --app-surface: #ffffff;
+      --app-text: #15232d;
+      --app-muted: #5a6b78;
+      --app-border: #dce6ee;
+      --app-bg: #eef2f6;
+      --sidebar-w: 15.5rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
+      max-width: 100%;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--app-bg);
+      color: var(--app-text);
+      line-height: 1.6;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      max-width: 100%;
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    body > .app-shell a:not(.btn-home):not(.btn-primary):not(.btn-secondary):not(.btn-new-route):not(.btn-unregister):not(.signup-mailto-link):not(.home-hero-infos) {
+      color: var(--app-sea);
+    }
+
+    /* —— Coque app : layout global dans app-chrome.css —— */
+
+    .app-main--home {
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      background: var(--app-bg);
+      color: var(--app-text);
+    }
+
+    /* Accueil : hero plein écran, image fond + texte incrusté lisible */
+    .home-landing {
+      position: relative;
+      isolation: isolate;
+      margin: 0;
+      min-height: 32rem;
+      min-height: 100svh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .home-landing-visual {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      /* Au moins la hauteur viewport (évite image « vide » si % mal résolu). */
+      min-height: 100dvh;
+      min-height: 100svh;
+      overflow: hidden;
+      background: #0b1724;
+    }
+
+    .home-landing-visual img {
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      min-height: 100svh;
+      max-width: none;
+      object-fit: cover;
+      object-position: center 45%;
+      display: block;
+      transform: scale(1.02);
+    }
+
+    .home-landing-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      /* Voile type crépuscule : texte lisible tout en gardant la photo mer visible */
+      background: linear-gradient(
+        165deg,
+        rgba(4, 10, 22, 0.82) 0%,
+        rgba(6, 18, 32, 0.5) 36%,
+        rgba(8, 22, 36, 0.32) 52%,
+        rgba(4, 12, 24, 0.78) 100%
+      );
+    }
+
+    @media (max-width: 640px) {
+      /* Voile un peu plus léger pour laisser voir l’eau / la côte sur petit écran. */
+      .home-landing-scrim {
+        background: linear-gradient(
+          165deg,
+          rgba(6, 14, 26, 0.62) 0%,
+          rgba(6, 14, 26, 0.32) 40%,
+          rgba(6, 14, 26, 0.22) 55%,
+          rgba(6, 14, 26, 0.58) 100%
+        );
+      }
+    }
+
+    .home-landing-scrim::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        120% 80% at 50% 20%,
+        rgba(255, 255, 255, 0.14) 0%,
+        transparent 55%
+      );
+      opacity: 0.55;
+      mix-blend-mode: soft-light;
+    }
+
+    .home-landing-inner {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      text-align: center;
+      max-width: 56rem;
+      width: 100%;
+      margin: 0 auto;
+      padding-top: max(clamp(1.25rem, 4vw, 2.5rem), env(safe-area-inset-top, 0px));
+      padding-right: max(clamp(1.15rem, 4vw, 2.25rem), env(safe-area-inset-right, 0px));
+      padding-bottom: max(clamp(2.25rem, 8vh, 4rem), env(safe-area-inset-bottom, 0px));
+      padding-left: max(clamp(1.15rem, 4vw, 2.25rem), env(safe-area-inset-left, 0px));
+    }
+
+    .home-landing-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem 1rem;
+      width: 100%;
+      max-width: min(100%, 40rem);
+      margin: 0 auto 1.35rem;
+      padding: 0.65rem 1.1rem;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.62);
+      backdrop-filter: blur(14px) saturate(1.1);
+      -webkit-backdrop-filter: blur(14px) saturate(1.1);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    .home-landing-topbar-loc {
+      margin: 0;
+      flex: 1 1 100%;
+      font-size: clamp(0.72rem, 2vw, 0.8rem);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #f8fafc;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.9),
+        0 0 1px rgba(0, 0, 0, 1);
+    }
+
+    .home-landing-topbar-dot {
+      opacity: 0.65;
+      margin: 0 0.12em;
+    }
+
+    .home-landing-topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem 0.85rem;
+    }
+
+    .home-landing-topbar-season {
+      font-size: clamp(0.72rem, 2vw, 0.8rem);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #fff0a8;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.75),
+        0 0 20px rgba(249, 215, 28, 0.45);
+    }
+
+    .home-landing-topbar .goelo-auth-home-slot {
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem 0.6rem;
+    }
+
+    .home-landing-topbar .goelo-auth-home-greeting {
+      flex: 1 1 100%;
+      order: -1;
+      max-width: 100%;
+      white-space: normal;
+      text-align: center;
+      font-size: clamp(0.78rem, 2.2vw, 0.9rem);
+      font-weight: 700;
+      color: #fff;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.85),
+        0 0 1px rgba(0, 0, 0, 1);
+    }
+
+    /* Bandeau illustratif : piste en dégradé + arbres + cyclistes (sans cadre) */
+    .home-landing-bike-motif {
+      width: min(100%, 26rem);
+      margin: 0 auto 0.75rem;
+      color: rgba(248, 250, 252, 0.96);
+      filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
+    }
+
+    .home-landing-bike-motif svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    /* Ligne : dégradé défini dans le SVG (url #home-landing-road) */
+
+    /* Cyclistes : 1 = clair, 2 = vert, 3 = bleu, 4 = rouge */
+    .home-landing-bike-motif .home-landing-bike--1 {
+      color: rgba(255, 255, 255, 0.98);
+    }
+
+    .home-landing-bike-motif .home-landing-bike--2 {
+      color: #22c55e;
+    }
+
+    .home-landing-bike-motif .home-landing-bike--3 {
+      color: #2563eb;
+    }
+
+    .home-landing-bike-motif .home-landing-bike--4 {
+      color: #dc2626;
+    }
+
+    .home-landing-bike-motif .home-landing-bike-tree {
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .home-landing-bike-motif {
+        width: min(100%, 22rem);
+        margin-bottom: 0.65rem;
+      }
+    }
+
+    .home-landing-brand-wrap {
+      text-align: center;
+      width: 100%;
+      margin: 0 0 1.65rem;
+    }
+
+    .home-brand--hero {
+      transform: none;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .home-brand-line {
+      width: min(5.5rem, 28vw);
+      height: 2px;
+      margin: 0.95rem auto 0;
+      border-radius: 2px;
+      background: linear-gradient(90deg, transparent, var(--sq-yellow) 15%, var(--sq-yellow) 85%, transparent);
+      box-shadow: 0 0 16px rgba(249, 215, 28, 0.35);
+    }
+
+    .home-landing-hero-stage {
+      max-width: 38rem;
+      width: 100%;
+      margin: 0 auto 0.25rem;
+      text-align: center;
+    }
+
+    .home-landing-kicker {
+      margin: 0 auto 0.85rem;
+      max-width: 36rem;
+      font-family: var(--font-serif);
+      font-size: clamp(0.78rem, 2vw, 0.92rem);
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.55),
+        0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-landing-display {
+      margin: 0 auto 1rem;
+      font-family: var(--font-serif);
+      font-weight: 500;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+
+    .home-landing-display-l1 {
+      display: block;
+      font-size: clamp(2rem, 5.8vw, 3.35rem);
+      font-weight: 600;
+      font-style: normal;
+      color: #fff;
+      text-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.55),
+        0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-landing-display-l2 {
+      display: block;
+      margin-top: 0.12em;
+      font-size: clamp(2rem, 5.8vw, 3.35rem);
+      font-weight: 600;
+      font-style: italic;
+      color: var(--sq-blue);
+      text-shadow:
+        0 0 1px rgba(255, 255, 255, 0.35),
+        0 2px 6px rgba(0, 0, 0, 0.5),
+        0 0 28px rgba(0, 85, 164, 0.35);
+    }
+
+    .goelo-auth-home-slot {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      align-self: center;
+    }
+
+    .goelo-auth-home-greeting {
+      font-size: clamp(0.72rem, 2.2vw, 0.9rem);
+      font-weight: 600;
+      color: #f1f5f9;
+      text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.75),
+        0 0 1px rgba(0, 0, 0, 0.9);
+      max-width: min(42vw, 16rem);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+    .home-landing-topbar .goelo-auth-home-greeting:not([hidden]) {
+      overflow: visible;
+      text-overflow: unset;
+    }
+
+    /* Marque accueil : GoëloRides (sans espace), police moins arrondie */
+    .home-brand {
+      margin: 0;
+      font-family: var(--font-logo);
+      font-weight: 700;
+      font-size: clamp(2.35rem, 8.5vw, 4.25rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0;
+      transform: rotate(-1.25deg);
+      transform-origin: 0 50%;
+    }
+
+    .home-brand-go {
+      color: var(--sq-yellow);
+      text-shadow:
+        0 2px 0 rgba(120, 80, 0, 0.35),
+        0 4px 20px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(249, 215, 28, 0.45);
+    }
+
+    /* « Rides » : bleu Saint-Quay (#0055a4) */
+    .home-brand-rides {
+      margin-left: -0.04em;
+      color: var(--sq-blue);
+      font-weight: 700;
+      text-shadow:
+        0 0 1px rgba(255, 255, 255, 0.45),
+        0 1px 2px rgba(0, 0, 0, 0.55),
+        0 2px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-landing-lead {
+      font-size: clamp(1.12rem, 2.6vw, 1.32rem);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: #f8fafc;
+      line-height: 1.42;
+      margin: 0 0 1.15rem;
+      padding: 0.65rem 0.85rem 0.65rem 0.85rem;
+      border-left: 3px solid rgba(125, 211, 252, 0.95);
+      background: rgba(15, 23, 42, 0.42);
+      border-radius: 0 10px 10px 0;
+      box-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.9);
+    }
+
+    .home-landing-lead strong {
+      font-weight: 800;
+      color: #bae6fd;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    }
+
+    .home-landing-lead-tail {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.45rem;
+      vertical-align: middle;
+    }
+
+    .home-landing-lead-icon {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      /* Icône lisible sur le fond sombre du chapô (éviter le bleu foncé seul). */
+      color: #f1f5f9;
+      filter:
+        drop-shadow(0 0 1px rgba(15, 23, 42, 0.95))
+        drop-shadow(0 0 6px rgba(186, 230, 253, 0.45))
+        drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75));
+    }
+
+    .home-landing-lead-icon svg {
+      width: 1.62em;
+      height: 1.62em;
+      display: block;
+    }
+
+    .home-kasino-name {
+      font-weight: 800;
+      color: #bae6fd;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    }
+
+    .home-landing-accent {
+      font-family: var(--font-accent-tag);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      /* Même jaune que « Goëlo » (drapeau / marque) */
+      color: var(--sq-yellow);
+      text-shadow:
+        0 2px 0 rgba(120, 80, 0, 0.35),
+        0 4px 20px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(249, 215, 28, 0.45);
+    }
+
+    .home-landing-message {
+      font-family: "Lato", var(--font-sans);
+      margin: 0 auto 1.25rem;
+      max-width: 100%;
+      text-align: center;
+      padding: clamp(1.1rem, 2.8vw, 1.55rem) clamp(1.05rem, 3vw, 1.65rem);
+      background: rgba(15, 23, 42, 0.32);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 12px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .home-landing-body-text {
+      font-size: clamp(0.96rem, 2.15vw, 1.08rem);
+      font-weight: 400;
+      line-height: 1.72;
+      color: rgba(248, 250, 252, 0.96);
+      margin: 0 0 0.85rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+      text-wrap: pretty;
+    }
+
+    .home-landing-body-text:last-child {
+      margin-bottom: 0;
+    }
+
+    .home-landing-body-philosophy {
+      margin-top: 0.15rem;
+      margin-bottom: 0;
+      padding-top: 1.05rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: clamp(0.93rem, 2vw, 1.03rem);
+      line-height: 1.68;
+      color: rgba(226, 232, 240, 0.98);
+    }
+
+    .home-landing-philosophy-line {
+      display: block;
+      margin-top: 0.5rem;
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-style: italic;
+      letter-spacing: -0.015em;
+      line-height: 1.55;
+      color: #fef3c7;
+      text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.65),
+        0 0 20px rgba(250, 204, 21, 0.12);
+    }
+
+    /* Accroches = infos, pas des boutons : ligne discrète + points médians */
+    .home-landing-values {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0;
+      margin: 1rem auto 0;
+      padding: 0;
+      max-width: 100%;
+      background: none;
+      border: none;
+      box-shadow: none;
+    }
+
+    .home-landing-values li {
+      flex: 0 0 auto;
+      min-width: 0;
+      text-align: center;
+      font-size: clamp(0.88rem, 2vw, 0.95rem);
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      color: rgba(248, 250, 252, 0.9);
+      padding: 0;
+      position: relative;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+
+    .home-landing-values li:not(:last-child)::after {
+      content: "·";
+      display: inline;
+      margin: 0 0.5rem;
+      color: rgba(255, 255, 255, 0.38);
+      font-weight: 700;
+      text-shadow: none;
+    }
+
+    .home-scroll-hint {
+      position: absolute;
+      right: max(1rem, env(safe-area-inset-right, 0px));
+      bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.45rem;
+      pointer-events: none;
+    }
+
+    .home-scroll-hint-track {
+      display: block;
+      width: 1px;
+      height: 2.25rem;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.45));
+      border-radius: 1px;
+    }
+
+    .home-scroll-hint-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.42);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-orientation: mixed;
+    }
+
+    .home-landing-region {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #7dd3fc;
+      margin: 0 0 0.4rem;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+    }
+
+    .home-landing-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.35rem, 6vw, 3.35rem);
+      font-weight: 500;
+      font-style: italic;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      line-height: 1.06;
+      margin: 0 0 0.4rem;
+      text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.85),
+        0 8px 32px rgba(0, 0, 0, 0.55),
+        0 0 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-landing-subtitle {
+      font-size: clamp(1rem, 2.2vw, 1.08rem);
+      font-weight: 500;
+      font-style: italic;
+      color: rgba(226, 232, 240, 0.98);
+      margin: 0;
+      letter-spacing: 0.02em;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+    }
+
+    /* Bloc accroche : (1) valeurs (2) Baie (3) La côte (4) sous-titre — CTAs en dessous */
+    .home-landing-tagline-stack {
+      margin-top: 1.15rem;
+      max-width: 100%;
+    }
+
+    .home-landing-tagline-stack > .home-landing-region {
+      margin: 0 0 0.35rem;
+    }
+
+    .home-landing-tagline-mid {
+      display: block;
+    }
+
+    .home-landing-tagline-mid .home-landing-title {
+      margin: 0;
+      font-size: clamp(1.55rem, 6vw, 3.35rem);
+      line-height: 1.06;
+    }
+
+    .home-landing-tagline-bottom {
+      display: block;
+      margin-top: 0.9rem;
+    }
+
+    .home-landing-tagline-bottom .home-landing-subtitle {
+      margin: 0;
+    }
+
+    /* CTAs hero : deux boutons côte à côte ; lien Infos pratiques en dessous (texte, pas bouton) */
+    .home-landing-hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      justify-content: center;
+      gap: 0.55rem 0.75rem;
+      margin-top: 0.95rem;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .home-landing-hero-ctas .btn-primary {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: none;
+    }
+
+    .home-hero-arrow {
+      display: inline-block;
+      margin-left: 0.45em;
+      font-weight: 700;
+    }
+
+    .home-hero-infos {
+      flex: 1 1 100%;
+      order: 3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+      margin-top: 0.1rem;
+      padding: 0.35rem 0.5rem;
+      font-family: "Lato", var(--font-sans);
+      font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: rgba(248, 250, 252, 0.88);
+      text-decoration: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .home-hero-infos:hover {
+      color: #fff;
+      border-bottom-color: rgba(255, 255, 255, 0.55);
+    }
+
+    @media (max-width: 520px) {
+      .home-landing-tagline-bottom {
+        margin-top: 1rem;
+      }
+
+      .home-landing-hero-ctas {
+        gap: 0.45rem 0.55rem;
+      }
+    }
+
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.58rem 1.05rem;
+      border-radius: 9px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      font-family: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+    }
+
+    .btn-home-primary {
+      background: var(--app-sea);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(21, 101, 168, 0.28);
+    }
+
+    .btn-home-primary:hover {
+      background: var(--app-sea-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-home-secondary {
+      background: var(--app-surface);
+      color: var(--app-text);
+      border: 1px solid var(--app-border);
+    }
+
+    .btn-home-secondary:hover {
+      border-color: #b8c8d8;
+      background: #f8fafc;
+    }
+
+    /* Sections accueil sur fond clair (sauf #groupes : texte sur fond photo immersif) */
+    .app-main--home section:not(#groupes):not(.home-cta-sorties) {
+      background: var(--app-bg);
+      color: var(--app-text);
+    }
+
+    .app-main--home .route-stat {
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+    }
+
+    .app-main--home .route-stat .detail {
+      color: var(--app-muted);
+    }
+
+    .app-main--home .route-stat .name {
+      color: var(--app-text);
+    }
+
+    @media (max-width: 640px) {
+      .home-landing-inner {
+        justify-content: flex-end;
+        padding-top: max(1rem, env(safe-area-inset-top, 0px));
+        padding-left: max(0.85rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.85rem, env(safe-area-inset-right, 0px));
+      }
+
+      .home-landing-topbar {
+        margin-bottom: 1rem;
+      }
+
+      .home-brand.home-brand--hero {
+        font-size: clamp(2.1rem, 11vw, 3.2rem);
+        transform: none;
+        margin-bottom: 0;
+      }
+
+      .home-landing-display-l1,
+      .home-landing-display-l2 {
+        font-size: clamp(1.55rem, 7.5vw, 2.45rem);
+      }
+
+      .home-landing-lead {
+        font-size: clamp(0.98rem, 3.8vw, 1.15rem);
+        padding: 0.55rem 0.7rem;
+      }
+
+      .home-landing-message {
+        padding: 1.05rem 1.1rem;
+      }
+
+      .home-landing-body-text {
+        font-size: 0.92rem;
+        line-height: 1.68;
+      }
+
+      .home-landing-body-philosophy {
+        font-size: 0.9rem;
+        padding-top: 0.9rem;
+      }
+
+      .home-landing-values {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0;
+        margin: 0.75rem 0 0;
+        padding: 0;
+        overflow: visible;
+      }
+
+      .home-landing-values li {
+        font-size: 0.82rem;
+        line-height: 1.45;
+        white-space: normal;
+      }
+
+      .home-landing-values li:not(:last-child)::after {
+        display: inline;
+      }
+
+      .home-landing-tagline-mid .home-landing-title {
+        font-size: clamp(1.45rem, 8vw, 2.45rem);
+      }
+
+      /* CTAs : deux boutons sur une ligne, Infos pratiques en dessous */
+      .home-landing-hero-ctas {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+
+      .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+      .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+        font-size: clamp(0.68rem, 3.4vw, 0.82rem);
+        padding: 0.48rem 0.5rem;
+        min-height: 2.5rem;
+      }
+
+      .home-hero-infos {
+        margin-top: 0.2rem;
+        font-size: 0.82rem;
+      }
+
+      .home-landing-visual img {
+        /* Photo : mer en bas — éviter de ne montrer que le ciel sur téléphone. */
+        object-position: center 76%;
+        transform: scale(1.04);
+      }
+
+      .app-main--home .site-footer-inner {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+      }
+    }
+
+    svg, video { max-width: 100%; height: auto; }
+
+    /* Ne pas appliquer height:auto au hero plein écran (.home-landing-visual img). */
+    img:not(.home-landing-visual img) {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* —— Accueil —— */
+    .home-hero {
+      position: relative;
+      z-index: 1;
+      border-bottom: none;
+    }
+
+    .home-hero-photo {
+      position: relative;
+      width: 100%;
+      min-height: min(100vh, 920px);
+      min-height: min(100dvh, 920px);
+      overflow: hidden;
+      background: linear-gradient(165deg, #0d1820 0%, #152a38 45%, #0f1c26 100%);
+    }
+
+    .home-hero-photo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.08) 25%,
+        rgba(255, 255, 255, 0.03) 42%,
+        rgba(20, 55, 65, 0.06) 58%,
+        rgba(12, 35, 45, 0.14) 78%,
+        rgba(10, 28, 36, 0.22) 100%
+      );
+    }
+
+    .home-hero-decor {
+      position: absolute;
+      top: -8%;
+      right: -12%;
+      width: min(52vw, 260px);
+      height: min(52vw, 260px);
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.45;
+    }
+
+    .home-hero-decor::before,
+    .home-hero-decor::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(13, 24, 32, 0.18);
+      border-radius: 50%;
+    }
+
+    .home-hero-decor::after {
+      inset: 18%;
+      border-color: rgba(13, 24, 32, 0.12);
+    }
+
+    .home-hero-panel {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: clamp(0.85rem, 3vw, 1.35rem);
+      min-height: min(100vh, 920px);
+      min-height: min(100dvh, 920px);
+      max-width: min(94vw, 860px);
+      margin: 0 auto;
+      padding: clamp(1.25rem, 4vw, 2rem) clamp(1.25rem, 5vw, 2.5rem) clamp(2rem, 6vw, 3rem);
+    }
+
+    .home-hero-lower {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    /* Bloc vitré : 2 colonnes (texte | photo), même carte — padding uniquement à gauche pour garder le texte lisible. */
+    .home-hero-sky {
+      flex: 0 0 auto;
+      padding: 0;
+      overflow: hidden;
+      border-radius: 16px;
+      background: rgba(255, 253, 250, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 0 10px 40px rgba(13, 24, 32, 0.12), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .home-hero-sky-split {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+    }
+
+    .home-hero-sky-split > * {
+      min-width: 0;
+    }
+
+    .home-hero-sky-left {
+      padding: 1.15rem 1.25rem 1.35rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .home-hero-sky-split .home-topbar {
+      margin-bottom: clamp(0.55rem, 2vw, 0.85rem);
+    }
+
+    .home-sky-lede {
+      margin: 0 0 clamp(1rem, 4vw, 1.5rem);
+      max-width: 36rem;
+    }
+
+    .home-sky-lede .home-quote {
+      margin-bottom: 0.75rem;
+    }
+
+    .home-sky-lede .home-pills {
+      margin-bottom: 0;
+    }
+
+    .home-hero-sky-right {
+      position: relative;
+      margin: 0;
+      min-height: auto;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid rgba(13, 24, 32, 0.09);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .home-hero-sky-right img {
+      display: block;
+      width: 100%;
+      flex: 0 0 auto;
+      min-height: 168px;
+      height: clamp(188px, 48vw, 280px);
+      max-height: 300px;
+      object-fit: cover;
+      object-position: center 52%;
+      filter: saturate(1.06) contrast(1.03);
+    }
+
+    @media (min-width: 700px) {
+      .home-hero-sky-split {
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 56%);
+      }
+
+      .home-hero-sky-left {
+        padding: 1.2rem 1rem 1.35rem 1.35rem;
+      }
+
+      .home-hero-sky-right {
+        border-top: none;
+        border-left: 1px solid rgba(13, 24, 32, 0.1);
+        min-height: 14rem;
+      }
+
+      .home-hero-sky-right img {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 48%;
+      }
+    }
+
+    .home-topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 1rem;
+      width: 100%;
+      margin-bottom: clamp(2rem, 8vw, 3.5rem);
+    }
+
+    .home-brand-sr {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .home-brand-badge {
+      padding: 0;
+      text-align: center;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid var(--sq-blue);
+      box-shadow:
+        0 10px 28px rgba(0, 50, 110, 0.28),
+        0 1px 0 rgba(255, 255, 255, 0.35) inset;
+    }
+
+    .home-brand-band--strip {
+      background: var(--sq-yellow);
+      padding: 0.42rem 0.65rem 0.48rem;
+      border-bottom: 2px solid var(--sq-rule);
+    }
+
+    .home-brand-strip {
+      margin: 0;
+      color: var(--sq-blue);
+    }
+
+    .home-brand-strip svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 2.65rem;
+    }
+
+    .home-brand-band--core {
+      background: var(--sq-blue);
+      color: var(--sq-yellow);
+      padding: 0.55rem 0.75rem 0.62rem;
+    }
+
+    .home-brand-wordmark {
+      margin: 0;
+      font-family: var(--font-logo);
+      font-weight: 800;
+      font-size: clamp(1.4rem, 5.8vw, 2rem);
+      line-height: 1.1;
+      letter-spacing: 0.04em;
+      color: var(--sq-yellow);
+      text-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .home-brand-wordmark-accent {
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      margin-left: 0.02em;
+    }
+
+    .home-season-badge {
+      flex-shrink: 0;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #7a4a0f;
+      border: 1px solid rgba(180, 120, 40, 0.45);
+      padding: 0.4rem 0.65rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.65);
+      box-shadow: 0 1px 4px rgba(13, 24, 32, 0.08);
+    }
+
+    .home-season-badge--on-photo {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.55rem;
+      z-index: 2;
+      margin: 0;
+      font-size: 0.66rem;
+      padding: 0.45rem 0.78rem;
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(180, 120, 40, 0.52);
+      box-shadow: 0 2px 16px rgba(13, 24, 32, 0.22);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .home-region {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0 0 1rem;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #2d6b6b;
+    }
+
+    .home-region-line {
+      display: block;
+      width: 1.75rem;
+      height: 1px;
+      background: #3d8b8b;
+      flex-shrink: 0;
+    }
+
+    .home-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-style: normal;
+      font-weight: 600;
+      line-height: 1.02;
+      letter-spacing: -0.045em;
+    }
+
+    .home-title-line {
+      display: block;
+      font-size: clamp(2.35rem, 9.5vw, 3.85rem);
+      font-weight: 500;
+      color: #0c1a22;
+    }
+
+    .home-title-accent {
+      display: block;
+      font-size: clamp(2.35rem, 9.5vw, 3.85rem);
+      font-weight: 700;
+      color: #1a6b6b;
+      letter-spacing: -0.05em;
+    }
+
+    .home-quote {
+      margin: 0 0 1.15rem;
+      padding-left: 1rem;
+      border-left: 3px solid rgba(61, 139, 139, 0.55);
+      max-width: 36rem;
+    }
+
+    .home-intro {
+      margin: 0 0 0.65rem;
+      font-family: var(--font-sans);
+      font-style: normal;
+      font-weight: 500;
+      font-size: clamp(0.98rem, 2.6vw, 1.12rem);
+      line-height: 1.55;
+      letter-spacing: -0.015em;
+      color: #1a3550;
+    }
+
+    .home-sub {
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: clamp(0.84rem, 2.2vw, 0.95rem);
+      font-weight: 400;
+      line-height: 1.55;
+      color: #3d5a6b;
+    }
+
+    .home-pills {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0 0 1.35rem;
+      padding: 0;
+    }
+
+    .home-pills li {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.7rem;
+      border: 1px solid rgba(61, 139, 139, 0.35);
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: #1e3a4a;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .home-pills li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #2f9d62;
+      flex-shrink: 0;
+    }
+
+    .home-actions--hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      padding: 0.15rem 0 0.35rem;
+    }
+
+    .home-actions--hero .btn-primary {
+      background: rgba(61, 139, 139, 0.88);
+      color: #f8fafb;
+      border: 1px solid rgba(45, 107, 107, 0.45);
+      box-shadow: 0 2px 12px rgba(13, 24, 32, 0.12);
+    }
+
+    .home-actions--hero .btn-primary:hover {
+      background: var(--teal-dark);
+      border-color: rgba(45, 107, 107, 0.6);
+    }
+
+    .home-actions--hero .btn-secondary {
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(61, 139, 139, 0.38);
+      color: #164e52;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .home-actions--hero .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.62);
+      border-color: var(--teal);
+      color: #0f3d42;
+    }
+
+    /* —— Hero (legacy, unused) —— */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 2rem 1.5rem 3.5rem;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        #f4a43a 0%,
+        #e07850 12%,
+        #b85868 25%,
+        #6a5088 42%,
+        #2a4060 58%,
+        #152838 75%,
+        #0d1820 92%
+      );
+      animation: sunsetShift 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes sunsetShift {
+      0% { filter: hue-rotate(0deg) brightness(1); }
+      100% { filter: hue-rotate(-8deg) brightness(1.05); }
+    }
+
+    .hero-sun {
+      position: absolute;
+      width: min(140px, 28vw);
+      height: min(140px, 28vw);
+      top: 18%;
+      right: 15%;
+      background: radial-gradient(circle, #fff5d8 0%, #f4a43a 50%, transparent 72%);
+      border-radius: 50%;
+      animation: sunPulse 6s ease-in-out infinite;
+    }
+
+    @keyframes sunPulse {
+      0%, 100% { transform: scale(1); opacity: 0.92; }
+      50% { transform: scale(1.06); opacity: 1; }
+    }
+
+    .hero-coast {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 42%;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+    }
+
+    .logo-box {
+      display: inline-block;
+      background: var(--white);
+      color: var(--ocean);
+      padding: 0.65rem 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .logo-box .logo-title {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      line-height: 1.2;
+    }
+
+    .logo-box .logo-sub {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      opacity: 0.7;
+      margin-top: 0.15rem;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+      border: 1px solid rgba(244, 164, 58, 0.4);
+      padding: 0.35rem 0.75rem;
+      border-radius: 2px;
+      background: rgba(13, 24, 32, 0.35);
+      backdrop-filter: blur(4px);
+    }
+
+    .hero h1 {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-lead {
+      font-size: clamp(1rem, 2.8vw, 1.15rem);
+      color: var(--white);
+      max-width: 520px;
+      margin-bottom: 1rem;
+      line-height: 1.55;
+    }
+
+    .hero-body {
+      font-size: clamp(0.9rem, 2.4vw, 1rem);
+      color: var(--muted);
+      max-width: 520px;
+      margin-bottom: 1.75rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn-secondary {
+      display: inline-block;
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.85rem 1.4rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gold);
+      background: rgba(244, 164, 58, 0.08);
+    }
+
+  /* —— Prochaine sortie & confiance —— */
+    .info-section {
+      padding: 3.5rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .sortie-card {
+      background: linear-gradient(135deg, rgba(61, 139, 139, 0.15) 0%, rgba(13, 24, 32, 0.8) 100%);
+      border: 1px solid rgba(61, 139, 139, 0.35);
+      border-radius: 10px;
+      padding: 1.75rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .sortie-card h2 {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .sortie-details {
+      list-style: none;
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .sortie-details li {
+      font-size: 0.95rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+    }
+
+    .sortie-details .icon { flex-shrink: 0; }
+
+    .sortie-note {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sortie-note a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .sortie-note a:hover { text-decoration: underline; }
+
+    .trust-text {
+      font-size: 0.95rem;
+      color: var(--muted);
+      max-width: 640px;
+      line-height: 1.75;
+    }
+
+    .trust-text strong { color: var(--white); font-weight: 500; }
+
+    /* —— Inscription (modale) —— */
+    .signup-hint {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.45);
+      line-height: 1.5;
+    }
+
+    .signup-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .signup-modal[hidden] {
+      display: none;
+    }
+
+    .signup-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 15, 20, 0.82);
+      backdrop-filter: blur(4px);
+    }
+
+    .signup-modal-dialog {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: min(96vw, 880px);
+      max-height: min(94dvh, 900px);
+      overflow-y: auto;
+      background: #152028;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 1.55rem 1.5rem 1.45rem;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+      text-align: center;
+    }
+
+    .signup-modal h2:focus {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-modal-head h2:focus {
+      outline: 2px solid var(--sq-yellow);
+      outline-offset: 3px;
+    }
+
+    .signup-modal-map-section {
+      text-align: left;
+      margin-bottom: 1.15rem;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .signup-modal-map-section.is-falaises {
+      border-color: rgba(232, 232, 232, 0.45);
+      box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.15);
+    }
+
+    .signup-modal-map-section.is-boucle {
+      border-color: rgba(37, 99, 235, 0.45);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+    }
+
+    .signup-modal-map-section.is-brehec {
+      border-color: rgba(46, 125, 82, 0.5);
+      box-shadow: 0 0 0 1px rgba(76, 175, 110, 0.22);
+    }
+
+    .signup-modal-map-section.is-custom-route {
+      border-color: rgba(61, 139, 139, 0.5);
+      box-shadow: 0 0 0 1px rgba(61, 139, 139, 0.22);
+    }
+
+    .section-header--with-action {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .section-header--with-action .btn-new-route {
+      flex-shrink: 0;
+    }
+
+    /* —— Maquette type « app » (nouvelle sortie + CTA) : vert forêt, surfaces claires —— */
+    .btn-new-route {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.62rem 1.2rem;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.01em;
+      background: var(--app-sea);
+      color: #fff !important;
+      box-shadow: 0 2px 12px rgba(21, 101, 168, 0.35);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-new-route:hover {
+      background: var(--app-sea-hover);
+      transform: translateY(-1px);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-backdrop {
+      background: rgba(12, 22, 18, 0.48);
+      backdrop-filter: blur(6px);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-modal-dialog {
+      max-width: min(96vw, 1040px);
+      max-height: min(92dvh, 920px);
+      background: var(--app-surface);
+      color: var(--app-text);
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
+      box-shadow:
+        0 4px 6px rgba(15, 40, 65, 0.04),
+        0 18px 48px rgba(15, 40, 65, 0.1);
+      text-align: left;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-close {
+      color: var(--app-muted);
+      top: 0.65rem;
+      right: 0.65rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-modal-head {
+      padding: calc(1.35rem + 8px) 3rem 1.05rem 1.5rem;
+      border-bottom: 1px solid var(--app-border);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 52%, #fffdf7 100%);
+      box-shadow: inset 0 4px 0 0 var(--sq-yellow), inset 0 8px 0 0 var(--app-sea);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-modal-head h2 {
+      margin: 0 0 0.4rem;
+      font-size: clamp(1.28rem, 2.6vw, 1.55rem);
+      font-weight: 800;
+      color: var(--app-sea-hover);
+      letter-spacing: -0.03em;
+      font-family: var(--font-sans);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-sub {
+      margin: 0;
+      font-size: 0.875rem;
+      line-height: 1.45;
+      color: var(--app-muted);
+      max-width: 52rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      padding: 0.65rem 1.45rem 0.7rem;
+      border-bottom: 1px solid var(--app-border);
+      background: linear-gradient(180deg, #f6f9fc 0%, #edf3f9 100%);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab {
+      flex: 1 1 auto;
+      min-width: min(100%, 8.25rem);
+      min-height: 2.75rem;
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      font-family: inherit;
+      color: var(--app-muted);
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(21, 101, 168, 0.12);
+      border-radius: 10px;
+      cursor: pointer;
+      line-height: 1.25;
+      transition: background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab:hover:not(:disabled) {
+      color: var(--app-sea-hover);
+      background: linear-gradient(180deg, #fff 0%, var(--sq-yellow-soft) 100%);
+      border-color: rgba(21, 101, 168, 0.22);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab.is-active {
+      color: var(--app-sea-hover);
+      background: linear-gradient(180deg, #ffffff 0%, #fffbeb 100%);
+      border-color: rgba(21, 101, 168, 0.28);
+      box-shadow:
+        0 2px 10px rgba(15, 40, 65, 0.07),
+        inset 0 -3px 0 0 var(--sq-yellow);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tab:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      background: rgba(248, 250, 252, 0.8);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tabpanels {
+      padding: 0;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-tabpanel {
+      padding: 1rem 1.5rem 1.15rem;
+    }
+
+    #new-route-panel-edit .new-route-edit-pick {
+      margin-top: 0.35rem;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    #new-route-panel-create > .new-route-modal-body {
+      margin-top: 0;
+    }
+
+    .new-route-admin-gate {
+      padding: 1rem 1.15rem 1.1rem;
+      margin: 0 0 0.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 85, 164, 0.16);
+      background: linear-gradient(150deg, #f0f7ff 0%, #fffef8 55%, #fff8e4 100%);
+      box-shadow: 0 1px 4px rgba(15, 40, 65, 0.06);
+    }
+
+    .new-route-admin-intro {
+      font-size: 0.9rem;
+      color: var(--app-muted);
+      margin: 0 0 0.85rem;
+      line-height: 1.5;
+    }
+
+    .new-route-admin-field {
+      display: block;
+      margin-bottom: 0.6rem;
+    }
+
+    .new-route-admin-field span {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--sq-blue);
+      margin-bottom: 0.3rem;
+    }
+
+    .new-route-admin-field input {
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--app-border);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      box-shadow: 0 1px 2px rgba(15, 40, 65, 0.04);
+    }
+
+    .new-route-admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.65rem;
+    }
+
+    .new-route-admin-error {
+      margin: 0.45rem 0 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #b91c1c;
+    }
+
+    .new-route-admin-toolbar {
+      padding: 1rem 1.15rem 1.05rem;
+      margin: 0 0 0.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 85, 164, 0.14);
+      background: linear-gradient(165deg, #ffffff 0%, #f4f9fc 100%);
+      text-align: left;
+      box-shadow: 0 1px 3px rgba(15, 40, 65, 0.05);
+    }
+
+    .new-route-admin-toolbar-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .new-route-team-rider-details {
+      margin-top: 0.35rem;
+      font-size: 0.84rem;
+      color: var(--app-muted);
+    }
+
+    .new-route-team-rider-details summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--app-sea);
+    }
+
+    .new-route-team-rider-details .new-route-admin-field {
+      margin-top: 0.55rem;
+    }
+
+    .new-route-team-grant-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      margin: 0.5rem 0;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .new-route-team-grant-row input[type="checkbox"] {
+      margin-top: 0.15rem;
+    }
+
+    .new-route-team-msg {
+      margin-top: 0.45rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #b91c1c;
+    }
+
+    .new-route-team-msg.is-ok {
+      color: #15803d;
+    }
+
+    .new-route-admin-toolbar-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--app-sea);
+    }
+
+    .new-route-edit-pick {
+      margin-top: 0.75rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid rgba(21, 101, 168, 0.18);
+    }
+
+    .new-route-edit-pick-row {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.65rem;
+      margin-top: 0.45rem;
+    }
+
+    .new-route-edit-pick-field {
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 0;
+    }
+
+    .new-route-edit-pick-field select {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .new-route-edit-pick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .new-route-edit-pick-actions .btn-primary,
+    .new-route-edit-pick-actions .new-route-edit-delete {
+      flex-shrink: 0;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-edit-delete {
+      flex-shrink: 0;
+      border-color: rgba(185, 28, 28, 0.42);
+      color: #991b1b;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-edit-delete:hover:not(:disabled) {
+      background: rgba(185, 28, 28, 0.09);
+      border-color: rgba(153, 27, 27, 0.55);
+    }
+
+    .new-route-modal-body.is-locked {
+      display: none !important;
+    }
+
+    .new-route-modal-grid {
+      display: grid;
+      grid-template-columns: 11.75rem minmax(0, 1fr) minmax(10rem, 15rem);
+      gap: 0;
+      min-height: 260px;
+    }
+
+    @media (max-width: 820px) {
+      .new-route-modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps {
+        border-right: none !important;
+        border-bottom: 1px solid var(--app-border);
+        padding: 0.5rem 0.55rem 0.55rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps-title {
+        margin: 0 0 0.4rem;
+        font-size: 0.72rem;
+      }
+
+      /* Étapes en une ligne défilante : moins de hauteur que 5 lignes empilées. */
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps-list {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.35rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        padding-bottom: 0.15rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps li {
+        flex: 0 0 auto;
+        padding: 0.32rem 0.45rem 0.32rem 1.55rem;
+        font-size: 0.74rem;
+        line-height: 1.25;
+        margin: 0;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(21, 101, 168, 0.12);
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-steps li::before {
+        top: 50%;
+        transform: translateY(-50%);
+        left: 0.28rem;
+        width: 1.15rem;
+        height: 1.15rem;
+        font-size: 0.62rem;
+        line-height: 1.15rem;
+      }
+
+      .new-route-aside {
+        border-left: none !important;
+        border-top: 1px solid var(--app-border);
+      }
+    }
+
+    @media (max-width: 560px) {
+      #new-route-modal.new-route-modal--goelo-app .new-route-datetime-row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0.45rem;
+        align-items: stretch;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-datetime-row input {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        min-height: 2.35rem;
+        padding: 0.28rem 0.45rem;
+        font-size: 16px;
+        line-height: 1.2;
+        box-sizing: border-box;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-modal-head {
+        padding: calc(0.95rem + 8px) 2.75rem 0.55rem 1rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-sub {
+        font-size: 0.76rem;
+        line-height: 1.35;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-tabs {
+        padding: 0.55rem 1rem 0.6rem;
+        gap: 0.35rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-tab {
+        min-width: 0;
+        flex: 1 1 calc(50% - 0.2rem);
+        min-height: 2.65rem;
+        font-size: 0.76rem;
+        padding: 0.45rem 0.5rem;
+      }
+
+      #new-route-modal.new-route-modal--goelo-app .new-route-tabpanel {
+        padding: 0.85rem 1rem 1rem;
+      }
+    }
+
+    .new-route-steps {
+      padding: 1rem 0.75rem 1rem 1rem;
+      background: #e8f2fa;
+      border-right: 1px solid var(--app-border);
+      color: var(--app-text);
+    }
+
+    .new-route-steps-title {
+      margin: 0 0 0.65rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--app-sea);
+    }
+
+    .new-route-steps-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      counter-reset: nrstep;
+    }
+
+    .new-route-steps li {
+      position: relative;
+      padding: 0.48rem 0 0.48rem 2rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--app-muted);
+      letter-spacing: 0.02em;
+      line-height: 1.35;
+      text-transform: none;
+      counter-increment: nrstep;
+    }
+
+    .new-route-steps li::before {
+      content: counter(nrstep);
+      position: absolute;
+      left: 0;
+      top: 0.38rem;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 50%;
+      font-size: 0.68rem;
+      font-weight: 800;
+      display: block;
+      text-align: center;
+      line-height: 1.35rem;
+      background: #cfe2f2;
+      color: var(--app-sea-hover);
+    }
+
+    .new-route-steps li.is-active {
+      color: var(--app-text);
+    }
+
+    .new-route-steps li.is-active::before {
+      background: var(--app-sea);
+      color: #fff;
+    }
+
+    .new-route-panel-intro {
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .new-route-panel-hint {
+      font-size: 0.85rem;
+      color: var(--app-muted);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .new-route-recap {
+      padding: 0.65rem 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      background: #f6f9fc;
+      font-size: 0.84rem;
+      color: var(--app-text);
+      line-height: 1.45;
+    }
+
+    .new-route-recap-list {
+      margin: 0;
+      padding-left: 1.1rem;
+    }
+
+    .new-route-recap-list li {
+      margin: 0.35rem 0;
+    }
+
+    .new-route-wizard-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
+      margin-top: 1.1rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid var(--app-border);
+      position: relative;
+      z-index: 2;
+      background: var(--app-surface);
+    }
+
+    .new-route-wizard-nav-main {
+      margin-left: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-wizard-nav button[hidden] {
+      display: none !important;
+    }
+
+    .new-route-main {
+      min-width: 0;
+      padding: 1rem 1.35rem 1.4rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-main .signup-hint {
+      color: var(--app-muted);
+      text-align: left;
+      margin-top: 0;
+      margin-bottom: 0.85rem;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-hint code {
+      color: var(--app-sea) !important;
+      background: rgba(21, 101, 168, 0.1);
+      padding: 0.08rem 0.28rem;
+      border-radius: 4px;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-form {
+      margin-top: 0;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-form label {
+      text-align: left;
+      display: block;
+      margin-bottom: 0.65rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-type-row label,
+    #new-route-modal.new-route-modal--goelo-app .new-route-diff-pills label {
+      display: inline-block;
+      margin-bottom: 0;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-form input {
+      background: #fff;
+      color: var(--app-text);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-form input::placeholder {
+      color: #9aa8a0;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-form .btn-primary {
+      background: var(--app-sea);
+      color: #fff;
+      border: none;
+      width: 100%;
+      margin-top: 0.35rem;
+      border-radius: 10px;
+      font-weight: 700;
+      min-height: 2.75rem;
+      font-size: 0.9375rem;
+      padding: 0.62rem 1.15rem;
+      letter-spacing: 0.02em;
+      box-shadow: 0 3px 12px rgba(21, 101, 168, 0.28);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .signup-modal-form .btn-primary:hover {
+      background: var(--app-sea-hover);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .btn-primary {
+      min-height: 2.75rem;
+      padding: 0.62rem 1.2rem;
+      font-size: 0.9375rem;
+      border-radius: 10px;
+      font-weight: 700;
+      letter-spacing: 0.015em;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-admin-submit,
+    #new-route-modal.new-route-modal--goelo-app #new-route-submit.btn-primary {
+      background: linear-gradient(180deg, #fce056 0%, var(--sq-yellow) 50%, #e8c812 100%);
+      color: var(--sq-yellow-ink) !important;
+      border: 1px solid rgba(15, 40, 65, 0.12);
+      box-shadow: 0 3px 14px rgba(232, 200, 18, 0.42);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-admin-submit:hover,
+    #new-route-modal.new-route-modal--goelo-app #new-route-submit.btn-primary:hover {
+      background: linear-gradient(180deg, #fde86b 0%, var(--sq-yellow-hover) 55%, #dfc010 100%);
+      filter: brightness(0.99);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit {
+      width: auto;
+      min-width: 7.5rem;
+      background: var(--app-sea);
+      color: #fff !important;
+      border: none;
+      box-shadow: 0 3px 12px rgba(21, 101, 168, 0.28);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-team-submit:hover {
+      background: var(--app-sea-hover);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load {
+      width: auto;
+      min-width: 7.5rem;
+      background: #fff !important;
+      color: var(--app-sea) !important;
+      border: 2px solid var(--app-sea) !important;
+      box-shadow: 0 2px 10px rgba(21, 101, 168, 0.12);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app #new-route-edit-load:hover {
+      background: #f0f7ff !important;
+      color: var(--app-sea-hover) !important;
+      border-color: var(--app-sea-hover) !important;
+    }
+
+    .new-route-steps-help {
+      margin: 0 0 0.5rem;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      color: var(--app-muted);
+      font-weight: 600;
+    }
+
+    .new-route-field-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--app-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .new-route-type-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .new-route-type-row input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .new-route-type-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--app-border);
+      background: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--app-text);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .new-route-type-row input:focus-visible + .new-route-type-btn {
+      outline: 2px solid var(--app-sea);
+      outline-offset: 2px;
+    }
+
+    .new-route-type-row input:checked + .new-route-type-btn {
+      border-color: var(--app-sea);
+      background: rgba(21, 101, 168, 0.1);
+      color: var(--app-sea-hover);
+    }
+
+    .new-route-datetime-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .new-route-datetime-row input {
+      width: 100%;
+    }
+
+    .new-route-gpx-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .new-route-gpx-name {
+      font-size: 0.78rem;
+      color: var(--app-muted);
+      flex: 1 1 8rem;
+      min-width: 0;
+      word-break: break-all;
+    }
+
+    .btn-app-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 0.95rem;
+      border-radius: 8px;
+      border: 1px solid var(--app-sea);
+      background: #fff;
+      color: var(--app-sea) !important;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-app-outline:hover {
+      background: rgba(21, 101, 168, 0.08);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .btn-app-outline {
+      min-height: 2.65rem;
+      padding: 0.55rem 1.15rem;
+      border-radius: 10px;
+      border: 2px solid rgba(21, 101, 168, 0.35);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--app-sea-hover) !important;
+      box-shadow: 0 1px 2px rgba(15, 40, 65, 0.05);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .btn-app-outline:hover {
+      background: linear-gradient(180deg, rgba(21, 101, 168, 0.07) 0%, var(--sq-yellow-soft) 100%);
+      border-color: var(--app-sea);
+    }
+
+    .new-route-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      padding: 0.55rem 0.65rem;
+      background: #f2f7fb;
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--app-text);
+    }
+
+    .new-route-stats span strong {
+      color: var(--app-sea);
+      font-weight: 700;
+    }
+
+    .new-route-difficulty {
+      margin-bottom: 0.85rem;
+    }
+
+    .new-route-diff-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+    }
+
+    .new-route-diff-pills input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .new-route-diff-pill {
+      display: inline-flex;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .new-route-diff-pills input:checked + .new-route-diff-pill {
+      border-color: var(--app-sea);
+      box-shadow: 0 0 0 2px rgba(21, 101, 168, 0.2);
+    }
+
+    .new-route-diff-pill--blanc { color: #6b7280; }
+    .new-route-diff-pill--vert { color: #15803d; }
+    .new-route-diff-pill--bleu { color: #1d4ed8; }
+    .new-route-diff-pill--rouge { color: #b91c1c; }
+
+    .new-route-cover-row {
+      margin-bottom: 0.85rem;
+    }
+
+    .new-route-cover-preview {
+      margin-top: 0.45rem;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--app-border);
+      max-height: 120px;
+      background: #f0f4f8;
+    }
+
+    .new-route-cover-preview img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 120px;
+      object-fit: cover;
+    }
+
+    #new-route-preview-map {
+      position: relative;
+      z-index: 0;
+      isolation: isolate;
+      height: 200px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--app-border);
+      margin-bottom: 0.65rem;
+      background: #e8eef4;
+    }
+
+    #new-route-preview-map.leaflet-container {
+      font-family: var(--font-sans);
+    }
+
+    /* Après création / mise à jour / suppression : message groupe + story (aligné parcours.css) */
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      box-sizing: border-box;
+      padding: 1.25rem 1.5rem 1.5rem;
+      background: var(--app-surface);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: inherit;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-inner {
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-title {
+      margin: 0 0 0.65rem;
+      font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+      font-weight: 800;
+      color: var(--app-sea-hover);
+      letter-spacing: -0.02em;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-ok,
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-intro {
+      margin: 0 0 0.85rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--app-text);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-intro {
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-label {
+      display: block;
+      margin: 0.35rem 0 0.35rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-textarea {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0 0 1rem;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.8125rem;
+      line-height: 1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--app-text);
+      background: #f8fafc;
+      border: 1px solid var(--app-border);
+      border-radius: 10px;
+      resize: vertical;
+      min-height: 10rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-textarea--mid {
+      min-height: 7.5rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-bottom: 1.15rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions--spread {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 1.1rem;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-actions--footer {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--app-border);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-sub {
+      margin: 0 0 0.45rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--app-sea-hover);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-visual {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--app-muted);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-details {
+      margin: 0 0 1rem;
+      padding: 0.65rem 0 0;
+      border-top: 1px solid var(--app-border);
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-summary {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--app-sea-hover);
+      cursor: pointer;
+      padding: 0.35rem 0;
+      list-style: none;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    #new-route-modal.new-route-modal--goelo-app .new-route-after-save-details[open] .new-route-after-save-summary {
+      margin-bottom: 0.75rem;
+    }
+
+    .gpx-upload-pop {
+      position: fixed;
+      inset: 0;
+      z-index: 100001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .gpx-upload-pop[hidden] {
+      display: none;
+    }
+
+    .gpx-upload-pop-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 20, 30, 0.55);
+      backdrop-filter: blur(4px);
+    }
+
+    .gpx-upload-pop-dialog {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      background: var(--app-surface);
+      border-radius: 12px;
+      border: 1px solid var(--app-border);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+      padding: 1.25rem 1.35rem;
+      color: var(--app-text);
+    }
+
+    .gpx-upload-pop-dialog h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .gpx-upload-drop {
+      margin-top: 0.75rem;
+      padding: 1.25rem 1rem;
+      border: 2px dashed var(--app-border);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--app-muted);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .gpx-upload-drop.is-drag {
+      border-color: var(--app-sea);
+      background: rgba(21, 101, 168, 0.06);
+    }
+
+    .gpx-upload-pop-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .gpx-upload-pop-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.55rem;
+      border: none;
+      background: none;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: var(--app-muted);
+      cursor: pointer;
+    }
+
+    .new-route-aside {
+      padding: 0.9rem;
+      background: #fafbf9;
+      border-left: 1px solid var(--app-border);
+    }
+
+    .new-route-aside-card {
+      border: 1px dashed #c5d6ce;
+      border-radius: 10px;
+      padding: 0.85rem;
+      background: #fff;
+    }
+
+    .new-route-aside-title {
+      margin: 0 0 0.4rem;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--app-text);
+    }
+
+    .new-route-aside-text {
+      margin: 0;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: var(--app-muted);
+    }
+
+    .signup-modal .map-options {
+      margin: 0;
+      border-radius: 0;
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.2);
+      color: rgba(255, 255, 255, 0.82);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem 1.25rem;
+      align-items: center;
+    }
+
+    .grade-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.85rem;
+      align-items: center;
+      margin: 0;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.75);
+      background: rgba(0, 0, 0, 0.18);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .grade-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+
+    .grade-swatch {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 2px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .signup-modal .map-options label {
+      color: inherit;
+    }
+
+    .signup-modal .cities-list {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .signup-modal-map-inner {
+      position: relative;
+    }
+
+    .signup-modal #route-map {
+      height: min(42dvh, 300px);
+      min-height: 200px;
+      border-radius: 0;
+    }
+
+    .signup-modal-close {
+      position: absolute;
+      top: 0.65rem;
+      right: 0.75rem;
+      width: 2rem;
+      height: 2rem;
+      border: none;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--white);
+      font-size: 1.35rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .signup-modal-close:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .signup-modal h2 {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1.75rem;
+      margin-bottom: 0.85rem;
+      padding-right: 1.5rem;
+    }
+
+    .signup-modal-route {
+      text-align: left;
+      font-size: 0.88rem;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.15rem;
+      line-height: 1.55;
+    }
+
+    .signup-modal-route strong {
+      color: var(--white);
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .signup-modal-course {
+      text-align: left;
+      font-size: 0.8rem;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.88);
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 1rem 1.05rem 1.1rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .signup-modal-course-title {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-style: normal;
+      color: var(--gold);
+      margin: 1.1rem 0 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .signup-modal-course-title:first-child {
+      margin-top: 0;
+    }
+
+    .signup-modal-course p {
+      margin: 0.45rem 0;
+    }
+
+    .signup-modal-course ul {
+      margin: 0.35rem 0 0.65rem;
+      padding-left: 1.15rem;
+    }
+
+    .signup-modal-course li {
+      margin: 0.25rem 0;
+    }
+
+    .signup-modal-course .course-warn {
+      margin: 0.65rem 0 0.85rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      font-weight: 600;
+    }
+
+    .signup-modal-course a {
+      color: var(--gold);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      word-break: break-word;
+    }
+
+    .signup-modal-course a:hover {
+      color: #ffc46b;
+    }
+
+    .signup-modal-course-footer {
+      margin-top: 0.85rem;
+      margin-bottom: 0;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 0.78rem;
+      font-weight: 400;
+    }
+
+    .signup-modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-bottom: 1.15rem;
+      text-align: left;
+    }
+
+    .signup-modal-form input {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--white);
+      width: 100%;
+    }
+
+    .signup-modal-form input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .signup-modal-form .btn-primary {
+      width: 100%;
+      margin-top: 0.25rem;
+      font-size: 1rem;
+      padding: 0.9rem;
+    }
+
+    .signup-modal-done {
+      display: none;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: rgba(61, 139, 139, 0.2);
+      border: 1px solid rgba(61, 139, 139, 0.45);
+      color: var(--white);
+      font-size: 0.9rem;
+    }
+
+    .signup-modal-done.is-visible {
+      display: block;
+    }
+
+    .signup-registered-actions {
+      margin-bottom: 1rem;
+    }
+
+    .signup-registered-actions[hidden] {
+      display: none;
+    }
+
+    .btn-unregister {
+      width: 100%;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid rgba(248, 113, 113, 0.55);
+      background: rgba(248, 113, 113, 0.12);
+      color: #fecaca;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-unregister:hover {
+      background: rgba(248, 113, 113, 0.22);
+      border-color: rgba(248, 113, 113, 0.75);
+    }
+
+    .signup-modal .participants-panel {
+      margin-bottom: 1rem;
+    }
+
+    .signup-mailto-link {
+      display: inline-block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--teal);
+      text-decoration: none;
+      margin-bottom: 0.5rem;
+    }
+
+    .signup-mailto-link:hover {
+      text-decoration: underline;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .participants-panel {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 1.15rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .participants-heading {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 0.75rem;
+    }
+
+    .participants-heading span {
+      color: var(--gold);
+      font-size: 1.15rem;
+    }
+
+    .participants-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    .participants-list li {
+      font-size: 0.82rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 20px;
+      background: rgba(61, 139, 139, 0.25);
+      border: 1px solid rgba(61, 139, 139, 0.5);
+      color: var(--white);
+    }
+
+    .participants-empty {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-style: italic;
+      margin: 0;
+    }
+
+    .participants-empty.is-hidden,
+    .participants-list.is-hidden {
+      display: none;
+    }
+
+    .signup-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+      align-items: stretch;
+      margin-bottom: 0.75rem;
+    }
+
+    .signup-form input[type="text"] {
+      flex: 1 1 180px;
+      min-width: 0;
+      max-width: 280px;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      padding: 0.8rem 1rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--white);
+    }
+
+    .signup-form input[type="text"]::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .signup-form .btn-primary {
+      flex: 0 0 auto;
+    }
+
+    .signup-form.is-disabled {
+      display: none;
+    }
+
+    .signup-mailto {
+      display: none;
+      margin-bottom: 0.75rem;
+    }
+
+    .signup-mailto.is-visible {
+      display: inline-block;
+    }
+
+    .signup-alt {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.45);
+      margin-top: 0.5rem;
+    }
+
+    .signup-alt a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .signup-alt a:hover {
+      text-decoration: underline;
+    }
+
+    .signup-success {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      background: rgba(61, 139, 139, 0.2);
+      border: 1px solid rgba(61, 139, 139, 0.45);
+      color: var(--white);
+      font-size: 0.9rem;
+    }
+
+    .signup-success.is-visible {
+      display: block;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--teal);
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.85rem 1.6rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+    }
+
+    /* CTA hero : « Voir les groupes » plein jaune Saint-Quay ; « Sorties » vitré */
+    .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+    .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    .home-landing-inner .btn-primary.home-hero-groupes {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Lato", var(--font-sans);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--sq-yellow-ink);
+      background: var(--sq-yellow);
+      border: 1px solid rgba(0, 85, 164, 0.35);
+      padding: 0.95rem 1.85rem;
+      border-radius: 14px;
+      box-shadow:
+        0 2px 0 rgba(180, 140, 0, 0.25),
+        0 8px 28px rgba(0, 0, 0, 0.3);
+      text-decoration: none;
+      cursor: pointer;
+      text-shadow: none;
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    }
+
+    .home-landing-inner .btn-primary.home-hero-groupes:hover {
+      color: var(--sq-yellow-ink);
+      background: var(--sq-yellow-hover);
+      border-color: rgba(0, 85, 164, 0.5);
+      transform: translateY(-2px);
+      box-shadow:
+        0 2px 0 rgba(160, 120, 0, 0.3),
+        0 12px 36px rgba(0, 0, 0, 0.32);
+    }
+
+    .home-landing-inner a.btn-ghost.home-hero-sorties {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Lato", var(--font-sans);
+      font-weight: 600;
+      font-size: 1rem;
+      color: #fff;
+      background: rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(18px) saturate(1.15);
+      -webkit-backdrop-filter: blur(18px) saturate(1.15);
+      padding: 0.95rem 1.85rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 8px 32px rgba(0, 0, 0, 0.22);
+      text-decoration: none;
+      cursor: pointer;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    }
+
+    .home-landing-inner a.btn-ghost.home-hero-sorties:hover {
+      color: #fff;
+      background: rgba(15, 23, 42, 0.42);
+      border-color: rgba(255, 255, 255, 0.32);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 10px 36px rgba(0, 0, 0, 0.28);
+      transform: translateY(-2px);
+    }
+
+    .home-landing-inner .home-landing-hero-ctas .btn-primary.home-hero-groupes,
+    .home-landing-inner .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+      max-width: none;
+      min-height: 2.75rem;
+      padding: 0.5rem 0.65rem;
+      font-size: clamp(0.72rem, 3.1vw, 0.875rem);
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      border-radius: 14px;
+      border-width: 1px;
+      border-style: solid;
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .home-landing-hero-ctas a.btn-ghost.home-hero-sorties {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .home-landing-hero-ctas .btn-primary.home-hero-groupes {
+      border-color: rgba(0, 85, 164, 0.35);
+    }
+
+    /* —— Sections —— */
+    section {
+      padding: 4.5rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.85rem, 4vw, 2.5rem);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    /* —— Map (modale inscription, etc.) —— */
+    .map-wrap {
+      position: relative;
+      margin: 0 auto 2rem;
+      max-width: 1100px;
+      padding: 0 1.5rem;
+    }
+
+    .map-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+      padding: 0 1.5rem;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .map-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .map-legend-item:hover,
+    .map-legend-item.is-active {
+      border-color: var(--gold);
+      background: rgba(244, 164, 58, 0.08);
+      color: var(--white);
+    }
+
+    .map-legend-line {
+      width: 28px;
+      height: 0;
+      border-top: 3px solid;
+    }
+
+    .map-legend-line.dashed {
+      border-style: dashed;
+    }
+
+    .map-alert {
+      display: none;
+      max-width: 1100px;
+      margin: 0 auto 1rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: var(--gold);
+      background: rgba(244, 164, 58, 0.1);
+      border: 1px solid rgba(244, 164, 58, 0.3);
+      border-radius: 6px;
+    }
+
+    .map-alert.is-visible { display: block; }
+
+    .map-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 18, 24, 0.85);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      z-index: 500;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .map-loading.is-hidden {
+      opacity: 0;
+    }
+
+    .strava-view {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+    }
+
+    .route-choices-scroll {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .route-choices-scroll::before,
+    .route-choices-scroll::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2.85rem;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .route-choices-scroll::before {
+      left: 0;
+      background: linear-gradient(90deg, rgba(10, 18, 24, 0.92) 0%, rgba(10, 18, 24, 0.35) 55%, transparent 100%);
+    }
+
+    .route-choices-scroll::after {
+      right: 0;
+      background: linear-gradient(270deg, rgba(10, 18, 24, 0.92) 0%, rgba(10, 18, 24, 0.35) 55%, transparent 100%);
+    }
+
+    .route-choices-scroll.can-scroll-left::before,
+    .route-choices-scroll.can-scroll-right::after {
+      opacity: 1;
+    }
+
+    .route-choices {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 1rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 2.1rem 0.15rem 0.85rem;
+      scroll-snap-type: x proximity;
+      scroll-padding-inline: 0.25rem;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.42) rgba(255, 255, 255, 0.08);
+    }
+
+    .route-choices::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .route-choices::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.38);
+      border-radius: 4px;
+    }
+
+    .route-choices::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+    }
+
+    /* 2 parcours : côte à côte sur grand écran, sans scroll forcé */
+    .route-choices:not(.route-choices--many) {
+      justify-content: center;
+    }
+
+    .route-choices:not(.route-choices--many) .route-choice-card {
+      flex: 1 1 0;
+      min-width: min(280px, 100%);
+      max-width: 520px;
+    }
+
+    /* 3+ parcours : carrousel horizontal */
+    .route-choices.route-choices--many .route-choice-card {
+      flex: 0 0 clamp(300px, 78vw, 400px);
+      width: clamp(300px, 78vw, 400px);
+      scroll-snap-align: start;
+    }
+
+    .route-choice-card {
+      position: relative;
+      display: block;
+      flex-shrink: 0;
+      font-family: var(--font-sans);
+      padding: 0;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      background: #fff;
+      color: #1a1a1a;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .route-choice-card:focus {
+      outline: 2px solid var(--teal);
+      outline-offset: 2px;
+    }
+
+    .route-choice-card:focus:not(:focus-visible) {
+      outline: none;
+    }
+
+    .route-choice-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      z-index: 3;
+      background: var(--route-color, var(--teal));
+      pointer-events: none;
+    }
+
+    .route-choice-card:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .route-choice-card.is-active {
+      border-color: var(--route-color);
+      box-shadow: 0 0 0 1px var(--route-color), 0 12px 32px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+      overflow: visible;
+    }
+
+    .route-choice-card.is-active::after {
+      content: "Sélectionné";
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 0.5rem);
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 6.75rem;
+      height: 1.55rem;
+      padding: 0 0.7rem;
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      background: var(--route-color, var(--teal));
+      border-radius: 6px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .route-choice-card .ride-event-card {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      width: 100%;
+      background: #fff;
+      color: #1a1a1a;
+    }
+
+    .route-choice-card .ride-td-left {
+      background: color-mix(in srgb, var(--route-color, #94a3b8) 44%, #ffffff);
+      border-right: 1px solid color-mix(in srgb, var(--route-color, #64748b) 32%, #e2e8f0);
+    }
+
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left {
+      background: linear-gradient(180deg, #f2f2f3 0%, #e6e6e8 100%);
+      border-right: 1px solid #d1d5db;
+    }
+
+    /* Colonne gauche boucle : même teinte que le tracé via --route-color (règle .ride-td-left ci-dessus). */
+
+    .route-choice-card .ride-event-card.is-route-boucle .ride-aside-bike svg {
+      fill: var(--route-color);
+      color: var(--route-color);
+    }
+
+    .route-choice-card .ride-event-card.is-route-brehec .ride-aside-bike svg {
+      fill: var(--route-color);
+      color: var(--route-color);
+    }
+
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-month,
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-time,
+    .route-choice-card .ride-event-card.is-route-falaises .ride-td-left .ride-meet-place {
+      color: #374151;
+    }
+
+    .route-choice-card .ride-td-right {
+      background: #fff;
+    }
+
+    .route-choice-card .ride-aside-label {
+      color: #9ca3af;
+    }
+
+    .route-choice-card .ride-day {
+      color: #e05252;
+    }
+
+    .route-choice-card .ride-month {
+      color: #111827;
+      background: transparent;
+    }
+
+    .route-choice-card .ride-time {
+      color: #374151;
+    }
+
+    .route-choice-card .ride-td-bike {
+      min-height: 5.25rem;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .route-choice-card .ride-meet-place {
+      margin: 0 0 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      line-height: 1.3;
+      color: #374151;
+    }
+
+    .route-choice-card .ride-aside-bike {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3.5rem;
+      padding: 0.15rem 0;
+    }
+
+    .route-choice-card .ride-aside-bike svg {
+      display: block;
+      width: 2.75rem;
+      height: 2.75rem;
+      fill: #1f2937;
+      color: #1f2937;
+    }
+
+    .route-choice-card .ride-desc,
+    .route-choice-card .ride-pace-level,
+    .route-choice-card .ride-group,
+    .route-choice-card .ride-course {
+      color: inherit;
+    }
+
+    .route-choice-card .ride-km-row {
+      width: 100%;
+    }
+
+    .route-choice-card .btn-je-participe {
+      position: relative;
+      z-index: 4;
+      font-size: 0.78rem;
+      padding: 0.55rem 0.8rem;
+    }
+
+    .route-pick-prompt {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+      padding: 1.25rem 1rem 0.5rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .ride-event-card {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      color: #1a1a1a;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .ride-event-card td {
+      vertical-align: middle;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.65rem 0.85rem;
+    }
+
+    .ride-event-card tr:last-child td {
+      border-bottom: none;
+    }
+
+    .ride-td-left {
+      width: 6.5rem;
+      text-align: center;
+      background: #fafafa;
+      border-right: 1px solid #e5e7eb;
+    }
+
+    .ride-td-right {
+      text-align: left;
+      background: #fff;
+    }
+
+    .ride-aside-label {
+      display: block;
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      line-height: 1.2;
+      margin-bottom: 0.15rem;
+    }
+
+    .ride-day {
+      display: block;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #e05252;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .ride-month {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      line-height: 1.2;
+    }
+
+    .ride-time {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #374151;
+      letter-spacing: 0.02em;
+    }
+
+    .ride-aside-bike {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem 0;
+      color: #1a1a1a;
+    }
+
+    .ride-aside-bike svg {
+      width: 2.35rem;
+      height: 2.35rem;
+    }
+
+    .ride-km-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .ride-km {
+      font-size: clamp(1.65rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0;
+      flex: 0 1 auto;
+    }
+
+    .btn-je-participe {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      padding: 0.45rem 0.95rem;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-je-participe:hover:not(.btn-je-participe--done) {
+      background: linear-gradient(180deg, #fdba74 0%, #ea580c 100%);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .btn-je-participe:focus-visible:not(.btn-je-participe--done) {
+      outline: 2px solid #ea580c;
+      outline-offset: 2px;
+    }
+
+    .btn-je-participe--done {
+      background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.38);
+    }
+
+    .btn-je-participe--done:hover {
+      background: linear-gradient(180deg, #86efac 0%, #15803d 100%);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .btn-je-participe--done:focus-visible {
+      outline: 2px solid #15803d;
+      outline-offset: 2px;
+    }
+
+    .ride-event-card.is-route-falaises .ride-km { color: #6b7280; }
+    .ride-event-card.is-route-brehec .ride-km { color: #15803d; }
+    .ride-event-card.is-route-boucle .ride-km { color: #2563eb; }
+
+    .ride-course {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 0;
+      color: #111827;
+    }
+
+    .ride-group {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+      color: #1f2937;
+    }
+
+    .ride-pace-level {
+      font-size: 0.85rem;
+      color: #4b5563;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .ride-desc {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin: 0;
+      line-height: 1.45;
+      font-style: italic;
+    }
+
+    .ride-meet-place {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #374151;
+      margin: 0 0 0.4rem;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    .map-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .map-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .map-options input {
+      accent-color: var(--teal);
+      width: 15px;
+      height: 15px;
+    }
+
+    .cities-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+      min-height: 1.5rem;
+    }
+
+    .city-chip {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 20px;
+      background: rgba(61, 139, 139, 0.2);
+      border: 1px solid rgba(61, 139, 139, 0.45);
+      color: var(--white);
+    }
+
+    .city-chip.is-start {
+      border-color: var(--gold);
+      background: rgba(244, 164, 58, 0.15);
+      color: var(--gold);
+    }
+
+    .strava-map-block {
+      background: #f4f4f5;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .city-marker {
+      background: none !important;
+      border: none !important;
+    }
+
+    .city-label {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #1e3a5f;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      margin-top: -6px;
+    }
+
+    .city-label.city-start {
+      background: #fff8eb;
+      border-color: var(--gold);
+      color: #92400e;
+    }
+
+    #route-map {
+      height: 480px;
+      width: 100%;
+      background: #e8eef2;
+    }
+
+
+
+    .leaflet-control-layers {
+      border-radius: 6px !important;
+      font-family: var(--font-sans) !important;
+      font-size: 0.8rem !important;
+    }
+
+    .leaflet-container.strava-map-tiles { background: #f4f4f5; }
+
+    .route-arrow-marker {
+      background: none !important;
+      border: none !important;
+    }
+
+    .route-arrow {
+      display: block;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: inherit;
+      text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 1px 2px rgba(0, 0, 0, 0.35);
+      transform-origin: 50% 50%;
+    }
+
+    .route-stat.is-loaded { cursor: pointer; }
+    .route-stat.is-loaded:hover { border-color: rgba(244, 164, 58, 0.35); }
+    .route-stat:not(.is-loaded) { opacity: 0.55; }
+
+    .route-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+    }
+
+    .route-stat {
+      text-align: center;
+      padding: 1rem 0.5rem;
+      background: var(--card-bg);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .route-stat .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 0 auto 0.5rem;
+    }
+
+    .route-stat .name {
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .route-stat .detail {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Leaflet overrides */
+    .leaflet-container { font-family: var(--font-sans); }
+    .leaflet-popup-content-wrapper {
+      background: var(--ocean);
+      color: var(--white);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .leaflet-popup-tip { background: var(--ocean); }
+    .leaflet-popup-content { margin: 0.65rem 0.85rem; font-size: 0.85rem; }
+    .leaflet-popup-content strong { color: var(--gold); }
+
+    .gold-pin {
+      width: 24px;
+      height: 24px;
+      margin-left: -12px;
+      margin-top: -24px;
+    }
+
+    .gold-pin svg { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
+      @media (max-width: 768px) {
+      .signup-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .signup-form input[type="text"],
+      .signup-form .btn-primary,
+      .signup-mailto {
+        width: 100%;
+        max-width: none;
+      }
+
+      .home-hero-photo {
+        min-height: min(100dvh, 720px);
+      }
+
+      .home-hero-photo::after {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.12) 0%,
+          rgba(255, 255, 255, 0.05) 28%,
+          rgba(255, 255, 255, 0.02) 45%,
+          rgba(20, 55, 65, 0.04) 62%,
+          rgba(12, 35, 45, 0.1) 82%,
+          rgba(10, 28, 36, 0.16) 100%
+        );
+      }
+
+      .home-hero-panel {
+        min-height: auto;
+        justify-content: flex-start;
+        gap: 0.65rem;
+        padding: 0.85rem 0.85rem 1.1rem;
+        max-width: 100%;
+      }
+
+      .home-hero-sky {
+        border-radius: 12px;
+        background: rgba(255, 253, 250, 0.58);
+        box-shadow: 0 6px 20px rgba(13, 24, 32, 0.08), 0 1px 0 rgba(255, 255, 255, 0.55) inset;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .home-hero-sky-left {
+        padding: 0.75rem 0.85rem 0.85rem;
+      }
+
+      .home-hero-sky-split .home-topbar {
+        margin-bottom: 0.65rem;
+      }
+
+      .home-sky-lede {
+        margin-bottom: 0.85rem;
+      }
+
+      .home-title-line,
+      .home-title-accent {
+        font-size: clamp(1.55rem, 7.5vw, 2.4rem);
+      }
+
+      .home-pills {
+        margin-bottom: 0.85rem;
+      }
+
+      .home-hero-lower {
+        gap: 0.55rem;
+      }
+
+      .home-actions--hero {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: stretch;
+        gap: 0.45rem;
+        max-width: none;
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0.1rem 0 0.2rem;
+      }
+
+      .home-actions--hero .btn-primary,
+      .home-actions--hero .btn-secondary {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        padding: 0.65rem 0.45rem;
+        font-size: 0.78rem;
+        line-height: 1.25;
+        min-height: 44px;
+        text-align: center;
+      }
+
+      .hero {
+        padding: 1.5rem 1rem 2.5rem;
+        min-height: auto;
+        min-height: 85dvh;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .hero-actions .btn-primary,
+      .hero-actions .btn-secondary {
+        width: 100%;
+        text-align: center;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .info-section { padding: 2.5rem 1rem; }
+      .sortie-card { padding: 1.25rem 1rem; }
+
+      .strava-view { padding: 0 1rem 1.5rem; }
+
+      .route-choices:not(.route-choices--many) {
+        flex-wrap: wrap;
+        overflow-x: visible;
+      }
+
+      .route-choices:not(.route-choices--many) .route-choice-card {
+        flex: 1 1 100%;
+        max-width: none;
+        width: 100%;
+      }
+
+      .route-choices-scroll:not(:has(.route-choices--many))::before,
+      .route-choices-scroll:not(:has(.route-choices--many))::after {
+        display: none;
+      }
+
+      .route-choices.route-choices--many .route-choice-card {
+        flex: 0 0 min(88vw, 360px);
+        width: min(88vw, 360px);
+      }
+
+      .route-choice-card.is-active::after {
+        height: 1.45rem;
+        font-size: 0.55rem;
+        bottom: calc(100% + 0.4rem);
+      }
+
+      .ride-event-card--choice .ride-km {
+        font-size: 1.35rem;
+      }
+
+      .ride-event-card--choice .ride-course {
+        font-size: 0.88rem;
+      }
+
+      .route-choice-card .ride-km-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .route-choice-card .btn-je-participe {
+        width: 100%;
+        text-align: center;
+      }
+
+      .ride-td-left {
+        width: 5.25rem;
+      }
+
+      .ride-day {
+        font-size: 1.75rem;
+      }
+
+      .ride-month {
+        font-size: 0.62rem;
+      }
+
+      .ride-km {
+        font-size: 1.45rem;
+      }
+
+      .ride-course {
+        font-size: 0.92rem;
+      }
+
+      .route-stats {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 0 1rem 1.5rem;
+        gap: 0.65rem;
+      }
+
+      #route-map {
+        height: min(38dvh, 260px);
+        min-height: 180px;
+      }
+
+      .map-options {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.65rem;
+      }
+
+      .map-options label {
+        min-height: 44px;
+        align-items: center;
+      }
+
+      .signup-section {
+        padding: 3rem 1rem 4rem;
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+      }
+
+      .signup-section .btn-primary {
+        width: 100%;
+        max-width: 100%;
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .site-footer-inner {
+        padding-bottom: max(2.35rem, calc(1.25rem + env(safe-area-inset-bottom)));
+      }
+
+      .signup-modal {
+        align-items: flex-start;
+        padding-top: max(0.65rem, env(safe-area-inset-top));
+        padding-right: max(0.65rem, env(safe-area-inset-right));
+        padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+        padding-left: max(0.65rem, env(safe-area-inset-left));
+      }
+
+      .signup-modal-dialog {
+        padding: 1.15rem 1rem calc(1.15rem + env(safe-area-inset-bottom));
+        max-height: min(100dvh - 1.25rem, 900px);
+        margin-top: 0.15rem;
+      }
+
+      .signup-modal h2 {
+        font-size: clamp(1.35rem, 5.5vw, 1.65rem);
+        padding-right: 2.75rem;
+      }
+
+      .signup-modal-close {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        top: 0.4rem;
+        right: 0.4rem;
+      }
+
+      .signup-modal-route {
+        font-size: 0.9rem;
+        padding: 0.75rem 0.85rem;
+      }
+
+      .signup-modal-course {
+        font-size: 0.875rem;
+        line-height: 1.62;
+        padding: 0.9rem 0.85rem 1rem;
+      }
+
+      .signup-modal-course-title {
+        font-size: 0.92rem;
+      }
+
+      .signup-modal-form input {
+        font-size: 16px;
+      }
+
+      .signup-modal-form .btn-primary {
+        min-height: 48px;
+        font-size: 1rem;
+      }
+
+      .btn-unregister {
+        min-height: 48px;
+        padding: 0.85rem 1rem;
+      }
+
+      .signup-modal .signup-mailto-link {
+        font-size: 0.92rem;
+        padding: 0.7rem 0.35rem;
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 100%;
+      }
+
+      .signup-modal #route-map {
+        min-height: 220px;
+        height: min(42dvh, 280px);
+      }
+
+      .leaflet-control-zoom a {
+        width: 36px !important;
+        height: 36px !important;
+        line-height: 36px !important;
+      }
+    }
+
+    @media (max-width: 699px) {
+      .home-hero-sky-right {
+        min-height: 11rem;
+      }
+
+      .home-hero-sky-right img {
+        width: 100%;
+        min-height: 220px;
+        height: min(52vw, 300px);
+        max-height: 320px;
+        object-fit: cover;
+        object-position: center 50%;
+        display: block;
+        flex: none;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .route-stats { grid-template-columns: 1fr; }
+      section { padding: 3rem 1rem; }
+
+      .section-header h2 {
+        font-size: 1.65rem;
+      }
+
+      .ride-meta {
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+
+      .city-label {
+        font-size: 0.6rem;
+        max-width: 90px;
+        white-space: normal;
+        text-align: center;
+      }
+
+      .route-stat .detail {
+        font-size: 0.7rem;
+      }
+    }
+  
+/* ── MOBILE DRAWER ──────────────────────────── */
+.gr-mobile-drawer {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex;
+}
+.gr-mobile-drawer[hidden] { display: none !important; }
+.gr-mobile-drawer__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(3px);
+}
+.gr-mobile-drawer__panel {
+  position: relative; z-index: 1;
+  width: min(280px, 85vw);
+  background: #1A1A1A;
+  border-right: 1px solid #2E2E2E;
+  display: flex; flex-direction: column;
+  padding: 1.5rem;
+  animation: drawerIn 0.25s ease;
+}
+@keyframes drawerIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.gr-mobile-drawer__head {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.gr-mobile-drawer__logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.2rem; font-weight: 800;
+  letter-spacing: 0.05em; color: #F0F0F0;
+}
+.gr-mobile-drawer__logo span { color: #C8F135; }
+.gr-mobile-drawer__close {
+  background: none; border: none;
+  color: #888; font-size: 1rem; cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.15s;
+}
+.gr-mobile-drawer__close:hover { color: #F0F0F0; }
+.gr-mobile-drawer__links {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 0;
+  flex: 1;
+}
+.gr-mobile-drawer__links li a {
+  display: block; padding: 0.85rem 0;
+  border-bottom: 1px solid #2E2E2E;
+  font-size: 1rem; font-weight: 600;
+  color: #F0F0F0; text-decoration: none;
+  transition: color 0.15s;
+}
+.gr-mobile-drawer__links li a:hover { color: #C8F135; }
+.gr-mobile-drawer__cta { margin-top: 2rem; }
+.gr-mobile-drawer__btn {
+  display: block; width: 100%; text-align: center;
+  background: #C8F135; color: #000;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.75rem; border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.gr-mobile-drawer__btn:hover { background: #9ABF20; }
+</style>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+
+  <div class="app-shell">
+    <main class="app-main app-main--home" id="main-content" role="main">
+  <!-- ── HEADER NAV ── -->
+  <header class="gr-header" id="accueil" role="banner">
+    <a href="index.html" class="gr-header-logo" aria-label="GoëloRides — Accueil">
+      <span class="gr-header-logo-main">GOËLO</span>
+      <span class="gr-header-logo-sub">RIDES</span>
+    </a>
+    <nav>
+      <ul class="gr-nav">
+        <li><a href="sorties.html" style="color:#fff;">Sorties</a></li>
+        <li><a href="groupes.html" style="color:#fff;">Groupes</a></li>
+        <li><a href="infos-pratiques.html" style="color:#fff;">Infos pratiques</a></li>
+        <li><a href="https://www.instagram.com/goelo.rides/" style="color:#fff;" target="_blank" rel="noopener noreferrer">Actualités</a></li>
+      </ul>
+    </nav>
+    <a href="#" class="gr-header-connect" data-goelo-auth-trigger>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+      Se connecter
+    </a>
+    <button class="gr-header-burger" aria-label="Menu" type="button" onclick="openMobileMenu()">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <!-- ── HERO ── -->
+  <section class="gr-hero">
+    <div class="gr-hero-bg">
+      <img src="assets/goeloRidesHomePage.jpg" alt="Cyclistes sur une route de la côte du Goëlo" width="1920" height="1080" loading="eager" fetchpriority="high" decoding="async">
+    </div>
+    <div class="gr-hero-content">
+      <h1 class="gr-hero-headline">
+        Rouler ensemble<br>
+        Profiter du paysage<br>
+        <span class="gr-hero-headline-accent">Partager quelques kilomètres</span>
+      </h1>
+      <p class="gr-hero-subtitle">
+        Que tu reprennes le vélo ou que tu roules chaque semaine,
+        il y a une place pour toi dans le groupe.
+      </p>
+      <div class="gr-hero-ctas">
+        <a href="sorties.html" class="gr-btn gr-btn--accent">
+          Voir les sorties
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+        </a>
+        <a href="#" class="gr-btn gr-btn--ghost" data-goelo-auth-trigger style="color:#fff;">
+          Rejoindre en Team Rider
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        </a>
+      </div>
+      <p class="gr-hero-signature">On part ensemble. On roule ensemble. On rentre ensemble.</p>
+    </div>
+    <!-- Stats strip -->
+    <div class="gr-stats">
+      <div class="gr-stat">
+        <span class="gr-stat-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </span>
+        <div>
+          <p class="gr-stat-title">Des sorties chaque semaine</p>
+          <p class="gr-stat-desc">Route, gravel, VTT, tous niveaux</p>
+        </div>
+      </div>
+      <div class="gr-stat">
+        <span class="gr-stat-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 1-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </span>
+        <div>
+          <p class="gr-stat-title">Une communauté passionnée</p>
+          <p class="gr-stat-desc">Clubs, riders et bénévoles</p>
+        </div>
+      </div>
+      <div class="gr-stat">
+        <span class="gr-stat-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
+        <div>
+          <p class="gr-stat-title">Mode Team Rider</p>
+          <p class="gr-stat-desc">Organisez. Partagez. Inspirez.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STICKY BANNER 
+  <div class="gr-sticky-banner" id="gr-sticky-banner">
+    <p class="gr-sticky-banner-text"><strong>Mode Team Rider</strong> : organisez, modifiez et partagez vos sorties.</p>
+    <a href="#" class="gr-btn gr-btn--accent" data-goelo-auth-trigger style="font-size:0.8rem;padding:0.45rem 1rem;">Se connecter</a>
+    <button class="gr-sticky-banner-close" data-banner-close aria-label="Fermer la bannière" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  ── -->
+
+  <div id="goelo-site-updates-banner" class="goelo-site-updates-banner-root" hidden></div>
+
+  <footer class="gr-footer" role="contentinfo">
+    <div class="gr-footer-inner">
+      <div>
+        <p class="gr-footer-logo">GOËLO<span>RIDES</span></p>
+        <p class="gr-footer-loc">Saint-Quay-Portrieux<br>Côtes-d’Armor · 22410<br>Bretagne · France</p>
+      </div>
+      <div>
+        <p class="gr-footer-col-title">Nous suivre</p>
+        <div class="gr-footer-links">
+          <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener" class="gr-footer-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+            @goelo.rides
+          </a>
+          <a href="https://www.facebook.com/goelo.rides" target="_blank" rel="noopener" class="gr-footer-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            Goëlo Rides
+          </a>
+          <a href="mailto:goelo.rides@gmail.com" class="gr-footer-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+            goelo.rides@gmail.com
+          </a>
+        </div>
+      </div>
+      <div>
+        <p class="gr-footer-col-title">Le projet</p>
+        <p class="gr-footer-legal-text">Initiative locale et indépendante.<br>Pas d’adhésion. Pas de fédération.<br>Pas de course. Juste du vélo.<br><br>Été 2026 · GoëloRides</p>
+      </div>
+    </div>
+  </footer>
+    </main>
+  </div>
+
+  <nav class="goelo-mobile-tabbar" role="navigation" aria-label="Navigation principale" data-no-swipe-nav>
+    <a href="index.html" aria-current="page">Accueil</a>
+    <a href="groupes.html">Groupes</a>
+    <a href="sorties.html">Sorties</a>
+    <a href="infos-pratiques.html">Infos</a>
+  </nav>
+
+  <div class="signup-modal new-route-modal new-route-modal--goelo-app" id="new-route-modal" hidden>
+    <div class="signup-modal-backdrop" data-close-new-route aria-hidden="true"></div>
+    <div class="signup-modal-dialog new-route-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="new-route-modal-title">
+      <button type="button" class="signup-modal-close" data-close-new-route aria-label="Fermer">×</button>
+      <div class="new-route-modal-head">
+        <h2 id="new-route-modal-title" tabindex="-1">Nouvelle sortie</h2>
+        <p class="new-route-sub" id="new-route-modal-sub">Assistant en 5 étapes · dernière étape : récapitulatif et <strong>flyer</strong> pour les réseaux sociaux.</p>
+      </div>
+      <div id="new-route-modal-body" class="new-route-modal-body is-locked">
+      <div class="new-route-modal-grid">
+        <aside class="new-route-steps" aria-label="Étapes de création">
+          <p class="new-route-steps-title">Étapes</p>
+          <p class="new-route-steps-help">Liste des étapes (1 → 5) : progression du formulaire — rien à remplir dans cette colonne.</p>
+          <ol class="new-route-steps-list">
+            <li class="is-active" data-wizard-li="1">Informations</li>
+            <li data-wizard-li="2">Parcours</li>
+            <li data-wizard-li="3">Détails</li>
+            <li data-wizard-li="4">Capacité</li>
+            <li data-wizard-li="5">Récap &amp; flyer</li>
+          </ol>
+        </aside>
+        <div class="new-route-main">
+          <form class="signup-modal-form" id="new-route-form">
+            <div class="new-route-panel" id="new-route-panel-1" data-wizard-step="1">
+              <p class="signup-hint new-route-panel-intro">
+                <strong>Étape 1 — Informations</strong> · Choisis le type de sortie et la date/heure de départ.
+              </p>
+              <span class="new-route-field-label" id="label-race-type">Type de course</span>
+              <div class="new-route-type-row" role="group" aria-labelledby="label-race-type">
+                <label>
+                  <input type="radio" name="new-route-race" value="route" checked>
+                  <span class="new-route-type-btn">Route</span>
+                </label>
+                <label>
+                  <input type="radio" name="new-route-race" value="gravel">
+                  <span class="new-route-type-btn">Gravel</span>
+                </label>
+                <label>
+                  <input type="radio" name="new-route-race" value="vtt">
+                  <span class="new-route-type-btn">VTT</span>
+                </label>
+              </div>
+              <span class="new-route-field-label" id="label-ride-datetime">Date &amp; heure de départ</span>
+              <div class="new-route-datetime-row">
+                <input type="date" id="new-route-date" aria-labelledby="label-ride-datetime" autocomplete="off">
+                <input type="time" id="new-route-time" value="08:30" aria-labelledby="label-ride-datetime" autocomplete="off">
+              </div>
+            </div>
+
+            <div class="new-route-panel" id="new-route-panel-2" data-wizard-step="2" hidden>
+              <p class="signup-hint new-route-panel-intro">
+                <strong>Étape 2 — Parcours</strong> · Importe le fichier GPX : la carte à droite et les stats se mettent à jour.
+              </p>
+              <span class="new-route-field-label" id="label-gpx">Trace GPX</span>
+              <div class="new-route-gpx-row">
+                <button type="button" class="btn-app-outline" id="new-route-open-gpx">Importer un GPX…</button>
+                <span class="new-route-gpx-name" id="new-route-gpx-label">Aucun fichier</span>
+              </div>
+              <div class="new-route-stats" id="new-route-stats" hidden>
+                <span>Distance : <strong id="new-route-stat-km">—</strong></span>
+                <span>Dénivelé + : <strong id="new-route-stat-dplus">—</strong></span>
+                <span>Suggestion piste : <strong id="new-route-suggest-diff">—</strong></span>
+              </div>
+            </div>
+
+            <div class="new-route-panel" id="new-route-panel-3" data-wizard-step="3" hidden>
+              <p class="signup-hint new-route-panel-intro">
+                <strong>Étape 3 — Détails</strong> · Titre affiché, groupe, allure, capitaine (Team Rider), niveau piste, description.
+              </p>
+              <label>
+                <span class="new-route-field-label">Titre affiché</span>
+                <input type="text" id="new-route-track" placeholder="Ex. Gravel · 62,0 km · +780 m · Bleu" maxlength="120" autocomplete="off">
+              </label>
+              <label>
+                <span class="new-route-field-label">Groupe / sous-titre (optionnel)</span>
+                <input type="text" id="new-route-group" placeholder="Ex. Groupe Gravel" maxlength="80" autocomplete="off">
+              </label>
+              <label>
+                <span class="new-route-field-label">Allure cible (optionnel)</span>
+                <input type="text" id="new-route-pace" placeholder="Ex. 20–24 km/h" maxlength="80" autocomplete="off">
+              </label>
+              <label>
+                <span class="new-route-field-label">Capitaine de sortie — Team Rider (optionnel)</span>
+                <input type="text" id="new-route-ride-leader" placeholder="Ex. Marie D." maxlength="80" autocomplete="name">
+              </label>
+              <span class="new-route-field-label" id="label-diff">Niveau difficulté (piste)</span>
+              <div class="new-route-difficulty">
+                <div class="new-route-diff-pills" role="radiogroup" aria-labelledby="label-diff">
+                  <label>
+                    <input type="radio" name="new-route-level" value="level-blanc">
+                    <span class="new-route-diff-pill new-route-diff-pill--blanc">Blanc</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="new-route-level" value="level-vert" checked>
+                    <span class="new-route-diff-pill new-route-diff-pill--vert">Vert</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="new-route-level" value="level-bleu">
+                    <span class="new-route-diff-pill new-route-diff-pill--bleu">Bleu</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="new-route-level" value="level-rouge">
+                    <span class="new-route-diff-pill new-route-diff-pill--rouge">Rouge</span>
+                  </label>
+                </div>
+              </div>
+              <label>
+                <span class="new-route-field-label">Description courte (optionnel)</span>
+                <input type="text" id="new-route-desc" placeholder="Une ligne sur la sortie" maxlength="200" autocomplete="off">
+              </label>
+              <label>
+                <span class="new-route-field-label">Lieu de départ précis <strong>(affiché sur la fiche sortie)</strong></span>
+                <input type="text" id="new-route-meet-detail" placeholder="Ex. : parking du port, côté WC publics — Kasino, entrée principale…" maxlength="220" autocomplete="off">
+              </label>
+              <label>
+                <span class="new-route-field-label">Durée estimée (optionnel)</span>
+                <input type="text" id="new-route-duration-min" inputmode="text" maxlength="24" placeholder="ex. 2:30, 165 min ou 2:30 - 3:00" title="Minutes (165), H:MM (2:30), ou plage H:MM - H:MM (2:30 - 3:00) — roulage + pauses" autocomplete="off">
+              </label>
+            </div>
+
+            <div class="new-route-panel" id="new-route-panel-4" data-wizard-step="4" hidden>
+              <p class="signup-hint new-route-panel-intro">
+                <strong>Étape 4 — Capacité &amp; visibilité</strong>
+              </p>
+              <p class="new-route-panel-hint">
+                Après création, les inscriptions se font sur la page Sorties puis la fiche sortie. Tu peux limiter le nombre de places : au-delà, file d’attente automatique.
+                Sur ordinateur, la <strong>liste numérotée à gauche</strong> indique seulement l’étape en cours (ce n’est pas liée au menu « Visibilité » ci-dessous).
+                <strong>Visibilité</strong> : « Publique » = visible et inscriptible pour tout le monde ; « Sur invitation » = la fiche existe mais pas d’inscription web ; « Privée » = masquée des listes (lien direct ou admin).
+              </p>
+              <label>
+                <span class="new-route-field-label">Places max (peloton principal)</span>
+                <input type="number" id="new-route-max-p" min="0" max="500" step="1" placeholder="0 = sans limite" value="" title="0 ou vide = illimité">
+              </label>
+              <label>
+                <span class="new-route-field-label">Statut des inscriptions</span>
+                <select id="new-route-status" class="new-route-select">
+                  <option value="open">Ouvertes</option>
+                  <option value="closed">Fermées (plus d’inscription)</option>
+                  <option value="cancelled">Sortie annulée</option>
+                </select>
+              </label>
+              <label>
+                <span class="new-route-field-label">Visibilité</span>
+                <select id="new-route-visibility" class="new-route-select">
+                  <option value="public">Publique (listes + fiche + inscription)</option>
+                  <option value="invitation">Sur invitation (fiche visible ; inscription web bloquée)</option>
+                  <option value="private">Privée (masquée des listes publiques — admin / édition OK)</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="new-route-panel" id="new-route-panel-5" data-wizard-step="5" hidden>
+              <p class="signup-hint new-route-panel-intro">
+                <strong>Étape 5 — Récapitulatif &amp; flyer</strong> · Vérifie les informations, puis génère le flyer 9:16 pour les réseaux sociaux (rien n’est posté automatiquement).
+              </p>
+              <span class="new-route-field-label">Récapitulatif</span>
+              <div id="new-route-recap" class="new-route-recap" aria-live="polite"></div>
+              <div class="new-route-publish-example-box new-route-publish-flyer-box" style="margin-top:1rem;">
+                <strong>Flyer (réseaux sociaux)</strong>
+                <p class="new-route-publish-example-caption">
+                  Image <strong>9:16</strong> avec infos à gauche (titre, date, lieu, distance, niveau). Photo de fond :
+                  <code>assets/goelo-flyer-bg.jpg</code> ou <code>.png</code>, ou <code>window.GOELO_FLYER_BG_URL</code>.
+                  Sinon repli sur le modèle Story du site.
+                </p>
+                <button type="button" class="btn-primary" id="new-route-publish-generate-flyer">
+                  Générer le flyer
+                </button>
+                <div id="new-route-publish-flyer-wrap" class="new-route-publish-generated-wrap" hidden>
+                  <p class="new-route-publish-example-caption new-route-publish-example-caption--gen">
+                    Aperçu — régénère si tu modifies le formulaire.
+                  </p>
+                  <div class="new-route-publish-example-row">
+                    <img
+                      id="new-route-publish-flyer-preview"
+                      alt="Flyer généré"
+                      width="90"
+                      height="160"
+                      class="new-route-publish-example-thumb"
+                    />
+                    <div class="new-route-publish-example-actions">
+                      <button type="button" class="btn-app-outline" id="new-route-publish-download-flyer">
+                        Télécharger (JPEG)
+                      </button>
+                      <button type="button" class="btn-app-outline" id="new-route-publish-copy-flyer">
+                        Copier le flyer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p class="new-route-wizard-flow-hint" aria-hidden="true">
+              <strong>Étapes 1 → 5 :</strong> d’abord <strong>Suivant</strong>, puis <strong>Précédent</strong> si besoin.
+              <strong>Créer la sortie</strong> / <strong>Enregistrer</strong> n’apparaît qu’à la dernière étape (récap &amp; flyer).
+            </p>
+            <div class="new-route-wizard-nav" id="new-route-wizard-nav">
+              <button type="button" class="btn-app-outline" id="new-route-prev" hidden>Précédent</button>
+              <div class="new-route-wizard-nav-main">
+                <button type="button" class="btn-app-outline" id="new-route-next">Suivant</button>
+                <button type="submit" class="btn-primary" id="new-route-submit" hidden>Créer la sortie</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <aside class="new-route-aside" aria-label="Aperçu carte et couverture">
+          <p class="new-route-aside-title" style="margin: 0 0 0.5rem">Aperçu du parcours</p>
+          <div id="new-route-preview-map" aria-label="Carte du GPX importé"></div>
+          <div class="new-route-aside-card">
+            <p class="new-route-aside-title">Photo de couverture</p>
+            <p class="new-route-aside-text">Optionnel · JPEG recommandé. Tu peux aussi charger le <strong>modèle Story</strong> GoëloRides (PNG 9:16) comme base pour la fiche.</p>
+            <input type="file" id="new-route-cover-input" accept="image/*" class="sr-only" aria-hidden="true">
+            <div class="new-route-cover-actions">
+              <button type="button" class="btn-app-outline" id="new-route-cover-btn">Choisir une image</button>
+              <button type="button" class="btn-app-outline" id="new-route-cover-from-example" title="Charge assets/gestion-sorties-story-exemple.png comme couverture">Modèle Story (exemple)</button>
+            </div>
+            <div class="new-route-cover-preview" id="new-route-cover-preview" hidden></div>
+          </div>
+        </aside>
+      </div>
+      <div class="new-route-edit-pick" id="new-route-edit-pick" hidden aria-hidden="true">
+        <div class="new-route-edit-pick-row">
+          <label class="new-route-admin-field new-route-edit-pick-field">
+            <span>Sortie à modifier (chargement depuis la liste)</span>
+            <select id="new-route-edit-select" aria-label="Choisir une sortie à modifier"></select>
+          </label>
+          <div class="new-route-edit-pick-actions">
+            <button type="button" class="btn-primary" id="new-route-edit-load">Charger</button>
+            <button type="button" class="btn-app-outline new-route-edit-delete" id="new-route-edit-delete" title="Désactive la sortie sur le site (irréversible depuis l’interface)">Supprimer…</button>
+          </div>
+        </div>
+        <p class="signup-hint new-route-edit-empty-hint" id="new-route-edit-empty-hint" hidden style="margin-top:0.45rem;text-align:left;">
+          Aucune sortie personnalisée pour l’instant : crée une sortie avec <strong>Nouvelle sortie</strong>, valide, puis rouvre cette fenêtre — la liste se met à jour automatiquement.
+        </p>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gpx-upload-pop" id="gpx-upload-pop" hidden>
+    <div class="gpx-upload-pop-backdrop" data-close-gpx-pop aria-hidden="true"></div>
+    <div class="gpx-upload-pop-dialog" role="dialog" aria-modal="true" aria-labelledby="gpx-upload-title">
+      <button type="button" class="gpx-upload-pop-close" data-close-gpx-pop aria-label="Fermer">×</button>
+      <h3 id="gpx-upload-title">Importer un fichier GPX</h3>
+      <p style="font-size:0.85rem;color:var(--app-muted);margin:0 0 0.35rem;">Glisse-dépose le fichier ici ou clique pour parcourir.</p>
+      <div class="gpx-upload-drop" id="gpx-upload-drop" tabindex="0" role="button" aria-label="Zone d’import GPX">
+        <strong>.gpx</strong> · trace affichée sur la carte à droite
+      </div>
+      <input type="file" id="gpx-upload-input" accept=".gpx,application/gpx+xml" class="sr-only" aria-hidden="true">
+      <div class="gpx-upload-pop-actions">
+        <button type="button" class="btn-app-outline" data-close-gpx-pop>Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="signup-modal" id="signup-modal" hidden>
+    <div class="signup-modal-backdrop" data-close-modal aria-hidden="true"></div>
+    <div class="signup-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="signup-modal-title">
+      <button type="button" class="signup-modal-close" data-close-modal aria-label="Fermer">×</button>
+      <h2 id="signup-modal-title" tabindex="-1">Je participe !</h2>
+      <div class="signup-modal-route" id="signup-modal-route"></div>
+      <div class="signup-modal-course" id="signup-modal-course" aria-label="Détail de la sortie"></div>
+
+      <div class="signup-modal-map-section" id="signup-modal-map-section" aria-label="Carte du parcours">
+        <div class="map-options" id="map-options">
+          <label>
+            <input type="checkbox" id="opt-cities" checked>
+            Villes traversées
+          </label>
+          <label>
+            <input type="checkbox" id="opt-grade-colors" checked>
+            Couleurs selon la pente (rouge = montée raide)
+          </label>
+        </div>
+        <p class="grade-legend" id="grade-legend" hidden>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#64748b"></span> Plat</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#ca8a04"></span> Montée légère</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#ea580c"></span> Modérée</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#dc2626"></span> Raide</span>
+          <span class="grade-legend-item"><span class="grade-swatch" style="background:#2563eb"></span> Descente</span>
+        </p>
+        <div class="cities-list" id="cities-list" aria-label="Villes sur le parcours"></div>
+        <div class="signup-modal-map-inner strava-map-block">
+          <div class="map-loading" id="map-loading">Chargement des parcours…</div>
+          <div id="route-map" role="application" aria-label="Carte du parcours sélectionné"></div>
+        </div>
+      </div>
+
+      <p class="signup-modal-done" id="signup-modal-done" role="status"></p>
+      <div class="signup-registered-actions" id="signup-registered-actions" hidden>
+        <button type="button" class="btn-unregister" id="signup-unregister-btn">Me désinscrire de ce parcours</button>
+      </div>
+      <form class="signup-modal-form" id="signup-modal-form">
+        <label>
+          <span class="sr-only">Pseudo ou prénom</span>
+          <input type="text" name="pseudo" id="signup-modal-pseudo" placeholder="Ton pseudo ou prénom" required autocomplete="nickname" maxlength="40">
+        </label>
+        <label>
+          <span class="sr-only">E-mail</span>
+          <input type="email" name="email" id="signup-modal-email" placeholder="Ton e-mail" required autocomplete="email" maxlength="120">
+        </label>
+        <label>
+          <span class="sr-only">Niveau cycliste (optionnel)</span>
+          <select id="signup-modal-cyclist-level" name="cyclist_level" aria-label="Niveau cycliste (optionnel)" autocomplete="off">
+            <option value="">— Non indiqué —</option>
+            <option value="debutant">Débutant</option>
+            <option value="intermediaire">Intermédiaire</option>
+            <option value="confirme">Confirmé</option>
+          </select>
+        </label>
+        <label>
+          <span class="sr-only">Ville ou commune (optionnel)</span>
+          <input type="text" id="signup-modal-city" name="participant_city" maxlength="80" placeholder="Ville (optionnel)" aria-label="Ville ou commune (optionnel)" autocomplete="address-level2">
+        </label>
+        <button type="submit" class="btn-primary">Je participe !</button>
+      </form>
+      <div class="participants-panel" aria-live="polite">
+        <p class="participants-heading">
+          <span id="modal-participants-count">0</span> inscrit·e·s sur ce parcours
+        </p>
+        <ul class="participants-list is-hidden" id="modal-participants-list"></ul>
+        <p class="participants-empty" id="modal-participants-empty">Personne pour l’instant — sois le ou la première !</p>
+      </div>
+      <div class="participants-panel participants-panel--waitlist" id="signup-modal-waitlist-wrap" hidden aria-live="polite">
+        <p class="participants-heading">Liste d’attente</p>
+        <ul class="participants-list is-hidden" id="modal-waitlist-list"></ul>
+        <p class="participants-empty" id="modal-waitlist-empty">Personne en liste d’attente.</p>
+      </div>
+      <a class="signup-mailto-link" id="signup-modal-mailto" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=goelo.rides@gmail.com" target="_blank" rel="noopener noreferrer">Je m’inscris par e-mail à goelo.rides@gmail.com</a>
+      <p class="signup-hint">Gratuit · sans engagement · tu peux annuler jusqu’à la veille.</p>
+      <p class="signup-alt">Tu préfères Instagram ? <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener noreferrer">@goelo.rides</a></p>
+    </div>
+  </div>
+
+  <!-- Modales Team Rider / Connexion : injectées par js/auth.js (styles css/components.css) -->
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
+  <!-- Supabase : URL projet + clé anon / publishable (identique sorties.html / sortie.html). -->
+  <script>
+    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
+    /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
+    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";
+    window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
+    /* Optionnel : URLs ouvertes par les boutons « Messenger » / « Instagram » après enregistrement d’une sortie (admin). */
+    /* window.GOELO_SHARE_MESSENGER_URL = "https://m.me/…"; */
+    /* window.GOELO_SHARE_INSTAGRAM_URL = "https://www.instagram.com/goelo.rides/"; */
+  </script>
+  <script src="goelo-onesignal.js?v=16" defer></script>
+  <script src="goelo-enable-notifications-banner.js?v=11" defer></script>
+  <script src="goelo-notif-manual-button.js?v=11" defer></script>
+  <script>window.GOELO_DEBUG = false;</script>
+  <script src="goelo-debug-panel.js?v=1" defer></script>
+  <script src="goelo-swipe-nav.js" defer></script>
+  <!-- script src="goelo-supabase-client.js" defer></script> -->
+  <!-- script src="goelo-routes-data.js" defer></script> -->
+  <!-- script src="goelo-gpx-utils.js" defer></script> -->
+  <script src="goelo-auth.js" defer></script>
+  <script src="goelo-ride-updates.js" defer></script>
+  <script src="parcours.js" defer></script>
+  <script src="js/ui.js" defer></script>
+
+  <!-- ── MOBILE DRAWER ── -->
+  <div id="gr-mobile-drawer" class="gr-mobile-drawer" hidden aria-modal="true" role="dialog">
+    <div class="gr-mobile-drawer__backdrop" onclick="closeMobileMenu()"></div>
+    <nav class="gr-mobile-drawer__panel">
+      <div class="gr-mobile-drawer__head">
+        <span class="gr-mobile-drawer__logo">GOËLO<span>RIDES</span></span>
+        <button class="gr-mobile-drawer__close" onclick="closeMobileMenu()" aria-label="Fermer">✕</button>
+      </div>
+      <ul class="gr-mobile-drawer__links">
+        <li><a href="sorties.html">Sorties</a></li>
+        <li><a href="groupes.html">Groupes</a></li>
+        <li><a href="infos-pratiques.html">Infos pratiques</a></li>
+      </ul>
+      <div class="gr-mobile-drawer__cta">
+        <a href="#" class="gr-mobile-drawer__btn" data-goelo-auth-trigger>Se connecter</a>
+      </div>
+    </nav>
+  </div>
+  <script>
+  function openMobileMenu()  {
+    const d = document.getElementById('gr-mobile-drawer');
+    d.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobileMenu() {
+    const d = document.getElementById('gr-mobile-drawer');
+    d.setAttribute('hidden','');
+    document.body.style.overflow = '';
+  }
+  // Fermer avec Échap
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeMobileMenu();
+  });
+  </script>
+</body>
+</html>

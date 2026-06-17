@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Goelo Rides" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Groupe Vert</name>
+    <trkseg>
+      <trkpt lat="48.6536" lon="-2.8353"/>
+      <trkpt lat="48.6600" lon="-2.8200"/>
+      <trkpt lat="48.6700" lon="-2.8000"/>
+      <trkpt lat="48.6800" lon="-2.7900"/>
+      <trkpt lat="48.6880" lon="-2.8100"/>
+      <trkpt lat="48.6820" lon="-2.8350"/>
+      <trkpt lat="48.6700" lon="-2.8500"/>
+      <trkpt lat="48.6600" lon="-2.8450"/>
+      <trkpt lat="48.6536" lon="-2.8353"/>
+    </trkseg>
+  </trk>
+</gpx>

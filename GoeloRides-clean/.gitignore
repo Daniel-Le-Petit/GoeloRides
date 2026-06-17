@@ -1,0 +1,10 @@
+# Secrets / config locale — ne pas pousser sur GitHub
+env.txt
+.env.backup
+
+.DS_Store
+Thumbs.db
+*.log
+.cursor/
+.idea/
+.vscode/

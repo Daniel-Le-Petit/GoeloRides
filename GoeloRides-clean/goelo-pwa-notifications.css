@@ -1,0 +1,295 @@
+/* PWA + bandeau notifications (priorité mobile, safe area) */
+
+.goelo-enable-notifications-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 220000;
+  padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(0.75rem + env(safe-area-inset-left, 0px));
+  padding-right: calc(0.75rem + env(safe-area-inset-right, 0px));
+  background: linear-gradient(180deg, rgba(21, 101, 168, 0.97) 0%, #0e4d80 100%);
+  color: #fff;
+  box-shadow: 0 -6px 24px rgba(15, 40, 65, 0.22);
+  font-family: inherit;
+}
+
+.goelo-enable-notifications-banner__inner {
+  max-width: 42rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+@media (min-width: 520px) {
+  .goelo-enable-notifications-banner__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+}
+
+.goelo-enable-notifications-banner__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.goelo-enable-notifications-banner__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.goelo-enable-notifications-banner__hint strong {
+  font-weight: 800;
+  color: #fff;
+}
+
+.goelo-enable-notifications-banner__retry {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #fde047;
+}
+
+.goelo-enable-notifications-banner--denied {
+  background: linear-gradient(180deg, rgba(124, 45, 18, 0.97) 0%, #5c2810 100%);
+  box-shadow: 0 -6px 24px rgba(40, 15, 8, 0.28);
+}
+
+.goelo-enable-notifications-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.goelo-enable-notifications-banner__btn {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.goelo-enable-notifications-banner__btn[aria-busy="true"] {
+  cursor: wait;
+  pointer-events: none;
+  opacity: 0.88;
+}
+
+.goelo-enable-notifications-banner__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.goelo-enable-notifications-banner__btn--primary {
+  background: #f9d71c;
+  color: #14222d;
+}
+
+.goelo-enable-notifications-banner__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.goelo-enable-notifications-banner__btn--ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.goelo-enable-notifications-banner__btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Bouton manuel hero (accueil) — 2ᵉ canal en plus du bandeau OneSignal */
+.goelo-notif-manual {
+  margin-top: 0.85rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.goelo-notif-manual__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.goelo-notif-manual__btn[aria-busy="true"] {
+  cursor: wait;
+  pointer-events: none;
+  opacity: 0.88;
+}
+
+.goelo-notif-manual__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* API absente (WebView in-app) : bouton actif pour afficher l’alerte d’aide, sans style « grisé inutile ». */
+.goelo-notif-manual__btn--needs-safari {
+  opacity: 1;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(249, 215, 28, 0.55);
+}
+
+.goelo-notif-manual__hint,
+.goelo-notif-help {
+  margin: 0;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  opacity: 0.88;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.goelo-btn.goelo-notif-manual__btn {
+  width: 100%;
+}
+
+/* Sortir du navigateur in-app (Instagram, etc.) — iOS sans API Notification */
+.goelo-notif-manual__inapp-actions {
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.goelo-notif-manual__inapp-title {
+  margin: 0 0 0.45rem;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.goelo-notif-manual__inapp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.goelo-notif-manual__inapp-link,
+.goelo-notif-manual__inapp-btn {
+  flex: 1 1 auto;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.goelo-notif-manual__inapp-link:hover,
+.goelo-notif-manual__inapp-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+@media (min-width: 720px) {
+  .goelo-notif-manual {
+    max-width: 26rem;
+  }
+}
+
+/* —— Pied de page : option notifications (discret) —— */
+.goelo-footer-notify-bar {
+  margin: 0.85rem auto 0;
+  max-width: 36rem;
+  padding: 0.5rem 0.35rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(90, 107, 120, 0.92);
+}
+
+.goelo-footer-notify-bar__btn {
+  display: inline-block;
+  margin: 0 0 0.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: #1565a8;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.goelo-footer-notify-bar__btn:hover {
+  color: #0e4d80;
+}
+
+.goelo-footer-notify-bar__btn:disabled {
+  color: #5a6b78;
+  text-decoration: none;
+  cursor: default;
+}
+
+.goelo-footer-notify-bar__hint {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: rgba(90, 107, 120, 0.88);
+}
+
+.goelo-footer-notify-bar__inapp {
+  margin-top: 0.55rem;
+  padding: 0.5rem 0.45rem;
+  border-radius: 0.5rem;
+  background: rgba(21, 101, 168, 0.06);
+  border: 1px solid rgba(21, 101, 168, 0.14);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem 0.65rem;
+}
+
+.goelo-footer-notify-bar__inapp-lead {
+  flex-basis: 100%;
+  font-size: 0.72rem;
+  color: rgba(21, 35, 45, 0.75);
+}
+
+.goelo-footer-notify-bar__inapp-link,
+.goelo-footer-notify-bar__inapp-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1565a8;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0.15rem 0.2rem;
+}
+
+.goelo-footer-notify-bar__inapp-link:hover,
+.goelo-footer-notify-bar__inapp-btn:hover {
+  color: #0e4d80;
+}
