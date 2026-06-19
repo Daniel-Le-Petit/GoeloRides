@@ -6,113 +6,7 @@
   <title>GoëloRides – Team Rider Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{--bg:#111418;--s1:#1a1e24;--s2:#22272f;--s3:#2a2f38;--border:#2a2f38;--border2:#333840;--accent:#C8F135;--accent-bg:rgba(200,241,53,.10);--accent-border:rgba(200,241,53,.28);--text:#f0f0f0;--muted:#6b7280;--green:#4ade80;--orange:#f59e0b;--red:#f87171;--blue:#60a5fa;--font-d:'Barlow Condensed',sans-serif;--font-b:'Inter',sans-serif}
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{background:var(--bg)}
-    body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
-    .topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;padding:.85rem 1.25rem;background:var(--s1);border-bottom:1px solid var(--border)}
-    .topbar-logo{font-family:var(--font-d);font-size:1rem;font-weight:800;letter-spacing:.05em;color:var(--text);text-decoration:none}
-    .topbar-logo span{color:var(--accent)}
-    .topbar-badge{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);font-size:.6rem;font-weight:700;letter-spacing:.08em;padding:3px 10px;border-radius:99px}
-    .topbar-badge.is-admin{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)}
-    .topbar-spacer{flex:1}
-    .topbar-user{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted)}
-    .av{width:28px;height:28px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:var(--accent)}
-    .gate{text-align:center;padding:3rem 2rem;background:var(--s1);border:1px solid var(--border);border-radius:8px;margin:1.5rem 1.25rem}
-    .gate h2{font-family:var(--font-d);font-size:1.4rem;margin-bottom:.5rem}
-    .gate p{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6}
-    .gate-btn{background:var(--accent);color:#0a1a0a;font-family:var(--font-d);font-size:.9rem;font-weight:800;letter-spacing:.06em;padding:.75rem 2rem;border-radius:8px;border:none;cursor:pointer;transition:opacity .15s}
-    .gate-btn:hover{opacity:.88}
-    .main{max-width:720px;margin:0 auto;padding:1.5rem 1.25rem 5rem}
-    .slabel{font-family:var(--font-d);font-size:.65rem;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:.65rem;margin-top:1.75rem;display:flex;align-items:center;gap:10px}
-    .slabel:first-child{margin-top:0}
-    .slabel::after{content:'';flex:1;height:1px;background:var(--border)}
-    .slabel em{font-style:normal;color:var(--orange);font-size:.72rem;text-transform:none;letter-spacing:0}
-    /* QUICK ACTIONS */
-    .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .qa-btn{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;text-align:left;color:var(--text)}
-    .qa-btn:hover{border-color:var(--accent);background:var(--accent-bg)}
-    .qa-btn.primary{border-color:var(--accent);background:var(--accent);color:#0a1a0a}
-    .qa-btn.primary:hover{opacity:.88}
-    .qa-icon{font-size:1.2rem;flex-shrink:0}
-    .qa-label{font-size:.82rem;font-weight:600}
-    .qa-btn.primary .qa-label{color:#0a1a0a}
-    .qa-sub{font-size:.68rem;color:var(--muted);margin-top:1px}
-    .qa-btn.primary .qa-sub{color:rgba(10,26,10,.6)}
-    /* TABS */
-    .tabs{display:flex;gap:6px;margin-bottom:.75rem}
-    .stab{font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:99px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;font-family:var(--font-b)}
-    .stab.active{background:var(--accent-bg);border-color:var(--accent-border);color:var(--text)}
-    /* SORTIE CARD */
-    .sortie-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;transition:border-color .15s}
-    .sortie-card:hover{border-color:var(--border2)}
-    .sortie-main{display:flex;align-items:center;gap:12px;padding:.75rem 1rem}
-    .s-date{width:38px;text-align:center;flex-shrink:0}
-    .s-date-n{font-family:var(--font-d);font-size:1.2rem;font-weight:700;color:var(--accent);line-height:1}
-    .s-date-m{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-    .s-info{flex:1;min-width:0}
-    .s-title{font-size:.85rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .s-sub{font-size:.72rem;color:var(--muted);margin-top:2px}
-    .dot-niv{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .badge{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em;flex-shrink:0}
-    .badge-pub{background:rgba(74,222,128,.12);color:var(--green)}
-    .badge-draft{background:rgba(245,158,11,.12);color:var(--orange)}
-    .badge-cancel{background:rgba(248,113,113,.10);color:var(--red)}
-    /* INSCRITS */
-    .s-inscrits{display:flex;align-items:center;gap:8px;padding:.35rem 1rem .5rem;border-top:1px solid var(--border)}
-    .av-stack{display:flex}
-    .av-item{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--s1);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#0a1a0a;margin-left:-5px}
-    .av-item:first-child{margin-left:0}
-    .av-more{background:var(--s3);color:var(--muted);font-size:.55rem;font-weight:600}
-    .inscrits-txt{font-size:.72rem;color:var(--muted)}
-    .inscrits-txt strong{color:var(--text)}
-    /* ACTIONS */
-    .s-actions{display:flex;gap:6px;flex-wrap:wrap;padding:.5rem 1rem .65rem;border-top:1px solid var(--border)}
-    .btn-sm{border-radius:5px;padding:5px 11px;font-size:.7rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text);transition:all .15s;display:inline-flex;align-items:center;gap:4px;font-family:var(--font-b)}
-    .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
-    .btn-sm.accent{background:var(--accent);color:#0a1a0a;border-color:var(--accent)}
-    .btn-sm.accent:hover{opacity:.85}
-    .btn-sm.danger{border-color:rgba(248,113,113,.3);color:var(--red)}
-    .btn-sm.danger:hover{background:rgba(248,113,113,.08)}
-    /* URGENCE */
-    .urgence-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .urgence-btn{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:.85rem;cursor:pointer;transition:border-color .15s;text-align:left}
-    .urgence-btn:hover{border-color:var(--orange)}
-    .u-icon{font-size:1.2rem;margin-bottom:4px;display:block}
-    .u-label{font-size:.82rem;font-weight:600;color:var(--text)}
-    .u-sub{font-size:.68rem;color:var(--muted);margin-top:2px}
-    .u-result{display:none;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:.7rem;margin-top:.6rem;font-size:.72rem;color:var(--muted);white-space:pre-line;line-height:1.55}
-    .u-copy{font-size:.68rem;font-weight:700;color:var(--accent);cursor:pointer;margin-top:.35rem;display:block;background:none;border:none;padding:0;font-family:var(--font-b)}
-    /* DEMANDES */
-    .demand-card{background:var(--s1);border:1px solid rgba(200,241,53,.15);border-radius:8px;padding:.85rem 1rem;margin-bottom:6px}
-    .d-head{display:flex;align-items:center;gap:8px;margin-bottom:.3rem;flex-wrap:wrap}
-    .d-name{font-size:.85rem;font-weight:500}
-    .badge-niv{font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:3px}
-    .bv{background:rgba(200,241,53,.12);color:var(--accent)}
-    .bb{background:rgba(96,165,250,.12);color:var(--blue)}
-    .br{background:rgba(248,113,113,.10);color:var(--red)}
-    .bw{background:rgba(156,163,175,.12);color:#9ca3af}
-    .badge-att{background:rgba(245,158,11,.12);color:var(--orange);font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:3px}
-    .d-meta{font-size:.72rem;color:var(--muted);margin-bottom:.4rem}
-    .d-quote{font-size:.72rem;color:var(--muted);font-style:italic;border-left:2px solid var(--border2);padding-left:8px;margin-bottom:.5rem;line-height:1.5}
-    .d-actions{display:flex;gap:6px}
-    .da-approve{background:rgba(200,241,53,.1);border:1px solid rgba(200,241,53,.3);color:var(--accent);font-size:.68rem;font-weight:700;padding:4px 12px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:var(--font-b)}
-    .da-approve:hover{background:rgba(200,241,53,.2)}
-    .da-refuse{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);color:var(--red);font-size:.68rem;font-weight:700;padding:4px 12px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:var(--font-b)}
-    .da-refuse:hover{background:rgba(248,113,113,.12)}
-    /* TOAST */
-    .toast-wrap{position:fixed;bottom:1.5rem;right:1rem;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-    .toast{background:var(--s2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:.6rem .9rem;font-size:.78rem;color:var(--text);max-width:260px;animation:tIn .25s ease,tOut .3s 2.5s ease forwards}
-    @keyframes tIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
-    @keyframes tOut{to{transform:translateX(10px);opacity:0}}
-    /* MOBILE NAV */
-    .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:1px solid var(--border);z-index:200}
-    .mobile-nav a{flex:1;text-align:center;padding:.65rem .5rem calc(.65rem + env(safe-area-inset-bottom));font-size:.6rem;font-weight:600;color:var(--muted);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:2px;transition:color .15s}
-    .mobile-nav a span{font-size:.9rem}
-    .mobile-nav a:hover,.mobile-nav a[aria-current]{color:var(--accent)}
-    @media(max-width:600px){.main{padding:1.25rem .85rem 5rem}.mobile-nav{display:flex}}
-  </style>
+  <link rel="stylesheet" href="css/pages/team-rider-2.css">
 </head>
 <body>
 
@@ -212,277 +106,50 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-window.GOELO_SUPABASE_URL      = 'https://iqxyiwnjwcepfgngkzsm.supabase.co';
-window.GOELO_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA';
+  console.log("🔥 TEAM RIDER HTML JS IS RUNNING");
+</script>
 
-/* ── CONSTANTS ─────────────────────────────── */
-const MONTH_SHORT = ['','JAN','FÉV','MARS','AVR','MAI','JUIN','JUIL','AOÛT','SEPT','OCT','NOV','DÉC'];
-const AV_COLORS = ['#C8F135','#7DD3FC','#FCA5A5','#FCD34D','#C4B5FD','#86EFAC'];
-const GRUP_COLOR = {blanc:'#9ca3af',vert:'#C8F135',bleu:'#60a5fa',rouge:'#f87171'};
-const GRUP_LABEL = {blanc:'Blanc',vert:'Vert',bleu:'Bleu',rouge:'Rouge'};
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 TEAM RIDER PAGE LOADED");
 
-const URGENCE_MSGS = {
-  retard:    '⏱ GOËLORIDES — Retard\n\nDépart retardé de 15 min.\nMerci de patienter au Parking du Kasino.\n\n💬 Message du Team Rider',
-  annulation:'❌ GOËLORIDES — Annulation\n\nSortie annulée — conditions météo.\n\nProchaine sortie bientôt :\ngoelorides.onrender.com',
-  meteo:     '🌧 GOËLORIDES — Météo\n\nSortie maintenue ✅\nAverses possibles — coupe-vent recommandé.\n\n⏰ Horaire inchangé',
-  rdv:       '📍 GOËLORIDES — Changement RDV\n\n⚠️ Nouveau point de départ :\nParking de la plage du Châtelet\n(et non le Kasino)\n\n⏰ Horaire inchangé'
-};
+  console.log("window._goeloSb =", window._goeloSb);
+  console.log("window.supabase =", window.supabase);
+  console.log("window.supabaseClient =", window.supabaseClient);
 
-/* MOCK — remplacer par routes_list() + signup_list_all_names() en prod */
-const MOCK_SORTIES = [
-  {id:'falaises',titre:'Route des Falaises', day:13,month:7, groupe:'vert',  km:85, dplus:950,statut:'publiee',
-   participants:[{p:'ML',c:'#C8F135'},{p:'SL',c:'#7DD3FC'},{p:'TM',c:'#FCA5A5'},{p:'RG',c:'#FCD34D'}],total:8,max:15},
-  {id:'brehec',  titre:'Vers Bréhec',        day:21,month:7, groupe:'vert',  km:61, dplus:700,statut:'publiee',
-   participants:[{p:'AL',c:'#C4B5FD'},{p:'RG',c:'#86EFAC'}],total:5,max:12},
-  {id:'boucle',  titre:'Grande Boucle du Goëlo',day:4,month:8,groupe:'bleu', km:85,dplus:950,statut:'brouillon',
-   participants:[],total:0,max:15},
-  {id:'frehel',  titre:'Cap Fréhel — Gravel',day:18,month:8,groupe:'rouge', km:72, dplus:850,statut:'brouillon',
-   participants:[],total:0,max:10},
-];
+  let sb = window._goeloSb || window.supabaseClient;
 
-const MOCK_DEMANDS = [
-  {name:'Mael Kervarrec', niv:'vert',  email:'mael.kervarrec@email.com',  date:'08 juin 2026', quote:'Je viens chaque été à Saint-Quay depuis 3 ans.'},
-  {name:'Sophie Lebrec',  niv:'bleu',  email:'sophie.lebrec@email.com',   date:'07 juin 2026', quote:null},
-  {name:'Tanguy Morin',   niv:'rouge', email:'tanguy.morin@email.com',    date:'06 juin 2026', quote:'Cycliste confirmé, niveau Rouge.'},
-];
+  if (!sb && window.supabase?.createClient) {
+    sb = window.supabase.createClient(
+      window.GOELO_SUPABASE_URL,
+      window.GOELO_SUPABASE_ANON_KEY
+    );
+    console.log("🧱 Supabase client recréé localement");
+  }
 
-/* ── TOAST ─────────────────────────────────── */
-function toast(msg) {
-  const wrap = document.getElementById('toast-wrap');
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  wrap.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
-}
+  if (!sb) {
+    console.log("❌ Supabase NON initialisé sur cette page");
+    return;
+  }
 
-/* ── HELPERS ────────────────────────────────── */
-function initials(str) { return str.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase(); }
-function scrollToId(id) { document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
-
-/* ── AUTH ───────────────────────────────────── */
-function decodeJwt(t) {
   try {
-    const b64 = t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(atob(b64 + '='.repeat((4-b64.length%4)%4)));
-  } catch(e) { return null; }
-}
-
-function detectRole() {
-  // Session parcours.js (goelo_admin_auth_v1)
-  try {
-    const raw = sessionStorage.getItem('goelo_admin_auth_v1');
-    if (raw) {
-      const o = JSON.parse(raw);
-      const p = o?.access_token ? decodeJwt(o.access_token) : null;
-      if (p && p.exp*1000 > Date.now()) {
-        const am = p.app_metadata || {};
-        const isAdmin = am.goelo_admin === true || am.goelo_admin === 'true';
-        if (isAdmin) {
-          const um = p.user_metadata || {};
-          return { role: am.goelo_super_admin ? 'admin' : 'teamrider', pseudo: um.pseudo || p.email?.split('@')[0] || 'Team Rider' };
-        }
-      }
-    }
-  } catch(e) {}
-
-  // Session supabase-js (sb-*-auth-token)
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k?.startsWith('sb-') || !k.includes('-auth-token')) continue;
-      const s = JSON.parse(localStorage.getItem(k));
-      const tok = s?.access_token || s?.currentSession?.access_token;
-      if (!tok) continue;
-      const p = decodeJwt(tok);
-      if (!p || p.exp*1000 < Date.now()) continue;
-      const am = p.app_metadata || {};
-      const isAdmin = am.goelo_admin === true || am.goelo_admin === 'true';
-      if (!isAdmin) continue;
-      const um = p.user_metadata || {};
-      const pseudo = um.pseudo || um.name || p.email?.split('@')[0] || 'Team Rider';
-      const role = am.goelo_super_admin ? 'admin' : 'teamrider';
-      return { role, pseudo };
-    }
-  } catch(e) {}
-  return null;
-}
-
-/* ── RENDER ─────────────────────────────────── */
-function boot(rider) {
-  document.getElementById('gate-panel').style.display = 'none';
-  document.getElementById('dashboard').style.display  = 'block';
-
-  document.getElementById('user-name').textContent   = rider.pseudo;
-  document.getElementById('user-name').textContent   = rider.role;
-  document.getElementById('user-avatar').textContent = initials(rider.pseudo);
-
-  const badge = document.getElementById('role-badge');
-  if (rider.role === 'admin') {
-    badge.textContent = '👑 ADMIN';
-    badge.classList.add('is-admin');
+    const session = await sb.auth.getSession();
+    console.log("🔐 SESSION CHECK =", session);
+  } catch (e) {
+    console.error("❌ Erreur getSession:", e);
   }
-
-  renderSorties(rider.role);
-  if (rider.role === 'admin') renderDemands();
-}
-
-let _currentFilter = 'all';
-function renderSorties(role) {
-  const list = document.getElementById('sorties-list');
-  const items = _currentFilter === 'all' ? MOCK_SORTIES : MOCK_SORTIES.filter(s => s.statut === _currentFilter);
-  if (!items.length) { list.innerHTML = '<p style="font-size:.82rem;color:var(--muted);padding:.5rem 0">Aucune sortie.</p>'; return; }
-
-  list.innerHTML = items.map(s => {
-    const gc = GRUP_COLOR[s.groupe] || '#888';
-    const gl = GRUP_LABEL[s.groupe] || s.groupe;
-    const badgeCls = s.statut==='publiee'?'badge-pub':s.statut==='annulee'?'badge-cancel':'badge-draft';
-    const badgeTxt = s.statut==='publiee'?'PUB':s.statut==='annulee'?'ANNULÉ':'DRAFT';
-
-    /* Avatars inscrits */
-    const shown = s.participants.slice(0,4);
-    const more  = s.total - shown.length;
-    const avHtml = shown.map(a =>
-      `<div class="av-item" style="background:${a.c};color:#0a1a0a" title="${a.p}">${a.p}</div>`
-    ).join('') + (more>0 ? `<div class="av-item av-more">+${more}</div>` : '');
-
-    /* Boutons selon rôle */
-    let actions = `<button class="btn-sm" onclick="location.href='parcours.html?id=${s.id}'">👁 Voir</button>`;
-    if (role === 'teamrider' || role === 'admin') {
-      actions += `<button class="btn-sm accent" onclick="location.href='gestion-sorties.html?id=${s.id}&mode=edit'">✏️ Modifier</button>`;
-      actions += `<button class="btn-sm danger" onclick="cancelSortie('${s.id}','${s.titre}',this)">✕ Annuler</button>`;
-    }
-
-    return `
-      <div class="sortie-card" data-s="${s.statut}">
-        <div class="sortie-main">
-          <div class="s-date"><div class="s-date-n">${s.day}</div><div class="s-date-m">${MONTH_SHORT[s.month]}</div></div>
-          <div class="s-info">
-            <div class="s-title">${s.titre}</div>
-            <div class="s-sub">${s.km} km · ${s.dplus} m D+ · Groupe ${gl}</div>
-          </div>
-          <div class="dot-niv" style="background:${gc}"></div>
-          <span class="badge ${badgeCls}">${badgeTxt}</span>
-        </div>
-        <div class="s-inscrits">
-          <div class="av-stack">${avHtml}</div>
-          <span class="inscrits-txt"><strong>${s.total}</strong> / ${s.max} inscrits</span>
-        </div>
-        <div class="s-actions">${actions}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-function filterSorties(filter, btn) {
-  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _currentFilter = filter;
-  const role = document.getElementById('role-badge').classList.contains('is-admin') ? 'admin' : 'teamrider';
-  renderSorties(role);
-}
-
-function cancelSortie(id, titre, btn) {
-  if (!confirm(`Annuler "${titre}" ?\n\nPense à envoyer un message urgence Messenger aux participants.`)) return;
-  const card = btn.closest('.sortie-card');
-  card.querySelector('.badge').className = 'badge badge-cancel';
-  card.querySelector('.badge').textContent = 'ANNULÉ';
-  toast(`Sortie "${titre}" annulée — envoie un message Messenger ↓`);
-  setTimeout(() => scrollToId('urgence-section'), 800);
-}
-
-function renderDemands() {
-  const section = document.getElementById('demands-section');
-  const list    = document.getElementById('demand-list');
-  const label   = document.getElementById('demands-count-label');
-  section.style.display = 'block';
-
-  let pending = MOCK_DEMANDS.length;
-  label.textContent = `· ${pending} en attente`;
-
-  list.innerHTML = MOCK_DEMANDS.map((d, i) => `
-    <div class="demand-card" id="dc-${i}">
-      <div class="d-head">
-        <span class="d-name">${d.name}</span>
-        <span class="badge-niv b${d.niv[0]}">${d.niv.toUpperCase()}</span>
-        <span class="badge-att" id="dbadge-${i}">EN ATTENTE</span>
-      </div>
-      <div class="d-meta">${d.email} · ${d.date}</div>
-      ${d.quote ? `<div class="d-quote">" ${d.quote} "</div>` : ''}
-      <div class="d-actions" id="da-${i}">
-        <button class="da-approve" onclick="approveDemand(${i})">✓ APPROUVER</button>
-        <button class="da-refuse"  onclick="refuseDemand(${i})">✕ REFUSER</button>
-      </div>
-    </div>
-  `).join('');
-
-  window._demandPending = pending;
-}
-
-function approveDemand(i) {
-  document.getElementById('da-'+i).innerHTML = '<span style="font-size:.72rem;color:var(--green)">✓ Approuvée — accès envoyé</span>';
-  const b = document.getElementById('dbadge-'+i);
-  b.textContent='APPROUVÉE'; b.style.cssText='background:rgba(74,222,128,.12);color:var(--green);font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:3px';
-  updateDemandCount(-1);
-  toast('Accès Team Rider accordé à '+MOCK_DEMANDS[i].name);
-}
-
-function refuseDemand(i) {
-  document.getElementById('da-'+i).innerHTML = '<span style="font-size:.72rem;color:var(--red)">✕ Demande refusée</span>';
-  const b = document.getElementById('dbadge-'+i);
-  b.textContent='REFUSÉE'; b.style.cssText='background:rgba(248,113,113,.1);color:var(--red);font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:3px';
-  updateDemandCount(-1);
-  toast('Demande refusée');
-}
-
-function updateDemandCount(delta) {
-  window._demandPending = Math.max(0, (window._demandPending||0) + delta);
-  const lbl = document.getElementById('demands-count-label');
-  if (lbl) lbl.textContent = window._demandPending > 0 ? `· ${window._demandPending} en attente` : '· Aucune en attente';
-}
-
-/* ── URGENCE ────────────────────────────────── */
-function genUrgence(btn, type) {
-  const result = btn.querySelector('.u-result');
-  if (result.style.display === 'block') { result.style.display='none'; return; }
-  const msg = URGENCE_MSGS[type] || '';
-  result.textContent = msg;
-  result.style.display = 'block';
-  navigator.clipboard?.writeText(msg).then(() => toast('Message copié — colle dans Messenger'));
-  if (!btn.querySelector('.u-copy')) {
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'u-copy';
-    copyBtn.textContent = '📋 Copier à nouveau';
-    copyBtn.addEventListener('click', e => { e.stopPropagation(); navigator.clipboard?.writeText(msg).then(()=>toast('Copié !')); });
-    result.after(copyBtn);
-  }
-}
-
-/* ── INIT ───────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  let rider = detectRole();
-
-  // Mode démo : ?demo=teamrider ou ?demo=admin
-  if (!rider) {
-    const demo = new URLSearchParams(location.search).get('demo');
-    if (demo === 'admin')     rider = { role:'admin',     pseudo:'Admin' };
-    if (demo === 'teamrider') rider = { role:'teamrider', pseudo:'Team Rider' };
-  }
-
-  if (rider) {
-    boot(rider);
-  } else {
-    document.getElementById('gate-panel').style.display = 'block';
-    document.getElementById('dashboard').style.display  = 'none';
-  }
-
-  window.addEventListener('goelo:auth-success', () => {
-    const r = detectRole();
-    if (r) boot(r);
-  });
 });
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+window.GOELO_SUPABASE_URL      = 'https://iqxyiwnjwcepfgngkzsm.supabase.co';
+window.GOELO_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA';
+
+</script>
+
+<script src="js/team-rider.js" defer></script>
 <script src="goelo-auth.js" defer></script>
 <script src="goelo-swipe-nav.js" defer></script>
 </body>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rejoindre l'équipe · GoëloRides</title>
+  <meta name="description" content="Rejoins l'équipe GoëloRides — soumets ta demande d'accès Team Rider.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS global du projet (à adapter à ton arborescence) -->
+  <!-- <link rel="stylesheet" href="css/global.css"> -->
+
+  <!-- CSS pages -->
+  <link rel="stylesheet" href="css/pages/gestion-team-rider-form.css">
+  <link rel="stylesheet" href="css/pages/gestion-team-rider-confirm.css">
+  <link rel="stylesheet" href="css/pages/gestion-team-rider-admin.css">
+
+  <style>
+    /* ── Styles communs inline INTERDITS — voir CSS pages ci-dessus ── */
+    /* Uniquement les overrides de layout global nécessaires pour cette page */
+    body {
+      background: #0D0D0D;
+      color: #F2F2F2;
+      font-family: 'Inter', system-ui, sans-serif;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="gtr-page">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HEADER GoëloRides
+       Reproduit le header du projet (nav principale)
+       ═══════════════════════════════════════════════════════════ -->
+  <header class="gr-nav" style="
+    background:#111;
+    border-bottom:1px solid #1E1E1E;
+    padding:0 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:56px;
+    position:sticky;
+    top:0;
+    z-index:100;
+  ">
+    <a href="index.html" style="
+      display:flex;
+      align-items:center;
+      gap:8px;
+      text-decoration:none;
+      color:#F2F2F2;
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    ">
+      <span style="color:#C8F135;font-size:20px;">≋</span>
+      GOËLORIDES
+    </a>
+    <nav style="display:flex;gap:20px;align-items:center;">
+      <a href="sorties.html"  style="color:#888;font-size:13px;text-decoration:none;font-weight:500;">Sorties</a>
+      <a href="parcours.html" style="color:#888;font-size:13px;text-decoration:none;font-weight:500;">Parcours</a>
+      <a href="gestion-team-rider.html" style="
+        background:#C8F135;
+        color:#0D0D0D;
+        font-size:12px;
+        font-weight:800;
+        letter-spacing:.04em;
+        text-transform:uppercase;
+        padding:6px 14px;
+        border-radius:6px;
+        text-decoration:none;
+      ">Team Rider</a>
+    </nav>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TOAST CONTAINER (partagé form + admin)
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="gtr-toast-wrap" id="gtr-toast-wrap"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MAIN
+       ═══════════════════════════════════════════════════════════ -->
+  <main>
+    <div class="gtr-container">
+
+      <!-- ─────────────────────────────────────────────────────
+           SECTION 1 : FORMULAIRE DE DEMANDE
+           Visible par défaut / masqué après envoi réussi
+           ───────────────────────────────────────────────────── -->
+      <div id="gtr-form-view">
+
+        <!-- Hero -->
+        <div class="gtr-hero">
+          <div class="gtr-hero__badge">🚴 Accès Team Rider</div>
+          <h1 class="gtr-hero__title">Rejoins l'équipe GoëloRides</h1>
+          <p class="gtr-hero__sub">Remplis ce formulaire — l'équipe examinera ta demande sous 48 h.</p>
+        </div>
+
+        <!-- Formulaire -->
+        <form id="gtr-form" novalidate>
+          <div class="gtr-card">
+
+            <!-- Prénom + Nom -->
+            <div class="gtr-row">
+              <div class="gtr-field">
+                <label class="gtr-label" for="gtr-first-name">Prénom</label>
+                <input
+                  class="gtr-input"
+                  id="gtr-first-name"
+                  name="first_name"
+                  type="text"
+                  placeholder="Mael"
+                  autocomplete="given-name"
+                  required
+                >
+                <span class="gtr-error-msg" id="gtr-first-name-err"></span>
+              </div>
+              <div class="gtr-field">
+                <label class="gtr-label" for="gtr-last-name">Nom</label>
+                <input
+                  class="gtr-input"
+                  id="gtr-last-name"
+                  name="last_name"
+                  type="text"
+                  placeholder="Kervarrec"
+                  autocomplete="family-name"
+                  required
+                >
+                <span class="gtr-error-msg" id="gtr-last-name-err"></span>
+              </div>
+            </div>
+
+            <!-- E-mail -->
+            <div class="gtr-field">
+              <label class="gtr-label" for="gtr-email">E-mail</label>
+              <input
+                class="gtr-input"
+                id="gtr-email"
+                name="email"
+                type="email"
+                placeholder="mael@email.com"
+                autocomplete="email"
+                required
+              >
+              <span class="gtr-error-msg" id="gtr-email-err"></span>
+            </div>
+
+            <!-- Téléphone (optionnel) -->
+            <div class="gtr-field">
+              <label class="gtr-label" for="gtr-phone">
+                Téléphone
+                <span class="gtr-label--opt">(optionnel)</span>
+              </label>
+              <input
+                class="gtr-input"
+                id="gtr-phone"
+                name="phone"
+                type="tel"
+                placeholder="06 12 34 56 78"
+                autocomplete="tel"
+              >
+            </div>
+
+            <!-- Niveau habituel -->
+            <div class="gtr-field">
+              <label class="gtr-label">Niveau habituel</label>
+              <div class="gtr-levels" role="radiogroup" aria-label="Niveau cycliste">
+
+                <label class="gtr-level" data-level="blanc" title="Blanc — 18–22 km/h">
+                  <input type="radio" name="level" value="blanc">
+                  <div class="gtr-level__dot"></div>
+                  <span class="gtr-level__name">Blanc</span>
+                </label>
+
+                <label class="gtr-level" data-level="vert" title="Vert — 22–25 km/h">
+                  <input type="radio" name="level" value="vert" checked>
+                  <div class="gtr-level__dot"></div>
+                  <span class="gtr-level__name">Vert</span>
+                </label>
+
+                <label class="gtr-level" data-level="bleu" title="Bleu — 25–30 km/h">
+                  <input type="radio" name="level" value="bleu">
+                  <div class="gtr-level__dot"></div>
+                  <span class="gtr-level__name">Bleu</span>
+                </label>
+
+                <label class="gtr-level" data-level="rouge" title="Rouge — 30+ km/h">
+                  <input type="radio" name="level" value="rouge">
+                  <div class="gtr-level__dot"></div>
+                  <span class="gtr-level__name">Rouge</span>
+                </label>
+
+              </div>
+            </div>
+
+            <!-- Message (optionnel) -->
+            <div class="gtr-field">
+              <label class="gtr-label" for="gtr-message">
+                Pourquoi rejoindre l'équipe ?
+                <span class="gtr-label--opt">(optionnel)</span>
+              </label>
+              <textarea
+                class="gtr-textarea"
+                id="gtr-message"
+                name="message"
+                placeholder="Ex. : Je viens chaque été à Saint-Quay et j'aimerais participer aux sorties réservées…"
+                rows="4"
+              ></textarea>
+            </div>
+
+          </div><!-- /.gtr-card -->
+
+          <!-- Submit -->
+          <button type="submit" class="gtr-btn-submit" id="gtr-submit-btn">
+            <span class="btn-icon">✈</span>
+            <span class="btn-label">Envoyer la demande</span>
+            <div class="gtr-spinner" aria-hidden="true"></div>
+          </button>
+
+          <p class="gtr-login-hint">
+            Déjà Team Rider ?
+            <a href="team-rider.html">Se connecter →</a>
+          </p>
+
+        </form>
+      </div><!-- /#gtr-form-view -->
+
+      <!-- ─────────────────────────────────────────────────────
+           SECTION 2 : CONFIRMATION
+           Masquée par défaut, affichée après envoi réussi
+           ───────────────────────────────────────────────────── -->
+      <div id="gtr-confirm-view" style="display:none;">
+        <div class="gtr-confirm">
+
+          <!-- Icône succès -->
+          <div class="gtr-confirm__icon" aria-hidden="true">✓</div>
+
+          <h1 class="gtr-confirm__title">Demande envoyée !</h1>
+          <p class="gtr-confirm__sub">
+            Ton e-mail a été transmis à
+            <strong>goelo.rides@gmail.com</strong>
+            et ta demande est enregistrée côté équipe.
+          </p>
+
+          <!-- Récapitulatif -->
+          <div class="gtr-recap">
+            <div class="gtr-recap__label">Récapitulatif</div>
+            <div class="gtr-recap__row">
+              <span class="gtr-recap__key">Nom</span>
+              <span class="gtr-recap__val" id="confirm-name">—</span>
+            </div>
+            <div class="gtr-recap__row">
+              <span class="gtr-recap__key">E-mail</span>
+              <span class="gtr-recap__val" id="confirm-email">—</span>
+            </div>
+            <div class="gtr-recap__row">
+              <span class="gtr-recap__key">Niveau</span>
+              <span id="confirm-level" class="gtr-badge-level gtr-badge-level--vert">VERT</span>
+            </div>
+            <div class="gtr-recap__row">
+              <span class="gtr-recap__key">Statut</span>
+              <span class="gtr-badge-status gtr-badge-status--pending">EN ATTENTE</span>
+            </div>
+          </div>
+
+          <!-- Étapes -->
+          <div class="gtr-steps">
+            <div class="gtr-step">
+              <div class="gtr-step__num gtr-step__num--done">✓</div>
+              <p class="gtr-step__text">Demande soumise — reçue par l'équipe</p>
+            </div>
+            <div class="gtr-step">
+              <div class="gtr-step__num">2</div>
+              <p class="gtr-step__text">
+                L'équipe examine ta demande
+                <em>(sous 48 h)</em>
+              </p>
+            </div>
+            <div class="gtr-step">
+              <div class="gtr-step__num">3</div>
+              <p class="gtr-step__text">Tu reçois un e-mail de confirmation avec ton accès</p>
+            </div>
+          </div>
+
+          <!-- Retour -->
+          <button class="gtr-btn-back" id="gtr-back-btn">
+            ← Retour à l'accueil
+          </button>
+
+        </div>
+      </div><!-- /#gtr-confirm-view -->
+
+    </div><!-- /.gtr-container -->
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 3 : DASHBOARD ADMIN
+         Visible uniquement si rôle admin détecté
+         Séparé visuellement du formulaire par une section dédiée
+         ═══════════════════════════════════════════════════════ -->
+    <section id="gtr-admin-section" class="gtr-admin">
+      <div class="gtr-container">
+
+        <!-- Gate : accès refusé -->
+        <div id="gtr-admin-gate" class="gtr-gate" style="display:none;">
+          <div class="gtr-gate__icon">🔒</div>
+          <p class="gtr-gate__title">Accès admin requis</p>
+          <p class="gtr-gate__sub">Cette section est réservée aux administrateurs GoëloRides.</p>
+        </div>
+
+        <!-- Panel admin -->
+        <div id="gtr-admin-panel" style="display:none;">
+
+          <div class="gtr-admin__header">
+            <h2 class="gtr-admin__title">Gestion des demandes</h2>
+            <p class="gtr-admin__sub">Approuve ou refuse les demandes d'accès Team Rider.</p>
+          </div>
+
+          <!-- Stats -->
+          <div class="gtr-stats">
+            <div class="gtr-stat-card">
+              <div class="gtr-stat-card__label">Total</div>
+              <div class="gtr-stat-card__value" id="stat-total">—</div>
+            </div>
+            <div class="gtr-stat-card gtr-stat-card--pending">
+              <div class="gtr-stat-card__label">En attente</div>
+              <div class="gtr-stat-card__value" id="stat-pending">—</div>
+            </div>
+            <div class="gtr-stat-card gtr-stat-card--approved">
+              <div class="gtr-stat-card__label">Approuvées</div>
+              <div class="gtr-stat-card__value" id="stat-approved">—</div>
+            </div>
+            <div class="gtr-stat-card gtr-stat-card--refused">
+              <div class="gtr-stat-card__label">Refusées</div>
+              <div class="gtr-stat-card__value" id="stat-refused">—</div>
+            </div>
+          </div>
+
+          <!-- Filter tabs -->
+          <div class="gtr-filter-tabs" role="tablist">
+            <button class="gtr-tab is-active" data-filter="all"      role="tab">Toutes</button>
+            <button class="gtr-tab"           data-filter="pending"  role="tab">En attente</button>
+            <button class="gtr-tab"           data-filter="approved" role="tab">Approuvées</button>
+            <button class="gtr-tab"           data-filter="refused"  role="tab">Refusées</button>
+          </div>
+
+          <!-- Demands list -->
+          <div id="gtr-demands-list" class="gtr-demands-list">
+            <!-- Rempli dynamiquement par gestion-team-rider-admin.js -->
+          </div>
+
+        </div><!-- /#gtr-admin-panel -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER GoëloRides
+       ═══════════════════════════════════════════════════════════ -->
+  <footer style="
+    background:#111;
+    border-top:1px solid #1E1E1E;
+    padding:32px 20px;
+    text-align:center;
+    color:#555;
+    font-size:12px;
+  ">
+    <div style="margin-bottom:8px;">
+      <span style="color:#C8F135;font-weight:800;">≋ GOËLORIDES</span>
+      — Saint-Quay-Portrieux, Bretagne
+    </div>
+    <div>
+      <a href="mailto:goelo.rides@gmail.com" style="color:#555;text-decoration:none;">goelo.rides@gmail.com</a>
+      · <a href="sorties.html" style="color:#555;text-decoration:none;">Sorties</a>
+      · <a href="parcours.html" style="color:#555;text-decoration:none;">Parcours</a>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:#333;">
+      © 2026 GoëloRides — Initiative cycliste non officielle · Pas un club, pas une compétition.
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCRIPTS
+       Ordre strict :
+       1. Supabase CDN (pas defer — doit être prêt avant les JS)
+       2. Config window.GOELO_*
+       3. JS pages (defer)
+       ═══════════════════════════════════════════════════════════ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <script>
+    /* Config — assignation unique, protégée contre le double init */
+    if (!window.GOELO_SUPABASE_URL) {
+      window.GOELO_SUPABASE_URL      = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
+      window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+    }
+  </script>
+
+  <script src="js/gestion-team-rider-app.js"   defer></script>
+  <script src="js/gestion-team-rider-admin.js"  defer></script>
+  <!-- Auth GoëloRides (optionnel — déclenche goelo:auth-success) -->
+  <!-- <script src="goelo-auth.js" defer></script> -->
+
+</body>
+</html>

@@ -4934,10 +4934,19 @@
   <script src="https://unpkg.com/leaflet-geometryutil@0.10.2/src/leaflet.geometryutil.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js" crossorigin=""></script>
   <!-- Supabase : URL projet + clé anon / publishable (identique sorties.html / sortie.html). -->
+
+<!-- 1. CONFIG (TOUJOURS EN PREMIER) -->
   <script>
     window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
-    /* Colle ta clé anon / publishable (une ligne). Ne la commit pas sur un dépôt public. */
     window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
+  </script>
+
+
+<!-- 2. SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- 3. SCRIPTS (TOUS DEFER OK MAIS APRÈS SDK) -->
+  <script>
     window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";
     window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
     /* Optionnel : URLs ouvertes par les boutons « Messenger » / « Instagram » après enregistrement d’une sortie (admin). */

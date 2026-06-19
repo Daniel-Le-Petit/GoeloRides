@@ -1,0 +1,284 @@
+/* ═══════════════════════════════════════════════════════════════
+   gestion-team-rider-form.css
+   GoëloRides — Formulaire demande d'adhésion Team Rider
+   Palette : #0D0D0D fond, #C8F135 accent, #1A1A1A surfaces
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Variables ── */
+:root {
+  --bg:        #0D0D0D;
+  --surface:   #1A1A1A;
+  --surface2:  #222222;
+  --border:    #2E2E2E;
+  --accent:    #C8F135;
+  --accent-dk: #a8cc1a;
+  --text:      #F2F2F2;
+  --muted:     #888;
+  --red:       #f87171;
+  --radius:    10px;
+  --font:      'Inter', system-ui, sans-serif;
+}
+
+/* ── Reset minimal ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Page ── */
+.gtr-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Container ── */
+.gtr-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ── Hero intro ── */
+.gtr-hero {
+  padding: 40px 0 24px;
+  text-align: center;
+}
+.gtr-hero__badge {
+  display: inline-block;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+.gtr-hero__title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.gtr-hero__sub {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ── Form card ── */
+.gtr-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+}
+
+/* ── Field group ── */
+.gtr-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.gtr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.gtr-field:last-child { margin-bottom: 0; }
+
+.gtr-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.gtr-label--opt {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #555;
+  margin-left: 4px;
+}
+
+.gtr-input,
+.gtr-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color .15s;
+}
+.gtr-input::placeholder,
+.gtr-textarea::placeholder { color: #444; }
+.gtr-input:focus,
+.gtr-textarea:focus { border-color: var(--accent); }
+.gtr-input.is-error,
+.gtr-textarea.is-error { border-color: var(--red); }
+
+.gtr-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ── Error message ── */
+.gtr-error-msg {
+  font-size: 12px;
+  color: var(--red);
+  margin-top: 2px;
+  display: none;
+}
+.gtr-error-msg.visible { display: block; }
+
+/* ── Level selector ── */
+.gtr-levels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.gtr-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.gtr-level input[type="radio"] { display: none; }
+.gtr-level__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #555;
+  transition: background .15s;
+}
+.gtr-level__name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* Checked states */
+.gtr-level:has(input:checked) { border-color: var(--accent); background: rgba(200,241,53,.06); }
+.gtr-level:has(input[value="blanc"]:checked)  .gtr-level__dot { background: #9ca3af; }
+.gtr-level:has(input[value="vert"]:checked)   .gtr-level__dot { background: var(--accent); }
+.gtr-level:has(input[value="bleu"]:checked)   .gtr-level__dot { background: #60a5fa; }
+.gtr-level:has(input[value="rouge"]:checked)  .gtr-level__dot { background: #f87171; }
+
+/* Default dot colors */
+.gtr-level[data-level="blanc"] .gtr-level__dot { background: #9ca3af; }
+.gtr-level[data-level="vert"]  .gtr-level__dot { background: var(--accent); }
+.gtr-level[data-level="bleu"]  .gtr-level__dot { background: #60a5fa; }
+.gtr-level[data-level="rouge"] .gtr-level__dot { background: #f87171; }
+
+/* ── Submit button ── */
+.gtr-btn-submit {
+  width: 100%;
+  background: var(--accent);
+  color: #0D0D0D;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background .15s, opacity .15s;
+  margin-bottom: 16px;
+}
+.gtr-btn-submit:hover  { background: var(--accent-dk); }
+.gtr-btn-submit:active { opacity: .85; }
+.gtr-btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+.gtr-btn-submit .btn-icon { font-size: 18px; }
+
+/* ── Loading spinner inside button ── */
+.gtr-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0,0,0,.2);
+  border-top-color: #0D0D0D;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+.gtr-btn-submit.is-loading .btn-label,
+.gtr-btn-submit.is-loading .btn-icon { display: none; }
+.gtr-btn-submit.is-loading .gtr-spinner { display: block; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Login link ── */
+.gtr-login-hint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  padding-bottom: 40px;
+}
+.gtr-login-hint a {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.gtr-login-hint a:hover { text-decoration: underline; }
+
+/* ── Toast ── */
+.gtr-toast-wrap {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.gtr-toast {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  animation: fadeUp .25s ease;
+  pointer-events: auto;
+}
+.gtr-toast--error { border-color: var(--red); color: var(--red); }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .gtr-card { padding: 20px 16px; }
+  .gtr-hero { padding: 28px 0 16px; }
+}

@@ -279,7 +279,7 @@ async function renderDemands() {
     .from('demandes')
     .select('*')
     .eq('status', 'pending')
-    .order('date', { ascending: false });
+    .order('create_at', { ascending: false });
 
   if (error) {
     console.error(error);

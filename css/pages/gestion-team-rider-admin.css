@@ -1,0 +1,272 @@
+/* ═══════════════════════════════════════════════════════════════
+   gestion-team-rider-admin.css
+   GoëloRides — Dashboard admin gestion des demandes
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Admin section ── */
+.gtr-admin {
+  padding: 32px 0 60px;
+}
+
+/* ── Admin header ── */
+.gtr-admin__header {
+  margin-bottom: 28px;
+}
+.gtr-admin__title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  margin-bottom: 4px;
+}
+.gtr-admin__sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── Stats grid ── */
+.gtr-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.gtr-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.gtr-stat-card__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.gtr-stat-card__value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  color: var(--text);
+}
+.gtr-stat-card--pending .gtr-stat-card__value  { color: #fbbf24; }
+.gtr-stat-card--approved .gtr-stat-card__value { color: var(--accent); }
+.gtr-stat-card--refused .gtr-stat-card__value  { color: var(--red); }
+
+/* ── Filter tabs ── */
+.gtr-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.gtr-filter-tabs::-webkit-scrollbar { display: none; }
+
+.gtr-tab {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 20px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.gtr-tab:hover { border-color: var(--text); color: var(--text); }
+.gtr-tab.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0D0D0D;
+}
+
+/* ── Demand cards ── */
+.gtr-demands-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gtr-demand-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 18px 14px;
+  transition: border-color .15s;
+}
+.gtr-demand-card:hover { border-color: #3E3E3E; }
+
+.gtr-demand-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.gtr-demand-card__name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  flex: 1;
+  min-width: 120px;
+}
+.gtr-demand-card__badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Level badge */
+.gtr-badge-level {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.gtr-badge-level--blanc { background: rgba(156,163,175,.15); color: #9ca3af; }
+.gtr-badge-level--vert  { background: rgba(200,241,53,.12);  color: var(--accent); }
+.gtr-badge-level--bleu  { background: rgba(96,165,250,.12);  color: #60a5fa; }
+.gtr-badge-level--rouge { background: rgba(248,113,113,.12); color: #f87171; }
+
+/* Status badge */
+.gtr-badge-status {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.gtr-badge-status--pending  { background: rgba(251,191,36,.15);  color: #fbbf24; }
+.gtr-badge-status--approved { background: rgba(200,241,53,.12);  color: var(--accent); }
+.gtr-badge-status--refused  { background: rgba(248,113,113,.12); color: var(--red); }
+
+/* ── Demand meta ── */
+.gtr-demand-card__meta {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.gtr-demand-card__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gtr-demand-card__meta-icon { font-size: 13px; flex-shrink: 0; }
+
+/* ── Message preview ── */
+.gtr-demand-card__message {
+  background: var(--surface2);
+  border-left: 2px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* ── Action buttons ── */
+.gtr-demand-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gtr-btn-approve,
+.gtr-btn-refuse {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity .15s;
+}
+.gtr-btn-approve {
+  background: rgba(200,241,53,.12);
+  color: var(--accent);
+  border: 1px solid rgba(200,241,53,.25);
+}
+.gtr-btn-approve:hover { background: rgba(200,241,53,.2); }
+.gtr-btn-refuse {
+  background: rgba(248,113,113,.08);
+  color: var(--red);
+  border: 1px solid rgba(248,113,113,.2);
+}
+.gtr-btn-refuse:hover { background: rgba(248,113,113,.15); }
+.gtr-btn-approve:disabled,
+.gtr-btn-refuse:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── Empty / loading states ── */
+.gtr-empty {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.gtr-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+.gtr-loading__dot {
+  width: 8px; height: 8px;
+  background: var(--border);
+  border-radius: 50%;
+  animation: pulse .8s ease-in-out infinite;
+}
+.gtr-loading__dot:nth-child(2) { animation-delay: .15s; }
+.gtr-loading__dot:nth-child(3) { animation-delay: .30s; }
+.gtr-loading {gap: 6px; align-items: center;}
+@keyframes pulse {
+  0%, 100% { opacity: .3; transform: scale(.8); }
+  50%       { opacity: 1;  transform: scale(1.1); }
+}
+
+/* ── Access gate ── */
+.gtr-gate {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 0;
+}
+.gtr-gate__icon { font-size: 40px; margin-bottom: 16px; }
+.gtr-gate__title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.gtr-gate__sub { font-size: 14px; color: var(--muted); }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .gtr-stats { grid-template-columns: 1fr 1fr; }
+  .gtr-demand-card { padding: 14px 14px 10px; }
+  .gtr-btn-approve,
+  .gtr-btn-refuse { min-width: 100px; font-size: 12px; }
+}

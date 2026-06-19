@@ -1,0 +1,178 @@
+/* ═══════════════════════════════════════════════════════════════
+   gestion-team-rider-confirm.css
+   GoëloRides — Page confirmation demande envoyée
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Confirmation screen ── */
+.gtr-confirm {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 0 60px;
+}
+
+/* ── Success icon ── */
+.gtr-confirm__icon {
+  width: 64px;
+  height: 64px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #0D0D0D;
+  margin-bottom: 24px;
+  animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.gtr-confirm__title {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  margin-bottom: 12px;
+}
+.gtr-confirm__sub {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 320px;
+  line-height: 1.6;
+}
+.gtr-confirm__sub strong { color: var(--text); }
+
+/* ── Recap card ── */
+.gtr-recap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 20px 4px;
+  margin: 28px 0 32px;
+  text-align: left;
+}
+.gtr-recap__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.gtr-recap__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.gtr-recap__row:last-child { border-bottom: none; }
+.gtr-recap__key { color: var(--muted); }
+.gtr-recap__val { font-weight: 600; color: var(--text); }
+
+/* ── Level badge in recap ── */
+.gtr-badge-level {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid currentColor;
+}
+.gtr-badge-level--blanc { color: #9ca3af; }
+.gtr-badge-level--vert  { color: var(--accent); }
+.gtr-badge-level--bleu  { color: #60a5fa; }
+.gtr-badge-level--rouge { color: #f87171; }
+
+/* ── Status badge ── */
+.gtr-badge-status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.gtr-badge-status--pending {
+  background: rgba(251,191,36,.12);
+  color: #fbbf24;
+  border: 1px solid rgba(251,191,36,.3);
+}
+.gtr-badge-status--approved {
+  background: rgba(200,241,53,.12);
+  color: var(--accent);
+  border: 1px solid rgba(200,241,53,.3);
+}
+.gtr-badge-status--refused {
+  background: rgba(248,113,113,.12);
+  color: var(--red);
+  border: 1px solid rgba(248,113,113,.3);
+}
+
+/* ── Steps ── */
+.gtr-steps {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+.gtr-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.gtr-step__num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.gtr-step__num--done {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0D0D0D;
+}
+.gtr-step__text {
+  font-size: 14px;
+  padding-top: 4px;
+}
+.gtr-step__text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+/* ── Back button ── */
+.gtr-btn-back {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: border-color .15s;
+  text-decoration: none;
+  display: inline-block;
+}
+.gtr-btn-back:hover { border-color: var(--accent); color: var(--accent); }
