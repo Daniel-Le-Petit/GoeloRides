@@ -113,30 +113,36 @@
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 TEAM RIDER PAGE LOADED");
 
-  console.log("window._goeloSb =", window._goeloSb);
-  console.log("window.supabase =", window.supabase);
-  console.log("window.supabaseClient =", window.supabaseClient);
-
-  let sb = window._goeloSb || window.supabaseClient;
-
-  if (!sb && window.supabase?.createClient) {
-    sb = window.supabase.createClient(
-      window.GOELO_SUPABASE_URL,
-      window.GOELO_SUPABASE_ANON_KEY
-    );
-    console.log("🧱 Supabase client recréé localement");
-  }
+  const sb = window._goeloSb;
 
   if (!sb) {
-    console.log("❌ Supabase NON initialisé sur cette page");
+    console.error("❌ Supabase NOT INITIALISED");
     return;
   }
 
   try {
-    const session = await sb.auth.getSession();
-    console.log("🔐 SESSION CHECK =", session);
+    const { data: session } = await sb.auth.getSession();
+    console.log("🔐 SESSION =", session);
+
+    const { data: userData } = await sb.auth.getUser();
+    const user = userData?.user;
+
+    if (!user) {
+      console.log("🚪 No user → redirect");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const { data: profile } = await sb
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    console.log("🎭 ROLE =", profile?.role);
+
   } catch (e) {
-    console.error("❌ Erreur getSession:", e);
+    console.error("❌ ERROR:", e);
   }
 });
 </script>
@@ -147,10 +153,77 @@ document.addEventListener("DOMContentLoaded", async () => {
 window.GOELO_SUPABASE_URL      = 'https://iqxyiwnjwcepfgngkzsm.supabase.co';
 window.GOELO_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA';
 
+window._goeloSb = supabase.createClient(
+  window.GOELO_SUPABASE_URL,
+  window.GOELO_SUPABASE_ANON_KEY
+);
+
+console.log("🧱 Supabase READY =", window._goeloSb);
+
 </script>
 
 <script src="js/team-rider.js" defer></script>
 <script src="goelo-auth.js" defer></script>
 <script src="goelo-swipe-nav.js" defer></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🔐 ROLE CHECK START");
+
+  const sb = window._goeloSb || window.supabaseClient;
+
+  if (!sb) {
+    console.error("❌ Supabase not initialised");
+    return;
+  }
+
+  try {
+    // 1. Get logged user
+    const { data: userData, error: userError } = await sb.auth.getUser();
+
+    if (userError || !userData.user) {
+      console.log("🚪 No user → redirect");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const user = userData.user;
+    console.log("👤 USER:", user.id);
+
+    // 2. Get role from profiles
+    const { data: profile, error: profileError } = await sb
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.error("❌ Profile error:", profileError);
+      window.location.href = "index.html";
+      return;
+    }
+
+    console.log("🎭 ROLE:", profile.role);
+
+    // 3. Guard rules
+    if (profile.role === "admin") {
+      console.log("🔴 ADMIN ACCESS GRANTED");
+      window.__USER_ROLE__ = "admin";
+    } 
+    else if (profile.role === "team_rider") {
+      console.log("🟢 TEAM RIDER ACCESS GRANTED");
+      window.__USER_ROLE__ = "team_rider";
+    } 
+    else {
+      console.log("⛔ NO ACCESS");
+      window.location.href = "index.html";
+    }
+
+  } catch (err) {
+    console.error("💥 ROLE CHECK FAILED", err);
+    window.location.href = "index.html";
+  }
+});
+</script>
+
 </body>
 </html>

@@ -279,7 +279,7 @@ async function renderDemands() {
     .from('demandes')
     .select('*')
     .eq('status', 'pending')
-    .order('create_at', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error(error);
@@ -391,3 +391,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (r) boot(r);
   });
 });
+
+function isAdmin() {
+  return window.__USER_ROLE__ === "admin";
+}
+
+function isTeamRider() {
+  return window.__USER_ROLE__ === "team_rider";
+}
