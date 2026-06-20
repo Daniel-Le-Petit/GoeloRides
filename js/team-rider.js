@@ -260,29 +260,6 @@
      ══════════════════════════════════════════════════════════════ */
   async function renderDemands() {
     var section = document.getElementById("demands-section");
-async function submitSignup(email, password) {
-  const sb = window.goeloGetSb();
-
-  if (!sb) {
-    console.error("Supabase non initialisé");
-    return;
-  }
-
-  const { data, error } = await sb.auth.signUp({
-    email: email.trim().toLowerCase(),
-    password: password
-  });
-
-  if (error) {
-    console.error("SIGNUP ERROR:", error.message);
-    _showError("Erreur inscription : " + error.message);
-    return;
-  }
-
-  console.log("SIGNUP OK:", data);
-
-  _showError("Compte créé ! Vérifie ton email pour confirmer.", true);
-}
     var list    = document.getElementById("demand-list");
     var label   = document.getElementById("demands-count-label");
     if (!section || !list) return;
@@ -389,7 +366,7 @@ async function submitSignup(email, password) {
 
     /* Attendre que auth.js ait résolu le rôle */
     function startWithRole(role, user) {
-      if (window.goeloGuard && !window.goeloGuard("teamrider")) {
+      if (!window.GOELO_ROLE || (window.GOELO_ROLE !== "teamrider" && window.GOELO_ROLE !== "admin"))
         /* Pas teamrider ni admin → afficher le gate */
         document.getElementById("gate-panel").style.display = "block";
         document.getElementById("dashboard").style.display  = "none";
@@ -429,4 +406,27 @@ async function submitSignup(email, password) {
     });
   });
 
+async function submitSignup(email, password) {
+  const sb = window.goeloGetSb();
+
+  if (!sb) {
+    console.error("Supabase non initialisé");
+    return;
+  }
+
+  const { data, error } = await sb.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password: password
+  });
+
+  if (error) {
+    console.error("SIGNUP ERROR:", error.message);
+    _showError("Erreur inscription : " + error.message);
+    return;
+  }
+
+  console.log("SIGNUP OK:", data);
+
+  _showError("Compte créé ! Vérifie ton email pour confirmer.", true);
+}
 })();

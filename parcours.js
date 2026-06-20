@@ -13,6 +13,9 @@
         time: "8h30"
       };
 
+function getSb() {
+  return window.goeloGetSb?.();
+}
       /* E-mail pour recevoir les inscriptions (Formsubmit). Laisse vide pour lien mailto uniquement.
          formSubmitOnUnregister : envoyer aussi un POST FormSubmit à la désinscription (défaut false :
          FormSubmit renvoie souvent 521 / ERR_ABORTED côté CDN — la désinscription reste gérée par Supabase). */

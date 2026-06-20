@@ -23,6 +23,10 @@
 
   var AVATAR_COLORS = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD", "#86EFAC"];
 
+function getSb() {
+  return window.goeloGetSb?.();
+}
+
   function setLoading(isLoading) {
     const el = document.getElementById("loading");
     if (!el) return;
