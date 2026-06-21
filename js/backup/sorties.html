@@ -138,26 +138,22 @@
     <a href="infos-pratiques.html">Infos</a>
   </nav>
 
-  <!-- 1. CONFIG (TOUJOURS EN PREMIER) charger SUPABASE et ANON_KEY-->
-  <script src="js/goelo-config.js"></script>
-
-  <!-- 2. SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-  <!-- 3. SCRIPTS (TOUS DEFER OK MAIS APRÈS SDK) -->
+  <!-- Supabase (mêmes variables que index.html / groupes.html) -->
   <script>
+    window.GOELO_SUPABASE_URL = "https://iqxyiwnjwcepfgngkzsm.supabase.co";
+    window.GOELO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxeHlpd25qd2NlcGZnbmdrenNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY5ODcsImV4cCI6MjA5NTgxMjk4N30._vanK7hFTdH-8o2l-BaVHP9m7mJv7oUFVyGrDwYCnbA";
     window.GOELO_ONESIGNAL_APP_ID = "";
     window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
   </script>
 
-  <script src="js/auth.js"></script>
+  <script src="js/sorties2.js" defer></script>
   <script src="goelo-onesignal.js?v=16" defer></script>
   <script src="goelo-enable-notifications-banner.js?v=11" defer></script>
   <script src="goelo-notif-manual-button.js?v=11" defer></script>
   <script>window.GOELO_DEBUG = false;</script>
   <script src="goelo-debug-panel.js?v=1" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
-  <script src="js/sorties.js"></script>
+  <script src="js/auth.js"></script>
 
 
   <script>

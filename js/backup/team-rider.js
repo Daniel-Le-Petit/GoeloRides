@@ -177,11 +177,15 @@
       var dateObj   = c.date ? new Date(c.date + "T00:00:00") : null;
       var day       = dateObj ? dateObj.getDate() : "?";
       var month     = dateObj ? MONTH_SHORT[dateObj.getMonth() + 1] : "";
-      var titleEsc  = c.titre.replace(/'/g, "\\'");
+      var titleEsc  = String(c.titre || "").replace(/'/g, "\\'");
 
-      var actions = "<button class=\"btn-sm\" onclick=\"location.href='parcours.html?id=" + c.id + "'\">\uD83D\uDC41 Voir</button>";
-      actions += "<button class=\"btn-sm accent\" onclick=\"location.href='gestion-sorties.html?mode=edit&id=" + c.id + "'\">\u270F\uFE0F Modifier</button>";
-      actions += "<button class=\"btn-sm danger\" onclick=\"cancelSortie('" + c.id + "','" + titleEsc + "',this)\">\u2715 Annuler</button>";
+      var actions =
+        "<button class=\"btn-sm\" onclick=\"location.href='parcours.html?id=" + c.id + "'\">👁 Voir</button>" +
+        "<button class=\"btn-sm accent\" onclick=\"location.href='gestion-sorties.html?mode=edit&id=" + c.id + "'\">✏️ Modifier</button>" +
+        "<button class=\"btn-sm danger\" onclick=\"cancelSortie(" +
+        JSON.stringify(c.id) + "," +
+        JSON.stringify(c.titre) +
+        ",this)\">✕ Annuler</button>";
 
       return [
         "<div class=\"sortie-card\" data-s=\"" + c.statut + "\">",
@@ -260,29 +264,6 @@
      ══════════════════════════════════════════════════════════════ */
   async function renderDemands() {
     var section = document.getElementById("demands-section");
-async function submitSignup(email, password) {
-  const sb = window.goeloGetSb();
-
-  if (!sb) {
-    console.error("Supabase non initialisé");
-    return;
-  }
-
-  const { data, error } = await sb.auth.signUp({
-    email: email.trim().toLowerCase(),
-    password: password
-  });
-
-  if (error) {
-    console.error("SIGNUP ERROR:", error.message);
-    _showError("Erreur inscription : " + error.message);
-    return;
-  }
-
-  console.log("SIGNUP OK:", data);
-
-  _showError("Compte créé ! Vérifie ton email pour confirmer.", true);
-}
     var list    = document.getElementById("demand-list");
     var label   = document.getElementById("demands-count-label");
     if (!section || !list) return;
@@ -387,16 +368,16 @@ async function submitSignup(email, password) {
      ══════════════════════════════════════════════════════════════ */
   document.addEventListener("DOMContentLoaded", function () {
 
-    /* Attendre que auth.js ait résolu le rôle */
-    function startWithRole(role, user) {
-      if (window.goeloGuard && !window.goeloGuard("teamrider")) {
-        /* Pas teamrider ni admin → afficher le gate */
-        document.getElementById("gate-panel").style.display = "block";
-        document.getElementById("dashboard").style.display  = "none";
-        return;
-      }
-      boot(role, user);
-    }
+     function startWithRole(role, user) {
+       if (!window.GOELO_ROLE || (window.GOELO_ROLE !== "team_rider" && window.GOELO_ROLE !== "admin")) {
+         /* Pas teamrider ni admin → afficher le gate */
+         document.getElementById("gate-panel").style.display = "block";
+         document.getElementById("dashboard").style.display  = "none";
+         return;
+       }
+
+       boot(role, user);
+     }
 
     /* Cas 1 : rôle déjà connu (auth.js rapide) */
     if (window.GOELO_ROLE && window.GOELO_ROLE !== "visitor") {
@@ -429,4 +410,27 @@ async function submitSignup(email, password) {
     });
   });
 
+async function submitSignup(email, password) {
+  const sb = window.goeloGetSb();
+
+  if (!sb) {
+    console.error("Supabase non initialisé");
+    return;
+  }
+
+  const { data, error } = await sb.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password: password
+  });
+
+  if (error) {
+    console.error("SIGNUP ERROR:", error.message);
+    _showError("Erreur inscription : " + error.message);
+    return;
+  }
+
+  console.log("SIGNUP OK:", data);
+
+  _showError("Compte créé ! Vérifie ton email pour confirmer.", true);
+}
 })();

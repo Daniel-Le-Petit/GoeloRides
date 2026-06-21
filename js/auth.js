@@ -39,36 +39,30 @@ window.__GOELO_AUTH_V2__ = true;
   var _sb = null;
 
 window.goeloGetSb = function () {
-  console.log("AUTH JS OK");
-  return null;
+  if (window._goeloSbClient) return window._goeloSbClient;
+
+  const cfg = window.GOELO_CONFIG || {};
+
+  const url = (cfg.SUPABASE_URL || "").trim();
+  const key = (cfg.SUPABASE_ANON_KEY || "").trim();
+
+  if (!url || !key) {
+    console.error("[GoëloAuth] Supabase config invalide :", cfg);
+    return null;
+  }
+
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error("[GoëloAuth] Supabase SDK non chargé");
+    return null;
+  }
+
+  window._goeloSbClient = window.supabase.createClient(url, key);
+
+  console.log("[GoëloAuth] Supabase client initialisé ✔");
+
+  return window._goeloSbClient;
 };
 
-  window.goeloGetSb = function () {
-    if (_sb) return _sb;
-
-    var url = (window.GOELO_SUPABASE_URL  || "").trim();
-    var key = (window.GOELO_SUPABASE_ANON_KEY || "").trim();
-
-    if (!url || !key || url.indexOf("xxxxxxxx") !== -1) {
-      console.error("[GoëloAuth] GOELO_SUPABASE_URL ou ANON_KEY manquant/invalide");
-      return null;
-    }
-    if (typeof window.supabase === "undefined" || typeof window.supabase.createClient !== "function") {
-      console.error("[GoëloAuth] SDK Supabase absent — charger le CDN AVANT auth.js");
-      return null;
-    }
-
-    _sb = window.supabase.createClient(url, key, {
-      auth: {
-        storageKey:       "goelo_sb_auth_v2", // clé unique = 1 session localStorage
-        autoRefreshToken: true,
-        persistSession:   true,
-        detectSessionInUrl: true   // lit #access_token=… pour le reset password
-      }
-    });
-
-    return _sb;
-  };
 
   /* ════════════════════════════════════════════════════════════
      2.  ÉTAT GLOBAL DU RÔLE
@@ -165,23 +159,25 @@ window.goeloGetSb = function () {
   /* ════════════════════════════════════════════════════════════
      5.  REDIRECTION SELON RÔLE
      ════════════════════════════════════════════════════════════ */
-  function _redirectForRole(role) {
-    var path = window.location.pathname;
+function _redirectForRole(role) {
+  var path = window.location.pathname;
+  var r = (role || window.GOELO_ROLE || "").replace("_", "");
 
-    if (role === "admin") {
-      if (!path.endsWith("admin.html")) {
-        window.location.href = "admin.html";
-      }
-      return;
+  if (r === "admin") {
+    if (!path.endsWith("admin.html")) {
+      window.location.href = "admin.html";
     }
-    if (role === "team_rider") {
-      if (!path.endsWith("team-rider.html")) {
-        window.location.href = "team-rider.html";
-      }
-      return;
-    }
-    // user → reste sur la page, home.js adapte l'UI
+    return;
   }
+
+  if (r === "teamrider") {
+    if (!path.endsWith("team-rider.html")) {
+      window.location.href = "team-rider.html";
+    }
+    return;
+  }
+}
+
 
   /* ════════════════════════════════════════════════════════════
      6.  LOGIN

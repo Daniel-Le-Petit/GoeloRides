@@ -1,29 +1,13 @@
-/**
- * GoëloRides — Page Sorties v2 (js/sorties.js)
- *
- * - Charge les sorties depuis Supabase (RPC `routes_list`, la table `routes`
- *   n'est pas lisible en anon — RLS) + parcours intégrés en secours, tri date DESC.
- * - Filtres : Tous / Route / Gravel / VTT / À venir / Aujourd'hui + recherche.
- * - Participants (avatars) via RPC `signup_list_all_names`.
- * - Mode Team Rider : JWT Supabase avec app_metadata.goelo_admin = true
- *   (session parcours.js `goelo_admin_auth_v1` ou session supabase-js `sb-*-auth-token`).
- * - Popups contextuels réutilisables (création / gestion / rejoindre) :
- *   tooltip au survol + modale centrée au clic — styles css/components.css
- *   (.gr-popover / .gr-lockmodal).
- */
 (function () {
   "use strict";
-
   /* ════════════════════════════════════════════════════════════
      Config
      ════════════════════════════════════════════════════════════ */
-
   var ACCESS_MAILTO =
     "mailto:goelo.rides@gmail.com" +
     "?subject=Demande%20acc%C3%A8s%20Team%20Rider" +
     "&body=Bonjour%2C%0A%0AJe%20souhaite%20demander%20l%27acc%C3%A8s%20Team%20Rider.%0A%0A";
 
-  /* Les 3 popups contextuels réutilisables */
   var LOCK_CONTENT = {
     create: {
       title: "Mode Team Rider requis",
@@ -40,52 +24,16 @@
   };
 
   var AVATAR_COLORS = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD", "#86EFAC"];
-
   var FR_MONTHS = {
     janvier: 1, fevrier: 2, mars: 3, avril: 4, mai: 5, juin: 6,
     juillet: 7, aout: 8, septembre: 9, octobre: 10, novembre: 11, decembre: 12
   };
-  var MONTH_SHORT = ["", "JAN", "FÉV", "MARS", "AVR", "MAI", "JUIN", "JUIL", "AOÛT", "SEPT", "OCT", "NOV", "DÉC"];
+  var MONTH_SHORT  = ["", "JAN", "FÉV", "MARS", "AVR", "MAI", "JUIN", "JUIL", "AOÛT", "SEPT", "OCT", "NOV", "DÉC"];
   var WEEKDAY_SHORT = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
-
-  /* Parcours intégrés (secours si Supabase indisponible) */
-  var ROUTES_BUILTIN = [
-    {
-      id: "falaises",
-      title: "La Route des Falaises",
-      group: "Groupe Blanc",
-      levelClass: "level-blanc",
-      file: "La Route des Falaises.gpx",
-      type: "route",
-      place: "Devant le Kasino",
-      dateParts: { day: 7, month: 7, year: 2026, hh: 8, mm: 30 }
-    },
-    {
-      id: "brehec",
-      title: "Vers Bréhec",
-      group: "Groupe Vert",
-      levelClass: "level-vert",
-      file: "Bréhec.gpx",
-      type: "route",
-      place: "Devant le Kasino",
-      dateParts: { day: 21, month: 7, year: 2026, hh: 8, mm: 30 }
-    },
-    {
-      id: "boucle",
-      title: "La Grande Boucle du Goëlo",
-      group: "Groupe Bleu",
-      levelClass: "level-bleu",
-      file: "La Grande Boucle du Goëlo.gpx",
-      type: "route",
-      place: "Devant le Kasino",
-      dateParts: { day: 14, month: 7, year: 2026, hh: 8, mm: 30 }
-    }
-  ];
 
   /* ════════════════════════════════════════════════════════════
      Helpers génériques
      ════════════════════════════════════════════════════════════ */
-
   function escapeHtml(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;")
@@ -93,7 +41,6 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
   }
-
   function escapeAttr(s) {
     return String(s || "").replace(/"/g, "&quot;");
   }
@@ -139,7 +86,6 @@
   /* ════════════════════════════════════════════════════════════
      Mode Team Rider (JWT → app_metadata.goelo_admin)
      ════════════════════════════════════════════════════════════ */
-
   function decodeJwtPayload(accessToken) {
     if (!accessToken || typeof accessToken !== "string") return null;
     var parts = accessToken.split(".");
@@ -165,17 +111,13 @@
   }
 
   function detectTeamRider() {
-    /* 1. Session admin parcours.js */
     try {
       var raw = sessionStorage.getItem("goelo_admin_auth_v1");
       if (raw) {
         var o = JSON.parse(raw);
         if (o && o.access_token && tokenIsTeamRider(o.access_token)) return true;
       }
-    } catch (err) {
-      void err;
-    }
-    /* 2. Session supabase-js (modale Connexion js/auth.js) : clé sb-<ref>-auth-token */
+    } catch (err) { void err; }
     try {
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
@@ -184,26 +126,20 @@
         var tok = s && (s.access_token || (s.currentSession && s.currentSession.access_token));
         if (tok && tokenIsTeamRider(tok)) return true;
       }
-    } catch (err) {
-      void err;
-    }
+    } catch (err) { void err; }
     return false;
   }
 
   /* ════════════════════════════════════════════════════════════
      Données : routes_list + front_config → modèle de ligne
      ════════════════════════════════════════════════════════════ */
-
   function parseFrontConfig(raw) {
     if (raw == null) return {};
     if (typeof raw === "string") {
       try {
         var p = JSON.parse(raw);
         return p && typeof p === "object" && !Array.isArray(p) ? p : {};
-      } catch (err) {
-        void err;
-        return {};
-      }
+      } catch (err) { void err; return {}; }
     }
     return typeof raw === "object" && !Array.isArray(raw) ? raw : {};
   }
@@ -212,14 +148,11 @@
     return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
-  /** Date de départ (objet Date) depuis front_config (rideDateIso prioritaire). */
   function rideDateFromFc(fc) {
     var iso = typeof fc.rideDateIso === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fc.rideDateIso.trim())
-      ? fc.rideDateIso.trim()
-      : "";
+      ? fc.rideDateIso.trim() : "";
     var time = typeof fc.rideTime === "string" && /^\d{2}:\d{2}$/.test(fc.rideTime.trim())
-      ? fc.rideTime.trim()
-      : "";
+      ? fc.rideTime.trim() : "";
     if (iso) {
       var hhmm = time ? time.split(":") : ["8", "30"];
       var p = iso.split("-");
@@ -252,77 +185,95 @@
 
   function toneFromLevelClass(levelClass) {
     if (levelClass === "level-blanc") return "blanc";
-    if (levelClass === "level-vert") return "vert";
+    if (levelClass === "level-vert")  return "vert";
     if (levelClass === "level-rouge") return "rouge";
     return "bleu";
   }
 
+  /*
+   * CORRECTION 1 : suppression du filtre visibility ici.
+   *   La RPC routes_list filtre déjà via p_filter.
+   *   dbRowToSortie ne doit PAS exclure les brouillons elle-même —
+   *   c'est fetchSorties() qui contrôle ce que l'on passe à la RPC.
+   *
+   * CORRECTION 2 : fc.captain || fc.rideLeader
+   *   gestion-route.js écrit fc.captain, l'ancienne clé était fc.rideLeader.
+   *   On lit les deux pour compatibilité.
+   *
+   * CORRECTION 3 : fc.meetTime || fc.rideTime pour l'heure de RDV
+   *   gestion-route.js écrit meetTime (heure RDV) et rideTime (heure départ).
+   */
   function dbRowToSortie(row) {
     var fc = parseFrontConfig(row.front_config);
-    if (String(fc.visibility || "public") !== "public") return null;
     return {
-      id: String(row.id),
-      title: String(row.track_name || row.group_label || "Sortie"),
-      group: String(row.group_label || ""),
-      levelClass: String(fc.levelClass || "level-bleu"),
-      type: typeFromRaceType(fc.raceType),
-      place: String(fc.meetPlace || fc.meet_place || "Devant le Kasino"),
-      status: String(fc.sortieStatus || "open"),
-      date: rideDateFromFc(fc),
-      file: String(fc.file || "").trim(),
+      id:             String(row.id),
+      title:          String(row.track_name || row.group_label || "Sortie"),
+      group:          String(row.group_label || ""),
+      levelClass:     String(fc.levelClass || "level-bleu"),
+      type:           typeFromRaceType(fc.raceType),
+      place:          String(fc.meetPlace || fc.meet_place || "Devant le Kasino"),
+      status:         String(fc.sortieStatus || "open"),
+      visibility:     String(fc.visibility  || "draft"),
+      date:           rideDateFromFc(fc),
+      file:           String(fc.file || "").trim(),
       embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
-      km: null,
-      dplus: null,
-      participants: []
+      // CORRECTION 2 : captain lu depuis les deux clés possibles
+      captain:        String(fc.captain || fc.rideLeader || ""),
+      // CORRECTION 3 : meetTime = heure RDV, rideTime = heure départ
+      meetTime:       String(fc.meetTime || fc.rideTime || ""),
+      km:             null,
+      dplus:          null,
+      participants:   []
     };
   }
 
-  function builtinToSortie(b) {
-    var dp = b.dateParts;
-    return {
-      id: b.id,
-      title: b.title,
-      group: b.group,
-      levelClass: b.levelClass,
-      type: b.type,
-      place: b.place,
-      status: "open",
-      date: new Date(dp.year, dp.month - 1, dp.day, dp.hh, dp.mm),
-      file: b.file,
-      embeddedPoints: null,
-      km: null,
-      dplus: null,
-      participants: []
-    };
-  }
-
+  /*
+   * CORRECTION 4 : fetchSorties() sans ROUTES_BUILTIN ni logique seen[].
+   *   - On appelle routes_list avec p_filter: { is_active: true } pour
+   *     n'obtenir que les routes actives côté SQL (pas de filtre JS fragile).
+   *   - Plus de données hardcodées qui masquaient les vraies données Supabase.
+   *   - Plus de seen[] qui ignorait silencieusement les routes Supabase
+   *     dont l'id coïncidait avec un builtin.
+   *   - Le filtre visibility "public" est appliqué ici pour la vue publique.
+   *     La vue admin (gestion-sorties) appellera routes_list différemment.
+   */
   async function fetchSorties() {
-    var sorties = ROUTES_BUILTIN.map(builtinToSortie);
-    var seen = {};
-    sorties.forEach(function (s) { seen[s.id] = true; });
-
-    var raw = await supabaseRpc("routes_list", { p_filter: {} });
-    var rows = Array.isArray(raw) ? raw : raw && Array.isArray(raw.routes) ? raw.routes : [];
-    rows.forEach(function (row) {
-      if (!row || !row.id || seen[String(row.id)]) return;
-      var s = dbRowToSortie(row);
-      if (s) {
-        seen[s.id] = true;
-        sorties.push(s);
-      }
+    var raw = await supabaseRpc("routes_list", {
+      p_filter: { is_active: true }
     });
 
-    /* Tri par date DESC (les sorties sans date à la fin) */
+    var rows = Array.isArray(raw) ? raw
+      : (raw && Array.isArray(raw.routes)) ? raw.routes
+      : [];
+
+    if (!rows.length) {
+      console.warn("sorties.js : routes_list a retourné 0 lignes");
+    }
+
+    var sorties = [];
+    rows.forEach(function (row) {
+      if (!row || !row.id) return;
+
+      var s = dbRowToSortie(row);
+
+      // Vue publique : n'afficher que les sorties publiées (visibility = public)
+      // Les brouillons restent visibles uniquement dans gestion-sorties.html
+      if (s.visibility !== "public") return;
+
+      sorties.push(s);
+    });
+
+    // Tri par date DESC (les sorties sans date à la fin)
     sorties.sort(function (a, b) {
       var ta = a.date ? a.date.getTime() : -Infinity;
       var tb = b.date ? b.date.getTime() : -Infinity;
       return tb - ta;
     });
+
     return sorties;
   }
 
-  /* ── Participants (avatars) : un seul appel pour toutes les sorties ── */
-
+  /* ── Participants : un seul appel pour toutes les sorties ── */
   function participantPseudo(x) {
     if (typeof x === "string") return x.trim();
     if (x && typeof x === "object" && typeof x.pseudo === "string") return x.pseudo.trim();
@@ -343,7 +294,6 @@
   }
 
   /* ── Stats km / D+ : embeddedPoints ou trace GPX locale ── */
-
   function haversine(lat1, lon1, lat2, lon2) {
     var R = 6371000;
     var p = Math.PI / 180;
@@ -370,9 +320,28 @@
       }
     }
     return {
-      km: Math.round(dist / 1000),
+      km:    Math.round(dist / 1000),
       dplus: gain > 5 ? Math.round(gain) : null
     };
+  }
+
+  /*
+   * CORRECTION 5 : statsFromPoints accepte aussi le format [[lat,lng,ele]]
+   *   que gestion-route.js stocke dans embeddedPoints.
+   */
+  function normalizePoints(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.map(function (p) {
+      if (Array.isArray(p)) {
+        return { lat: p[0], lon: p[1], ele: typeof p[2] === "number" ? p[2] : undefined };
+      }
+      // format {lat, lng, ele} → convertir lng→lon
+      return {
+        lat: p.lat,
+        lon: p.lon !== undefined ? p.lon : p.lng,
+        ele: p.ele
+      };
+    });
   }
 
   function parseGpxPoints(xmlText) {
@@ -403,7 +372,8 @@
 
   async function loadStats(sortie) {
     if (sortie.embeddedPoints) {
-      var st = statsFromPoints(sortie.embeddedPoints);
+      // CORRECTION 5 appliquée : normaliser avant de calculer
+      var st = statsFromPoints(normalizePoints(sortie.embeddedPoints));
       if (st) return st;
     }
     if (!sortie.file || /^https?:/i.test(sortie.file)) return null;
@@ -420,12 +390,11 @@
   /* ════════════════════════════════════════════════════════════
      Rendu
      ════════════════════════════════════════════════════════════ */
-
   var state = {
-    sorties: [],
-    filter: "tous",
-    search: "",
-    isTeamRider: false
+    sorties:      [],
+    filter:       "tous",
+    search:       "",
+    isTeamRider:  false
   };
 
   function matchesFilter(s) {
@@ -438,8 +407,8 @@
       if (!s.date) return false;
       if (
         s.date.getFullYear() !== now.getFullYear() ||
-        s.date.getMonth() !== now.getMonth() ||
-        s.date.getDate() !== now.getDate()
+        s.date.getMonth()    !== now.getMonth()    ||
+        s.date.getDate()     !== now.getDate()
       ) return false;
     }
     if (state.search) {
@@ -452,22 +421,15 @@
   function avatarsHtml(participants) {
     if (!participants.length) return "";
     var shown = participants.slice(0, 3);
-    var html = shown
-      .map(function (pseudo, i) {
-        var initials = pseudo
-          .split(/\s+/)
-          .map(function (w) { return w.charAt(0); })
-          .join("")
-          .slice(0, 2)
-          .toUpperCase();
-        var color = AVATAR_COLORS[(pseudo.length + i) % AVATAR_COLORS.length];
-        return (
-          '<span class="so-avatar" style="background:' + color + '" title="' + escapeAttr(pseudo) + '">' +
-          escapeHtml(initials) +
-          "</span>"
-        );
-      })
-      .join("");
+    var html = shown.map(function (pseudo, i) {
+      var initials = pseudo.split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
+      var color = AVATAR_COLORS[(pseudo.length + i) % AVATAR_COLORS.length];
+      return (
+        '<span class="so-avatar" style="background:' + color + '" title="' + escapeAttr(pseudo) + '">' +
+        escapeHtml(initials) +
+        "</span>"
+      );
+    }).join("");
     var more = participants.length - shown.length;
     if (more > 0) html += '<span class="so-avatar so-avatar--more">+' + more + "</span>";
     return html;
@@ -475,88 +437,72 @@
 
   function typeLabel(t) {
     if (t === "gravel") return "Gravel";
-    if (t === "vtt") return "VTT";
+    if (t === "vtt")    return "VTT";
     return "Route";
   }
 
   function rowHtml(s) {
-  var tone = toneFromLevelClass(s.levelClass);
-  var cancelled = s.status === "cancelled";
-  var d = s.date;
+    var tone      = toneFromLevelClass(s.levelClass);
+    var cancelled = s.status === "cancelled";
+    var d         = s.date;
+    var detailHref = "parcours.html?id=" + encodeURIComponent(s.id);
+    var weekday   = d ? WEEKDAY_SHORT[d.getDay()] : "—";
+    var dayNum    = d ? d.getDate() : "?";
+    var month     = d ? MONTH_SHORT[d.getMonth() + 1] : "";
+    // CORRECTION 3 appliquée : utiliser s.meetTime (heure RDV) prioritairement
+    var time = s.meetTime
+      ? s.meetTime.replace(":", "h")
+      : d ? String(d.getHours()) + "h" + String(d.getMinutes()).padStart(2, "0") : "";
 
-  var detailHref = "parcours.html?id=" + encodeURIComponent(s.id);
+    var stats =
+      "<strong>" + (s.km != null ? s.km + " km" : "— km") + "</strong>" +
+      " · " + (s.dplus != null ? s.dplus + " m D+" : "— m D+") +
+      " · " + escapeHtml(typeLabel(s.type));
 
-  var weekday = d ? WEEKDAY_SHORT[d.getDay()] : "—";
-  var dayNum  = d ? d.getDate() : "?";
-  var month   = d ? MONTH_SHORT[d.getMonth() + 1] : "";
-  var time    = d ? String(d.getHours()) + "h" + String(d.getMinutes()).padStart(2, "0") : "";
+    var thumbSrc = s.imageUrl || null;
 
-  var stats =
-    "<strong>" + (s.km != null ? s.km + " km" : "— km") + "</strong>" +
-    " · " + (s.dplus != null ? s.dplus + " m D+" : "— m D+") +
-    " · " + escapeHtml(typeLabel(s.type));
+    var joinBtn = state.isTeamRider
+      ? '<a class="so-act" href="' + escapeAttr(detailHref) + '">Rejoindre</a>'
+      : '<button type="button" class="so-act is-locked" data-lock="join" aria-disabled="true">🔒 Rejoindre</button>';
 
+    var manageBtns = state.isTeamRider
+      ? '<a class="so-act" href="' + escapeAttr("gestion-sorties.html?mode=edit&id=" + encodeURIComponent(s.id)) + '">Modifier</a>' +
+        '<a class="so-act" href="' + escapeAttr(detailHref) + '">Annuler</a>'
+      : '<button type="button" class="so-act is-locked" data-lock="manage" aria-disabled="true">🔒 Modifier</button>' +
+        '<button type="button" class="so-act is-locked" data-lock="manage" aria-disabled="true">🔒 Annuler</button>';
 
-// ── Image (désactivée par défaut) ──
-var thumbSrc = null;
+    var peopleHtml = avatarsHtml(s.participants || []);
+    var imgHtml = thumbSrc
+      ? '<img class="so-thumb" src="' + escapeAttr(thumbSrc) + '" loading="lazy">'
+      : '';
 
-// optionnel : si un jour tu as une vraie image liée à la sortie
-if (s.imageUrl) {
-  thumbSrc = s.imageUrl;
-}
-
-  var joinBtn = state.isTeamRider
-    ? '<a class="so-act" href="' + escapeAttr(detailHref) + '">Rejoindre</a>'
-    : '<button type="button" class="so-act is-locked" data-lock="join" aria-disabled="true">🔒 Rejoindre</button>';
-
-  var manageBtns = state.isTeamRider
-    ? '<a class="so-act" href="' + escapeAttr(detailHref) + '">Modifier</a>' +
-      '<a class="so-act" href="' + escapeAttr(detailHref) + '">Annuler</a>'
-    : '<button type="button" class="so-act is-locked" data-lock="manage" aria-disabled="true">🔒 Modifier</button>' +
-      '<button type="button" class="so-act is-locked" data-lock="manage" aria-disabled="true">🔒 Annuler</button>';
-
-  var peopleHtml = avatarsHtml(s.participants || []);
-
-var imgHtml = thumbSrc
-  ? '<img class="so-thumb" src="' + escapeAttr(thumbSrc) + '" loading="lazy">'
-  : '';
-
-  return (
-    '<li><article class="so-row' + (cancelled ? " is-cancelled" : "") + '">' +
-
-      '<div class="so-date so-date--' + tone + '">' +
-        '<span class="so-date__wd">' + escapeHtml(weekday) + '</span>' +
-        '<span class="so-date__num">' + escapeHtml(String(dayNum)) + '</span>' +
-        '<span class="so-date__mo">' + escapeHtml(month) + '</span>' +
-      '</div>' +
-
-      '<div class="so-body">' +
-        '<h2 class="so-title">' + escapeHtml(s.title) +
-          (cancelled ? '<span class="so-badge so-badge--cancelled">Annulée</span>' : '') +
-        '</h2>' +
-
-        '<p class="so-stats">' + stats + '</p>' +
-
-        '<p class="so-meta">' +
-          '<span>📍 ' + escapeHtml(s.place) + '</span>' +
-          (time ? '<span>🕒 ' + time + '</span>' : '') +
-        '</p>' +
-
-        '<div class="so-actions">' +
-          joinBtn + manageBtns +
+    return (
+      '<li><article class="so-row' + (cancelled ? " is-cancelled" : "") + '">' +
+        '<div class="so-date so-date--' + tone + '">' +
+          '<span class="so-date__wd">'  + escapeHtml(weekday)        + '</span>' +
+          '<span class="so-date__num">' + escapeHtml(String(dayNum)) + '</span>' +
+          '<span class="so-date__mo">'  + escapeHtml(month)          + '</span>' +
         '</div>' +
-      '</div>' +
-
-
-'<div class="so-card-right">' +
-      imgHtml +
-      '<a class="so-btn-voir" href="' + escapeAttr(detailHref) + '">Voir</a>' +
-      (peopleHtml ? '<div class="so-people">' + peopleHtml + '</div>' : '') +
-    '</div>' +
-
-
-    '</article></li>'
-  );
+        '<div class="so-body">' +
+          '<h2 class="so-title">' + escapeHtml(s.title) +
+            (cancelled ? '<span class="so-badge so-badge--cancelled">Annulée</span>' : '') +
+          '</h2>' +
+          '<p class="so-stats">' + stats + '</p>' +
+          '<p class="so-meta">' +
+            '<span>📍 ' + escapeHtml(s.place) + '</span>' +
+            (time ? '<span>🕒 ' + time + '</span>' : '') +
+          '</p>' +
+          '<div class="so-actions">' +
+            joinBtn + manageBtns +
+          '</div>' +
+        '</div>' +
+        '<div class="so-card-right">' +
+          imgHtml +
+          '<a class="so-btn-voir" href="' + escapeAttr(detailHref) + '">Voir</a>' +
+          (peopleHtml ? '<div class="so-people">' + peopleHtml + '</div>' : '') +
+        '</div>' +
+      '</article></li>'
+    );
   }
 
   function render() {
@@ -569,9 +515,8 @@ var imgHtml = thumbSrc
   }
 
   /* ════════════════════════════════════════════════════════════
-     Popups contextuels (tooltip survol + modale centrée au clic)
+     Popups contextuels
      ════════════════════════════════════════════════════════════ */
-
   function lockBodyHtml(kind, idPrefix) {
     var c = LOCK_CONTENT[kind] || LOCK_CONTENT.create;
     return (
@@ -585,7 +530,6 @@ var imgHtml = thumbSrc
     );
   }
 
-  /* — Tooltip (un seul élément flottant partagé) — */
   var tipEl = null;
   var tipHideTimer = null;
 
@@ -597,9 +541,7 @@ var imgHtml = thumbSrc
     tipEl.style.zIndex = "9500";
     tipEl.hidden = true;
     tipEl.setAttribute("role", "tooltip");
-    tipEl.addEventListener("mouseenter", function () {
-      if (tipHideTimer) clearTimeout(tipHideTimer);
-    });
+    tipEl.addEventListener("mouseenter", function () { if (tipHideTimer) clearTimeout(tipHideTimer); });
     tipEl.addEventListener("mouseleave", scheduleTipHide);
     document.body.appendChild(tipEl);
     return tipEl;
@@ -613,19 +555,16 @@ var imgHtml = thumbSrc
     var r = trigger.getBoundingClientRect();
     var w = tip.offsetWidth;
     var left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
-    tip.style.top = Math.round(r.bottom + 10) + "px";
+    tip.style.top  = Math.round(r.bottom + 10) + "px";
     tip.style.left = Math.round(left) + "px";
     tip.style.right = "auto";
   }
 
   function scheduleTipHide() {
     if (tipHideTimer) clearTimeout(tipHideTimer);
-    tipHideTimer = setTimeout(function () {
-      if (tipEl) tipEl.hidden = true;
-    }, 180);
+    tipHideTimer = setTimeout(function () { if (tipEl) tipEl.hidden = true; }, 180);
   }
 
-  /* — Modale centrée — */
   var lockModalEl = null;
 
   function getLockModal() {
@@ -644,7 +583,6 @@ var imgHtml = thumbSrc
       "</div>";
     lockModalEl.addEventListener("click", function (e) {
       if (e.target.closest("[data-lockmodal-close]")) closeLockModal();
-      /* « Se connecter » : js/auth.js ouvre la modale Team Rider, on referme celle-ci */
       if (e.target.closest("[data-goelo-auth-trigger]")) closeLockModal();
     });
     document.body.appendChild(lockModalEl);
@@ -668,13 +606,11 @@ var imgHtml = thumbSrc
       if (!t || !t.classList.contains("is-locked")) return;
       showTip(t, t.getAttribute("data-lock"));
     });
-
     document.addEventListener("mouseout", function (e) {
       var t = e.target.closest("[data-lock]");
       if (!t) return;
       scheduleTipHide();
     });
-
     document.addEventListener("click", function (e) {
       var t = e.target.closest("[data-lock]");
       if (t && t.classList.contains("is-locked")) {
@@ -682,7 +618,6 @@ var imgHtml = thumbSrc
         openLockModal(t.getAttribute("data-lock"));
       }
     });
-
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
         closeLockModal();
@@ -692,12 +627,10 @@ var imgHtml = thumbSrc
   }
 
   /* ════════════════════════════════════════════════════════════
-     État Team Rider → déverrouillage de l'interface
+     État Team Rider
      ════════════════════════════════════════════════════════════ */
-
   function applyTeamRiderState() {
     state.isTeamRider = detectTeamRider();
-
     var createBtn = document.getElementById("nav-create-sortie");
     if (createBtn) {
       if (state.isTeamRider) {
@@ -707,12 +640,10 @@ var imgHtml = thumbSrc
         var lockIcon = createBtn.querySelector(".gr-nav__cta-lock");
         if (lockIcon) lockIcon.textContent = "+";
         createBtn.onclick = function () {
-          /* La création de sortie (formulaire admin) vit sur la page d'accueil */
-          window.location.href = "index.html#sorties";
+          window.location.href = "gestion-sorties.html?mode=create";
         };
       }
     }
-
     var aside = document.getElementById("so-aside");
     if (aside && state.isTeamRider) {
       aside.classList.add("is-unlocked");
@@ -720,14 +651,13 @@ var imgHtml = thumbSrc
         '<div class="so-aside__lock" aria-hidden="true">✓</div>' +
         '<p class="so-aside__title">Mode Team Rider<br>actif</p>' +
         '<p class="so-aside__text">Tu peux créer, modifier et annuler des sorties.</p>' +
-        '<a class="gr-popover__btn" href="index.html#sorties">Créer une sortie</a>';
+        '<a class="gr-popover__btn" href="gestion-sorties.html?mode=create">Créer une sortie</a>';
     }
   }
 
   /* ════════════════════════════════════════════════════════════
      Filtres + recherche
      ════════════════════════════════════════════════════════════ */
-
   function bindFilters() {
     document.querySelectorAll(".so-chip[data-filter]").forEach(function (chip) {
       chip.addEventListener("click", function () {
@@ -738,7 +668,6 @@ var imgHtml = thumbSrc
         render();
       });
     });
-
     var input = document.getElementById("so-search-input");
     if (input) {
       input.addEventListener("input", function () {
@@ -751,13 +680,11 @@ var imgHtml = thumbSrc
   /* ════════════════════════════════════════════════════════════
      Init
      ════════════════════════════════════════════════════════════ */
-
   document.addEventListener("DOMContentLoaded", async function () {
     applyTeamRiderState();
     bindFilters();
     bindLockTriggers();
 
-    /* Re-tester le mode Team Rider après une connexion réussie (js/auth.js) */
     window.addEventListener("goelo:auth-success", function () {
       applyTeamRiderState();
       render();
@@ -766,7 +693,7 @@ var imgHtml = thumbSrc
     state.sorties = await fetchSorties();
     render();
 
-    /* Enrichissements asynchrones : participants + stats km / D+ */
+    /* Enrichissements asynchrones : participants */
     fetchParticipantsByRoute().then(function (byRoute) {
       var touched = false;
       state.sorties.forEach(function (s) {
@@ -779,10 +706,11 @@ var imgHtml = thumbSrc
       if (touched) render();
     });
 
+    /* Enrichissements asynchrones : stats km / D+ */
     state.sorties.forEach(function (s) {
       loadStats(s).then(function (st) {
         if (st && (st.km != null || st.dplus != null)) {
-          s.km = st.km;
+          s.km    = st.km;
           s.dplus = st.dplus;
           render();
         }
