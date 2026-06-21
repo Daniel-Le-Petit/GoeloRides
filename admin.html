@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>GoëloRides — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       TOKENS — cohérence avec le système GoëloRides
+       ═══════════════════════════════════════════════════════════ */
+    :root {
+      --bg:        #0D0D0D;
+      --surface:   #161616;
+      --surface2:  #1e1e1e;
+      --border:    rgba(255,255,255,.08);
+      --accent:    #C8F135;
+      --accent-dim:rgba(200,241,53,.12);
+      --text:      #f0f0f0;
+      --muted:     #6b7280;
+      --red:       #f87171;
+      --red-dim:   rgba(248,113,113,.12);
+      --green:     #86efac;
+      --green-dim: rgba(134,239,172,.12);
+      --yellow:    #fcd34d;
+      --yellow-dim:rgba(252,211,77,.12);
+      --blue:      #60a5fa;
+      --blue-dim:  rgba(96,165,250,.12);
+
+      --font-display: "Barlow Condensed", sans-serif;
+      --font-body:    "Inter", sans-serif;
+      --radius:    10px;
+      --topbar-h:  56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+    body {
+      min-height: 100dvh;
+      padding-top: var(--topbar-h);
+      padding-bottom: 2rem;
+    }
+
+    /* ── Topbar ───────────────────────────────────────────── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--topbar-h);
+      background: rgba(13,13,13,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 16px;
+    }
+    .topbar-logo {
+      font-family: var(--font-display);
+      font-size: 1.25rem; font-weight: 800;
+      color: var(--text); text-decoration: none; letter-spacing: .04em;
+    }
+    .topbar-logo span { color: var(--accent); }
+
+    .topbar-crown {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+      padding: 2px 8px; border-radius: 4px;
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-user {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .82rem; color: var(--muted);
+    }
+    .topbar-av {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--accent); color: #0D0D0D;
+      font-family: var(--font-display); font-size: .75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logout {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); font-size: .75rem; padding: 4px 10px;
+      border-radius: 6px; cursor: pointer; font-family: var(--font-body);
+      transition: border-color .2s, color .2s;
+    }
+    .topbar-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .page { max-width: 860px; margin: 0 auto; padding: 24px 16px 0; }
+
+    /* ── Page header ──────────────────────────────────────── */
+    .page-header { margin-bottom: 24px; }
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 2rem; font-weight: 800; letter-spacing: .02em;
+      line-height: 1;
+    }
+    .page-title span { color: var(--accent); }
+    .page-sub { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Stats bar ────────────────────────────────────────── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .stat-card__label {
+      font-size: .68rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-card__value {
+      font-family: var(--font-display);
+      font-size: 2rem; font-weight: 800; line-height: 1;
+      color: var(--text);
+    }
+    .stat-card--pending  .stat-card__value { color: var(--yellow); }
+    .stat-card--approved .stat-card__value { color: var(--green); }
+    .stat-card--refused  .stat-card__value { color: var(--red); }
+
+    /* ── Filter tabs ──────────────────────────────────────── */
+    .tabs {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .gtr-tab {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-display);
+      font-size: .8rem; font-weight: 700; letter-spacing: .06em;
+      padding: 5px 14px; border-radius: 6px;
+      cursor: pointer; text-transform: uppercase;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .gtr-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .gtr-tab.is-active {
+      background: var(--accent); border-color: var(--accent);
+      color: #0D0D0D;
+    }
+
+    /* ── Demand card ──────────────────────────────────────── */
+    .gtr-demand-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 10px;
+      transition: border-color .2s;
+    }
+    .gtr-demand-card:hover { border-color: rgba(255,255,255,.14); }
+
+    .gtr-demand-card__head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .gtr-demand-card__name {
+      font-family: var(--font-display);
+      font-size: 1.1rem; font-weight: 700; letter-spacing: .02em;
+    }
+    .gtr-demand-card__badges {
+      display: flex; gap: 6px; align-items: center; flex-shrink: 0;
+    }
+
+    .gtr-demand-card__meta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .gtr-demand-card__meta-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .8rem; color: var(--muted);
+    }
+    .gtr-demand-card__meta-icon { font-size: .85rem; }
+
+    .gtr-demand-card__message {
+      font-size: .82rem; color: var(--text); opacity: .75;
+      background: var(--surface2);
+      border-left: 3px solid var(--accent);
+      padding: 8px 12px; border-radius: 0 6px 6px 0;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .gtr-demand-card__actions { display: flex; gap: 8px; }
+
+    /* Badges niveau */
+    .gtr-badge-level {
+      font-family: var(--font-display);
+      font-size: .65rem; font-weight: 700; letter-spacing: .08em;
+      padding: 2px 7px; border-radius: 4px; text-transform: uppercase;
+    }
+    .gtr-badge-level--blanc  { background: rgba(156,163,175,.15); color: #9ca3af; border: 1px solid rgba(156,163,175,.3); }
+    .gtr-badge-level--vert   { background: var(--accent-dim);     color: var(--accent);  border: 1px solid rgba(200,241,53,.3); }
+    .gtr-badge-level--bleu   { background: var(--blue-dim);       color: var(--blue);    border: 1px solid rgba(96,165,250,.3); }
+    .gtr-badge-level--rouge  { background: var(--red-dim);        color: var(--red);     border: 1px solid rgba(248,113,113,.3); }
+
+    /* Badges statut */
+    .gtr-badge-status {
+      font-family: var(--font-display);
+      font-size: .65rem; font-weight: 700; letter-spacing: .08em;
+      padding: 2px 7px; border-radius: 4px; text-transform: uppercase;
+    }
+    .gtr-badge-status--pending  { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(252,211,77,.3); }
+    .gtr-badge-status--approved { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(134,239,172,.3); }
+    .gtr-badge-status--refused  { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(248,113,113,.3); }
+
+    /* Boutons action */
+    .gtr-btn-approve, .gtr-btn-refuse {
+      font-family: var(--font-display);
+      font-size: .78rem; font-weight: 700; letter-spacing: .08em;
+      padding: 6px 14px; border-radius: 6px;
+      cursor: pointer; transition: opacity .15s, transform .1s;
+      border: none; text-transform: uppercase;
+    }
+    .gtr-btn-approve:hover, .gtr-btn-refuse:hover { opacity: .85; transform: translateY(-1px); }
+    .gtr-btn-approve:disabled, .gtr-btn-refuse:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .gtr-btn-approve { background: var(--green);  color: #0D0D0D; }
+    .gtr-btn-refuse  { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+
+    /* ── Empty / loading ──────────────────────────────────── */
+    .gtr-empty {
+      text-align: center; padding: 40px 20px;
+      font-size: .85rem; color: var(--muted);
+    }
+    .gtr-loading {
+      display: flex; justify-content: center; gap: 8px;
+      padding: 48px 0;
+    }
+    .gtr-loading__dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); opacity: .3;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    .gtr-loading__dot:nth-child(2) { animation-delay: .2s; }
+    .gtr-loading__dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes pulse {
+      0%, 100% { opacity: .2; transform: scale(.85); }
+      50%       { opacity: .9; transform: scale(1.1); }
+    }
+
+    /* ── Gate ─────────────────────────────────────────────── */
+    #gtr-admin-gate {
+      min-height: calc(100dvh - var(--topbar-h));
+      display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; gap: 16px; padding: 32px;
+    }
+    .gate-icon { font-size: 2.5rem; }
+    .gate-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem; font-weight: 800;
+    }
+    .gate-sub { font-size: .85rem; color: var(--muted); max-width: 340px; }
+    .gate-btn {
+      background: var(--accent); color: #0D0D0D;
+      font-family: var(--font-display); font-size: .9rem; font-weight: 700;
+      padding: 10px 24px; border-radius: 8px; border: none;
+      cursor: pointer; letter-spacing: .06em; text-transform: uppercase;
+    }
+
+    /* ── Toast ────────────────────────────────────────────── */
+    #gtr-toast-wrap {
+      position: fixed; bottom: 24px; right: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 999; pointer-events: none;
+    }
+    .gtr-toast {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      color: var(--text);
+      font-size: .8rem; padding: 10px 16px;
+      border-radius: 6px;
+      animation: slideIn .25s ease;
+      pointer-events: auto;
+    }
+    .gtr-toast--error { border-left-color: var(--red); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Refresh btn ──────────────────────────────────────── */
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; flex-wrap: wrap; gap: 10px;
+    }
+    .btn-refresh {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); font-size: .75rem; padding: 5px 12px;
+      border-radius: 6px; cursor: pointer; font-family: var(--font-body);
+      transition: border-color .2s, color .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-refresh__icon { transition: transform .4s; }
+    .btn-refresh:active .btn-refresh__icon { transform: rotate(360deg); }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .gtr-demand-card__head { flex-direction: column; gap: 8px; }
+      .page-title { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
+  <span class="topbar-crown">👑 ADMIN</span>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <div class="topbar-av" id="admin-avatar">AD</div>
+    <span id="admin-name">Admin</span>
+    <button class="topbar-logout" id="admin-logout-btn">Déconnexion</button>
+  </div>
+</header>
+
+<!-- GATE : visible si non admin -->
+<div id="gtr-admin-gate">
+  <div class="gate-icon">🔒</div>
+  <div class="gate-title">Accès restreint</div>
+  <p class="gate-sub">Cette page est réservée aux administrateurs GoëloRides.</p>
+  <button class="gate-btn" data-goelo-auth-trigger>Se connecter</button>
+</div>
+
+<!-- PANEL ADMIN -->
+<div id="gtr-admin-panel" style="display:none">
+  <div class="page">
+
+    <!-- En-tête page -->
+    <div class="page-header">
+      <h1 class="page-title">Dashboard <span>Admin</span></h1>
+      <p class="page-sub">Gestion des demandes Team Rider</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-card__label">Total</div>
+        <div class="stat-card__value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card stat-card--pending">
+        <div class="stat-card__label">En attente</div>
+        <div class="stat-card__value" id="stat-pending">—</div>
+      </div>
+      <div class="stat-card stat-card--approved">
+        <div class="stat-card__label">Approuvées</div>
+        <div class="stat-card__value" id="stat-approved">—</div>
+      </div>
+      <div class="stat-card stat-card--refused">
+        <div class="stat-card__label">Refusées</div>
+        <div class="stat-card__value" id="stat-refused">—</div>
+      </div>
+    </div>
+
+    <!-- Toolbar : tabs + refresh -->
+    <div class="toolbar">
+      <div class="tabs">
+        <button class="gtr-tab is-active" data-filter="all">Toutes</button>
+        <button class="gtr-tab" data-filter="pending">En attente</button>
+        <button class="gtr-tab" data-filter="approved">Approuvées</button>
+        <button class="gtr-tab" data-filter="refused">Refusées</button>
+      </div>
+      <button class="btn-refresh" id="btn-refresh">
+        <span class="btn-refresh__icon">↻</span> Actualiser
+      </button>
+    </div>
+
+    <!-- Liste -->
+    <div id="gtr-demands-list">
+      <div class="gtr-loading">
+        <div class="gtr-loading__dot"></div>
+        <div class="gtr-loading__dot"></div>
+        <div class="gtr-loading__dot"></div>
+      </div>
+    </div>
+
+  </div><!-- /.page -->
+</div><!-- /#gtr-admin-panel -->
+
+<!-- Toast container -->
+<div id="gtr-toast-wrap"></div>
+
+<!--
+  ORDRE IMPÉRATIF :
+  1. goelo-config.js   → window.GOELO_CONFIG
+  2. supabase.min.js   → window.supabase
+  3. auth.js           → window.goeloGetSb, window.GOELO_ROLE, goelo:role-ready
+  4. gestion-team-rider-admin.js
+-->
+<script src="js/goelo-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/gestion-team-rider-admin.js"></script>
+<script src="js/goelo-swipe-nav.js" defer></script>
+
+</body>
+</html>

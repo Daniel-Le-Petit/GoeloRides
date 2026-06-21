@@ -31,6 +31,10 @@
   var MONTH_SHORT  = ["", "JAN", "FÉV", "MARS", "AVR", "MAI", "JUIN", "JUIL", "AOÛT", "SEPT", "OCT", "NOV", "DÉC"];
   var WEEKDAY_SHORT = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 
+  function getSb() {
+    return window.goeloGetSb ? window.goeloGetSb() : null;
+  }
+
   /* ════════════════════════════════════════════════════════════
      Helpers génériques
      ════════════════════════════════════════════════════════════ */
@@ -43,44 +47,6 @@
   }
   function escapeAttr(s) {
     return String(s || "").replace(/"/g, "&quot;");
-  }
-
-  function getSupabaseConfig() {
-    var url = typeof window.GOELO_SUPABASE_URL === "string" ? window.GOELO_SUPABASE_URL.trim() : "";
-    var key = typeof window.GOELO_SUPABASE_ANON_KEY === "string" ? window.GOELO_SUPABASE_ANON_KEY.trim() : "";
-    if (!url || !key || url.indexOf("xxxxxxxx.supabase.co") !== -1) return null;
-    return { url: url.replace(/\/?$/, ""), key: key };
-  }
-
-  async function supabaseRpc(fnName, payload) {
-    var cfg = getSupabaseConfig();
-    if (!cfg) return null;
-    var res;
-    try {
-      res = await fetch(cfg.url + "/rest/v1/rpc/" + encodeURIComponent(fnName), {
-        method: "POST",
-        headers: {
-          apikey: cfg.key,
-          Authorization: "Bearer " + cfg.key,
-          "Content-Type": "application/json",
-          Prefer: "return=representation"
-        },
-        body: JSON.stringify(payload || {})
-      });
-    } catch (err) {
-      console.warn("Supabase RPC", fnName, err);
-      return null;
-    }
-    if (!res.ok || res.status === 204) {
-      console.warn("Supabase RPC", fnName, res.status);
-      return null;
-    }
-    try {
-      return await res.json();
-    } catch (err) {
-      void err;
-      return null;
-    }
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -237,41 +203,26 @@
    *   - Le filtre visibility "public" est appliqué ici pour la vue publique.
    *     La vue admin (gestion-sorties) appellera routes_list différemment.
    */
-  async function fetchSorties() {
-    var raw = await supabaseRpc("routes_list", {
-      p_filter: { is_active: true }
-    });
-
-    var rows = Array.isArray(raw) ? raw
-      : (raw && Array.isArray(raw.routes)) ? raw.routes
-      : [];
-
-    if (!rows.length) {
-      console.warn("sorties.js : routes_list a retourné 0 lignes");
-    }
-
-    var sorties = [];
-    rows.forEach(function (row) {
-      if (!row || !row.id) return;
-
-      var s = dbRowToSortie(row);
-
-      // Vue publique : n'afficher que les sorties publiées (visibility = public)
-      // Les brouillons restent visibles uniquement dans gestion-sorties.html
-      if (s.visibility !== "public") return;
-
-      sorties.push(s);
-    });
-
-    // Tri par date DESC (les sorties sans date à la fin)
-    sorties.sort(function (a, b) {
-      var ta = a.date ? a.date.getTime() : -Infinity;
-      var tb = b.date ? b.date.getTime() : -Infinity;
-      return tb - ta;
-    });
-
-    return sorties;
+async function fetchSorties() {
+  var sb = getSb();
+  if (!sb) {
+    console.warn("[sorties] Supabase non disponible");
+    return [];
   }
+
+  var res = await sb
+    .from("routes")
+    .select("id, track_name, group_label, pace_label, is_active, front_config, created_at")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (res.error) {
+    console.error("[sorties] erreur:", res.error);
+    return [];
+  }
+
+  return (res.data || []).map(dbRowToSortie);
+}
 
   /* ── Participants : un seul appel pour toutes les sorties ── */
   function participantPseudo(x) {

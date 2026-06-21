@@ -17,6 +17,14 @@
   let loadError = null;
 
 
+  function isTeamRider() {
+    return window.GOELO_ROLE === "team_rider" || window.GOELO_ROLE === "admin";
+  }
+
+  window.addEventListener("goelo:role-ready", function () {
+  console.log("[parcours] role ready:", window.GOELO_ROLE);
+  });
+
   /* ════════════════════════════════════════════════════════════
      Helpers
      ════════════════════════════════════════════════════════════ */
@@ -103,14 +111,14 @@ function getSb() {
    * Raccordement Supabase : appeler ici RPC `signup_register` /
    * `signup_unregister` puis rafraîchir la liste des participants.
    */
-  function saveJoin(sortieId, joined) {
-    var o = loadJoins();
-    if (joined) o[sortieId] = true;
-    else delete o[sortieId];
-    try {
-      localStorage.setItem(JOIN_KEY, JSON.stringify(o));
-    } catch (err) {
-      void err;
+  async function saveJoin(sortieId, joined) {
+    const sb = window.goeloGetSb?.();
+    if (!sb) return;
+  
+    if (joined) {
+      await sb.rpc("signup_register", { route_id: sortieId });
+    } else {
+      await sb.rpc("signup_unregister", { route_id: sortieId });
     }
   }
 
@@ -175,10 +183,20 @@ function getSb() {
     var joined = isJoined(sortie.id);
     var n = allParticipants().length;
 
-    if (btn) {
-      btn.textContent = joined ? "J'annule" : "Je participe !";
-      btn.classList.toggle("is-registered", joined);
+    if (!btn) return;
+
+    // 🔒 BLOQUAGE NON TEAM RIDER
+    if (!isTeamRider()) {
+      btn.textContent = "Connexion requise";
+      btn.classList.add("is-locked");
+      btn.disabled = true;
+      return;
     }
+
+    // ✅ LOGIQUE NORMALE SI TEAM RIDER
+    btn.textContent = joined ? "J'annule" : "Je participe !";
+    btn.classList.toggle("is-registered", joined);
+
     if (count) {
       count.innerHTML = "<strong>" + n + "</strong> participant" + (n > 1 ? "s" : "");
     }
@@ -489,13 +507,13 @@ function mapRouteToSortie(route) {
     dateIso: fc.rideDateIso,
     time: fc.rideTime,
 
-    captain: fc.rideLeader,
+    captain: fc.captain || fc.rideLeader,
 
     kmFallback: fc.stats?.totalKm,
     dplusFallback: fc.stats?.elevGainM,
 
     duration: fc.estimated_duration_hm,
-    meetTime: fc.rideTime,
+    meetTime: fc.meetTime || fc.rideTime,
 
     place: fc.meetPlace,
 
@@ -529,12 +547,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (!id) {
     loadError = "ID manquant dans l’URL";
     console.error(loadError);
-    return renderError();
+    return renderError(loadError);
   }
 
   try {
     setLoading(true);
-    const { data, error } = await supabase
+    const sb = window.goeloGetSb?.();
+    if (!sb) throw new Error("Supabase client non disponible");
+
+    console.log("[DEBUG SB]", sb);
+    console.log("[DEBUG typeof from]", typeof sb?.from);
+
+    const { data, error } = await sb
       .from("routes")
       .select("*")
       .eq("id", id)

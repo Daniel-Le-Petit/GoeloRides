@@ -1,11 +1,26 @@
 /**
  * GoëloRides — /js/team-rider.js
+ * ─────────────────────────────────────────────────────────────────
+ * Tableau de bord Team Rider / Admin.
+ *
+ * Corrections appliquées :
+ *   • PLUS de createClient() ici — on utilise window.goeloGetSb()
+ *   • Détection du rôle via window.GOELO_ROLE (résolu par auth.js)
+ *   • renderSorties utilise la table `routes` + front_config
+ *   • renderDemands utilise la table `demandes` (Supabase live)
+ *   • MOCK_SORTIES / MOCK_DEMANDS supprimés
+ * ─────────────────────────────────────────────────────────────────
  */
+
 (function () {
   "use strict";
 
+  /* ── Constantes ────────────────────────────────────────────── */
   var MONTH_SHORT = ["","JAN","FÉV","MARS","AVR","MAI","JUIN","JUIL","AOÛT","SEPT","OCT","NOV","DÉC"];
+  var AV_COLORS   = ["#C8F135","#7DD3FC","#FCA5A5","#FCD34D","#C4B5FD","#86EFAC"];
   var GRUP_COLOR  = { blanc:"#9ca3af", vert:"#C8F135", bleu:"#60a5fa", rouge:"#f87171" };
+  var GRUP_LABEL  = { blanc:"Blanc", vert:"Vert", bleu:"Bleu", rouge:"Rouge" };
+
   var URGENCE_MSGS = {
     retard:    "\u23f1 GOËLORIDES \u2014 Retard\n\nD\u00e9part retard\u00e9 de 15 min.\nMerci de patienter au Parking du Kasino.\n\n\uD83D\uDCAC Message du Team Rider",
     annulation:"\u274C GOËLORIDES \u2014 Annulation\n\nSortie annul\u00e9e \u2014 conditions m\u00e9t\u00e9o.\n\nProchaine sortie bient\u00f4t\u00a0:\ngoelorides.onrender.com",
@@ -13,11 +28,9 @@
     rdv:       "\uD83D\uDCCD GOËLORIDES \u2014 Changement RDV\n\n\u26A0\uFE0F Nouveau point de d\u00e9part\u00a0:\nParking de la plage du Ch\u00e2telet\n(et non le Kasino)\n\n\u23f0 Horaire inchang\u00e9"
   };
 
-  /* CORRECTION C5 : valeur initiale cohérente avec le format officiel */
   var _currentFilter = "all";
-  var _currentRole   = "visitor";
+  var _currentRole   = "teamrider";
   var _currentEmail  = "";
-  var _bootDone      = false;  /* guard anti-double boot */
 
   /* ── Toast ─────────────────────────────────────────────────── */
   function toast(msg) {
@@ -30,22 +43,20 @@
     setTimeout(function () { el.remove(); }, 3000);
   }
 
+  /* ── Helpers ────────────────────────────────────────────────── */
   function initials(str) {
     return String(str || "").split(" ").map(function (w) { return w[0] || ""; }).join("").slice(0, 2).toUpperCase();
   }
+  function scrollToId(id) { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }
 
-  function scrollToId(id) {
-    var el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  }
-  window.scrollToId = scrollToId;
-
+  /* ── front_config parser ─────────────────────────────────────── */
   function parseFc(raw) {
     if (!raw) return {};
     if (typeof raw === "object") return raw;
     try { return JSON.parse(raw); } catch (e) { return {}; }
   }
 
+  /* Convertit une ligne `routes` en carte normalisée */
   function routeToCard(row) {
     var fc    = parseFc(row.front_config);
     var stats = fc.stats || {};
@@ -69,46 +80,33 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
-     BOOT
+     BOOT — appelé quand le rôle est connu
      ══════════════════════════════════════════════════════════════ */
   async function boot(role, user) {
-    /* CORRECTION M3+M4 : guard anti-double boot */
-    if (_bootDone) {
-      console.log("[team-rider] boot() déjà exécuté, ignoré");
-      return;
-    }
-    _bootDone = true;
-
     _currentRole  = role;
     _currentEmail = (user && user.email) ? user.email : "";
-
-    var pseudo = _getPseudo(user);
+    var pseudo    = _getPseudo(user);
 
     var dash = document.getElementById("dashboard");
     var gate = document.getElementById("gate-panel");
 
-    /* CORRECTION M2+M3 : null-checks exhaustifs */
     if (!dash || !gate) {
-      console.warn("[team-rider] Éléments dashboard/gate introuvables dans le DOM");
+      console.warn("[team-rider] DOM pas prêt");
       return;
     }
 
     gate.style.display = "none";
     dash.style.display = "block";
 
-    var userNameEl   = document.getElementById("user-name");
-    var userAvatarEl = document.getElementById("user-avatar");
-    var badgeEl      = document.getElementById("role-badge");
+    document.getElementById("user-name").textContent   = pseudo + " (" + role + ")";
+    document.getElementById("user-avatar").textContent = initials(pseudo);
 
-    if (userNameEl)   userNameEl.textContent   = pseudo + " (" + role + ")";
-    if (userAvatarEl) userAvatarEl.textContent = initials(pseudo);
-    if (badgeEl) {
-      if (role === "admin") {
-        badgeEl.textContent = "\uD83D\uDC51 ADMIN";
-        badgeEl.classList.add("is-admin");
-      } else {
-        badgeEl.textContent = "\uD83D\uDEB4 TEAM RIDER";
-      }
+    var badge = document.getElementById("role-badge");
+    if (role === "admin") {
+      badge.textContent = "\uD83D\uDC51 ADMIN";
+      badge.classList.add("is-admin");
+    } else {
+      badge.textContent = "\uD83D\uDEB4 TEAM RIDER";
     }
 
     await renderSorties();
@@ -122,7 +120,7 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
-     RENDER SORTIES
+     RENDER SORTIES — depuis table `routes`
      ══════════════════════════════════════════════════════════════ */
   async function renderSorties() {
     var list = document.getElementById("sorties-list");
@@ -141,7 +139,7 @@
       .order("sort_order", { ascending: true })
       .order("created_at",  { ascending: false });
 
-    /* CORRECTION C5 : comparer avec "admin" (format officiel) */
+    /* Admins voient tout ; team riders voient seulement les actives */
     if (_currentRole !== "admin") {
       query = query.eq("is_active", true);
     }
@@ -155,12 +153,13 @@
 
     var cards = (result.data || []).map(routeToCard);
 
+    /* Filtres UI */
     if (_currentFilter === "publiee") {
       cards = cards.filter(function (c) { return c.statut === "publiee"; });
     } else if (_currentFilter === "brouillon") {
       cards = cards.filter(function (c) { return c.statut === "brouillon"; });
     } else if (_currentFilter === "mine") {
-      var email  = _currentEmail;
+      var email = _currentEmail;
       var pseudo = email ? email.split("@")[0] : "";
       cards = cards.filter(function (c) {
         return email && (c.captain === email || c.captain === pseudo);
@@ -173,19 +172,20 @@
     }
 
     list.innerHTML = cards.map(function (c) {
-      var gc       = GRUP_COLOR[_groupKey(c.groupe)] || "#888";
-      var gl       = c.groupe;
-      var badgeCls = c.statut === "publiee" ? "badge-pub"
-                   : c.statut === "annulee" ? "badge-cancel"
-                   : "badge-draft";
-      var badgeTxt = c.statut === "publiee" ? "PUB"
-                   : c.statut === "annulee" ? "ANNUL\u00c9"
-                   : "DRAFT";
-      var kmStr    = c.km    != null ? c.km    + " km"   : "\u2014 km";
-      var dplusStr = c.dplus != null ? c.dplus + " m D+" : "\u2014 m D+";
-      var dateObj  = c.date ? new Date(c.date + "T00:00:00") : null;
-      var day      = dateObj ? dateObj.getDate() : "?";
-      var month    = dateObj ? MONTH_SHORT[dateObj.getMonth() + 1] : "";
+      var gc        = GRUP_COLOR[_groupKey(c.groupe)] || "#888";
+      var gl        = c.groupe;
+      var badgeCls  = c.statut === "publiee"  ? "badge-pub"
+                    : c.statut === "annulee"  ? "badge-cancel"
+                    : "badge-draft";
+      var badgeTxt  = c.statut === "publiee"  ? "PUB"
+                    : c.statut === "annulee"  ? "ANNUL\u00c9"
+                    : "DRAFT";
+      var kmStr     = c.km    != null ? c.km    + " km"   : "\u2014 km";
+      var dplusStr  = c.dplus != null ? c.dplus + " m D+" : "\u2014 m D+";
+      var dateObj   = c.date ? new Date(c.date + "T00:00:00") : null;
+      var day       = dateObj ? dateObj.getDate() : "?";
+      var month     = dateObj ? MONTH_SHORT[dateObj.getMonth() + 1] : "";
+      var titleEsc  = String(c.titre || "").replace(/'/g, "\\'");
 
       var actions =
         "<button class=\"btn-sm\" onclick=\"location.href='parcours.html?id=" + c.id + "'\">👁 Voir</button>" +
@@ -215,10 +215,10 @@
 
   function _groupKey(groupLabel) {
     var gl = String(groupLabel || "").toLowerCase();
-    if (gl.indexOf("blanc") !== -1) return "blanc";
-    if (gl.indexOf("vert")  !== -1) return "vert";
-    if (gl.indexOf("bleu")  !== -1) return "bleu";
-    if (gl.indexOf("rouge") !== -1) return "rouge";
+    if (gl.indexOf("blanc")  !== -1) return "blanc";
+    if (gl.indexOf("vert")   !== -1) return "vert";
+    if (gl.indexOf("bleu")   !== -1) return "bleu";
+    if (gl.indexOf("rouge")  !== -1) return "rouge";
     return "vert";
   }
 
@@ -228,30 +228,38 @@
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
+  /* ── Filtre tabs ────────────────────────────────────────────── */
   function filterSorties(filter, btn) {
     document.querySelectorAll(".stab").forEach(function (b) { b.classList.remove("active"); });
-    if (btn) btn.classList.add("active");
+    btn.classList.add("active");
     _currentFilter = filter;
     renderSorties();
   }
-  window.filterSorties = filterSorties;
+  window.filterSorties = filterSorties; /* exposé pour les onclick inline du HTML */
 
+  /* ── Annuler une sortie ─────────────────────────────────────── */
   async function cancelSortie(id, titre, btn) {
     if (!confirm("Annuler \"" + titre + "\" ?\n\nPense \u00e0 envoyer un message urgence aux participants.")) return;
     var sb = window.goeloGetSb();
     if (!sb) { toast("Client Supabase non disponible."); return; }
+
     try {
+      /* Lire le front_config actuel */
       var fetch = await sb.from("routes").select("front_config").eq("id", id).single();
       if (fetch.error) throw fetch.error;
       var fc = parseFc(fetch.data.front_config);
       fc.sortieStatus = "cancelled";
+
       var upd = await sb.from("routes").update({ front_config: fc }).eq("id", id);
       if (upd.error) throw upd.error;
-      var card  = btn ? btn.closest(".sortie-card") : null;
+
+      /* Mise à jour visuelle immédiate */
+      var card  = btn.closest(".sortie-card");
       var badge = card ? card.querySelector(".badge") : null;
       if (badge) { badge.className = "badge badge-cancel"; badge.textContent = "ANNUL\u00c9"; }
       toast("Sortie \"" + titre + "\" annul\u00e9e \u2014 envoie un message Messenger \u2193");
       setTimeout(function () { scrollToId("urgence-section"); }, 800);
+
     } catch (err) {
       console.error("[team-rider.js] cancelSortie:", err.message);
       toast("Erreur : " + err.message);
@@ -260,7 +268,7 @@
   window.cancelSortie = cancelSortie;
 
   /* ══════════════════════════════════════════════════════════════
-     RENDER DEMANDES
+     RENDER DEMANDES — depuis table `demandes` (admins uniquement)
      ══════════════════════════════════════════════════════════════ */
   async function renderDemands() {
     var section = document.getElementById("demands-section");
@@ -305,11 +313,10 @@
       var quote = d.message ? "<div class=\"d-quote\">\u201c " + _esc(d.message) + " \u201d</div>" : "";
       var date  = d.created_at ? d.created_at.slice(0, 10) : (d.date || "");
       var actions = isPending
-        ? "<div class=\"d-actions\">" +
-          "<button class=\"da-approve\" onclick=\"approveDemand(" + i + ",'" + d.id + "')\">✓ APPROUVER</button>" +
-          "<button class=\"da-refuse\" onclick=\"refuseDemand(" + i + ",'" + d.id + "')\">✕ REFUSER</button>" +
-          "</div>"
+        ? "<div class=\"d-actions\"><button class=\"da-approve\" onclick=\"approveDemand(" + i + ",'" + d.id + "')\">✓ APPROUVER</button>" +
+          "<button class=\"da-refuse\" onclick=\"refuseDemand(" + i + ",'" + d.id + "')\">✕ REFUSER</button></div>"
         : "";
+
       return [
         "<div class=\"demand-card\" id=\"dc-" + i + "\">",
         "<div class=\"d-head\"><span class=\"d-name\">" + name + "</span><span class=\"badge " + statusCls + "\" id=\"dbadge-" + i + "\">" + statusLbl + "</span></div>",
@@ -330,8 +337,6 @@
     toast("Demande approuv\u00e9e \u2713");
     renderDemands();
   }
-  window.approveDemand = approveDemand;
-
   async function refuseDemand(i, id) {
     var sb = window.goeloGetSb();
     if (!sb) return;
@@ -340,33 +345,26 @@
     toast("Demande refus\u00e9e \u2715");
     renderDemands();
   }
-  window.refuseDemand = refuseDemand;
+  window.approveDemand = approveDemand;
+  window.refuseDemand  = refuseDemand;
 
   /* ══════════════════════════════════════════════════════════════
-     URGENCE
+     URGENCE (inchangé, design identique)
      ══════════════════════════════════════════════════════════════ */
   function genUrgence(btn, type) {
-    /* CORRECTION m DOM : null-check sur u-result */
-    var result = btn ? btn.querySelector(".u-result") : null;
-    if (!result) return;
+    var result = btn.querySelector(".u-result");
     if (result.style.display === "block") { result.style.display = "none"; return; }
     var msg = URGENCE_MSGS[type] || "";
     result.textContent   = msg;
     result.style.display = "block";
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(msg).then(function () {
-        toast("Message copi\u00e9 \u2014 colle dans Messenger");
-      });
-    }
+    navigator.clipboard?.writeText(msg).then(function () { toast("Message copi\u00e9 \u2014 colle dans Messenger"); });
     if (!btn.querySelector(".u-copy")) {
       var copyBtn = document.createElement("button");
       copyBtn.className   = "u-copy";
       copyBtn.textContent = "\uD83D\uDCCB Copier \u00e0 nouveau";
       copyBtn.addEventListener("click", function (e) {
         e.stopPropagation();
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(msg).then(function () { toast("Copi\u00e9\u00a0!"); });
-        }
+        navigator.clipboard?.writeText(msg).then(function () { toast("Copi\u00e9\u00a0!"); });
       });
       result.after(copyBtn);
     }
@@ -374,59 +372,73 @@
   window.genUrgence = genUrgence;
 
   /* ══════════════════════════════════════════════════════════════
-     INIT — point d'entrée unique
+     INIT
      ══════════════════════════════════════════════════════════════ */
-  function startWithRole(role, user) {
-    var gate = document.getElementById("gate-panel");
-    var dash = document.getElementById("dashboard");
-
-    /* CORRECTION M2 : null-checks avant accès à .style */
-    if (!gate || !dash) {
-      console.warn("[team-rider] gate-panel ou dashboard introuvable");
-      return;
-    }
-
-    /* CORRECTION C5 : comparer avec "team_rider" (format officiel) */
-    if (role !== "team_rider" && role !== "admin") {
-      gate.style.display = "block";
-      dash.style.display = "none";
-      return;
-    }
-
-    boot(role, user);
-  }
-
   document.addEventListener("DOMContentLoaded", function () {
-    /* Cas 1 : rôle déjà connu (auth.js plus rapide) */
+
+     function startWithRole(role, user) {
+       if (!window.GOELO_ROLE || (window.GOELO_ROLE !== "team_rider" && window.GOELO_ROLE !== "admin")) {
+         /* Pas teamrider ni admin → afficher le gate */
+         document.getElementById("gate-panel").style.display = "block";
+         document.getElementById("dashboard").style.display  = "none";
+         return;
+       }
+
+       boot(role, user);
+     }
+
+    /* Cas 1 : rôle déjà connu (auth.js rapide) */
     if (window.GOELO_ROLE && window.GOELO_ROLE !== "visitor") {
       startWithRole(window.GOELO_ROLE, window.GOELO_USER);
       return;
     }
 
-    /* Cas 2 : attendre l'événement goelo:role-ready */
+    /* Cas 2 : attendre l'événement */
     window.addEventListener("goelo:role-ready", function handler(e) {
       window.removeEventListener("goelo:role-ready", handler);
       startWithRole(e.detail.role, e.detail.user);
     }, { once: true });
 
-    /* Cas 3 : mode démo via ?demo=admin ou ?demo=team_rider */
+    /* Cas 3 : mode démo via ?demo=admin ou ?demo=teamrider */
     var demo = new URLSearchParams(location.search).get("demo");
-    if (demo === "admin" || demo === "team_rider") {
+    if (demo === "admin" || demo === "teamrider") {
+      /* Laisser auth.js faire son travail, mais si après 2s rien
+         n'est venu (pas de session), utiliser le mode démo */
       setTimeout(function () {
-        var dash = document.getElementById("dashboard");
-        if (!dash || !dash.style.display || dash.style.display === "none") {
-          boot(demo, {
-            email: demo + "@demo.local",
-            user_metadata: { pseudo: demo === "admin" ? "Admin" : "Team Rider" }
-          });
+        if (document.getElementById("dashboard").style.display === "none" ||
+            !document.getElementById("dashboard").style.display) {
+          boot(demo, { email: demo + "@demo.local", user_metadata: { pseudo: demo === "admin" ? "Admin" : "Team Rider" } });
         }
       }, 2000);
     }
 
-    /* CORRECTION M4 : { once: true } pour éviter les appels répétés */
+    /* Re-écouter les changements de session (ex. connexion depuis la modale) */
     window.addEventListener("goelo:auth-success", function (e) {
-      startWithRole(e.detail.role || window.GOELO_ROLE, window.GOELO_USER);
-    }, { once: true });
+      startWithRole(window.GOELO_ROLE, window.GOELO_USER);
+    });
   });
 
+async function submitSignup(email, password) {
+  const sb = window.goeloGetSb();
+
+  if (!sb) {
+    console.error("Supabase non initialisé");
+    return;
+  }
+
+  const { data, error } = await sb.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password: password
+  });
+
+  if (error) {
+    console.error("SIGNUP ERROR:", error.message);
+    _showError("Erreur inscription : " + error.message);
+    return;
+  }
+
+  console.log("SIGNUP OK:", data);
+
+  _showError("Compte créé ! Vérifie ton email pour confirmer.", true);
+}
 })();

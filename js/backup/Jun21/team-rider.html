@@ -21,19 +21,19 @@
   </div>
 </header>
 
-<!-- GATE : visible par défaut, masqué par team-rider.js si rôle OK -->
+<!-- GATE -->
 <div id="gate-panel" style="display:none">
   <div class="gate">
     <h2>Accès Team Rider requis</h2>
-    <p>Cette page est réservée aux Team Riders et Admins GoëloRides.<br>
-       Connecte-toi pour accéder au tableau de bord.</p>
+    <p>Cette page est réservée aux Team Riders et Admins GoëloRides.<br>Connecte-toi pour accéder au tableau de bord.</p>
     <button class="gate-btn" data-goelo-auth-trigger>🔒 Se connecter</button>
   </div>
 </div>
 
-<!-- DASHBOARD : masqué par défaut, affiché par team-rider.js si rôle OK -->
+<!-- DASHBOARD -->
 <main class="main" id="dashboard" style="display:none">
 
+  <!-- QUICK ACTIONS : 2 boutons seulement -->
   <p class="slabel" style="margin-top:0">Actions rapides</p>
   <div class="qa-grid">
     <button class="qa-btn primary" onclick="location.href='gestion-sorties.html'">
@@ -46,6 +46,7 @@
     </button>
   </div>
 
+  <!-- MES SORTIES avec inscrits + bouton Modifier -->
   <p class="slabel">Mes sorties</p>
   <div class="tabs">
     <button class="stab active" onclick="filterSorties('all',this)">Toutes</button>
@@ -57,6 +58,7 @@
     <p style="font-size:.82rem;color:var(--muted)">Chargement…</p>
   </div>
 
+  <!-- URGENCES -->
   <p class="slabel" id="urgence-section">Messages urgence Messenger</p>
   <div class="urgence-grid">
     <div class="urgence-btn" onclick="genUrgence(this,'retard')">
@@ -85,7 +87,7 @@
     </div>
   </div>
 
-  <!-- DEMANDES : admin uniquement, rendu par team-rider.js -->
+  <!-- DEMANDES (Admin uniquement) -->
   <div id="demands-section" style="display:none">
     <p class="slabel">Demandes Team Rider <em id="demands-count-label"></em></p>
     <div id="demand-list"></div>
@@ -93,33 +95,128 @@
 
 </main>
 
-<!-- MOBILE NAV — CORRECTION m4 : href corrigé vers team-rider.html -->
+<!-- MOBILE NAV -->
 <nav class="mobile-nav">
   <a href="index.html"><span>🏠</span>Accueil</a>
   <a href="sorties.html"><span>🚴</span>Sorties</a>
   <a href="gestion-sorties.html"><span>＋</span>Créer</a>
-  <a href="team-rider.html" aria-current="page"><span>⚙️</span>Cockpit</a>
+  <a href="team-rider-dashboard.html" aria-current="page"><span>⚙️</span>Cockpit</a>
 </nav>
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<!--
-  ORDRE D'INCLUSION IMPÉRATIF :
-  1. goelo-config.js  → window.GOELO_CONFIG
-  2. supabase.min.js  → window.supabase
-  3. auth.js          → window.goeloGetSb, window.GOELO_ROLE, goelo:role-ready
-  4. team-rider.js    → écoute goelo:role-ready, lit GOELO_ROLE
+<script>
+  console.log("🔥 TEAM RIDER HTML JS IS RUNNING");
+</script>
 
-  CORRECTION C3+C4 : SUPPRESSION des 3 scripts inline qui
-  utilisaient window._goeloSb (inexistant) et pouvaient
-  rediriger vers index.html avant résolution du rôle.
--->
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 TEAM RIDER PAGE LOADED");
+
+  const sb = window._goeloSb;
+
+  if (!sb) {
+    console.error("❌ Supabase NOT INITIALISED");
+    return;
+  }
+
+  try {
+    const { data: session } = await sb.auth.getSession();
+    console.log("🔐 SESSION =", session);
+
+    const { data: userData } = await sb.auth.getUser();
+    const user = userData?.user;
+
+    if (!user) {
+      console.log("🚪 No user → redirect");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const { data: profile } = await sb
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    console.log("🎭 ROLE =", profile?.role);
+
+  } catch (e) {
+    console.error("❌ ERROR:", e);
+  }
+});
+</script>
+
+<!-- 1. CONFIG (TOUJOURS EN PREMIER) charger SUPABASE et ANON_KEY-->
 <script src="js/goelo-config.js"></script>
+
+<!-- 2. SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- 3. SCRIPTS (TOUS DEFER OK MAIS APRÈS SDK) -->
 <script src="js/auth.js"></script>
 <script src="js/team-rider.js"></script>
-<!-- CORRECTION m3 : chemin corrigé pour goelo-swipe-nav.js -->
-<script src="js/goelo-swipe-nav.js" defer></script>
+
+<script src="goelo-swipe-nav.js" defer></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🔐 ROLE CHECK START");
+
+  const sb = window._goeloSb || window.supabaseClient;
+
+  if (!sb) {
+    console.error("❌ Supabase not initialised");
+    return;
+  }
+
+  try {
+    // 1. Get logged user
+    const { data: userData, error: userError } = await sb.auth.getUser();
+
+    if (userError || !userData.user) {
+      console.log("🚪 No user → redirect");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const user = userData.user;
+    console.log("👤 USER:", user.id);
+
+    // 2. Get role from profiles
+    const { data: profile, error: profileError } = await sb
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.error("❌ Profile error:", profileError);
+      window.location.href = "index.html";
+      return;
+    }
+
+    console.log("🎭 ROLE:", profile.role);
+
+    // 3. Guard rules
+    if (profile.role === "admin") {
+      console.log("🔴 ADMIN ACCESS GRANTED");
+      window.__USER_ROLE__ = "admin";
+    } 
+    else if (profile.role === "team_rider") {
+      console.log("🟢 TEAM RIDER ACCESS GRANTED");
+      window.__USER_ROLE__ = "team_rider";
+    } 
+    else {
+      console.log("⛔ NO ACCESS");
+      window.location.href = "index.html";
+    }
+
+  } catch (err) {
+    console.error("💥 ROLE CHECK FAILED", err);
+    window.location.href = "index.html";
+  }
+});
+</script>
 
 </body>
 </html>

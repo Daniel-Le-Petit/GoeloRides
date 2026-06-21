@@ -335,25 +335,20 @@
     <a href="infos-pratiques.html">Infos</a>
   </nav>
 
-  <script>
-  const MOCK_SORTIES = {
-    falaises: { id: "falaises", title: "Falaises" },
-    colline: { id: "colline", title: "Colline" }
-  };
-  </script>
 
-
-  <!-- 1. CONFIG (TOUJOURS EN PREMIER) charger SUPABASE et ANON_KEY-->
+<!--
+  ORDRE D'INCLUSION IMPÉRATIF :
+  1. goelo-config.js  → window.GOELO_CONFIG
+  2. supabase.min.js  → window.supabase
+  3. auth.js          → window.goeloGetSb, window.GOELO_ROLE, goelo:role-ready
+  4. ***-rider.js    → écoute goelo:role-ready, lit GOELO_ROLE
+-->
   <script src="js/goelo-config.js"></script>
-
-  <!-- 2. SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-  <!-- 3. SCRIPTS (TOUS DEFER OK MAIS APRÈS SDK) -->
   <script src="js/auth.js"></script>
+  <script src="js/parcours.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="goelo-swipe-nav.js" defer></script>
-  <script src="js/parcours.js"></script>
 
 </body>
 </html>

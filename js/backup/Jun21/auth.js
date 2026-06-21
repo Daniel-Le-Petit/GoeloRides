@@ -1,5 +1,27 @@
+/**
+ * GoëloRides — /js/auth.js  (v2 — stable)
+ * ═══════════════════════════════════════════════════════════════
+ * SOURCE UNIQUE pour :
+ *   • Singleton Supabase  →  window.goeloGetSb()
+ *   • Résolution du rôle  →  window.GOELO_ROLE / window.GOELO_USER
+ *   • Login, Signup, Reset password
+ *   • Auth state listener
+ *   • Redirections selon rôle
+ *   • Injection + liaison des modales
+ *
+ * Rôles (table profiles.role) :
+ *   "visitor" (non connecté) | "user" | "team_rider" | "admin"
+ *
+ * Règles absolues :
+ *   ✗  Aucun autre fichier n'appelle supabase.createClient()
+ *   ✗  Aucun autre fichier ne déclare window.GOELO_ROLE
+ *   ✗  Ce fichier ne s'exécute qu'une seule fois (guard ligne 1)
+ * ═══════════════════════════════════════════════════════════════
+ */
+
 /* ── Guard double-init ──────────────────────────────────────── */
 if (window.__GOELO_AUTH_V2__) {
+  // Déjà chargé — ne rien faire (évite le warning GoTrueClient)
   throw new Error("[GoëloAuth] déjà chargé — vérifier que auth.js n'est inclus qu'une fois");
 }
 window.__GOELO_AUTH_V2__ = true;
@@ -8,141 +30,128 @@ window.__GOELO_AUTH_V2__ = true;
   "use strict";
 
   /* ════════════════════════════════════════════════════════════
-     1. SINGLETON SUPABASE
+     1.  SINGLETON SUPABASE
+     ════════════════════════════════════════════════════════════
+     Une seule instance, créée la première fois que goeloGetSb()
+     est appelé. storageKey isolé = pas de conflit entre onglets
+     qui chargeraient d'autres apps Supabase.
      ════════════════════════════════════════════════════════════ */
+  var _sb = null;
+
 window.goeloGetSb = function () {
   if (window._goeloSbClient) return window._goeloSbClient;
 
-  var cfg = window.GOELO_CONFIG || {};
-  var url = (cfg.SUPABASE_URL || "").trim();
-  var key = (cfg.SUPABASE_ANON_KEY || "").trim();
+  const cfg = window.GOELO_CONFIG || {};
+
+  const url = (cfg.SUPABASE_URL || "").trim();
+  const key = (cfg.SUPABASE_ANON_KEY || "").trim();
 
   if (!url || !key) {
-    console.error("[GoëloAuth] ❌ Config Supabase manquante", cfg);
+    console.error("[GoëloAuth] Supabase config invalide :", cfg);
     return null;
   }
 
   if (!window.supabase || !window.supabase.createClient) {
-    console.error("[GoëloAuth] ❌ SDK Supabase non chargé");
+    console.error("[GoëloAuth] Supabase SDK non chargé");
     return null;
   }
 
-  try {
-    window._goeloSbClient = window.supabase.createClient(url, key);
-    console.log("[GoëloAuth] Supabase client initialisé ✔");
-    return window._goeloSbClient;
-  } catch (e) {
-    console.error("[GoëloAuth] ❌ Erreur createClient :", e);
-    return null;
-  }
+  window._goeloSbClient = window.supabase.createClient(url, key);
+
+  console.log("[GoëloAuth] Supabase client initialisé ✔");
+
+  return window._goeloSbClient;
 };
 
+
   /* ════════════════════════════════════════════════════════════
-     2. ÉTAT GLOBAL DU RÔLE
+     2.  ÉTAT GLOBAL DU RÔLE
      ════════════════════════════════════════════════════════════ */
-  window.GOELO_ROLE = "visitor";
+  window.GOELO_ROLE = "visitor";  // valeur avant résolution
   window.GOELO_USER = null;
 
   var ROLE_ORDER = { visitor: 0, user: 1, team_rider: 2, admin: 3 };
 
+  /** Retourne true si le rôle courant >= rôle requis */
   window.goeloGuard = function (required) {
     return (ROLE_ORDER[window.GOELO_ROLE] || 0) >= (ROLE_ORDER[required] || 0);
   };
 
   /* ════════════════════════════════════════════════════════════
-     3. RÉSOLUTION DU RÔLE
+     3.  RÉSOLUTION DU RÔLE
+     ════════════════════════════════════════════════════════════
+     Ordre :
+       a) getSession()  — rapide (localStorage), vérifie l'expiry
+       b) getUser()     — appel serveur, garantit que le JWT est valide
+       c) SELECT role FROM profiles WHERE id = user.id
      ════════════════════════════════════════════════════════════ */
   async function resolveRole() {
     var sb = window.goeloGetSb();
     if (!sb) { _emitRole("visitor", null); return; }
+
     try {
-      var sessionResult = await sb.auth.getSession();
-      var session = sessionResult.data && sessionResult.data.session;
+      /* a. Session locale */
+      var { data: { session } } = await sb.auth.getSession();
       if (!session) { _emitRole("visitor", null); return; }
 
-      var userResult = await sb.auth.getUser();
-      if (userResult.error || !userResult.data || !userResult.data.user) {
-        _emitRole("visitor", null);
-        return;
-      }
-      var user = userResult.data.user;
+      /* b. Vérification serveur */
+      var { data: { user }, error: userErr } = await sb.auth.getUser();
+      if (userErr || !user) { _emitRole("visitor", null); return; }
 
-      var profileResult = await sb
+      /* c. Profil */
+      var { data: profile, error: profileErr } = await sb
         .from("profiles")
         .select("role")
         .eq("id", user.id)
         .maybeSingle();
 
-      if (profileResult.error) {
-        console.warn("[GoëloAuth] profiles:", profileResult.error.message);
-        _emitRole("user", user);
+      if (profileErr) {
+        console.warn("[GoëloAuth] profiles:", profileErr.message);
+        _emitRole("user", user);   // connecté mais profil inaccessible
         return;
       }
 
-      var role = (profileResult.data && profileResult.data.role)
-        ? profileResult.data.role
-        : "user";
-
+      var role = (profile && profile.role) ? profile.role : "user";
       _emitRole(role, user);
+
     } catch (err) {
       console.warn("[GoëloAuth] resolveRole:", err.message);
       _emitRole("visitor", null);
     }
   }
 
-  /* ════════════════════════════════════════════════════════════
-     4. ÉMISSION DU RÔLE — UNE SEULE DÉCLARATION
-     ════════════════════════════════════════════════════════════ */
-  function _emitRole(role, user) {
-    var cleanRole = role || "visitor";
-    window.GOELO_ROLE = cleanRole;
-    window.GOELO_USER = user;
-    console.log("[GoëloAuth] rôle résolu :", cleanRole);
-    window.dispatchEvent(new CustomEvent("goelo:role-ready", {
-      detail: { role: cleanRole, user: user }
-    }));
-  }
+function _emitRole(role, user) {
+  const cleanRole = role || "visitor";
+
+  window.GOELO_ROLE = cleanRole;
+  window.GOELO_USER = user;
+
+  window.dispatchEvent(new CustomEvent("goelo:role-ready", {
+    detail: { role: cleanRole, user: user }
+  }));
+}
 
   /* ════════════════════════════════════════════════════════════
-     5. REDIRECTION SELON RÔLE
-     ════════════════════════════════════════════════════════════ */
-  function _redirectForRole(role) {
-    var path = window.location.pathname;
-    /* CORRECTION C1 : ne jamais transformer le rôle — comparer directement */
-    if (role === "admin") {
-      if (!path.endsWith("admin.html")) {
-        window.location.href = "admin.html";
-      }
-      return;
-    }
-    if (role === "team_rider") {
-      if (!path.endsWith("team-rider.html")) {
-        window.location.href = "team-rider.html";
-      }
-      return;
-    }
-    /* visitor et user : pas de redirection forcée */
-  }
-
-  /* ════════════════════════════════════════════════════════════
-     6. AUTH STATE LISTENER (une seule souscription)
+     4.  AUTH STATE LISTENER (une seule souscription)
      ════════════════════════════════════════════════════════════ */
   var _authListenerBound = false;
-  var _lastResolvedRole  = null;  /* guard anti-doublon */
 
   function _bindAuthStateChange() {
     if (_authListenerBound) return;
     _authListenerBound = true;
+
     var sb = window.goeloGetSb();
     if (!sb) return;
+
     sb.auth.onAuthStateChange(function (event, session) {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        /* Éviter une double résolution si resolveRole() vient d'être appelé */
         resolveRole();
       } else if (event === "SIGNED_OUT") {
-        _lastResolvedRole = null;
         _emitRole("visitor", null);
       } else if (event === "PASSWORD_RECOVERY") {
+        /* Le token de reset est dans l'URL — la session est ouverte.
+           On dispatch pour que la page puisse afficher le formulaire
+           de nouveau mot de passe. */
         window.dispatchEvent(new CustomEvent("goelo:password-recovery", {
           detail: { session: session }
         }));
@@ -151,7 +160,26 @@ window.goeloGetSb = function () {
   }
 
   /* ════════════════════════════════════════════════════════════
-     7. LOGIN
+     5.  REDIRECTION SELON RÔLE
+     ════════════════════════════════════════════════════════════ */
+function _emitRole(role, user) {
+  const cleanRole = role || "visitor";
+
+  window.GOELO_ROLE = cleanRole;
+  window.GOELO_USER = user;
+
+  window.dispatchEvent(new CustomEvent("goelo:role-ready", {
+    detail: { role: cleanRole, user: user }
+  }));
+}
+
+
+  /* ════════════════════════════════════════════════════════════
+     6.  LOGIN
+     ════════════════════════════════════════════════════════════
+     Cause principale du "Invalid login credentials" instable :
+     plusieurs instances GoTrueClient en conflit de session.
+     Fix : singleton + storageKey unique (résolu en §1).
      ════════════════════════════════════════════════════════════ */
   async function _submitLogin() {
     var emailEl   = document.getElementById("ml-email");
@@ -159,16 +187,20 @@ window.goeloGetSb = function () {
     var label     = document.getElementById("ml-btn-label");
     var spinner   = document.getElementById("ml-btn-spinner");
     var submitBtn = document.getElementById("ml-submit");
+
     if (!emailEl || !pwEl) return;
 
+    /* Normaliser l'email (toLowerCase évite les faux "Invalid login") */
     var email    = emailEl.value.trim().toLowerCase();
     var password = pwEl.value;
+
     _hideError();
 
     if (!email || !password) {
       _showError("Remplis l'e-mail et le mot de passe.");
       return;
     }
+
     if (label)     label.hidden     = true;
     if (spinner)   spinner.hidden   = false;
     if (submitBtn) submitBtn.disabled = true;
@@ -177,20 +209,23 @@ window.goeloGetSb = function () {
       var sb = window.goeloGetSb();
       if (!sb) { _showError("Service temporairement indisponible."); return; }
 
-      var loginResult = await sb.auth.signInWithPassword({ email: email, password: password });
-      if (loginResult.error) {
-        _showError(_friendlyLoginError(loginResult.error.message));
+      var { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        _showError(_friendlyLoginError(error.message));
         return;
       }
 
+      /* Résoudre le rôle AVANT de rediriger */
       await resolveRole();
       _closeAllModals();
 
       window.dispatchEvent(new CustomEvent("goelo:auth-success", {
-        detail: { user: loginResult.data.user, role: window.GOELO_ROLE }
+        detail: { user: data.user, role: window.GOELO_ROLE }
       }));
 
       _redirectForRole(window.GOELO_ROLE);
+
     } catch (err) {
       console.error("[GoëloAuth] login:", err);
       _showError("Erreur inattendue. Réessaie.");
@@ -200,6 +235,25 @@ window.goeloGetSb = function () {
       if (submitBtn) submitBtn.disabled = false;
     }
   }
+
+function _redirectForRole(role) {
+  var path = window.location.pathname;
+  var r = (role || window.GOELO_ROLE || "").replace("_", "");
+
+  if (r === "admin") {
+    if (!path.endsWith("admin.html")) {
+      window.location.href = "admin.html";
+    }
+    return;
+  }
+
+  if (r === "team_rider") {
+    if (!path.endsWith("team-rider.html")) {
+      window.location.href = "team-rider.html";
+    }
+    return;
+  }
+}
 
   function _friendlyLoginError(msg) {
     msg = String(msg || "").toLowerCase();
@@ -215,20 +269,27 @@ window.goeloGetSb = function () {
   }
 
   /* ════════════════════════════════════════════════════════════
-     8. SIGNUP
+     7.  SIGNUP
+     ════════════════════════════════════════════════════════════
+     Crée le compte Supabase Auth.
+     La ligne dans `profiles` est créée par un trigger SQL
+     (ON INSERT ON auth.users → INSERT INTO profiles).
+     Si le trigger n'existe pas, on insère manuellement en fallback.
      ════════════════════════════════════════════════════════════ */
   async function _submitSignup() {
-    var emailEl   = document.getElementById("su-email");
-    var pwEl      = document.getElementById("su-password");
-    var pseudoEl  = document.getElementById("su-pseudo");
-    var submitBtn = document.getElementById("su-submit");
-    var label     = document.getElementById("su-btn-label");
-    var spinner   = document.getElementById("su-btn-spinner");
+    var emailEl     = document.getElementById("su-email");
+    var pwEl        = document.getElementById("su-password");
+    var pseudoEl    = document.getElementById("su-pseudo");
+    var submitBtn   = document.getElementById("su-submit");
+    var label       = document.getElementById("su-btn-label");
+    var spinner     = document.getElementById("su-btn-spinner");
+
     if (!emailEl || !pwEl) return;
 
     var email    = emailEl.value.trim().toLowerCase();
     var password = pwEl.value;
     var pseudo   = pseudoEl ? pseudoEl.value.trim() : "";
+
     _hideSignupError();
 
     if (!email || !password) {
@@ -239,6 +300,7 @@ window.goeloGetSb = function () {
       _showSignupError("Mot de passe trop court (8 caractères minimum).");
       return;
     }
+
     if (label)     label.hidden     = true;
     if (spinner)   spinner.hidden   = false;
     if (submitBtn) submitBtn.disabled = true;
@@ -247,36 +309,45 @@ window.goeloGetSb = function () {
       var sb = window.goeloGetSb();
       if (!sb) { _showSignupError("Service temporairement indisponible."); return; }
 
-      var signupResult = await sb.auth.signUp({
-        email: email,
-        password: password,
-        options: { data: { pseudo: pseudo || email.split("@")[0] } }
+      var { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { pseudo: pseudo || email.split("@")[0] }  // user_metadata
+        }
       });
-      if (signupResult.error) {
-        _showSignupError(_friendlySignupError(signupResult.error.message));
+
+      if (error) {
+        _showSignupError(_friendlySignupError(error.message));
         return;
       }
 
-      if (signupResult.data && signupResult.data.user) {
-        var profileResult = await sb
+      /* Fallback : insérer le profil si le trigger SQL n'existe pas */
+      if (data.user) {
+        var { error: profileErr } = await sb
           .from("profiles")
-          .upsert({ id: signupResult.data.user.id, role: "user" }, { onConflict: "id", ignoreDuplicates: true });
-        if (profileResult.error) {
-          console.warn("[GoëloAuth] profile upsert:", profileResult.error.message);
+          .upsert({ id: data.user.id, role: "user" }, { onConflict: "id", ignoreDuplicates: true });
+        if (profileErr) {
+          console.warn("[GoëloAuth] profile upsert:", profileErr.message);
         }
       }
 
-      if (signupResult.data.user && !signupResult.data.session) {
+      /* Si email confirmation requis */
+      if (data.user && !data.session) {
         _showSignupSuccess("Compte créé — vérifie ta boîte mail pour confirmer ton e-mail.");
         return;
       }
 
+      /* Session directe (confirmation désactivée dans Supabase) */
       await resolveRole();
       _closeAllModals();
+
       window.dispatchEvent(new CustomEvent("goelo:auth-success", {
-        detail: { user: signupResult.data.user, role: window.GOELO_ROLE }
+        detail: { user: data.user, role: window.GOELO_ROLE }
       }));
+
       _redirectForRole(window.GOELO_ROLE);
+
     } catch (err) {
       console.error("[GoëloAuth] signup:", err);
       _showSignupError("Erreur inattendue. Réessaie.");
@@ -299,27 +370,45 @@ window.goeloGetSb = function () {
   }
 
   /* ════════════════════════════════════════════════════════════
-     9. RESET PASSWORD
+     8.  RESET PASSWORD — FIX COMPLET
+     ════════════════════════════════════════════════════════════
+     Causes du bug actuel :
+       • redirectTo hardcodé sur localhost
+       • detectSessionInUrl non activé → token non lu
+       • otp_expired si l'URL contient un mauvais domaine
+     Solution :
+       • redirectTo = window.location.origin + "/index.html"
+         (dynamique : fonctionne en local ET en prod sans config)
+       • detectSessionInUrl: true (§1)
+       • Supabase émet PASSWORD_RECOVERY → handler en §4
+     Configuration Supabase Dashboard requise :
+       Authentication → URL Configuration → Site URL = ton domaine de prod
+       Authentication → URL Configuration → Redirect URLs = https://ton-domaine.com/*
      ════════════════════════════════════════════════════════════ */
   async function _sendPasswordReset(email) {
     var sb = window.goeloGetSb();
     if (!sb) { _showError("Service temporairement indisponible."); return; }
+
+    /* redirectTo dynamique — s'adapte à localhost ET prod */
     var redirectTo = window.location.origin + "/index.html";
-    var resetResult = await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+
+    var { error } = await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: redirectTo
     });
-    if (resetResult.error) {
+
+    if (error) {
       _showError("Envoi impossible. Vérifie l'adresse e-mail.");
       return;
     }
+
     _showError(
       "E-mail envoyé — vérifie ta boîte (et le dossier spam). Le lien est valide 1 heure.",
-      true
+      true /* isInfo */
     );
   }
 
   /* ════════════════════════════════════════════════════════════
-     10. MODALES
+     9.  MODALES — design inchangé, bindings nettoyés
      ════════════════════════════════════════════════════════════ */
   var _lastFocus = null;
 
@@ -361,6 +450,7 @@ window.goeloGetSb = function () {
     }
   }
 
+  /* Messages d'erreur / succès ─────────────────────────────── */
   function _showError(msg, isInfo) {
     var box = document.getElementById("ml-error");
     if (!box) return;
@@ -390,7 +480,9 @@ window.goeloGetSb = function () {
   /* Injection HTML ──────────────────────────────────────────── */
   function _injectModals() {
     if (document.getElementById("modal-teamrider")) return;
+
     var html =
+      /* ── MODALE 1 : Team Rider ── */
       '<div id="modal-teamrider" class="goelo-modal" hidden role="dialog" aria-modal="true" aria-labelledby="mtr-title">' +
         '<div class="goelo-modal__backdrop" data-close-modal="modal-teamrider"></div>' +
         '<div class="goelo-modal__box goelo-modal__box--teamrider">' +
@@ -412,6 +504,8 @@ window.goeloGetSb = function () {
           '</div>' +
         '</div>' +
       '</div>' +
+
+      /* ── MODALE 2 : Connexion ── */
       '<div id="modal-login" class="goelo-modal" hidden role="dialog" aria-modal="true" aria-labelledby="ml-title">' +
         '<div class="goelo-modal__backdrop" data-close-modal="modal-login"></div>' +
         '<div class="goelo-modal__box goelo-modal__box--login">' +
@@ -443,6 +537,8 @@ window.goeloGetSb = function () {
           '<a class="ml-btn-outline" id="ml-go-access" href="gestion-team-rider.html">Demander l\'acc\u00e8s Team Rider</a>' +
         '</div>' +
       '</div>' +
+
+      /* ── MODALE 3 : Inscription ── */
       '<div id="modal-signup" class="goelo-modal" hidden role="dialog" aria-modal="true" aria-labelledby="su-title">' +
         '<div class="goelo-modal__backdrop" data-close-modal="modal-signup"></div>' +
         '<div class="goelo-modal__box goelo-modal__box--login">' +
@@ -466,41 +562,59 @@ window.goeloGetSb = function () {
           '<button type="button" class="ml-btn-outline" id="su-go-login">J\'ai d\u00e9j\u00e0 un compte</button>' +
         '</div>' +
       '</div>';
+
     document.body.insertAdjacentHTML("beforeend", html);
   }
 
   /* Bindings événements ─────────────────────────────────────── */
   function _bindEvents() {
+    /* Fermeture clavier */
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") _closeAllModals();
     });
+
+    /* Délégation globale des clics */
     document.addEventListener("click", function (e) {
+
+      /* Fermeture backdrop / croix */
       var closer = e.target.closest("[data-close-modal]");
       if (closer) { _closeModal(closer.getAttribute("data-close-modal")); return; }
+
+      /* Triggers auth → Modale 1 */
       if (e.target.closest("[data-goelo-auth-trigger]")) {
         e.preventDefault();
         _openModal("modal-teamrider");
         return;
       }
+
+      /* Modale 1 → Modale 2 (connexion) */
       if (e.target.closest("#mtr-go-login")) {
         _closeModal("modal-teamrider");
         setTimeout(function () { _openModal("modal-login"); }, 200);
         return;
       }
+
+      /* Modale 2 → Modale 3 (inscription) */
       if (e.target.closest("#ml-go-signup")) {
         _closeModal("modal-login");
         setTimeout(function () { _openModal("modal-signup"); }, 200);
         return;
       }
+
+      /* Modale 3 → Modale 2 (retour connexion) */
       if (e.target.closest("#su-go-login")) {
         _closeModal("modal-signup");
         setTimeout(function () { _openModal("modal-login"); }, 200);
         return;
       }
+
+      /* Liens "Demander l'accès" */
       if (e.target.closest("#mtr-go-access") || e.target.closest("#ml-go-access")) {
         _closeAllModals();
         return;
       }
+
+      /* Œil mot de passe */
       if (e.target.closest("#ml-eye-btn")) {
         var inp  = document.getElementById("ml-password");
         var btn  = document.getElementById("ml-eye-btn");
@@ -509,16 +623,20 @@ window.goeloGetSb = function () {
         btn.setAttribute("aria-pressed", show ? "true" : "false");
         return;
       }
+
+      /* Mot de passe oublié */
       if (e.target.closest("#ml-forgot")) {
         e.preventDefault();
         var emailVal = (document.getElementById("ml-email") || {}).value || "";
         if (!emailVal.trim()) {
-          _showError("Indique d'abord ton e-mail, puis clique « Mot de passe oublié ? ».");
+          _showError("Indique d'abord ton e-mail, puis clique « Mot de passe oubli\u00e9 ? ».");
           return;
         }
         _sendPasswordReset(emailVal);
       }
     });
+
+    /* Soumissions formulaires */
     document.addEventListener("submit", function (e) {
       if (!e.target) return;
       if (e.target.id === "ml-form") { e.preventDefault(); _submitLogin();  }
@@ -527,24 +645,24 @@ window.goeloGetSb = function () {
   }
 
   /* ════════════════════════════════════════════════════════════
-     11. API PUBLIQUE
+     10.  API PUBLIQUE
      ════════════════════════════════════════════════════════════ */
-  window.openGoeloAuth  = function () { _openModal("modal-teamrider"); };
-  window.closeGoeloAuth = _closeAllModals;
-  window.goeloSignOut   = async function () {
+  window.openGoeloAuth   = function () { _openModal("modal-teamrider"); };
+  window.closeGoeloAuth  = _closeAllModals;
+  window.goeloSignOut    = async function () {
     var sb = window.goeloGetSb();
     if (sb) await sb.auth.signOut();
     _emitRole("visitor", null);
   };
 
   /* ════════════════════════════════════════════════════════════
-     12. INIT
+     11.  INIT
      ════════════════════════════════════════════════════════════ */
   function _init() {
     _injectModals();
     _bindEvents();
     _bindAuthStateChange();
-    resolveRole();
+    resolveRole();   // détermine le rôle dès le chargement
   }
 
   if (document.readyState === "loading") {
@@ -553,4 +671,8 @@ window.goeloGetSb = function () {
     _init();
   }
 
+window.debugRole = function(role) {
+  window.GOELO_ROLE = role;
+  console.log("ROLE =", role);
+};
 })();

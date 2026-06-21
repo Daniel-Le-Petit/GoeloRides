@@ -138,26 +138,28 @@
     <a href="infos-pratiques.html">Infos</a>
   </nav>
 
-  <!-- 1. CONFIG (TOUJOURS EN PREMIER) charger SUPABASE et ANON_KEY-->
+<!--
+  ORDRE D'INCLUSION IMPÉRATIF :
+  1. goelo-config.js  → window.GOELO_CONFIG
+  2. supabase.min.js  → window.supabase
+  3. auth.js          → window.goeloGetSb, window.GOELO_ROLE, goelo:role-ready
+  4. ***-rider.js    → écoute goelo:role-ready, lit GOELO_ROLE
+-->
   <script src="js/goelo-config.js"></script>
-
-  <!-- 2. SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-  <!-- 3. SCRIPTS (TOUS DEFER OK MAIS APRÈS SDK) -->
+  <script src="js/auth.js"></script>
+  <script src="js/sorties.js"></script>
+  <script src="js/goelo-swipe-nav.js" defer></script>
   <script>
     window.GOELO_ONESIGNAL_APP_ID = "";
     window.GOELO_ONESIGNAL_SAFARI_WEB_ID = "";
   </script>
-
-  <script src="js/auth.js"></script>
   <script src="goelo-onesignal.js?v=16" defer></script>
   <script src="goelo-enable-notifications-banner.js?v=11" defer></script>
   <script src="goelo-notif-manual-button.js?v=11" defer></script>
   <script>window.GOELO_DEBUG = false;</script>
   <script src="goelo-debug-panel.js?v=1" defer></script>
   <script src="goelo-swipe-nav.js" defer></script>
-  <script src="js/sorties.js"></script>
 
 
   <script>
