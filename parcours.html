@@ -43,45 +43,64 @@
 
   <main class="pd-main" id="main-content" role="main">
 
-    <!-- ── HERO SORTIE ── -->
+    <!-- ── HERO SORTIE (focus date type Strava + grille métriques) ── -->
     <header class="pd-hero" id="pd-hero">
-      <div class="pd-hero__badges">
-        <span class="pd-badge pd-badge--type" id="pd-type">Route</span>
-        <span class="pd-badge pd-badge--group" id="pd-group">Groupe Blanc · 15–18 km/h</span>
+
+      <div class="pd-hero__top">
+        <div class="go-cal" id="pd-cal" aria-hidden="true">
+          <div class="go-cal__head" id="pd-cal-month">—</div>
+          <div class="go-cal__body">
+            <span class="go-cal__day" id="pd-cal-day">?</span>
+            <span class="go-cal__wd" id="pd-cal-wd"></span>
+          </div>
+        </div>
+        <div class="pd-hero__intro">
+          <p class="pd-hero__datetime" id="pd-datetime">Chargement…</p>
+          <div class="pd-hero__people" id="pd-hero-people" hidden>
+            <div class="pd-hero__avatars" id="pd-hero-avatars"></div>
+            <p class="pd-hero__people-text" id="pd-hero-people-text"></p>
+          </div>
+        </div>
       </div>
+
       <h1 class="pd-title" id="pd-title">Chargement…</h1>
-      <p class="pd-date" id="pd-date"></p>
       <p class="pd-captain" id="pd-captain"></p>
 
-      <!-- Grille de cartes infos -->
-      <div class="pd-stats" id="pd-stats">
-        <div class="pd-stat">
-          <span class="pd-stat__icon" aria-hidden="true">📏</span>
-          <span class="pd-stat__label">Distance (trace GPX)</span>
-          <span class="pd-stat__value" id="pd-km">—</span>
+      <!-- Grille métriques (Sport · Groupe · Distance · Surface) -->
+      <div class="pd-metrics" id="pd-metrics">
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Sport</span>
+          <span class="pd-metrics__value" id="pd-metric-sport">🚴 Route</span>
         </div>
-        <div class="pd-stat">
-          <span class="pd-stat__icon" aria-hidden="true">⛰️</span>
-          <span class="pd-stat__label">Dénivelée</span>
-          <span class="pd-stat__value" id="pd-dplus">—</span>
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Groupe</span>
+          <span class="pd-metrics__value" id="pd-metric-group">—</span>
         </div>
-        <div class="pd-stat">
-          <span class="pd-stat__icon" aria-hidden="true">⏱️</span>
-          <span class="pd-stat__label">Durée estimée</span>
-          <span class="pd-stat__value" id="pd-duration">—</span>
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Distance</span>
+          <span class="pd-metrics__value" id="pd-km">—</span>
         </div>
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Dénivelé</span>
+          <span class="pd-metrics__value" id="pd-dplus">—</span>
+        </div>
+      </div>
+
+      <!-- Infos complémentaires -->
+      <div class="pd-stats pd-stats--secondary" id="pd-stats">
         <div class="pd-stat">
-          <span class="pd-stat__icon" aria-hidden="true">🤝</span>
           <span class="pd-stat__label">Rendez-vous</span>
           <span class="pd-stat__value" id="pd-meet">—</span>
         </div>
         <div class="pd-stat">
-          <span class="pd-stat__icon" aria-hidden="true">🚴</span>
           <span class="pd-stat__label">Départ roulant</span>
           <span class="pd-stat__value" id="pd-start">—</span>
         </div>
+        <div class="pd-stat">
+          <span class="pd-stat__label">Durée estimée</span>
+          <span class="pd-stat__value" id="pd-duration">—</span>
+        </div>
         <div class="pd-stat pd-stat--wide">
-          <span class="pd-stat__icon" aria-hidden="true">📍</span>
           <span class="pd-stat__label">Point de départ</span>
           <span class="pd-stat__value" id="pd-place">—</span>
         </div>

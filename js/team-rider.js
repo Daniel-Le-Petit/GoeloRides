@@ -4,20 +4,17 @@
 (function () {
   "use strict";
 
-  var MONTH_SHORT = ["","JAN","FÉV","MARS","AVR","MAI","JUIN","JUIL","AOÛT","SEPT","OCT","NOV","DÉC"];
-  var GRUP_COLOR  = { blanc:"#9ca3af", vert:"#C8F135", bleu:"#60a5fa", rouge:"#f87171" };
+  var _currentFilter = "all";
+  var _currentRole   = "visitor";
+  var _currentEmail  = "";
+  var _bootDone      = false;
+
   var URGENCE_MSGS = {
     retard:    "\u23f1 GOËLORIDES \u2014 Retard\n\nD\u00e9part retard\u00e9 de 15 min.\nMerci de patienter au Parking du Kasino.\n\n\uD83D\uDCAC Message du Team Rider",
     annulation:"\u274C GOËLORIDES \u2014 Annulation\n\nSortie annul\u00e9e \u2014 conditions m\u00e9t\u00e9o.\n\nProchaine sortie bient\u00f4t\u00a0:\ngoelorides.onrender.com",
     meteo:     "\uD83C\uDF27 GOËLORIDES \u2014 M\u00e9t\u00e9o\n\nSortie maintenue \u2705\nAverses possibles \u2014 coupe-vent recommand\u00e9.\n\n\u23f0 Horaire inchang\u00e9",
     rdv:       "\uD83D\uDCCD GOËLORIDES \u2014 Changement RDV\n\n\u26A0\uFE0F Nouveau point de d\u00e9part\u00a0:\nParking de la plage du Ch\u00e2telet\n(et non le Kasino)\n\n\u23f0 Horaire inchang\u00e9"
   };
-
-  /* CORRECTION C5 : valeur initiale cohérente avec le format officiel */
-  var _currentFilter = "all";
-  var _currentRole   = "visitor";
-  var _currentEmail  = "";
-  var _bootDone      = false;  /* guard anti-double boot */
 
   /* ── Toast ─────────────────────────────────────────────────── */
   function toast(msg) {
@@ -44,28 +41,6 @@
     if (!raw) return {};
     if (typeof raw === "object") return raw;
     try { return JSON.parse(raw); } catch (e) { return {}; }
-  }
-
-  function routeToCard(row) {
-    var fc    = parseFc(row.front_config);
-    var stats = fc.stats || {};
-    var statut = fc.sortieStatus === "cancelled" ? "annulee"
-               : fc.visibility   === "public"    ? "publiee"
-               : "brouillon";
-    return {
-      id:        row.id,
-      titre:     row.track_name || "\u2014",
-      groupe:    row.group_label || "\u2014",
-      pace:      row.pace_label  || "\u2014",
-      statut:    statut,
-      km:        stats.totalKm    != null ? stats.totalKm   : (fc.km    != null ? fc.km    : null),
-      dplus:     stats.elevGainM  != null ? stats.elevGainM : (fc.dplus != null ? fc.dplus : null),
-      date:      fc.rideDateIso   || null,
-      meetTime:  fc.meetTime      || fc.rideTime || null,
-      meetPlace: fc.meetPlace     || "Devant le Kasino",
-      captain:   fc.captain       || fc.rideLeader || "\u2014",
-      isActive:  row.is_active !== false
-    };
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -127,11 +102,16 @@
   async function renderSorties() {
     var list = document.getElementById("sorties-list");
     if (!list) return;
-    list.innerHTML = "<p style=\"font-size:.82rem;color:var(--muted)\">Chargement\u2026</p>";
+    list.innerHTML = "<p class=\"go-sc-empty\">Chargement…</p>";
 
     var sb = window.goeloGetSb();
     if (!sb) {
-      list.innerHTML = "<p style=\"color:var(--red)\">Client Supabase non disponible.</p>";
+      list.innerHTML = "<p class=\"go-sc-empty\" style=\"color:var(--red)\">Client Supabase non disponible.</p>";
+      return;
+    }
+
+    if (!window.GoeloSortieCards) {
+      list.innerHTML = "<p class=\"go-sc-empty\">Module cartes non chargé.</p>";
       return;
     }
 
@@ -141,7 +121,6 @@
       .order("sort_order", { ascending: true })
       .order("created_at",  { ascending: false });
 
-    /* CORRECTION C5 : comparer avec "admin" (format officiel) */
     if (_currentRole !== "admin") {
       query = query.eq("is_active", true);
     }
@@ -149,77 +128,46 @@
     var result = await query;
     if (result.error) {
       console.error("[team-rider.js] renderSorties:", result.error.message);
-      list.innerHTML = "<p style=\"color:var(--red)\">Erreur : " + result.error.message + "</p>";
+      list.innerHTML = "<p class=\"go-sc-empty\" style=\"color:var(--red)\">Erreur : " + result.error.message + "</p>";
       return;
     }
 
-    var cards = (result.data || []).map(routeToCard);
+    var cards = (result.data || []).map(function (row) {
+      return window.GoeloSortieCards.fromRouteRow(row);
+    });
 
     if (_currentFilter === "publiee") {
       cards = cards.filter(function (c) { return c.statut === "publiee"; });
     } else if (_currentFilter === "brouillon") {
       cards = cards.filter(function (c) { return c.statut === "brouillon"; });
     } else if (_currentFilter === "mine") {
-      var email  = _currentEmail;
-      var pseudo = email ? email.split("@")[0] : "";
       cards = cards.filter(function (c) {
-        return email && (c.captain === email || c.captain === pseudo);
+        return window.GoeloSortieCards.isCardOwner(c, window.GOELO_USER);
       });
     }
 
-    if (cards.length === 0) {
-      list.innerHTML = "<p style=\"font-size:.82rem;color:var(--muted);padding:.5rem 0\">Aucune sortie pour ce filtre.</p>";
-      return;
-    }
+    try {
+      var partRpc = await sb.rpc("signup_list_all_names", {});
+      if (!partRpc.error && partRpc.data) {
+        var byRoute = partRpc.data;
+        if (Array.isArray(byRoute) && byRoute.length) byRoute = byRoute[0];
+        if (byRoute && typeof byRoute === "object") {
+          cards.forEach(function (c) {
+            var v = byRoute[c.id];
+            if (!v) return;
+            var arr = Array.isArray(v) ? v : (v.participants || []);
+            c.participants = arr.map(function (p) {
+              return typeof p === "string" ? p : (p.pseudo || p.email || "?");
+            });
+          });
+        }
+      }
+    } catch (e) { void e; }
 
-    list.innerHTML = cards.map(function (c) {
-      var gc       = GRUP_COLOR[_groupKey(c.groupe)] || "#888";
-      var gl       = c.groupe;
-      var badgeCls = c.statut === "publiee" ? "badge-pub"
-                   : c.statut === "annulee" ? "badge-cancel"
-                   : "badge-draft";
-      var badgeTxt = c.statut === "publiee" ? "PUB"
-                   : c.statut === "annulee" ? "ANNUL\u00c9"
-                   : "DRAFT";
-      var kmStr    = c.km    != null ? c.km    + " km"   : "\u2014 km";
-      var dplusStr = c.dplus != null ? c.dplus + " m D+" : "\u2014 m D+";
-      var dateObj  = c.date ? new Date(c.date + "T00:00:00") : null;
-      var day      = dateObj ? dateObj.getDate() : "?";
-      var month    = dateObj ? MONTH_SHORT[dateObj.getMonth() + 1] : "";
-
-      var actions =
-        "<button class=\"btn-sm\" onclick=\"location.href='parcours.html?id=" + c.id + "'\">👁 Voir</button>" +
-        "<button class=\"btn-sm accent\" onclick=\"location.href='gestion-sorties.html?mode=edit&id=" + c.id + "'\">✏️ Modifier</button>" +
-        "<button class=\"btn-sm danger\" onclick=\"cancelSortie(" +
-        JSON.stringify(c.id) + "," +
-        JSON.stringify(c.titre) +
-        ",this)\">✕ Annuler</button>";
-
-      return [
-        "<div class=\"sortie-card\" data-s=\"" + c.statut + "\">",
-        "<div class=\"sortie-main\">",
-        "<div class=\"s-date\"><div class=\"s-date-n\">" + day + "</div><div class=\"s-date-m\">" + month + "</div></div>",
-        "<div class=\"s-info\">",
-        "<div class=\"s-title\">" + _esc(c.titre) + "</div>",
-        "<div class=\"s-sub\">" + kmStr + " \u00b7 " + dplusStr + " \u00b7 " + _esc(gl) + "</div>",
-        "</div>",
-        "<div class=\"dot-niv\" style=\"background:" + gc + "\"></div>",
-        "<span class=\"badge " + badgeCls + "\">" + badgeTxt + "</span>",
-        "</div>",
-        "<div class=\"s-inscrits\"><span class=\"inscrits-txt\">Capitaine : <strong>" + _esc(c.captain) + "</strong></span></div>",
-        "<div class=\"s-actions\">" + actions + "</div>",
-        "</div>"
-      ].join("");
-    }).join("");
-  }
-
-  function _groupKey(groupLabel) {
-    var gl = String(groupLabel || "").toLowerCase();
-    if (gl.indexOf("blanc") !== -1) return "blanc";
-    if (gl.indexOf("vert")  !== -1) return "vert";
-    if (gl.indexOf("bleu")  !== -1) return "bleu";
-    if (gl.indexOf("rouge") !== -1) return "rouge";
-    return "vert";
+    window.GoeloSortieCards.renderList(cards, list, {
+      viewMode: "team-rider",
+      emptyHtml: "<p class=\"go-sc-empty\">Aucune sortie pour ce filtre.</p>"
+    });
   }
 
   function _esc(s) {
@@ -247,9 +195,13 @@
       fc.sortieStatus = "cancelled";
       var upd = await sb.from("routes").update({ front_config: fc }).eq("id", id);
       if (upd.error) throw upd.error;
-      var card  = btn ? btn.closest(".sortie-card") : null;
-      var badge = card ? card.querySelector(".badge") : null;
-      if (badge) { badge.className = "badge badge-cancel"; badge.textContent = "ANNUL\u00c9"; }
+      var card  = btn ? btn.closest(".go-sc-card") : null;
+      var badge = card ? card.querySelector(".go-sc-badge--statut") : null;
+      if (card) card.classList.add("is-cancelled");
+      if (badge) {
+        badge.className = "go-sc-badge go-sc-badge--statut go-sc-badge--cancel";
+        badge.textContent = "Annulée";
+      }
       toast("Sortie \"" + titre + "\" annul\u00e9e \u2014 envoie un message Messenger \u2193");
       setTimeout(function () { scrollToId("urgence-section"); }, 800);
     } catch (err) {
@@ -397,6 +349,17 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-go-sc-cancel]");
+      if (!btn) return;
+      e.preventDefault();
+      cancelSortie(
+        btn.getAttribute("data-go-sc-cancel"),
+        btn.getAttribute("data-go-sc-title") || "cette sortie",
+        btn
+      );
+    });
+
     /* Cas 1 : rôle déjà connu (auth.js plus rapide) */
     if (window.GOELO_ROLE && window.GOELO_ROLE !== "visitor") {
       startWithRole(window.GOELO_ROLE, window.GOELO_USER);

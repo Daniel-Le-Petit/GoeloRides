@@ -23,13 +23,10 @@
     }
   };
 
-  var AVATAR_COLORS = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD", "#86EFAC"];
   var FR_MONTHS = {
     janvier: 1, fevrier: 2, mars: 3, avril: 4, mai: 5, juin: 6,
     juillet: 7, aout: 8, septembre: 9, octobre: 10, novembre: 11, decembre: 12
   };
-  var MONTH_SHORT  = ["", "JAN", "FÉV", "MARS", "AVR", "MAI", "JUIN", "JUIL", "AOÛT", "SEPT", "OCT", "NOV", "DÉC"];
-  var WEEKDAY_SHORT = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 
   function getSb() {
     return window.goeloGetSb ? window.goeloGetSb() : null;
@@ -47,53 +44,6 @@
   }
   function escapeAttr(s) {
     return String(s || "").replace(/"/g, "&quot;");
-  }
-
-  /* ════════════════════════════════════════════════════════════
-     Mode Team Rider (JWT → app_metadata.goelo_admin)
-     ════════════════════════════════════════════════════════════ */
-  function decodeJwtPayload(accessToken) {
-    if (!accessToken || typeof accessToken !== "string") return null;
-    var parts = accessToken.split(".");
-    if (parts.length < 2) return null;
-    try {
-      var b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      var pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : "";
-      return JSON.parse(atob(b64 + pad));
-    } catch (err) {
-      void err;
-      return null;
-    }
-  }
-
-  function tokenIsTeamRider(accessToken) {
-    var p = decodeJwtPayload(accessToken);
-    if (!p || typeof p !== "object") return false;
-    if (typeof p.exp === "number" && p.exp * 1000 < Date.now()) return false;
-    var am = p.app_metadata;
-    if (!am || typeof am !== "object") return false;
-    var v = am.goelo_admin;
-    return v === true || v === "true" || v === 1 || v === "1";
-  }
-
-  function detectTeamRider() {
-    try {
-      var raw = sessionStorage.getItem("goelo_admin_auth_v1");
-      if (raw) {
-        var o = JSON.parse(raw);
-        if (o && o.access_token && tokenIsTeamRider(o.access_token)) return true;
-      }
-    } catch (err) { void err; }
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (!k || k.indexOf("sb-") !== 0 || k.indexOf("-auth-token") === -1) continue;
-        var s = JSON.parse(localStorage.getItem(k));
-        var tok = s && (s.access_token || (s.currentSession && s.currentSession.access_token));
-        if (tok && tokenIsTeamRider(tok)) return true;
-      }
-    } catch (err) { void err; }
-    return false;
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -189,8 +139,27 @@
       meetTime:       String(fc.meetTime || fc.rideTime || ""),
       km:             null,
       dplus:          null,
+      paceKmh:        parsePaceKmh(row.pace_label),
+      imageUrl:       String(fc.thumbSrc || fc.coverImageUrl || fc.coverImageDataUrl || ""),
       participants:   []
     };
+  }
+
+  function parsePaceKmh(paceLabel) {
+    var m = String(paceLabel || "").match(/(\d+)\s*[–-]\s*(\d+)/);
+    if (m) return (parseInt(m[1], 10) + parseInt(m[2], 10)) / 2;
+    return 20;
+  }
+
+  async function supabaseRpc(fnName, payload) {
+    var sb = getSb();
+    if (!sb) return null;
+    var r = await sb.rpc(fnName, payload || {});
+    if (r.error) {
+      console.warn("[sorties] RPC", fnName, r.error.message);
+      return null;
+    }
+    return r.data;
   }
 
   /*
@@ -342,11 +311,107 @@ async function fetchSorties() {
      Rendu
      ════════════════════════════════════════════════════════════ */
   var state = {
-    sorties:      [],
-    filter:       "tous",
-    search:       "",
-    isTeamRider:  false
+    sorties:         [],
+    filter:          "tous",
+    search:          "",
+    joinedRouteIds:  new Set()
   };
+
+  function getUserRole() {
+    return window.GoeloSortieCards
+      ? window.GoeloSortieCards.getUserRole()
+      : (window.GOELO_ROLE === "admin" || window.GOELO_ROLE === "team_rider" || window.GOELO_ROLE === "user"
+        ? window.GOELO_ROLE : "visitor");
+  }
+
+  function isTeamRiderOrAdmin() {
+    var r = getUserRole();
+    return r === "team_rider" || r === "admin";
+  }
+
+  function sortieToCard(s) {
+    var SC = window.GoeloSortieCards;
+    return {
+      id:           s.id,
+      title:        s.title,
+      group:        s.group,
+      groupKey:     SC ? SC.groupKeyFromLabel(s.group) : "vert",
+      type:         s.type,
+      place:        s.place,
+      date:         s.date,
+      meetTime:     s.meetTime,
+      km:           s.km,
+      dplus:        s.dplus,
+      paceKmh:      s.paceKmh,
+      captain:      s.captain,
+      status:       s.status,
+      imageUrl:     s.imageUrl,
+      participants: s.participants || []
+    };
+  }
+
+  function render() {
+    var host = document.getElementById("sorties-list");
+    if (!host) return;
+    if (!window.GoeloSortieCards) {
+      host.innerHTML = '<p class="go-sc-empty">Chargement…</p>';
+      return;
+    }
+    var list = state.sorties.filter(matchesFilter).map(sortieToCard);
+    window.GoeloSortieCards.renderList(list, host, {
+      viewMode: "sorties",
+      joinedRouteIds: state.joinedRouteIds,
+      emptyHtml: '<p class="go-sc-empty" role="status">Aucune sortie pour ce filtre.</p>'
+    });
+  }
+
+  async function fetchJoinedRouteIds() {
+    if (getUserRole() !== "user") {
+      state.joinedRouteIds = new Set();
+      return;
+    }
+    var email = window.GOELO_USER && window.GOELO_USER.email;
+    if (!email) return;
+    var data = await supabaseRpc("signup_list_registered_routes", { p_email: email });
+    var routes = data && (data.routes || data);
+    if (!Array.isArray(routes)) routes = [];
+    state.joinedRouteIds = new Set(routes.map(String));
+  }
+
+  async function cancelSortieAdmin(id, titre, btn) {
+    if (!confirm('Annuler la sortie "' + titre + '" ?')) return;
+    var sb = getSb();
+    if (!sb) return;
+    try {
+      var fetch = await sb.from("routes").select("front_config").eq("id", id).single();
+      if (fetch.error) throw fetch.error;
+      var fc = parseFrontConfig(fetch.data.front_config);
+      fc.sortieStatus = "cancelled";
+      var upd = await sb.from("routes").update({ front_config: fc }).eq("id", id);
+      if (upd.error) throw upd.error;
+      var sortie = state.sorties.find(function (s) { return String(s.id) === String(id); });
+      if (sortie) sortie.status = "cancelled";
+      var card = btn ? btn.closest(".go-sc-card") : null;
+      if (card) card.classList.add("is-cancelled");
+      render();
+    } catch (err) {
+      console.error("[sorties] cancelSortie:", err.message || err);
+      alert("Erreur : " + (err.message || err));
+    }
+  }
+
+  function bindCardActions() {
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-go-sc-cancel]");
+      if (!btn) return;
+      e.preventDefault();
+      cancelSortieAdmin(
+        btn.getAttribute("data-go-sc-cancel"),
+        btn.getAttribute("data-go-sc-title") || "cette sortie",
+        btn
+      );
+    });
+  }
 
   function matchesFilter(s) {
     var now = new Date();
@@ -367,102 +432,6 @@ async function fetchSorties() {
       if (hay.indexOf(state.search) === -1) return false;
     }
     return true;
-  }
-
-  function avatarsHtml(participants) {
-    if (!participants.length) return "";
-    var shown = participants.slice(0, 3);
-    var html = shown.map(function (pseudo, i) {
-      var initials = pseudo.split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
-      var color = AVATAR_COLORS[(pseudo.length + i) % AVATAR_COLORS.length];
-      return (
-        '<span class="so-avatar" style="background:' + color + '" title="' + escapeAttr(pseudo) + '">' +
-        escapeHtml(initials) +
-        "</span>"
-      );
-    }).join("");
-    var more = participants.length - shown.length;
-    if (more > 0) html += '<span class="so-avatar so-avatar--more">+' + more + "</span>";
-    return html;
-  }
-
-  function typeLabel(t) {
-    if (t === "gravel") return "Gravel";
-    if (t === "vtt")    return "VTT";
-    return "Route";
-  }
-
-  function rowHtml(s) {
-    var tone      = toneFromLevelClass(s.levelClass);
-    var cancelled = s.status === "cancelled";
-    var d         = s.date;
-    var detailHref = "parcours.html?id=" + encodeURIComponent(s.id);
-    var weekday   = d ? WEEKDAY_SHORT[d.getDay()] : "—";
-    var dayNum    = d ? d.getDate() : "?";
-    var month     = d ? MONTH_SHORT[d.getMonth() + 1] : "";
-    // CORRECTION 3 appliquée : utiliser s.meetTime (heure RDV) prioritairement
-    var time = s.meetTime
-      ? s.meetTime.replace(":", "h")
-      : d ? String(d.getHours()) + "h" + String(d.getMinutes()).padStart(2, "0") : "";
-
-    var stats =
-      "<strong>" + (s.km != null ? s.km + " km" : "— km") + "</strong>" +
-      " · " + (s.dplus != null ? s.dplus + " m D+" : "— m D+") +
-      " · " + escapeHtml(typeLabel(s.type));
-
-    var thumbSrc = s.imageUrl || null;
-
-    var joinBtn = state.isTeamRider
-      ? '<a class="so-act" href="' + escapeAttr(detailHref) + '">Rejoindre</a>'
-      : '<button type="button" class="so-act is-locked" data-lock="join" aria-disabled="true">🔒 Rejoindre</button>';
-
-    var manageBtns = state.isTeamRider
-      ? '<a class="so-act" href="' + escapeAttr("gestion-sorties.html?mode=edit&id=" + encodeURIComponent(s.id)) + '">Modifier</a>' +
-        '<a class="so-act" href="' + escapeAttr(detailHref) + '">Annuler</a>'
-      : '<button type="button" class="so-act is-locked" data-lock="manage" aria-disabled="true">🔒 Modifier</button>' +
-        '<button type="button" class="so-act is-locked" data-lock="manage" aria-disabled="true">🔒 Annuler</button>';
-
-    var peopleHtml = avatarsHtml(s.participants || []);
-    var imgHtml = thumbSrc
-      ? '<img class="so-thumb" src="' + escapeAttr(thumbSrc) + '" loading="lazy">'
-      : '';
-
-    return (
-      '<li><article class="so-row' + (cancelled ? " is-cancelled" : "") + '">' +
-        '<div class="so-date so-date--' + tone + '">' +
-          '<span class="so-date__wd">'  + escapeHtml(weekday)        + '</span>' +
-          '<span class="so-date__num">' + escapeHtml(String(dayNum)) + '</span>' +
-          '<span class="so-date__mo">'  + escapeHtml(month)          + '</span>' +
-        '</div>' +
-        '<div class="so-body">' +
-          '<h2 class="so-title">' + escapeHtml(s.title) +
-            (cancelled ? '<span class="so-badge so-badge--cancelled">Annulée</span>' : '') +
-          '</h2>' +
-          '<p class="so-stats">' + stats + '</p>' +
-          '<p class="so-meta">' +
-            '<span>📍 ' + escapeHtml(s.place) + '</span>' +
-            (time ? '<span>🕒 ' + time + '</span>' : '') +
-          '</p>' +
-          '<div class="so-actions">' +
-            joinBtn + manageBtns +
-          '</div>' +
-        '</div>' +
-        '<div class="so-card-right">' +
-          imgHtml +
-          '<a class="so-btn-voir" href="' + escapeAttr(detailHref) + '">Voir</a>' +
-          (peopleHtml ? '<div class="so-people">' + peopleHtml + '</div>' : '') +
-        '</div>' +
-      '</article></li>'
-    );
-  }
-
-  function render() {
-    var host = document.getElementById("sorties-list");
-    if (!host) return;
-    var list = state.sorties.filter(matchesFilter);
-    host.innerHTML = list.length
-      ? list.map(rowHtml).join("")
-      : '<li class="so-empty" role="status">Aucune sortie pour ce filtre.</li>';
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -581,10 +550,10 @@ async function fetchSorties() {
      État Team Rider
      ════════════════════════════════════════════════════════════ */
   function applyTeamRiderState() {
-    state.isTeamRider = detectTeamRider();
+    var unlocked = isTeamRiderOrAdmin();
     var createBtn = document.getElementById("nav-create-sortie");
     if (createBtn) {
-      if (state.isTeamRider) {
+      if (unlocked) {
         createBtn.classList.remove("is-locked");
         createBtn.removeAttribute("data-lock");
         createBtn.removeAttribute("aria-disabled");
@@ -596,7 +565,7 @@ async function fetchSorties() {
       }
     }
     var aside = document.getElementById("so-aside");
-    if (aside && state.isTeamRider) {
+    if (aside && unlocked) {
       aside.classList.add("is-unlocked");
       aside.innerHTML =
         '<div class="so-aside__lock" aria-hidden="true">✓</div>' +
@@ -635,13 +604,20 @@ async function fetchSorties() {
     applyTeamRiderState();
     bindFilters();
     bindLockTriggers();
+    bindCardActions();
+
+    window.addEventListener("goelo:role-ready", function () {
+      applyTeamRiderState();
+      fetchJoinedRouteIds().then(render);
+    });
 
     window.addEventListener("goelo:auth-success", function () {
       applyTeamRiderState();
-      render();
+      fetchJoinedRouteIds().then(render);
     });
 
     state.sorties = await fetchSorties();
+    await fetchJoinedRouteIds();
     render();
 
     /* Enrichissements asynchrones : participants */

@@ -1,9 +1,13 @@
 /**
  * GoëloRides — parcours.js
  *
- * Corrections :
- *  - renderJoin() rappelé sur goelo:role-ready (bouton ne reste plus sur
- *    "Connexion requise" quand auth.js finit après parcours.js)
+ * Corrections inscription :
+ *  - isJoined() : SELECT user_id + canceled_at IS NULL, puis RPC
+ *    signup_get_registration (SECURITY DEFINER) si RLS bloque le direct
+ *  - renderJoin() : état bouton basé uniquement sur isJoined(), pas sur
+ *    sortie.participants
+ *  - waitForAuthReady() avant le premier renderJoin (session hydratée)
+ *  - goelo:role-ready sans { once:true } pour resync après auth tardive
  *  - bindJoin() appelé une seule fois après renderAll(), guard dataset.bound
  *  - bindAccordions() appelée avec typeof guard (fonction externe optionnelle)
  *  - pd-participants-count synchronisé avec renderParticipants()
@@ -43,24 +47,69 @@
   async function getUser() {
     var sb = getSb();
     if (!sb) return null;
+
+    /* Session locale d'abord (évite la course avec resolveRole au chargement) */
+    var sessionResult = await sb.auth.getSession();
+    var sessionUser = sessionResult.data && sessionResult.data.session
+      ? sessionResult.data.session.user
+      : null;
+    if (sessionUser) return sessionUser;
+
     var result = await sb.auth.getUser();
     return (result.data && result.data.user) ? result.data.user : null;
   }
 
-  /* =========================================================
-     JOIN STATE
-  ========================================================= */
-  async function isJoined(routeId, userId) {
+  /**
+   * État inscrit = vérité Supabase uniquement (pas sortie.participants).
+   * 1. SELECT signups (user_id + canceled_at IS NULL) si RLS le permet
+   * 2. Sinon RPC signup_get_registration (SECURITY DEFINER, contourne RLS)
+   */
+  async function isJoined(routeId, user) {
     var sb = getSb();
-    if (!sb || !routeId || !userId) return false;
-    var result = await sb
+    if (!sb || !routeId || !user || !user.id) return false;
+
+    var direct = await sb
       .from("signups")
       .select("id")
       .eq("route_id", routeId)
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .is("canceled_at", null)
       .maybeSingle();
-    return !!(result.data);
+
+    if (direct.error) {
+      console.warn("[isJoined] direct signups:", direct.error.message, direct.error.code);
+    } else if (direct.data) {
+      return true;
+    }
+
+    /* RPC user_id (auth.uid()) — si migration signup_is_joined appliquée */
+    var rpcUser = await sb.rpc("signup_is_joined", { p_route_id: routeId });
+    if (!rpcUser.error && rpcUser.data && typeof rpcUser.data === "object") {
+      if (rpcUser.data.joined === true) return true;
+      if (rpcUser.data.joined === false && !direct.error) return false;
+    } else if (rpcUser.error && rpcUser.error.code !== "PGRST202") {
+      console.warn("[isJoined] signup_is_joined:", rpcUser.error.message);
+    }
+
+    /* Fallback RPC email (legacy signups ou RLS bloquant le SELECT direct) */
+    var email = (user.email || "").trim().toLowerCase();
+    if (!email) return false;
+
+    var rpc = await sb.rpc("signup_get_registration", {
+      p_route_id: routeId,
+      p_email: email
+    });
+
+    if (rpc.error) {
+      console.warn("[isJoined] signup_get_registration:", rpc.error.message);
+      return false;
+    }
+
+    var payload = rpc.data;
+    if (payload && typeof payload === "object") {
+      return payload.registered === true;
+    }
+    return false;
   }
 
   /* =========================================================
@@ -122,13 +171,13 @@ async function toggleSignup(routeId) {
     }
 
     btn.setAttribute("data-auth-pending", "0");
-    var joined = await isJoined(sortie.id, user.id);
+    var joined = await isJoined(sortie.id, user);
     btn.disabled    = false;
     btn.textContent = joined ? "J'annule" : "Je participe !";
     btn.setAttribute("data-joined", joined ? "1" : "0");
 
     if (count) {
-      var n = Array.isArray(sortie.participants) ? sortie.participants.length : 0;
+      var n = await getParticipantCount(sortie.id);
       count.textContent = n > 0
         ? n + " participant" + (n > 1 ? "s" : "")
         : "";
@@ -167,6 +216,7 @@ async function toggleSignup(routeId) {
         if (!sortie || !sortie.id) throw new Error("Identifiant sortie manquant");
 
         var res = await toggleSignup(sortie.id);
+        if (!res || !res.action) throw new Error("Réponse toggle_signup invalide");
         /* res = { action: "joined"|"unjoined", count: number } */
 
         btn.textContent = res.action === "joined" ? "J'annule" : "Je participe !";
@@ -193,22 +243,44 @@ async function toggleSignup(routeId) {
   }
 
   /* =========================================================
-     PARTICIPANTS
+     PARTICIPANTS (RPC — pas de SELECT direct sur signups)
   ========================================================= */
+  async function getParticipantCount(routeId) {
+    var sb = getSb();
+    if (!sb || !routeId) return 0;
+    var rpc = await sb.rpc("signup_list_all_names", {});
+    if (rpc.error || rpc.data == null) {
+      console.warn("[PARTICIPANTS] signup_list_all_names:", rpc.error && rpc.error.message);
+      return Array.isArray(sortie && sortie.participants) ? sortie.participants.length : 0;
+    }
+    var data = rpc.data;
+    var bucket = data && data[routeId];
+    if (!bucket) return 0;
+    if (Array.isArray(bucket)) return bucket.length;
+    if (bucket.participants && Array.isArray(bucket.participants)) return bucket.participants.length;
+    return 0;
+  }
+
   async function refreshParticipants() {
     var sb = getSb();
     if (!sb || !sortie || !sortie.id) return;
-    var result = await sb
-      .from("signups")
-      .select("id, pseudo, email, cyclist_level, created_at")
-      .eq("route_id", sortie.id)
-      .is("canceled_at", null)
-      .order("created_at", { ascending: true });
-    if (result.error) {
-      console.error("[PARTICIPANTS]", result.error);
+    var rpc = await sb.rpc("signup_list_all_names", {});
+    if (rpc.error || rpc.data == null) {
+      console.error("[PARTICIPANTS]", rpc.error);
       return;
     }
-    sortie.participants = result.data || [];
+    var bucket = rpc.data[sortie.id];
+    var names = [];
+    if (Array.isArray(bucket)) {
+      names = bucket;
+    } else if (bucket && Array.isArray(bucket.participants)) {
+      names = bucket.participants;
+    }
+    sortie.participants = names.map(function (n) {
+      if (typeof n === "string") return { pseudo: n };
+      if (n && typeof n === "object") return n;
+      return { pseudo: String(n) };
+    });
   }
 
   function avatarColor(seed, i) {
@@ -224,6 +296,8 @@ async function toggleSignup(routeId) {
     var list = sortie.participants || [];
 
     if (badge) badge.textContent = list.length > 0 ? "(" + list.length + ")" : "";
+
+    renderHeroPeople(list);
 
     if (!host) return;
     if (list.length === 0) {
@@ -244,19 +318,96 @@ async function toggleSignup(routeId) {
   /* =========================================================
      HERO
   ========================================================= */
+  var MONTH_CAL = ["", "Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+  var WEEKDAY_CAL = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+
+  function parseSortieDate(iso, timeStr) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso).trim())) return null;
+    var p = String(iso).trim().split("-");
+    var hh = 8;
+    var mm = 30;
+    if (timeStr && /^\d{2}:\d{2}$/.test(String(timeStr).trim())) {
+      var t = String(timeStr).trim().split(":");
+      hh = parseInt(t[0], 10) || 8;
+      mm = parseInt(t[1], 10) || 0;
+    }
+    return new Date(+p[0], +p[1] - 1, +p[2], hh, mm);
+  }
+
+  function frDateFull(d, timeStr) {
+    if (!d) return "Date à préciser";
+    var label = new Intl.DateTimeFormat("fr-FR", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
+    }).format(d);
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    var t = timeStr && String(timeStr).trim() ? String(timeStr).trim().replace(":", "h") : "";
+    if (!t && d) {
+      t = String(d.getHours()) + "h" + String(d.getMinutes()).padStart(2, "0");
+    }
+    return t ? label + " · " + t : label;
+  }
+
+  function typeLabelFromSortie(s) {
+    var rt = String(s.raceType || s.type || "").toLowerCase();
+    if (rt === "gravel") return "Gravel";
+    if (rt === "vtt" || rt === "rtt") return "VTT";
+    return "Route";
+  }
+
+  function renderHeroPeople(list) {
+    var wrap  = document.getElementById("pd-hero-people");
+    var av    = document.getElementById("pd-hero-avatars");
+    var text  = document.getElementById("pd-hero-people-text");
+    if (!wrap || !av || !text) return;
+    if (!list.length) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    var shown = list.slice(0, 5);
+    av.innerHTML = shown.map(function (p, i) {
+      var label = String(p.pseudo || p.email || "?");
+      var initials = label.slice(0, 2).toUpperCase();
+      return '<span class="so-avatar" style="background:' + avatarColor(p.email || p.pseudo, i) + '">' +
+        escapeHtml(initials) + "</span>";
+    }).join("");
+    var more = list.length - shown.length;
+    text.textContent = list.length + " participant" + (list.length > 1 ? "s" : "") +
+      (more > 0 ? " (+" + more + " autres)" : "");
+  }
+
   function renderHero() {
     if (!sortie) return;
     document.title = sortie.title + " \u2014 Go\u00ebloRides";
-    setText("pd-title",   sortie.title);
-    setText("pd-group",   sortie.group);
-    setText("pd-type",    sortie.type);
-    setText("pd-place",   sortie.place);
-    setText("pd-date",    sortie.date);
-    setText("pd-captain", sortie.captain);
-    setText("pd-km",      sortie.km);
-    setText("pd-dplus",   sortie.dplus);
-    setText("pd-meet",    sortie.meetTime);
-    setText("pd-start",   sortie.startTime);
+
+    var d = parseSortieDate(sortie.date, sortie.rideTime || sortie.meetTime);
+    if (d) {
+      setText("pd-cal-month", MONTH_CAL[d.getMonth() + 1]);
+      setText("pd-cal-day",   String(d.getDate()));
+      setText("pd-cal-wd",    WEEKDAY_CAL[d.getDay()]);
+    }
+    setText("pd-datetime", frDateFull(d, sortie.rideTime || sortie.meetTime));
+
+    setText("pd-title", sortie.title);
+
+    var cap = document.getElementById("pd-captain");
+    if (cap) {
+      cap.innerHTML = sortie.captain
+        ? 'Capitaine · Team Rider : <strong>' + escapeHtml(sortie.captain) + "</strong>"
+        : "";
+    }
+
+    var sport = typeLabelFromSortie(sortie);
+    setText("pd-metric-sport", "\uD83D\uDEB4 " + sport);
+    setText("pd-metric-group", sortie.group || "—");
+    setText("pd-km",           sortie.km || "—");
+    setText("pd-dplus",        sortie.dplus || "—");
+    setText("pd-meet",         sortie.meetTime || "—");
+    setText("pd-start",        sortie.startTime || "—");
+    setText("pd-duration",     sortie.duration || "—");
+    setText("pd-place",        sortie.place || "—");
+
+    renderHeroPeople(sortie.participants || []);
   }
 
   /* =========================================================
@@ -298,6 +449,37 @@ async function toggleSignup(routeId) {
   /* =========================================================
      INIT
   ========================================================= */
+  function waitForAuthReady() {
+    return new Promise(function (resolve) {
+      var sb = getSb();
+      if (!sb) {
+        resolve();
+        return;
+      }
+      sb.auth.getSession().then(function (sessionResult) {
+        if (sessionResult.data && sessionResult.data.session) {
+          resolve();
+          return;
+        }
+        if (window.GOELO_USER) {
+          resolve();
+          return;
+        }
+        var done = false;
+        function finish() {
+          if (done) return;
+          done = true;
+          window.removeEventListener("goelo:role-ready", onReady);
+          clearTimeout(timer);
+          resolve();
+        }
+        function onReady() { finish(); }
+        window.addEventListener("goelo:role-ready", onReady);
+        var timer = setTimeout(finish, 2500);
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", async function () {
     try {
       setLoading(true);
@@ -307,6 +489,9 @@ async function toggleSignup(routeId) {
 
       var sb = getSb();
       if (!sb) throw new Error("Supabase non initialis\u00e9");
+
+      /* Laisser auth.js hydrater la session avant de lire l'état inscrit */
+      await waitForAuthReady();
 
       var result = await sb
         .from("routes")
@@ -328,13 +513,16 @@ async function toggleSignup(routeId) {
         title:     result.data.track_name   || "Sortie",
         group:     result.data.group_label  || "",
         type:      result.data.route_kind   || "",
+        raceType:  fc.raceType              || "",
         place:     fc.meetPlace             || "",
         date:      fc.rideDateIso           || "",
+        rideTime:  fc.rideTime              || fc.meetTime || "",
         captain:   fc.captain || fc.rideLeader || "",
         km:        stats.totalKm   != null ? stats.totalKm   + " km"   : (fc.km    != null ? fc.km    + " km"   : "\u2014"),
         dplus:     stats.elevGainM != null ? stats.elevGainM + " m D+" : (fc.dplus != null ? fc.dplus + " m D+" : "\u2014"),
-        meetTime:  fc.meetTime  || fc.rideTime || "",
-        startTime: fc.startTime || "",
+        duration:  fc.estimatedDurationHm   || fc.estimated_duration_hm || "",
+        meetTime:  fc.meetTime              || "",
+        startTime: fc.startTime || fc.rideTime || "",
         participants: []
       };
 
@@ -350,23 +538,14 @@ async function toggleSignup(routeId) {
       setLoading(false);
     }
 
-    /* ── FIX PRINCIPAL ───────────────────────────────────────
-     * auth.js résout le rôle de manière asynchrone (getSession
-     * + getUser + SELECT profiles). Si cette résolution se
-     * termine APRÈS que renderJoin() a déjà tourné, le bouton
-     * reste figé sur "Se connecter" même pour un user connecté.
-     *
-     * Solution : écouter goelo:role-ready { once:true } et
-     * goelo:auth-success { once:true } pour re-rendre le bouton
-     * dès que l'auth est confirmée.
-     * ───────────────────────────────────────────────────────── */
+    /* Re-synchroniser le bouton dès que le rôle / la session est confirmé */
     window.addEventListener("goelo:role-ready", function () {
       renderJoin();
-    }, { once: true });
+    });
 
     window.addEventListener("goelo:auth-success", function () {
       renderJoin();
-    }, { once: true });
+    });
   });
 
 })();
