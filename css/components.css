@@ -1,3 +1,4 @@
+@import url("tokens.css");
 @import url("components/sortie-cards.css");
 
 /* ═══════════════════════════════════════════════════════════════
@@ -863,4 +864,57 @@ html.goelo-modal-open {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #6b7280;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Badges RÔLE (identité utilisateur — jamais niveau sortie)
+   ═══════════════════════════════════════════════════════════════ */
+.go-role-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.go-role-badge--visitor {
+  color: var(--role-visitor);
+  background: var(--role-visitor-bg);
+  border-color: rgba(154, 160, 166, 0.35);
+}
+
+.go-role-badge--user {
+  color: #93C5FD;
+  background: var(--role-user-bg);
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+.go-role-badge--team_rider {
+  color: #C4B5FD;
+  background: var(--role-team-rider-bg);
+  border-color: rgba(124, 58, 237, 0.45);
+}
+
+.go-role-badge--admin {
+  color: #E2E8F0;
+  background: var(--role-admin-bg);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+/* Auth loading — évite flash Visitor incorrect */
+.goelo-auth-pending [data-goelo-role-badge],
+.goelo-auth-pending .gr-header-connect,
+.goelo-auth-pending .gr-nav__cta {
+  visibility: hidden;
+}
+
+.gr-header-connect.is-loading {
+  min-width: 6rem;
+  min-height: 2rem;
 }

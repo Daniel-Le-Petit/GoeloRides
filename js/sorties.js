@@ -19,7 +19,7 @@
     },
     join: {
       title: "Connexion requise",
-      text: "Connecte-toi en Team Rider pour rejoindre cette sortie et apparaître parmi les participants."
+      text: "Connecte-toi pour rejoindre cette sortie et apparaître parmi les participants."
     }
   };
 
@@ -550,6 +550,7 @@ async function fetchSorties() {
      État Team Rider
      ════════════════════════════════════════════════════════════ */
   function applyTeamRiderState() {
+    if (window.GoeloUI) window.GoeloUI.syncRoleUI();
     var unlocked = isTeamRiderOrAdmin();
     var createBtn = document.getElementById("nav-create-sortie");
     if (createBtn) {
@@ -601,6 +602,8 @@ async function fetchSorties() {
      Init
      ════════════════════════════════════════════════════════════ */
   document.addEventListener("DOMContentLoaded", async function () {
+    if (window.GoeloUI) await window.GoeloUI.waitForRole();
+
     applyTeamRiderState();
     bindFilters();
     bindLockTriggers();

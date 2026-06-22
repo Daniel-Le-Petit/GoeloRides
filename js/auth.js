@@ -42,6 +42,7 @@ window.goeloGetSb = function () {
      ════════════════════════════════════════════════════════════ */
   window.GOELO_ROLE = "visitor";
   window.GOELO_USER = null;
+  window.GOELO_AUTH_PENDING = true;
 
   var ROLE_ORDER = { visitor: 0, user: 1, team_rider: 2, admin: 3 };
 
@@ -97,6 +98,7 @@ window.goeloGetSb = function () {
     var cleanRole = role || "visitor";
     window.GOELO_ROLE = cleanRole;
     window.GOELO_USER = user;
+    window.GOELO_AUTH_PENDING = false;
     console.log("[GoëloAuth] rôle résolu :", cleanRole);
     window.dispatchEvent(new CustomEvent("goelo:role-ready", {
       detail: { role: cleanRole, user: user }
@@ -107,21 +109,8 @@ window.goeloGetSb = function () {
      5. REDIRECTION SELON RÔLE
      ════════════════════════════════════════════════════════════ */
   function _redirectForRole(role) {
-    var path = window.location.pathname;
-    /* CORRECTION C1 : ne jamais transformer le rôle — comparer directement */
-    if (role === "admin") {
-      if (!path.endsWith("admin.html")) {
-        window.location.href = "admin.html";
-      }
-      return;
-    }
-    if (role === "team_rider") {
-      if (!path.endsWith("team-rider.html")) {
-        window.location.href = "team-rider.html";
-      }
-      return;
-    }
-    /* visitor et user : pas de redirection forcée */
+    /* Pas de redirection forcée : l'UI s'adapte sur la page courante (goelo-ui.js). */
+    void role;
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -479,6 +468,7 @@ window.goeloGetSb = function () {
       if (closer) { _closeModal(closer.getAttribute("data-close-modal")); return; }
       if (e.target.closest("[data-goelo-auth-trigger]")) {
         e.preventDefault();
+        if (window.GoeloUI) window.GoeloUI.syncRoleUI();
         _openModal("modal-teamrider");
         return;
       }

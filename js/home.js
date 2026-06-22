@@ -1,138 +1,32 @@
 /**
  * GoëloRides — /js/home.js
+ * Délègue l'UI rôle à goelo-ui.js ; gère logout et CTAs spécifiques homepage.
  */
 (function () {
   "use strict";
 
-  function _$(id)        { return document.getElementById(id); }
-  function _q(sel)       { return document.querySelector(sel); }
-  function _qa(sel)      { return document.querySelectorAll(sel); }
-  function _hide(el)     { if (el) el.hidden = true; }
-  function _show(el)     { if (el) el.hidden = false; }
-  function _text(el, t)  { if (el) el.textContent = t; }
-
-  function _pseudo(user) {
-    if (!user) return "Rider";
-    var um = user.user_metadata || {};
-    return um.pseudo || um.name || (user.email ? user.email.split("@")[0] : "Rider");
-  }
-
-  function _renderVisitor() {
-    _hide(_$("goelo-user-greeting"));
-    _hide(_$("goelo-logout-btn"));
-    var btn = _q(".gr-header-connect, [data-goelo-connect-btn]");
-    if (btn) {
-      btn.textContent = "Se connecter";
-      btn.setAttribute("data-goelo-auth-trigger", "");
-      btn.removeAttribute("href");
-      btn.onclick = null;
-    }
-  }
-
-  function _renderUser(user) {
-    var pseudo = _pseudo(user);
-    var greeting = _$("goelo-user-greeting");
-    if (greeting) { _text(greeting, "Bonjour, " + pseudo + " 👋"); _show(greeting); }
-    var btn = _q(".gr-header-connect, [data-goelo-connect-btn]");
-    if (btn) {
-      _text(btn, pseudo);
-      btn.removeAttribute("data-goelo-auth-trigger");
-      btn.href = "gestion-team-rider.html";
-    }
-    _show(_$("goelo-logout-btn"));
-    _qa("[data-goelo-tr-cta]").forEach(function (el) {
-      _text(el, "Demander l'accès Team Rider");
-      el.removeAttribute("data-goelo-auth-trigger");
-      if (el.tagName === "A") el.href = "gestion-team-rider.html";
-      else el.onclick = function () { window.location.href = "gestion-team-rider.html"; };
-    });
-    _hide(_$("gr-teamrider-banner"));
-  }
-
-  function _renderTeamRider(user) {
-    var pseudo = _pseudo(user);
-    var greeting = _$("goelo-user-greeting");
-    if (greeting) { _text(greeting, "🚴 " + pseudo); _show(greeting); }
-    var btn = _q(".gr-header-connect, [data-goelo-connect-btn]");
-    if (btn) {
-      _text(btn, "Mon cockpit");
-      btn.removeAttribute("data-goelo-auth-trigger");
-      btn.href = "team-rider.html";
-    }
-    _show(_$("goelo-logout-btn"));
-    _qa("[data-goelo-tr-cta]").forEach(function (el) {
-      _text(el, "Mon cockpit Team Rider →");
-      el.removeAttribute("data-goelo-auth-trigger");
-      if (el.tagName === "A") el.href = "team-rider.html";
-      else el.onclick = function () { window.location.href = "team-rider.html"; };
-    });
-    _qa(".btn-new-route, [data-new-route-trigger]").forEach(function (el) {
-      el.removeAttribute("data-goelo-auth-trigger");
-      el.setAttribute("data-open-new-route", "");
-    });
-    var createLink = _q(".gr-nav__cta, a[href='gestion-sorties.html']");
-    if (createLink) {
-      createLink.removeAttribute("data-goelo-auth-trigger");
-      createLink.classList.remove("is-locked");
-      var lock = createLink.querySelector(".gr-nav__cta-lock");
-      if (lock) lock.textContent = "+";
-    }
-    var aside = _$("so-aside");
-    if (aside) {
-      aside.classList.add("is-unlocked");
-      var lockDiv = aside.querySelector(".so-aside__lock");
-      if (lockDiv) lockDiv.textContent = "✓";
-    }
-    _hide(_$("gr-teamrider-banner"));
-  }
-
-  function _renderAdmin(user) {
-    _renderTeamRider(user);
-    var greeting = _$("goelo-user-greeting");
-    if (greeting) _text(greeting, "👑 Admin");
-    var btn = _q(".gr-header-connect, [data-goelo-connect-btn]");
-    if (btn) { _text(btn, "👑 Admin"); btn.href = "admin.html"; }
-    var path = window.location.pathname;
-    if (path.endsWith("index.html") || path === "/" || path.endsWith("/")) {
-      window.location.href = "admin.html";
-    }
-  }
-
-  function _applyRole(detail) {
-    var role = detail.role || "visitor";
-    var user = detail.user || null;
-    switch (role) {
-      case "admin":      _renderAdmin(user);     break;
-      case "team_rider": _renderTeamRider(user); break;
-      case "user":       _renderUser(user);       break;
-      default:           _renderVisitor();        break;
-    }
-  }
+  function _$(id) { return document.getElementById(id); }
 
   function _init() {
-    _renderVisitor();
-
-    if (window.GOELO_ROLE && window.GOELO_ROLE !== "visitor") {
-      _applyRole({ role: window.GOELO_ROLE, user: window.GOELO_USER });
-    }
-
-    /* CORRECTION M1 : { once: true } — on applique le rôle une seule fois.
-       Si auth.js émet deux fois (SIGNED_IN + resolveRole manuel), on ne
-       re-render pas deux fois. Les changements ultérieurs (logout → login)
-       rechargeront la page via goeloSignOut → reload. */
-    window.addEventListener("goelo:role-ready", function (e) {
-      _applyRole(e.detail);
-    }, { once: true });
-
     var logoutBtn = _$("goelo-logout-btn");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", function () {
         if (typeof window.goeloSignOut === "function") {
-          window.goeloSignOut().then(function () {
-            window.location.reload();
-          });
+          window.goeloSignOut().then(function () { window.location.reload(); });
         }
       });
+    }
+
+    var heroCta = document.querySelector(".gr-hero-ctas .gr-btn--ghost[data-goelo-auth-trigger]");
+    if (heroCta) heroCta.setAttribute("data-goelo-tr-cta", "");
+
+    if (window.GoeloUI) {
+      window.addEventListener("goelo:role-ready", function (e) {
+        window.GoeloUI.syncRoleUI(e.detail);
+      });
+      if (!window.GOELO_AUTH_PENDING) {
+        window.GoeloUI.syncRoleUI({ role: window.GOELO_ROLE, user: window.GOELO_USER });
+      }
     }
   }
 
@@ -141,5 +35,4 @@
   } else {
     _init();
   }
-
 })();

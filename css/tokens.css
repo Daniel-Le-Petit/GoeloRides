@@ -1,0 +1,45 @@
+/* ═══════════════════════════════════════════════════════════════
+   GoëloRides — Design tokens (rôles · niveaux · états)
+   Règle : ne jamais mélanger couleur rôle et couleur niveau.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Marque */
+  --goelo-accent:       #C8F135;
+  --goelo-bg:           #0D0D0D;
+  --goelo-surface:      #1A1A1A;
+  --goelo-border:       #2E2E2E;
+  --goelo-text:         #F0F0F0;
+  --goelo-muted:        #888888;
+
+  /* Rôles (identité utilisateur) */
+  --role-visitor:       #9AA0A6;
+  --role-user:          #2563EB;
+  --role-team-rider:    #7C3AED;
+  --role-admin:         #0F172A;
+
+  --role-visitor-bg:    rgba(154, 160, 166, 0.14);
+  --role-user-bg:       rgba(37, 99, 235, 0.14);
+  --role-team-rider-bg: rgba(124, 58, 237, 0.14);
+  --role-admin-bg:      rgba(15, 23, 42, 0.85);
+
+  /* Niveaux sortie (difficulté — pistes ski / vélo) */
+  --level-blanc:        #FFFFFF;
+  --level-vert:         #22C55E;
+  --level-bleu:         #2563EB;
+  --level-rouge:        #EF4444;
+
+  --level-blanc-bg:     rgba(255, 255, 255, 0.1);
+  --level-vert-bg:      rgba(34, 197, 94, 0.14);
+  --level-bleu-bg:      rgba(37, 99, 235, 0.14);
+  --level-rouge-bg:     rgba(239, 68, 68, 0.14);
+
+  /* États système */
+  --state-pending:      #F59E0B;
+  --state-success:      #22C55E;
+  --state-error:        #EF4444;
+
+  --state-pending-bg:   rgba(245, 158, 11, 0.14);
+  --state-success-bg:   rgba(34, 197, 94, 0.14);
+  --state-error-bg:     rgba(239, 68, 68, 0.14);
+}

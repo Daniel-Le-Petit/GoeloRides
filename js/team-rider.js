@@ -78,11 +78,11 @@
     if (userNameEl)   userNameEl.textContent   = pseudo + " (" + role + ")";
     if (userAvatarEl) userAvatarEl.textContent = initials(pseudo);
     if (badgeEl) {
+      badgeEl.className = "topbar-badge go-role-badge go-role-badge--" + role;
       if (role === "admin") {
-        badgeEl.textContent = "\uD83D\uDC51 ADMIN";
-        badgeEl.classList.add("is-admin");
+        badgeEl.textContent = "ADMIN";
       } else {
-        badgeEl.textContent = "\uD83D\uDEB4 TEAM RIDER";
+        badgeEl.textContent = "TEAM RIDER";
       }
     }
 

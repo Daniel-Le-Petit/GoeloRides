@@ -7,7 +7,7 @@
 
   var MONTH_SHORT = ["", "Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
   var WEEKDAY_SHORT = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  var AVATAR_COLORS = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD", "#86EFAC"];
+  var AVATAR_COLORS = ["#7DD3FC", "#C4B5FD", "#FCA5A5", "#FCD34D", "#86EFAC", "#F9A8D4"];
 
   var THUMBS = {
     route:  "assets/goeloRidesHomePage-thumb.jpg",
@@ -231,7 +231,7 @@
           (cancelled ? ' <span class="go-sc-badge go-sc-badge--cancel">Annulée</span>' : "") +
           statutBadge +
           "</h2>" +
-          '<span class="go-sc-badge go-sc-badge--' + gk + '">' + escapeHtml(groupShort) + "</span>" +
+          '<span class="go-sc-badge go-level-badge go-sc-badge--' + gk + '" data-level="' + gk + '">' + escapeHtml(groupShort) + "</span>" +
         "</div>" +
         '<div class="go-sc-metrics">' +
           '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Sport</span>' +
