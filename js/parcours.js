@@ -66,13 +66,34 @@
   /* =========================================================
      TOGGLE RPC
   ========================================================= */
-  async function toggleSignup(routeId) {
-    var sb = getSb();
-    if (!sb) throw new Error("Supabase non disponible");
-    var result = await sb.rpc("toggle_signup", { p_route_id: routeId });
-    if (result.error) throw result.error;
-    return result.data; /* { action: "joined"|"unjoined", count: number } */
+
+
+async function toggleSignup(routeId) {
+  const sb = getSb();
+
+  try {
+    const { data: sessionData } = await sb.auth.getSession();
+    const session = sessionData?.session;
+
+    if (!session) {
+      console.warn("No session");
+      return null;
+    }
+
+    const { data, error } = await sb.rpc("toggle_signup", {
+      p_route_id: routeId
+    });
+
+    if (error) throw error;
+
+    return data;
+
+  } catch (e) {
+    console.error("[toggleSignup]", e);
+    return null;
+
   }
+}
 
   /* =========================================================
      RENDER JOIN BUTTON
