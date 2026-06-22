@@ -1,590 +1,351 @@
 /**
- * GoëloRides — Page Détail Parcours / Sortie (parcours.html?id=…)
+ * GoëloRides — parcours.js
  *
- * - Données mock (MOCK_SORTIES) pour démontrer le fonctionnement complet
- *   avant raccordement à Supabase (le point d'entrée est isolé dans
- *   getSortieById(), à remplacer par un appel RPC `routes_list` + signups).
- * - Carte Leaflet : trace GPX, zoom +/- natif, bouton « Recentrer »,
- *   colorisation du tracé selon la pente (vert / bleu / orange / rouge).
- * - Participation : « Je participe ! » ↔ « J'annule », persistée en
- *   localStorage (goelo_parcours_join_v1), compteur de participants.
- * - Accordéons : un seul ouvert à la fois, animation max-height.
+ * Corrections :
+ *  - renderJoin() rappelé sur goelo:role-ready (bouton ne reste plus sur
+ *    "Connexion requise" quand auth.js finit après parcours.js)
+ *  - bindJoin() appelé une seule fois après renderAll(), guard dataset.bound
+ *  - bindAccordions() appelée avec typeof guard (fonction externe optionnelle)
+ *  - pd-participants-count synchronisé avec renderParticipants()
+ *  - initMap() ne plante plus si L absent (Leaflet chargé en dernier)
  */
 (function () {
   "use strict";
 
-  let sortie = null;
-  let loadError = null;
+  var sortie    = null;
+  var _joinBusy = false;
 
-
-  function isTeamRider() {
-    return window.GOELO_ROLE === "team_rider" || window.GOELO_ROLE === "admin";
+  /* =========================================================
+     HELPERS
+  ========================================================= */
+  function getSb() {
+    return window.goeloGetSb ? window.goeloGetSb() : null;
   }
 
-  window.addEventListener("goelo:role-ready", function () {
-  console.log("[parcours] role ready:", window.GOELO_ROLE);
-  });
+  function setLoading(v) {
+    var el = document.getElementById("loading");
+    if (el) el.style.display = v ? "block" : "none";
+  }
 
-  /* ════════════════════════════════════════════════════════════
-     Helpers
-     ════════════════════════════════════════════════════════════ */
-
-  var AVATAR_COLORS = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD", "#86EFAC"];
-
-function getSb() {
-  return window.goeloGetSb?.();
-}
-
-  function setLoading(isLoading) {
-    const el = document.getElementById("loading");
-    if (!el) return;
-
-    el.style.display = isLoading ? "block" : "none";
+  function setText(id, v) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = v != null ? v : "";
   }
 
   function escapeHtml(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+    return String(s != null ? s : "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  function initials(name) {
-    return String(name || "")
-      .split(/\s+/)
-      .map(function (w) { return w.charAt(0); })
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
+  /* =========================================================
+     AUTH
+  ========================================================= */
+  async function getUser() {
+    var sb = getSb();
+    if (!sb) return null;
+    var result = await sb.auth.getUser();
+    return (result.data && result.data.user) ? result.data.user : null;
   }
 
-  function avatarColor(name, i) {
-    return AVATAR_COLORS[(String(name).length + i) % AVATAR_COLORS.length];
+  /* =========================================================
+     JOIN STATE
+  ========================================================= */
+  async function isJoined(routeId, userId) {
+    var sb = getSb();
+    if (!sb || !routeId || !userId) return false;
+    var result = await sb
+      .from("signups")
+      .select("id")
+      .eq("route_id", routeId)
+      .eq("user_id", userId)
+      .is("canceled_at", null)
+      .maybeSingle();
+    return !!(result.data);
   }
 
- function frenchDateLabel(dateIso, time) {
-  if (!dateIso || !time) return "Date inconnue";
-
-  var p = dateIso.split("-");
-  var hhmm = time.split(":");
-
-  var d = new Date(+p[0], +p[1] - 1, +p[2], +hhmm[0], +hhmm[1]);
-
-  var label = new Intl.DateTimeFormat("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  }).format(d);
-
-  return (
-    label.charAt(0).toUpperCase() + label.slice(1) +
-    " · " + hhmm[0] + "h" + hhmm[1]
-  );
- }
-
-  function formatKm(km) {
-    if (km == null) return "—";
-    var v = Math.round(km * 10) / 10;
-    return String(v).replace(".", ",") + " km";
+  /* =========================================================
+     TOGGLE RPC
+  ========================================================= */
+  async function toggleSignup(routeId) {
+    var sb = getSb();
+    if (!sb) throw new Error("Supabase non disponible");
+    var result = await sb.rpc("toggle_signup", { p_route_id: routeId });
+    if (result.error) throw result.error;
+    return result.data; /* { action: "joined"|"unjoined", count: number } */
   }
 
-  /* ════════════════════════════════════════════════════════════
-     Participation (mock persisté en localStorage)
-     ════════════════════════════════════════════════════════════ */
+  /* =========================================================
+     RENDER JOIN BUTTON
+     Appelé :
+       1. après renderAll() — état initial
+       2. sur goelo:role-ready — auth tardive
+       3. sur goelo:auth-success — connexion depuis la modale
+       4. après erreur dans le handler — rollback UI
+  ========================================================= */
+  async function renderJoin() {
+    if (!sortie || !sortie.id) return;
 
-  var JOIN_KEY = "goelo_parcours_join_v1";
-
-  function loadJoins() {
-    try {
-      var o = JSON.parse(localStorage.getItem(JOIN_KEY) || "{}");
-      return o && typeof o === "object" ? o : {};
-    } catch (err) {
-      void err;
-      return {};
-    }
-  }
-
-  /**
-   * Sauvegarde l'inscription.
-   * Raccordement Supabase : appeler ici RPC `signup_register` /
-   * `signup_unregister` puis rafraîchir la liste des participants.
-   */
-  async function saveJoin(sortieId, joined) {
-    const sb = window.goeloGetSb?.();
-    if (!sb) return;
-  
-    if (joined) {
-      await sb.rpc("signup_register", { route_id: sortieId });
-    } else {
-      await sb.rpc("signup_unregister", { route_id: sortieId });
-    }
-  }
-
-  function isJoined(sortieId) {
-    return loadJoins()[sortieId] === true;
-  }
-
-  /* ════════════════════════════════════════════════════════════
-     Rendu hero + participants
-     ════════════════════════════════════════════════════════════ */
-
-
-  function setText(id, text) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = text;
-  }
-
-  function renderHero() {
-    document.title = sortie.title + " · Goëlo Rides";
-    setText("pd-type", sortie.type);
-    setText("pd-group", sortie.group + " · " + sortie.pace);
-    setText("pd-title", sortie.title);
-    setText(
-      "pd-date",
-      sortie.dateIso && sortie.time
-        ? frenchDateLabel(sortie.dateIso, sortie.time)
-        : "Date à venir"
-    );
-
-    var cap = document.getElementById("pd-captain");
-    if (cap) {
-      cap.innerHTML =
-        'Capitaine · Team Rider : <strong>' + escapeHtml(sortie.captain) + "</strong>";
-    }
-
-    setText("pd-km", (sortie.kmFallback ?? 0) + " km");
-    setText("pd-dplus", (sortie.dplusFallback ?? 0) + " m D+");
-    setText("pd-duration", sortie.duration);
-    setText("pd-meet", sortie.meetTime);
-    setText("pd-start", sortie.rollingStart);
-    setText("pd-place", sortie.place);
-
-    var cities = Array.isArray(sortie.cities)
-      ? sortie.cities
-      : JSON.parse(sortie.cities || "[]");
-
-    var gpxBtn = document.getElementById("pd-gpx-btn");
-    if (gpxBtn) {
-      gpxBtn.href = encodeURI(sortie.gpx);
-      gpxBtn.setAttribute("download", sortie.gpx);
-    }
-  }
-
-  function allParticipants(participants) {
-    const list = Array.isArray(participants) ? participants : [];
-    return list.slice();
-  }
-
-  function renderJoin() {
-    var btn = document.getElementById("pd-join-btn");
+    var btn   = document.getElementById("pd-join-btn");
     var count = document.getElementById("pd-join-count");
-    var joined = isJoined(sortie.id);
-    var n = allParticipants().length;
-
     if (!btn) return;
 
-    // 🔒 BLOQUAGE NON TEAM RIDER
-    if (!isTeamRider()) {
-      btn.textContent = "Connexion requise";
-      btn.classList.add("is-locked");
-      btn.disabled = true;
+    var user = await getUser();
+
+    if (!user) {
+      /* Visiteur : bouton actif qui ouvre la modale auth */
+      btn.textContent = "Se connecter pour participer";
+      btn.disabled    = false;
+      btn.setAttribute("data-joined",       "0");
+      btn.setAttribute("data-auth-pending", "1");
       return;
     }
 
-    // ✅ LOGIQUE NORMALE SI TEAM RIDER
+    btn.setAttribute("data-auth-pending", "0");
+    var joined = await isJoined(sortie.id, user.id);
+    btn.disabled    = false;
     btn.textContent = joined ? "J'annule" : "Je participe !";
-    btn.classList.toggle("is-registered", joined);
+    btn.setAttribute("data-joined", joined ? "1" : "0");
 
     if (count) {
-      count.innerHTML = "<strong>" + n + "</strong> participant" + (n > 1 ? "s" : "");
+      var n = Array.isArray(sortie.participants) ? sortie.participants.length : 0;
+      count.textContent = n > 0
+        ? n + " participant" + (n > 1 ? "s" : "")
+        : "";
     }
   }
 
-  function renderParticipants() {
-    var host = document.getElementById("pd-participants");
-    var countEl = document.getElementById("pd-participants-count");
-    if (!host) return;
-    var list = allParticipants();
-
-    host.innerHTML = list
-      .map(function (p, i) {
-        return (
-          "<li>" +
-          '<span class="so-avatar" style="background:' + avatarColor(p.name, i) + '">' +
-          escapeHtml(initials(p.name)) +
-          "</span>" +
-          '<span class="pd-participant__name">' + escapeHtml(p.name) + "</span>" +
-          (p.captain ? '<span class="pd-participant__role">Capitaine</span>' : "") +
-          (p.you ? '<span class="pd-participant__role">Toi</span>' : "") +
-          "</li>"
-        );
-      })
-      .join("");
-
-    if (countEl) countEl.textContent = "(" + list.length + ")";
-  }
-
+  /* =========================================================
+     BIND BUTTON — attaché une seule fois via dataset.bound
+  ========================================================= */
   function bindJoin() {
     var btn = document.getElementById("pd-join-btn");
     if (!btn) return;
-    btn.addEventListener("click", function () {
-      saveJoin(sortie.id, !isJoined(sortie.id));
+    if (btn.dataset.bound === "1") return;
+    btn.dataset.bound = "1";
+
+    btn.addEventListener("click", async function () {
+      if (_joinBusy) return;
+
+      /* Visiteur → ouvrir modale auth */
+      if (btn.getAttribute("data-auth-pending") === "1") {
+        if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
+        return;
+      }
+
+      _joinBusy    = true;
+      btn.disabled = true;
+
+      try {
+        var user = await getUser();
+        if (!user) {
+          /* Session expirée entre le render et le clic */
+          if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
+          return;
+        }
+
+        if (!sortie || !sortie.id) throw new Error("Identifiant sortie manquant");
+
+        var res = await toggleSignup(sortie.id);
+        /* res = { action: "joined"|"unjoined", count: number } */
+
+        btn.textContent = res.action === "joined" ? "J'annule" : "Je participe !";
+        btn.setAttribute("data-joined", res.action === "joined" ? "1" : "0");
+
+        var count = document.getElementById("pd-join-count");
+        if (count && typeof res.count === "number") {
+          count.textContent = res.count > 0
+            ? res.count + " participant" + (res.count > 1 ? "s" : "")
+            : "";
+        }
+
+        /* Rafraîchir la liste en arrière-plan */
+        refreshParticipants().then(function () { renderParticipants(); });
+
+      } catch (err) {
+        console.error("[JOIN]", err);
+        await renderJoin(); /* rollback UI sur l'état réel DB */
+      } finally {
+        _joinBusy    = false;
+        btn.disabled = false;
+      }
+    });
+  }
+
+  /* =========================================================
+     PARTICIPANTS
+  ========================================================= */
+  async function refreshParticipants() {
+    var sb = getSb();
+    if (!sb || !sortie || !sortie.id) return;
+    var result = await sb
+      .from("signups")
+      .select("id, pseudo, email, cyclist_level, created_at")
+      .eq("route_id", sortie.id)
+      .is("canceled_at", null)
+      .order("created_at", { ascending: true });
+    if (result.error) {
+      console.error("[PARTICIPANTS]", result.error);
+      return;
+    }
+    sortie.participants = result.data || [];
+  }
+
+  function avatarColor(seed, i) {
+    var colors = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD"];
+    return colors[(String(seed || "").length + i) % colors.length];
+  }
+
+  function renderParticipants() {
+    var host  = document.getElementById("pd-participants");
+    var badge = document.getElementById("pd-participants-count");
+    if (!sortie) return;
+
+    var list = sortie.participants || [];
+
+    if (badge) badge.textContent = list.length > 0 ? "(" + list.length + ")" : "";
+
+    if (!host) return;
+    if (list.length === 0) {
+      host.innerHTML = "<li style=\"color:var(--muted);font-size:.82rem\">Aucun participant pour l'instant.</li>";
+      return;
+    }
+    host.innerHTML = list.map(function (p, i) {
+      var label    = escapeHtml(p.pseudo || p.email || "?");
+      var initials = label.slice(0, 2).toUpperCase();
+      return "<li>" +
+        "<span class=\"so-avatar\" style=\"background:" + avatarColor(p.email || p.pseudo, i) + "\">" +
+        initials + "</span>" +
+        "<span>" + label + "</span>" +
+        "</li>";
+    }).join("");
+  }
+
+  /* =========================================================
+     HERO
+  ========================================================= */
+  function renderHero() {
+    if (!sortie) return;
+    document.title = sortie.title + " \u2014 Go\u00ebloRides";
+    setText("pd-title",   sortie.title);
+    setText("pd-group",   sortie.group);
+    setText("pd-type",    sortie.type);
+    setText("pd-place",   sortie.place);
+    setText("pd-date",    sortie.date);
+    setText("pd-captain", sortie.captain);
+    setText("pd-km",      sortie.km);
+    setText("pd-dplus",   sortie.dplus);
+    setText("pd-meet",    sortie.meetTime);
+    setText("pd-start",   sortie.startTime);
+  }
+
+  /* =========================================================
+     MAP
+  ========================================================= */
+  function initMap() {
+    if (!sortie) return;
+    if (typeof L === "undefined") {
+      /* Leaflet pas encore chargé — retry à window.load */
+      window.addEventListener("load", function () { initMap(); }, { once: true });
+      return;
+    }
+    var el = document.getElementById("pd-map");
+    if (!el) return;
+    if (el._leaflet_id) return; /* déjà initialisé */
+
+    var map = L.map(el).setView([48.6, -2.8], 10);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19
+    }).addTo(map);
+
+    var fitBtn = document.getElementById("pd-map-fit");
+    if (fitBtn) {
+      fitBtn.addEventListener("click", function () { map.setView([48.6, -2.8], 10); });
+    }
+  }
+
+  /* =========================================================
+     RENDER ALL
+  ========================================================= */
+  async function renderAll() {
+    renderHero();
+    renderParticipants();
+    bindJoin();
+    await renderJoin();
+    if (typeof bindAccordions === "function") bindAccordions();
+  }
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  document.addEventListener("DOMContentLoaded", async function () {
+    try {
+      setLoading(true);
+
+      var id = new URLSearchParams(location.search).get("id");
+      if (!id) throw new Error("Param\u00e8tre id manquant dans l'URL");
+
+      var sb = getSb();
+      if (!sb) throw new Error("Supabase non initialis\u00e9");
+
+      var result = await sb
+        .from("routes")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error("Sortie introuvable");
+
+      var fc = result.data.front_config || {};
+      if (typeof fc === "string") {
+        try { fc = JSON.parse(fc); } catch (e) { fc = {}; }
+      }
+
+      var stats = fc.stats || {};
+
+      sortie = {
+        id:        result.data.id,
+        title:     result.data.track_name   || "Sortie",
+        group:     result.data.group_label  || "",
+        type:      result.data.route_kind   || "",
+        place:     fc.meetPlace             || "",
+        date:      fc.rideDateIso           || "",
+        captain:   fc.captain || fc.rideLeader || "",
+        km:        stats.totalKm   != null ? stats.totalKm   + " km"   : (fc.km    != null ? fc.km    + " km"   : "\u2014"),
+        dplus:     stats.elevGainM != null ? stats.elevGainM + " m D+" : (fc.dplus != null ? fc.dplus + " m D+" : "\u2014"),
+        meetTime:  fc.meetTime  || fc.rideTime || "",
+        startTime: fc.startTime || "",
+        participants: []
+      };
+
+      await refreshParticipants();
+      await renderAll();
+      initMap(); /* guard interne si Leaflet pas encore dispo */
+
+    } catch (err) {
+      console.error("[parcours.js]", err);
+      var errEl = document.getElementById("error");
+      if (errEl) errEl.textContent = err.message;
+    } finally {
+      setLoading(false);
+    }
+
+    /* ── FIX PRINCIPAL ───────────────────────────────────────
+     * auth.js résout le rôle de manière asynchrone (getSession
+     * + getUser + SELECT profiles). Si cette résolution se
+     * termine APRÈS que renderJoin() a déjà tourné, le bouton
+     * reste figé sur "Se connecter" même pour un user connecté.
+     *
+     * Solution : écouter goelo:role-ready { once:true } et
+     * goelo:auth-success { once:true } pour re-rendre le bouton
+     * dès que l'auth est confirmée.
+     * ───────────────────────────────────────────────────────── */
+    window.addEventListener("goelo:role-ready", function () {
       renderJoin();
-      renderParticipants();
-    });
-  }
+    }, { once: true });
 
-  /* ════════════════════════════════════════════════════════════
-     GPX + carte Leaflet + colorisation pente
-     ════════════════════════════════════════════════════════════ */
+    window.addEventListener("goelo:auth-success", function () {
+      renderJoin();
+    }, { once: true });
+  });
 
-  function parseGpxPoints(xmlText) {
-    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
-    if (doc.querySelector("parsererror")) return [];
-    var out = [];
-    var nodes = doc.getElementsByTagName("*");
-    for (var i = 0; i < nodes.length; i++) {
-      var el = nodes[i];
-      var tag = el.localName || el.nodeName.split(":").pop();
-      if (tag !== "trkpt" && tag !== "rtept") continue;
-      var lat = parseFloat(el.getAttribute("lat"));
-      var lon = parseFloat(el.getAttribute("lon"));
-      if (isNaN(lat) || isNaN(lon)) continue;
-      var ele = null;
-      for (var c = el.firstElementChild; c; c = c.nextElementSibling) {
-        var n = c.localName || c.nodeName.split(":").pop();
-        if (n === "ele" && c.textContent) {
-          var v = parseFloat(c.textContent.trim());
-          if (!isNaN(v)) ele = v;
-          break;
-        }
-      }
-      out.push(ele != null ? { lat: lat, lon: lon, ele: ele } : { lat: lat, lon: lon });
-    }
-    return out;
-  }
-
-  function haversine(lat1, lon1, lat2, lon2) {
-    var R = 6371000;
-    var p = Math.PI / 180;
-    var a =
-      Math.pow(Math.sin(((lat2 - lat1) * p) / 2), 2) +
-      Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.pow(Math.sin(((lon2 - lon1) * p) / 2), 2);
-    return 2 * R * Math.asin(Math.sqrt(a));
-  }
-
-  function computeStats(points) {
-    var dist = 0;
-    var gain = 0;
-    var lastEle = null;
-    for (var i = 1; i < points.length; i++) {
-      dist += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
-      var e = points[i].ele;
-      if (typeof e === "number") {
-        if (lastEle != null && e > lastEle) gain += e - lastEle;
-        lastEle = e;
-      }
-    }
-    return { km: dist / 1000, dplus: Math.round(gain) };
-  }
-
-  /**
-   * Couleur de pente.
-   * Architecture prête même sans altitude : si les points n'ont pas
-   * d'« ele », tout le tracé est rendu en « plat » (bleu).
-   *   vert   : descente   (pente < -2 %)
-   *   bleu   : plat       (-2 % … 2 %)
-   *   orange : montée     (2 % … 6 %)
-   *   rouge  : montée raide (> 6 %)
-   */
-  var SLOPE_COLORS = { down: "#22c55e", flat: "#3b82f6", up: "#f59e0b", steep: "#ef4444" };
-
-  function slopeCategory(gradePct) {
-    if (gradePct < -2) return "down";
-    if (gradePct <= 2) return "flat";
-    if (gradePct <= 6) return "up";
-    return "steep";
-  }
-
-  /** Découpe la trace en segments contigus de même catégorie de pente. */
-  function buildSlopeSegments(points) {
-    var hasEle = points.some(function (p) { return typeof p.ele === "number"; });
-    if (!hasEle) {
-      return [{ cat: "flat", latlngs: points.map(function (p) { return [p.lat, p.lon]; }) }];
-    }
-
-    /* Pente lissée sur une fenêtre glissante (~150 m) pour éviter le bruit GPS */
-    var WINDOW_M = 150;
-    var segments = [];
-    var cur = null;
-    var accDist = 0;
-    var winStart = 0;
-    var dists = [0];
-    for (var i = 1; i < points.length; i++) {
-      accDist += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
-      dists.push(accDist);
-    }
-
-    for (var j = 1; j < points.length; j++) {
-      while (dists[j] - dists[winStart] > WINDOW_M && winStart < j - 1) winStart++;
-      var run = dists[j] - dists[winStart];
-      var e1 = points[winStart].ele;
-      var e2 = points[j].ele;
-      var grade = run > 10 && typeof e1 === "number" && typeof e2 === "number"
-        ? ((e2 - e1) / run) * 100
-        : 0;
-      var cat = slopeCategory(grade);
-
-      if (!cur || cur.cat !== cat) {
-        var startPt = [points[j - 1].lat, points[j - 1].lon];
-        cur = { cat: cat, latlngs: [startPt] };
-        segments.push(cur);
-      }
-      cur.latlngs.push([points[j].lat, points[j].lon]);
-    }
-    return segments;
-  }
-
-
-async function initMap() {
-  if (!sortie) return;
-
-  const mapEl = document.getElementById("pd-map");
-  if (!mapEl || typeof L === "undefined") return;
-
-  let map = L.map(mapEl, { scrollWheelZoom: false });
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  }).addTo(map);
-
-  map.setView([48.65, -2.84], 11);
-
-  let points = [];
-
-  try {
-    if (!sortie.gpx) {
-      console.warn("GPX manquant pour la sortie");
-    } else {
-      const res = await fetch(encodeURI(sortie.gpx));
-
-      if (res.ok) {
-        const gpxText = await res.text();
-        points = parseGpxPoints(gpxText) || [];
-      } else {
-        console.warn("GPX introuvable :", sortie.gpx);
-      }
-    }
-  } catch (err) {
-    console.warn("Erreur GPX", sortie.gpx, err);
-  }
-
-  if (!Array.isArray(points) || points.length < 2) return;
-
-  /* Stats réelles */
-  const st = computeStats(points);
-
-  setText("pd-km", formatKm(st.km));
-
-  if (st.dplus && st.dplus > 5) {
-    setText("pd-dplus", st.dplus + " m D+");
-  }
-
-  /* Tracé colorisé */
-  const group = L.featureGroup();
-
-  if (typeof buildSlopeSegments === "function" && typeof SLOPE_COLORS !== "undefined") {
-    buildSlopeSegments(points).forEach(seg => {
-      if (!seg?.latlngs) return;
-
-      L.polyline(seg.latlngs, {
-        color: SLOPE_COLORS[seg.cat] || "#666",
-        weight: 4,
-        opacity: 0.9,
-        lineJoin: "round"
-      }).addTo(group);
-    });
-  }
-
-  group.addTo(map);
-
-  /* Départ */
-  if (points[0]) {
-    L.circleMarker([points[0].lat, points[0].lon], {
-      radius: 7,
-      color: "#0D0D0D",
-      weight: 2,
-      fillColor: "#C8F135",
-      fillOpacity: 1
-    })
-      .addTo(map)
-      .bindTooltip("Départ");
-  }
-
-  /* Arrivée */
-  const last = points[points.length - 1];
-
-  if (last) {
-    L.circleMarker([last.lat, last.lon], {
-      radius: 6,
-      color: "#0D0D0D",
-      weight: 2,
-      fillColor: "#ef4444",
-      fillOpacity: 1
-    })
-      .addTo(map)
-      .bindTooltip("Arrivée");
-  }
-
-  /* Fit map */
-  const fit = () => {
-    if (group.getBounds && group.getBounds().isValid()) {
-      map.fitBounds(group.getBounds(), { padding: [28, 28] });
-    }
-  };
-
-  fit();
-
-  const fitBtn = document.getElementById("pd-map-fit");
-  if (fitBtn) {
-    fitBtn.addEventListener("click", fit);
-  }
-}
-
-  /* ════════════════════════════════════════════════════════════
-     Accordéons (un seul ouvert, animation max-height)
-     ════════════════════════════════════════════════════════════ */
-
-  function bindAccordions() {
-    var items = Array.prototype.slice.call(document.querySelectorAll(".pd-acc__item"));
-
-    function close(item) {
-      item.classList.remove("is-open");
-      item.querySelector(".pd-acc__head").setAttribute("aria-expanded", "false");
-      item.querySelector(".pd-acc__panel").style.maxHeight = "0";
-    }
-
-    function open(item) {
-      item.classList.add("is-open");
-      item.querySelector(".pd-acc__head").setAttribute("aria-expanded", "true");
-      var panel = item.querySelector(".pd-acc__panel");
-      panel.style.maxHeight = panel.scrollHeight + "px";
-    }
-
-    items.forEach(function (item) {
-      item.querySelector(".pd-acc__head").addEventListener("click", function () {
-        var isOpen = item.classList.contains("is-open");
-        items.forEach(close);
-        if (!isOpen) open(item);
-      });
-    });
-
-    /* Recalcule la hauteur de l'accordéon ouvert au redimensionnement */
-    window.addEventListener("resize", function () {
-      items.forEach(function (item) {
-        if (item.classList.contains("is-open")) {
-          var panel = item.querySelector(".pd-acc__panel");
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      });
-    });
-  }
-
-function mapRouteToSortie(route) {
-  const fc = route.front_config || {};
-
-  return {
-    id: route.id,
-    title: route.track_name,
-    type: route.route_kind,
-    group: route.group_label,
-    pace: route.pace_label,
-
-    dateIso: fc.rideDateIso,
-    time: fc.rideTime,
-
-    captain: fc.captain || fc.rideLeader,
-
-    kmFallback: fc.stats?.totalKm,
-    dplusFallback: fc.stats?.elevGainM,
-
-    duration: fc.estimated_duration_hm,
-    meetTime: fc.meetTime || fc.rideTime,
-
-    place: fc.meetPlace,
-
-    cities: fc.embeddedPoints || [],
-
-    gpx: "gpx/" + fc.file
-  };
-}
-
-function renderError(message) {
-  console.error(message);
-
-  const el = document.getElementById("error");
-  if (el) el.textContent = message;
-}
-
-function renderAll() {
-  renderHero();
-  renderJoin();
-  renderParticipants();
-  bindJoin();
-  bindAccordions();
-}
-
-  /* ════════════════════════════════════════════════════════════
-     Init
-     ════════════════════════════════════════════════════════════ */
-document.addEventListener("DOMContentLoaded", async function () {
-  const id = new URLSearchParams(window.location.search).get("id");
-
-  if (!id) {
-    loadError = "ID manquant dans l’URL";
-    console.error(loadError);
-    return renderError(loadError);
-  }
-
-  try {
-    setLoading(true);
-    const sb = window.goeloGetSb?.();
-    if (!sb) throw new Error("Supabase client non disponible");
-
-    console.log("[DEBUG SB]", sb);
-    console.log("[DEBUG typeof from]", typeof sb?.from);
-
-    const { data, error } = await sb
-      .from("routes")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-
-    if (!data) {
-      throw new Error("Aucune sortie trouvée");
-    }
-
-    sortie = mapRouteToSortie(data);
-
-    renderAll();
-
-    console.log("SORTIE avant initMap=", sortie);
-    initMap();
-   
-
-  } catch (err) {
-    console.error(err);
-    loadError = err.message;
-    renderError();
-  } finally {
-    setLoading(false);
-  }
-});
-
-})(); 
+})();
