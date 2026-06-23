@@ -140,29 +140,15 @@
       cards = cards.filter(function (c) { return c.statut === "publiee"; });
     } else if (_currentFilter === "brouillon") {
       cards = cards.filter(function (c) { return c.statut === "brouillon"; });
-    } else if (_currentFilter === "mine") {
+    } else     if (_currentFilter === "mine") {
       cards = cards.filter(function (c) {
         return window.GoeloSortieCards.isCardOwner(c, window.GOELO_USER);
       });
     }
 
-    try {
-      var partRpc = await sb.rpc("signup_list_all_names", {});
-      if (!partRpc.error && partRpc.data) {
-        var byRoute = partRpc.data;
-        if (Array.isArray(byRoute) && byRoute.length) byRoute = byRoute[0];
-        if (byRoute && typeof byRoute === "object") {
-          cards.forEach(function (c) {
-            var v = byRoute[c.id];
-            if (!v) return;
-            var arr = Array.isArray(v) ? v : (v.participants || []);
-            c.participants = arr.map(function (p) {
-              return typeof p === "string" ? p : (p.pseudo || p.email || "?");
-            });
-          });
-        }
-      }
-    } catch (e) { void e; }
+    if (window.GoeloSignupParticipants) {
+      await window.GoeloSignupParticipants.enrichCardsWithParticipants(cards, sb);
+    }
 
     window.GoeloSortieCards.renderList(cards, list, {
       viewMode: "team-rider",
@@ -358,6 +344,14 @@
         btn.getAttribute("data-go-sc-title") || "cette sortie",
         btn
       );
+    });
+
+    window.addEventListener("goelo:signup-changed", function () {
+      if (_bootDone) renderSorties();
+    });
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && _bootDone) renderSorties();
     });
 
     /* Cas 1 : rôle déjà connu (auth.js plus rapide) */

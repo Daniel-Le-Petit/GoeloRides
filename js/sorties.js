@@ -193,24 +193,15 @@ async function fetchSorties() {
   return (res.data || []).map(dbRowToSortie);
 }
 
-  /* ── Participants : un seul appel pour toutes les sorties ── */
-  function participantPseudo(x) {
-    if (typeof x === "string") return x.trim();
-    if (x && typeof x === "object" && typeof x.pseudo === "string") return x.pseudo.trim();
-    return "";
-  }
-
-  async function fetchParticipantsByRoute() {
-    var data = await supabaseRpc("signup_list_all_names", {});
-    if (Array.isArray(data) && data.length) data = data[0];
-    if (!data || typeof data !== "object") return {};
-    var out = {};
-    Object.keys(data).forEach(function (id) {
-      var v = data[id];
-      var arr = Array.isArray(v) ? v : v && Array.isArray(v.participants) ? v.participants : [];
-      out[id] = arr.map(participantPseudo).filter(Boolean);
-    });
-    return out;
+  /* ── Participants : signups actifs via Supabase (même flux que parcours.js) ── */
+  async function reloadParticipants() {
+    if (!state.sorties.length) return;
+    if (!window.GoeloSignupParticipants) {
+      console.warn("[sorties] GoeloSignupParticipants non chargé");
+      return;
+    }
+    await window.GoeloSignupParticipants.enrichCardsWithParticipants(state.sorties, getSb());
+    render();
   }
 
   /* ── Stats km / D+ : embeddedPoints ou trace GPX locale ── */
@@ -619,24 +610,26 @@ async function fetchSorties() {
       fetchJoinedRouteIds().then(render);
     });
 
-    state.sorties = await fetchSorties();
-    await fetchJoinedRouteIds();
-    render();
-
-    /* Enrichissements asynchrones : participants */
-    fetchParticipantsByRoute().then(function (byRoute) {
-      var touched = false;
-      state.sorties.forEach(function (s) {
-        var arr = byRoute[s.id];
-        if (Array.isArray(arr) && arr.length) {
-          s.participants = arr;
-          touched = true;
-        }
-      });
-      if (touched) render();
+    window.addEventListener("goelo:signup-changed", function () {
+      reloadParticipants();
     });
 
-    /* Enrichissements asynchrones : stats km / D+ */
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") reloadParticipants();
+    });
+
+    window.addEventListener("pageshow", function () {
+      if (state.sorties.length) reloadParticipants();
+    });
+
+    window.addEventListener("focus", function () {
+      if (state.sorties.length) reloadParticipants();
+    });
+
+    state.sorties = await fetchSorties();
+    await fetchJoinedRouteIds();
+    await reloadParticipants();
+    render();
     state.sorties.forEach(function (s) {
       loadStats(s).then(function (st) {
         if (st && (st.km != null || st.dplus != null)) {

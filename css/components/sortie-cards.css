@@ -223,6 +223,78 @@
   font-size: 0.55rem;
 }
 
+/* Participants preview (cartes sorties + team-rider) */
+.go-participants-preview {
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(200, 241, 53, 0.05);
+  border: 1px solid rgba(200, 241, 53, 0.12);
+}
+
+.go-participants-preview--empty {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--border, #2E2E2E);
+}
+
+.go-participants-preview__empty {
+  font-size: 0.74rem;
+  color: var(--muted, #888);
+}
+
+.go-participants-preview__count {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #C8F135;
+}
+
+.go-participants-preview__avatars {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 0.35rem;
+}
+
+.go-participants-preview__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--surface, #1A1A1A);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #000;
+  margin-left: -6px;
+}
+
+.go-participants-preview__avatar:first-child { margin-left: 0; }
+
+.go-participants-preview__avatar--more {
+  background: var(--surface-2, #242424);
+  color: var(--muted, #888);
+  font-size: 0.58rem;
+}
+
+.go-participants-preview__names {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text, #F0F0F0);
+}
+
+.go-participants-preview__more-label {
+  color: var(--muted, #888);
+  font-weight: 500;
+}
+
 /* Actions */
 .go-sc-card__actions {
   display: flex;

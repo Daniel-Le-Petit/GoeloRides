@@ -7,7 +7,6 @@
 
   var MONTH_SHORT = ["", "Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
   var WEEKDAY_SHORT = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  var AVATAR_COLORS = ["#7DD3FC", "#C4B5FD", "#FCA5A5", "#FCD34D", "#86EFAC", "#F9A8D4"];
 
   var THUMBS = {
     route:  "assets/goeloRidesHomePage-thumb.jpg",
@@ -19,6 +18,16 @@
     rouge:  "assets/groupe-rouge-cyclistes-thumb.png",
     default:"assets/goeloRidesHomePage-thumb.jpg"
   };
+
+  function participantsPreviewHtml(participants) {
+    if (global.GoeloSignupParticipants) {
+      return global.GoeloSignupParticipants.renderParticipantsPreview(participants, {
+        maxAvatars: 5,
+        maxNames: 4
+      });
+    }
+    return "";
+  }
 
   function escapeHtml(s) {
     return String(s == null ? "" : s)
@@ -79,20 +88,6 @@
       '<span class="go-cal__wd">' + WEEKDAY_SHORT[d.getDay()] + "</span>" +
       "</div></div>"
     );
-  }
-
-  function avatarsHtml(participants) {
-    if (!participants || !participants.length) return "";
-    var shown = participants.slice(0, 3);
-    var html = shown.map(function (p, i) {
-      var name = typeof p === "string" ? p : (p.pseudo || p.email || "?");
-      var initials = String(name).split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
-      var color = AVATAR_COLORS[(name.length + i) % AVATAR_COLORS.length];
-      return '<span class="go-sc-avatar" style="background:' + color + '" title="' + escapeAttr(name) + '">' + escapeHtml(initials) + "</span>";
-    }).join("");
-    var more = participants.length - shown.length;
-    if (more > 0) html += '<span class="go-sc-avatar go-sc-avatar--more">+' + more + "</span>";
-    return html;
   }
 
   function typeLabel(t) {
@@ -201,11 +196,7 @@
       : d ? String(d.getHours()) + "h" + String(d.getMinutes()).padStart(2, "0") : "";
     var fullDate = frDateFull(d, card.meetTime || (d ? String(d.getHours()) + ":" + String(d.getMinutes()).padStart(2, "0") : ""));
     var participants = card.participants || [];
-    var partCount = participants.length;
-    var peopleLine = partCount > 0
-      ? '<div class="go-sc-card__people">' + avatarsHtml(participants) +
-        '<span class="go-sc-card__people-text">' + partCount + " participant" + (partCount > 1 ? "s" : "") + "</span></div>"
-      : "";
+    var participantsBlock = participantsPreviewHtml(participants);
 
     var statutBadge = "";
     if (opts.viewMode === "team-rider" && card.statut) {
@@ -223,7 +214,6 @@
           calendarHtml(d) +
           '<div class="go-sc-card__intro">' +
             '<p class="go-sc-card__datetime">' + escapeHtml(fullDate) + "</p>" +
-            peopleLine +
           "</div>" +
         "</div>" +
         '<div class="go-sc-card__title-row">' +
@@ -247,6 +237,7 @@
           '<span>📍 ' + escapeHtml(card.place || "—") + "</span>" +
           (time ? '<span>🕒 ' + escapeHtml(time) + "</span>" : "") +
         "</p>" +
+        participantsBlock +
         '<div class="go-sc-card__actions">' + buildActions(card, opts) + "</div>" +
       "</div>" +
       '<div class="go-sc-card__visual">' +
@@ -337,6 +328,7 @@
     fromRouteRow: fromRouteRow,
     buildCardHtml: buildCardHtml,
     buildActions: buildActions,
-    renderList: renderList
+    renderList: renderList,
+    renderParticipantsPreview: participantsPreviewHtml
   };
 })(typeof window !== "undefined" ? window : globalThis);

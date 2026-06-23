@@ -177,10 +177,9 @@ async function toggleSignup(routeId) {
     btn.setAttribute("data-joined", joined ? "1" : "0");
 
     if (count) {
-      var n = await getParticipantCount(sortie.id);
-      count.textContent = n > 0
-        ? n + " participant" + (n > 1 ? "s" : "")
-        : "";
+      var n = Array.isArray(sortie.participants) ? sortie.participants.length : 0;
+      if (!n) n = await refreshParticipants();
+      updateJoinCount(n);
     }
   }
 
@@ -216,21 +215,25 @@ async function toggleSignup(routeId) {
         if (!sortie || !sortie.id) throw new Error("Identifiant sortie manquant");
 
         var res = await toggleSignup(sortie.id);
-        if (!res || !res.action) throw new Error("Réponse toggle_signup invalide");
-        /* res = { action: "joined"|"unjoined", count: number } */
+        if (!res) throw new Error("Réponse toggle_signup invalide");
 
-        btn.textContent = res.action === "joined" ? "J'annule" : "Je participe !";
-        btn.setAttribute("data-joined", res.action === "joined" ? "1" : "0");
+        var action = res.action;
+        if (!action && res.joined === true) action = "joined";
+        if (!action && res.joined === false) action = "unjoined";
+        if (!action) throw new Error("Réponse toggle_signup sans action");
 
-        var count = document.getElementById("pd-join-count");
-        if (count && typeof res.count === "number") {
-          count.textContent = res.count > 0
-            ? res.count + " participant" + (res.count > 1 ? "s" : "")
-            : "";
+        btn.textContent = action === "joined" ? "J'annule" : "Je participe !";
+        btn.setAttribute("data-joined", action === "joined" ? "1" : "0");
+
+        var n = await syncParticipantsUI();
+        if (typeof res.count === "number") {
+          n = res.count;
+          updateJoinCount(n);
         }
 
-        /* Rafraîchir la liste en arrière-plan */
-        refreshParticipants().then(function () { renderParticipants(); });
+        if (window.GoeloSignupParticipants) {
+          window.GoeloSignupParticipants.emitChanged(sortie.id, n);
+        }
 
       } catch (err) {
         console.error("[JOIN]", err);
@@ -243,49 +246,33 @@ async function toggleSignup(routeId) {
   }
 
   /* =========================================================
-     PARTICIPANTS (RPC — pas de SELECT direct sur signups)
+     PARTICIPANTS
   ========================================================= */
-  async function getParticipantCount(routeId) {
-    var sb = getSb();
-    if (!sb || !routeId) return 0;
-    var rpc = await sb.rpc("signup_list_all_names", {});
-    if (rpc.error || rpc.data == null) {
-      console.warn("[PARTICIPANTS] signup_list_all_names:", rpc.error && rpc.error.message);
-      return Array.isArray(sortie && sortie.participants) ? sortie.participants.length : 0;
+  function participantLabel(p) {
+    if (window.GoeloSignupParticipants) {
+      return window.GoeloSignupParticipants.displayName(p);
     }
-    var data = rpc.data;
-    var bucket = data && data[routeId];
-    if (!bucket) return 0;
-    if (Array.isArray(bucket)) return bucket.length;
-    if (bucket.participants && Array.isArray(bucket.participants)) return bucket.participants.length;
-    return 0;
+    return (p && (p.pseudo || p.email)) ? String(p.pseudo || p.email) : "?";
   }
 
   async function refreshParticipants() {
-    var sb = getSb();
-    if (!sb || !sortie || !sortie.id) return;
-    var rpc = await sb.rpc("signup_list_all_names", {});
-    if (rpc.error || rpc.data == null) {
-      console.error("[PARTICIPANTS]", rpc.error);
-      return;
+    if (!sortie || !sortie.id) return 0;
+    var SP = window.GoeloSignupParticipants;
+    if (!SP) {
+      console.warn("[parcours] GoeloSignupParticipants manquant");
+      return 0;
     }
-    var bucket = rpc.data[sortie.id];
-    var names = [];
-    if (Array.isArray(bucket)) {
-      names = bucket;
-    } else if (bucket && Array.isArray(bucket.participants)) {
-      names = bucket.participants;
-    }
-    sortie.participants = names.map(function (n) {
-      if (typeof n === "string") return { pseudo: n };
-      if (n && typeof n === "object") return n;
-      return { pseudo: String(n) };
-    });
+    var result = await SP.fetchForRoute(sortie.id, getSb());
+    sortie.participants = result.participants || [];
+    return typeof result.count === "number" ? result.count : sortie.participants.length;
   }
 
-  function avatarColor(seed, i) {
-    var colors = ["#C8F135", "#7DD3FC", "#FCA5A5", "#FCD34D", "#C4B5FD"];
-    return colors[(String(seed || "").length + i) % colors.length];
+  function updateJoinCount(n) {
+    var count = document.getElementById("pd-join-count");
+    if (!count) return;
+    count.textContent = n > 0
+      ? n + " participant" + (n > 1 ? "s" : "")
+      : "";
   }
 
   function renderParticipants() {
@@ -298,6 +285,7 @@ async function toggleSignup(routeId) {
     if (badge) badge.textContent = list.length > 0 ? "(" + list.length + ")" : "";
 
     renderHeroPeople(list);
+    updateJoinCount(list.length);
 
     if (!host) return;
     if (list.length === 0) {
@@ -305,7 +293,7 @@ async function toggleSignup(routeId) {
       return;
     }
     host.innerHTML = list.map(function (p, i) {
-      var label    = escapeHtml(p.pseudo || p.email || "?");
+      var label    = escapeHtml(participantLabel(p));
       var initials = label.slice(0, 2).toUpperCase();
       return "<li>" +
         "<span class=\"so-avatar\" style=\"background:" + avatarColor(p.email || p.pseudo, i) + "\">" +
@@ -313,6 +301,17 @@ async function toggleSignup(routeId) {
         "<span>" + label + "</span>" +
         "</li>";
     }).join("");
+  }
+
+  async function syncParticipantsUI() {
+    var n = await refreshParticipants();
+    renderParticipants();
+    return n;
+  }
+
+  function avatarColor(seed, i) {
+    var colors = ["#7DD3FC", "#C4B5FD", "#FCA5A5", "#FCD34D", "#86EFAC"];
+    return colors[(String(seed || "").length + i) % colors.length];
   }
 
   /* =========================================================
@@ -366,7 +365,7 @@ async function toggleSignup(routeId) {
     wrap.hidden = false;
     var shown = list.slice(0, 5);
     av.innerHTML = shown.map(function (p, i) {
-      var label = String(p.pseudo || p.email || "?");
+      var label = participantLabel(p);
       var initials = label.slice(0, 2).toUpperCase();
       return '<span class="so-avatar" style="background:' + avatarColor(p.email || p.pseudo, i) + '">' +
         escapeHtml(initials) + "</span>";
@@ -526,7 +525,7 @@ async function toggleSignup(routeId) {
         participants: []
       };
 
-      await refreshParticipants();
+      await syncParticipantsUI();
       await renderAll();
       initMap(); /* guard interne si Leaflet pas encore dispo */
 
@@ -541,10 +540,12 @@ async function toggleSignup(routeId) {
     /* Re-synchroniser le bouton dès que le rôle / la session est confirmé */
     window.addEventListener("goelo:role-ready", function () {
       renderJoin();
+      syncParticipantsUI();
     });
 
     window.addEventListener("goelo:auth-success", function () {
       renderJoin();
+      syncParticipantsUI();
     });
   });
 
