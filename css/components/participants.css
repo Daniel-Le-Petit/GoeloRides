@@ -1,0 +1,134 @@
+/* ══════════════════════════════════════════════════════════════
+   Participants — avatar + pseudo uniquement (jamais d'e-mail affiché)
+   ══════════════════════════════════════════════════════════════ */
+
+.go-participant-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  list-style: none;
+}
+
+.go-participant-row__avatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--border, #2E2E2E);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #000;
+}
+
+.go-participant-row__pseudo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text, #F0F0F0);
+  line-height: 1.2;
+}
+
+.go-participant-row--more {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted, #888);
+  padding: 0.15rem 0 0.15rem 0.15rem;
+}
+
+/* Liste détail parcours */
+.pd-participants {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: min(50vh, 320px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.pd-participants .go-participant-row {
+  background: var(--surface, #1A1A1A);
+  border: 1px solid var(--border, #2E2E2E);
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+}
+
+.pd-participants .go-participant-row__avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 0.7rem;
+}
+
+.pd-participants__empty {
+  font-size: 0.82rem;
+  color: var(--muted, #888);
+  padding: 0.25rem 0;
+}
+
+/* Aperçu cartes sorties */
+.go-participants-preview {
+  margin-top: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(200, 241, 53, 0.05);
+  border: 1px solid rgba(200, 241, 53, 0.12);
+}
+
+.go-participants-preview--empty {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--border, #2E2E2E);
+}
+
+.go-participants-preview__empty {
+  font-size: 0.74rem;
+  color: var(--muted, #888);
+}
+
+.go-participants-preview__count {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #C8F135;
+}
+
+.go-participants-preview__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 7.5rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.go-participants-preview__list .go-participant-row {
+  padding: 0.2rem 0;
+}
+
+.go-participants-preview__list .go-participant-row__avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 0.58rem;
+}
+
+.go-participants-preview__list .go-participant-row__pseudo {
+  font-size: 0.78rem;
+}

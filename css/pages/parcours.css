@@ -571,46 +571,7 @@ body {
   margin-left: 0.4rem;
 }
 
-.pd-participants {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.pd-participants li {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.6rem 0.9rem;
-}
-
-.pd-participants .so-avatar {
-  width: 34px;
-  height: 34px;
-  margin-left: 0;
-  font-size: 0.8rem;
-  border-color: var(--border);
-}
-
-.pd-participant__name {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.pd-participant__role {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #000;
-  background: var(--accent);
-  border-radius: 4px;
-  padding: 0.14rem 0.45rem;
-}
+/* Liste + lignes : css/components/participants.css */
 
 /* Avatar (repris de la page Sorties pour cohérence) */
 .so-avatar {

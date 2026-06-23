@@ -8,27 +8,39 @@
     return String(id == null ? "" : id).trim();
   }
 
-  function displayName(p) {
+  function cleanPseudo(raw) {
+    var s = String(raw || "").trim();
+    if (!s) return "";
+    if (s.indexOf("@") !== -1) return s.split("@")[0];
+    return s;
+  }
+
+  /** Pseudo affiché — jamais d'e-mail complet (@ interdit dans le rendu). */
+  function displayPseudo(p) {
     if (!p) return "?";
-    if (typeof p === "string") return p.trim() || "?";
-    var pseudo = (p.pseudo || "").trim();
+    if (typeof p === "string") return cleanPseudo(p) || "?";
+    var pseudo = cleanPseudo(p.pseudo);
     if (pseudo) return pseudo;
-    var email = (p.email || "").trim();
-    if (email) return email.split("@")[0];
+    var email = String(p.email || "").trim();
+    if (email && email.indexOf("@") !== -1) return email.split("@")[0];
     return "?";
+  }
+
+  /** @deprecated utiliser displayPseudo */
+  function displayName(p) {
+    return displayPseudo(p);
   }
 
   function normalizeParticipant(x) {
     if (x == null) return null;
     if (typeof x === "string") {
-      var s = x.trim();
+      var s = cleanPseudo(x);
       return s ? { pseudo: s } : null;
     }
     if (typeof x === "object") {
-      var pseudo = displayName(x);
+      var pseudo = displayPseudo(x);
       return {
         pseudo: pseudo,
-        email: x.email || "",
         cyclist_level: x.cyclist_level || null,
         city: x.city || null
       };
@@ -121,15 +133,43 @@
     return String(name || "?").split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
   }
 
+  function avatarColorFor(p, i) {
+    var pseudo = displayPseudo(p);
+    return AVATAR_COLORS[(pseudo.length + i) % AVATAR_COLORS.length];
+  }
+
+  function renderParticipantRow(p, i, tag) {
+    tag = tag || "li";
+    var pseudo = displayPseudo(p);
+    var color = avatarColorFor(p, i);
+    return (
+      "<" + tag + ' class="go-participant-row">' +
+      '<span class="go-participant-row__avatar" style="background:' + color + '" title="' +
+      escapeHtml(pseudo) + '">' + escapeHtml(initialsFromName(pseudo)) + "</span>" +
+      '<span class="go-participant-row__pseudo" title="' + escapeHtml(pseudo) + '">' +
+      escapeHtml(pseudo) + "</span>" +
+      "</" + tag + ">"
+    );
+  }
+
+  function renderParticipantsListHtml(list, opts) {
+    opts = opts || {};
+    var items = normalizeList(list || []);
+    if (!items.length) {
+      return '<li class="pd-participants__empty">' +
+        escapeHtml(opts.emptyMsg || "Aucun participant pour l'instant.") + "</li>";
+    }
+    return items.map(function (p, i) {
+      return renderParticipantRow(p, i, "li");
+    }).join("");
+  }
+
   /**
-   * Aperçu participants pour cartes sorties (sorties.html + team-rider.html).
-   * @param {Array} participants — objets { pseudo, email } ou strings
-   * @param {object} opts — maxAvatars (5), maxNames (4)
+   * Aperçu participants pour cartes (sorties.html + team-rider.html).
+   * Liste complète scrollable (max-height CSS).
    */
   function renderParticipantsPreview(participants, opts) {
     opts = opts || {};
-    var maxAvatars = opts.maxAvatars || 5;
-    var maxNames = opts.maxNames || 4;
     var list = normalizeList(participants || []);
     var count = list.length;
 
@@ -141,39 +181,40 @@
       );
     }
 
-    var shownAv = list.slice(0, maxAvatars);
-    var avatarsHtml = shownAv.map(function (p, i) {
-      var name = displayName(p);
-      var color = AVATAR_COLORS[(name.length + i) % AVATAR_COLORS.length];
-      return (
-        '<span class="go-participants-preview__avatar" style="background:' + color + '" title="' +
-        escapeHtml(name) + '">' + escapeHtml(initialsFromName(name)) + "</span>"
-      );
+    var rows = list.map(function (p, i) {
+      return renderParticipantRow(p, i, "li");
     }).join("");
-
-    var hiddenAv = count - shownAv.length;
-    if (hiddenAv > 0) {
-      avatarsHtml += '<span class="go-participants-preview__avatar go-participants-preview__avatar--more">+' +
-        hiddenAv + "</span>";
-    }
-
-    var names = list.slice(0, maxNames).map(displayName);
-    var hiddenNames = count - names.length;
-    var namesHtml = escapeHtml(names.join(" · "));
-    if (hiddenNames > 0) {
-      namesHtml += ' <span class="go-participants-preview__more-label">+' + hiddenNames +
-        " participant" + (hiddenNames > 1 ? "s" : "") + "</span>";
-    }
 
     var countLabel = count + " participant" + (count > 1 ? "s" : "");
 
     return (
       '<div class="go-participants-preview" aria-label="' + escapeHtml(countLabel) + '">' +
       '<p class="go-participants-preview__count">' + escapeHtml(countLabel) + "</p>" +
-      '<div class="go-participants-preview__avatars">' + avatarsHtml + "</div>" +
-      '<p class="go-participants-preview__names">' + namesHtml + "</p>" +
+      '<ul class="go-participants-preview__list">' + rows + "</ul>" +
       "</div>"
     );
+  }
+
+  function renderAvatarStackHtml(list, opts) {
+    opts = opts || {};
+    var max = opts.max || 5;
+    var items = normalizeList(list || []);
+    if (!items.length) return "";
+    var shown = items.slice(0, max);
+    var html = shown.map(function (p, i) {
+      var pseudo = displayPseudo(p);
+      var color = avatarColorFor(p, i);
+      return (
+        '<span class="so-avatar" style="background:' + color + '" title="' +
+        escapeHtml(pseudo) + '">' + escapeHtml(initialsFromName(pseudo)) + "</span>"
+      );
+    }).join("");
+    var more = items.length - shown.length;
+    if (more > 0) {
+      html += '<span class="so-avatar" style="background:var(--surface-2,#242424);color:var(--muted,#888);font-size:0.55rem">+' +
+        more + "</span>";
+    }
+    return html;
   }
 
   /** Associe les participants Supabase (signups actifs) à chaque carte/route. */
@@ -200,13 +241,17 @@
 
   global.GoeloSignupParticipants = {
     routeKey: routeKey,
+    displayPseudo: displayPseudo,
     displayName: displayName,
     normalizeParticipant: normalizeParticipant,
     normalizeList: normalizeList,
     fetchForRoute: fetchForRoute,
     fetchAllByRoute: fetchAllByRoute,
     enrichCardsWithParticipants: enrichCardsWithParticipants,
+    renderParticipantRow: renderParticipantRow,
+    renderParticipantsListHtml: renderParticipantsListHtml,
     renderParticipantsPreview: renderParticipantsPreview,
+    renderAvatarStackHtml: renderAvatarStackHtml,
     emitChanged: emitChanged
   };
 })(typeof window !== "undefined" ? window : globalThis);

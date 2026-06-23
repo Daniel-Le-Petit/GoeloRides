@@ -250,9 +250,9 @@ async function toggleSignup(routeId) {
   ========================================================= */
   function participantLabel(p) {
     if (window.GoeloSignupParticipants) {
-      return window.GoeloSignupParticipants.displayName(p);
+      return window.GoeloSignupParticipants.displayPseudo(p);
     }
-    return (p && (p.pseudo || p.email)) ? String(p.pseudo || p.email) : "?";
+    return (p && p.pseudo) ? String(p.pseudo) : "?";
   }
 
   async function refreshParticipants() {
@@ -281,6 +281,7 @@ async function toggleSignup(routeId) {
     if (!sortie) return;
 
     var list = sortie.participants || [];
+    var SP = window.GoeloSignupParticipants;
 
     if (badge) badge.textContent = list.length > 0 ? "(" + list.length + ")" : "";
 
@@ -288,17 +289,23 @@ async function toggleSignup(routeId) {
     updateJoinCount(list.length);
 
     if (!host) return;
+    if (SP) {
+      host.innerHTML = SP.renderParticipantsListHtml(list, {
+        emptyMsg: "Aucun participant pour l'instant."
+      });
+      return;
+    }
     if (list.length === 0) {
-      host.innerHTML = "<li style=\"color:var(--muted);font-size:.82rem\">Aucun participant pour l'instant.</li>";
+      host.innerHTML = "<li class=\"pd-participants__empty\">Aucun participant pour l'instant.</li>";
       return;
     }
     host.innerHTML = list.map(function (p, i) {
       var label    = escapeHtml(participantLabel(p));
       var initials = label.slice(0, 2).toUpperCase();
-      return "<li>" +
-        "<span class=\"so-avatar\" style=\"background:" + avatarColor(p.email || p.pseudo, i) + "\">" +
+      return "<li class=\"go-participant-row\">" +
+        "<span class=\"go-participant-row__avatar\" style=\"background:" + avatarColor(p.pseudo, i) + "\">" +
         initials + "</span>" +
-        "<span>" + label + "</span>" +
+        "<span class=\"go-participant-row__pseudo\">" + label + "</span>" +
         "</li>";
     }).join("");
   }
@@ -363,14 +370,19 @@ async function toggleSignup(routeId) {
       return;
     }
     wrap.hidden = false;
-    var shown = list.slice(0, 5);
-    av.innerHTML = shown.map(function (p, i) {
-      var label = participantLabel(p);
-      var initials = label.slice(0, 2).toUpperCase();
-      return '<span class="so-avatar" style="background:' + avatarColor(p.email || p.pseudo, i) + '">' +
-        escapeHtml(initials) + "</span>";
-    }).join("");
-    var more = list.length - shown.length;
+    var SP = window.GoeloSignupParticipants;
+    if (SP) {
+      av.innerHTML = SP.renderAvatarStackHtml(list, { max: 5 });
+    } else {
+      var shown = list.slice(0, 5);
+      av.innerHTML = shown.map(function (p, i) {
+        var label = participantLabel(p);
+        var initials = label.slice(0, 2).toUpperCase();
+        return '<span class="so-avatar" style="background:' + avatarColor(p.pseudo, i) + '">' +
+          escapeHtml(initials) + "</span>";
+      }).join("");
+    }
+    var more = list.length - Math.min(list.length, 5);
     text.textContent = list.length + " participant" + (list.length > 1 ? "s" : "") +
       (more > 0 ? " (+" + more + " autres)" : "");
   }

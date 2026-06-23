@@ -21,10 +21,7 @@
 
   function participantsPreviewHtml(participants) {
     if (global.GoeloSignupParticipants) {
-      return global.GoeloSignupParticipants.renderParticipantsPreview(participants, {
-        maxAvatars: 5,
-        maxNames: 4
-      });
+      return global.GoeloSignupParticipants.renderParticipantsPreview(participants);
     }
     return "";
   }
