@@ -56,11 +56,11 @@
     if (!user || !card.captain) return false;
     var cap = String(card.captain).trim().toLowerCase();
     if (!cap || cap === "—") return false;
+    var dn = global.GOELO_DISPLAY_NAME
+      ? String(global.GOELO_DISPLAY_NAME).trim().toLowerCase()
+      : "user";
     var email = (user.email || "").trim().toLowerCase();
-    var um = user.user_metadata || {};
-    var pseudo = String(um.pseudo || um.name || "").trim().toLowerCase();
-    var local = email ? email.split("@")[0] : "";
-    return cap === email || cap === pseudo || cap === local;
+    return cap === dn || (email && cap === email);
   }
 
   function frDateFull(d, timeStr) {

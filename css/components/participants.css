@@ -1,6 +1,4 @@
-/* ══════════════════════════════════════════════════════════════
-   Participants — avatar + pseudo uniquement (jamais d'e-mail affiché)
-   ══════════════════════════════════════════════════════════════ */
+/* Participants — display_name uniquement (résolu côté Supabase) */
 
 .go-participant-row {
   display: flex;
@@ -26,7 +24,8 @@
   color: #000;
 }
 
-.go-participant-row__pseudo {
+.go-participant-row__pseudo,
+.go-participant-row__name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -129,6 +128,7 @@
   font-size: 0.58rem;
 }
 
-.go-participants-preview__list .go-participant-row__pseudo {
+.go-participants-preview__list .go-participant-row__pseudo,
+.go-participants-preview__list .go-participant-row__name {
   font-size: 0.78rem;
 }

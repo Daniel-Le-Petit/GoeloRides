@@ -57,7 +57,9 @@
     _currentRole  = role;
     _currentEmail = (user && user.email) ? user.email : "";
 
-    var pseudo = _getPseudo(user);
+    var displayName = window.GoeloProfile
+      ? window.GoeloProfile.sessionDisplayName()
+      : (window.GOELO_DISPLAY_NAME || "User");
 
     var dash = document.getElementById("dashboard");
     var gate = document.getElementById("gate-panel");
@@ -75,8 +77,12 @@
     var userAvatarEl = document.getElementById("user-avatar");
     var badgeEl      = document.getElementById("role-badge");
 
-    if (userNameEl)   userNameEl.textContent   = pseudo + " (" + role + ")";
-    if (userAvatarEl) userAvatarEl.textContent = initials(pseudo);
+    if (userNameEl)   userNameEl.textContent   = displayName + " (" + role + ")";
+    if (userAvatarEl) {
+      userAvatarEl.textContent = window.GoeloProfile
+        ? window.GoeloProfile.initials({ display_name: displayName })
+        : displayName.slice(0, 2).toUpperCase();
+    }
     if (badgeEl) {
       badgeEl.className = "topbar-badge go-role-badge go-role-badge--" + role;
       if (role === "admin") {
@@ -90,10 +96,12 @@
     if (role === "admin") renderDemands();
   }
 
-  function _getPseudo(user) {
-    if (!user) return "Team Rider";
-    var um = user.user_metadata || {};
-    return um.pseudo || um.name || (user.email ? user.email.split("@")[0] : "Team Rider");
+  function _sessionDisplayName() {
+    if (window.GOELO_DISPLAY_NAME && String(window.GOELO_DISPLAY_NAME).trim()) {
+      return String(window.GOELO_DISPLAY_NAME).trim();
+    }
+    if (window.GoeloProfile) return window.GoeloProfile.sessionDisplayName();
+    return "User";
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -372,9 +380,10 @@
       setTimeout(function () {
         var dash = document.getElementById("dashboard");
         if (!dash || !dash.style.display || dash.style.display === "none") {
+          window.GOELO_DISPLAY_NAME = demo === "admin" ? "Admin" : "Team Rider";
           boot(demo, {
             email: demo + "@demo.local",
-            user_metadata: { pseudo: demo === "admin" ? "Admin" : "Team Rider" }
+            user_metadata: { display_name: window.GOELO_DISPLAY_NAME }
           });
         }
       }, 2000);

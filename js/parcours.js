@@ -2,8 +2,7 @@
  * GoëloRides — parcours.js
  *
  * Corrections inscription :
- *  - isJoined() : SELECT user_id + canceled_at IS NULL, puis RPC
- *    signup_get_registration (SECURITY DEFINER) si RLS bloque le direct
+ *  - isJoined() : user_id + status actif, RPC signup_is_joined
  *  - renderJoin() : état bouton basé uniquement sur isJoined(), pas sur
  *    sortie.participants
  *  - waitForAuthReady() avant le premier renderJoin (session hydratée)
@@ -60,9 +59,9 @@
   }
 
   /**
-   * État inscrit = vérité Supabase uniquement (pas sortie.participants).
-   * 1. SELECT signups (user_id + canceled_at IS NULL) si RLS le permet
-   * 2. Sinon RPC signup_get_registration (SECURITY DEFINER, contourne RLS)
+   * État inscrit = vérité Supabase (user_id + status actif).
+   * 1. SELECT signups si RLS le permet
+   * 2. RPC signup_is_joined (auth.uid())
    */
   async function isJoined(routeId, user) {
     var sb = getSb();
@@ -70,10 +69,10 @@
 
     var direct = await sb
       .from("signups")
-      .select("id")
+      .select("id, status")
       .eq("route_id", routeId)
       .eq("user_id", user.id)
-      .is("canceled_at", null)
+      .in("status", ["joined", "waiting"])
       .maybeSingle();
 
     if (direct.error) {
@@ -82,33 +81,14 @@
       return true;
     }
 
-    /* RPC user_id (auth.uid()) — si migration signup_is_joined appliquée */
     var rpcUser = await sb.rpc("signup_is_joined", { p_route_id: routeId });
     if (!rpcUser.error && rpcUser.data && typeof rpcUser.data === "object") {
-      if (rpcUser.data.joined === true) return true;
-      if (rpcUser.data.joined === false && !direct.error) return false;
-    } else if (rpcUser.error && rpcUser.error.code !== "PGRST202") {
+      return rpcUser.data.joined === true;
+    }
+    if (rpcUser.error && rpcUser.error.code !== "PGRST202") {
       console.warn("[isJoined] signup_is_joined:", rpcUser.error.message);
     }
 
-    /* Fallback RPC email (legacy signups ou RLS bloquant le SELECT direct) */
-    var email = (user.email || "").trim().toLowerCase();
-    if (!email) return false;
-
-    var rpc = await sb.rpc("signup_get_registration", {
-      p_route_id: routeId,
-      p_email: email
-    });
-
-    if (rpc.error) {
-      console.warn("[isJoined] signup_get_registration:", rpc.error.message);
-      return false;
-    }
-
-    var payload = rpc.data;
-    if (payload && typeof payload === "object") {
-      return payload.registered === true;
-    }
     return false;
   }
 
@@ -250,9 +230,12 @@ async function toggleSignup(routeId) {
   ========================================================= */
   function participantLabel(p) {
     if (window.GoeloSignupParticipants) {
-      return window.GoeloSignupParticipants.displayPseudo(p);
+      return window.GoeloSignupParticipants.displayName(p);
     }
-    return (p && p.pseudo) ? String(p.pseudo) : "?";
+    if (window.GoeloProfile) {
+      return window.GoeloProfile.displayName(p);
+    }
+    return (p && p.display_name) ? String(p.display_name) : "User";
   }
 
   async function refreshParticipants() {
@@ -300,12 +283,14 @@ async function toggleSignup(routeId) {
       return;
     }
     host.innerHTML = list.map(function (p, i) {
-      var label    = escapeHtml(participantLabel(p));
-      var initials = label.slice(0, 2).toUpperCase();
+      var label = escapeHtml(participantLabel(p));
+      var GP = window.GoeloProfile;
+      var color = GP ? GP.avatarColor(p, i) : "#7DD3FC";
+      var inits = GP ? GP.initials(p) : label.slice(0, 2).toUpperCase();
       return "<li class=\"go-participant-row\">" +
-        "<span class=\"go-participant-row__avatar\" style=\"background:" + avatarColor(p.pseudo, i) + "\">" +
-        initials + "</span>" +
-        "<span class=\"go-participant-row__pseudo\">" + label + "</span>" +
+        "<span class=\"go-participant-row__avatar\" style=\"background:" + color + "\">" +
+        inits + "</span>" +
+        "<span class=\"go-participant-row__name\">" + label + "</span>" +
         "</li>";
     }).join("");
   }
@@ -314,11 +299,6 @@ async function toggleSignup(routeId) {
     var n = await refreshParticipants();
     renderParticipants();
     return n;
-  }
-
-  function avatarColor(seed, i) {
-    var colors = ["#7DD3FC", "#C4B5FD", "#FCA5A5", "#FCD34D", "#86EFAC"];
-    return colors[(String(seed || "").length + i) % colors.length];
   }
 
   /* =========================================================
@@ -377,9 +357,11 @@ async function toggleSignup(routeId) {
       var shown = list.slice(0, 5);
       av.innerHTML = shown.map(function (p, i) {
         var label = participantLabel(p);
-        var initials = label.slice(0, 2).toUpperCase();
-        return '<span class="so-avatar" style="background:' + avatarColor(p.pseudo, i) + '">' +
-          escapeHtml(initials) + "</span>";
+        var GP = window.GoeloProfile;
+        var color = GP ? GP.avatarColor(p, i) : "#7DD3FC";
+        var inits = GP ? GP.initials(p) : label.slice(0, 2).toUpperCase();
+        return '<span class="so-avatar" style="background:' + color + '">' +
+          escapeHtml(inits) + "</span>";
       }).join("");
     }
     var more = list.length - Math.min(list.length, 5);

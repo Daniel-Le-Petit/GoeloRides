@@ -361,9 +361,11 @@ async function fetchSorties() {
       state.joinedRouteIds = new Set();
       return;
     }
-    var email = window.GOELO_USER && window.GOELO_USER.email;
-    if (!email) return;
-    var data = await supabaseRpc("signup_list_registered_routes", { p_email: email });
+    if (!window.GOELO_USER || !window.GOELO_USER.id) {
+      state.joinedRouteIds = new Set();
+      return;
+    }
+    var data = await supabaseRpc("signup_list_registered_routes", {});
     var routes = data && (data.routes || data);
     if (!Array.isArray(routes)) routes = [];
     state.joinedRouteIds = new Set(routes.map(String));

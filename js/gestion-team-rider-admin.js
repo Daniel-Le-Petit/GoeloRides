@@ -227,12 +227,13 @@
 
     /* Mettre à jour le nom/avatar dans la topbar */
     if (user) {
-      var um     = user.user_metadata || {};
-      var pseudo = um.pseudo || um.name || (user.email ? user.email.split("@")[0] : "Admin");
+      var displayName = window.GOELO_DISPLAY_NAME
+        || (user.user_metadata && user.user_metadata.display_name)
+        || "User";
       var nameEl = document.getElementById("admin-name");
       var avEl   = document.getElementById("admin-avatar");
-      if (nameEl) nameEl.textContent = pseudo;
-      if (avEl)   avEl.textContent   = pseudo.slice(0, 2).toUpperCase();
+      if (nameEl) nameEl.textContent = displayName;
+      if (avEl)   avEl.textContent   = displayName.slice(0, 2).toUpperCase();
     }
   }
 
@@ -298,7 +299,7 @@
         if (!panel || panel.style.display === "none") {
           startAdmin("admin", {
             email: "admin@demo.local",
-            user_metadata: { pseudo: "Admin Demo" }
+            user_metadata: { display_name: "Admin Demo" }
           });
         }
       }, 2000);

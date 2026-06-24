@@ -18,10 +18,12 @@
     return "visitor";
   }
 
-  function pseudo(user) {
-    if (!user) return "";
-    var um = user.user_metadata || {};
-    return um.pseudo || um.name || (user.email ? user.email.split("@")[0] : "");
+  function headerDisplayName() {
+    if (global.GOELO_DISPLAY_NAME && String(global.GOELO_DISPLAY_NAME).trim()) {
+      return String(global.GOELO_DISPLAY_NAME).trim();
+    }
+    if (global.GoeloProfile) return global.GoeloProfile.sessionDisplayName();
+    return "User";
   }
 
   function waitForRole() {
@@ -59,7 +61,7 @@
     }
 
     if (r === "user") {
-      btn.textContent = pseudo(user) || "Mon compte";
+      btn.textContent = headerDisplayName();
       btn.href = "sorties.html";
       return;
     }

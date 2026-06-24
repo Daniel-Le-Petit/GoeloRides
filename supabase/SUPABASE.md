@@ -72,6 +72,12 @@ Puis exécuter **pour une ville / commune optionnelle affichée avec les inscrit
 
 `supabase/migrations/20250624120000_signups_participant_city.sql`
 
+Puis exécuter **pour nettoyer `signups` et centraliser les données utilisateur dans `profiles`** (suppression `pseudo` / `email` dans `signups`, colonne `status`, `user_id` obligatoire, RPC `toggle_signup` et listes via jointure `profiles`) :
+
+`supabase/migrations/20250627120000_signups_profiles_cleanup.sql`
+
+**Important** : cette migration supprime les colonnes `pseudo`, `email`, `waitlist`, `canceled_at`, `cyclist_level` et `participant_city` de `signups`. Les inscriptions sans `user_id` mappable vers `auth.users` sont supprimées. Appliquer **après** les migrations `signup_list_for_route` et `signup_is_joined`.
+
 Puis exécuter **pour masquer aussi les parcours intégrés** (`falaises`, `brehec`, `boucle`) depuis la même modale **« Gérer les sorties »** / liste **« Corriger une sortie »** :
 
 `supabase/migrations/20250611140000_goelo_hidden_builtins.sql`

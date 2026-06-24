@@ -1,46 +1,34 @@
 /**
- * GoëloRides — Participants signups (signup_list_for_route / signup_list_all_names)
+ * GoëloRides — Participants (display_name via RPC signup_list_*)
  */
 (function (global) {
   "use strict";
+
+  function profileApi() {
+    return global.GoeloProfile || null;
+  }
 
   function routeKey(id) {
     return String(id == null ? "" : id).trim();
   }
 
-  function cleanPseudo(raw) {
-    var s = String(raw || "").trim();
-    if (!s) return "";
-    if (s.indexOf("@") !== -1) return s.split("@")[0];
-    return s;
-  }
-
-  /** Pseudo affiché — jamais d'e-mail complet (@ interdit dans le rendu). */
-  function displayPseudo(p) {
-    if (!p) return "?";
-    if (typeof p === "string") return cleanPseudo(p) || "?";
-    var pseudo = cleanPseudo(p.pseudo);
-    if (pseudo) return pseudo;
-    var email = String(p.email || "").trim();
-    if (email && email.indexOf("@") !== -1) return email.split("@")[0];
-    return "?";
-  }
-
-  /** @deprecated utiliser displayPseudo */
   function displayName(p) {
-    return displayPseudo(p);
+    if (profileApi()) return profileApi().displayName(p);
+    if (!p) return "User";
+    if (typeof p === "string") return p.trim() || "User";
+    var dn = String(p.display_name || "").trim();
+    return dn || "User";
   }
 
   function normalizeParticipant(x) {
     if (x == null) return null;
     if (typeof x === "string") {
-      var s = cleanPseudo(x);
-      return s ? { pseudo: s } : null;
+      var s = x.trim();
+      return s ? { display_name: s } : null;
     }
     if (typeof x === "object") {
-      var pseudo = displayPseudo(x);
       return {
-        pseudo: pseudo,
+        display_name: displayName(x),
         cyclist_level: x.cyclist_level || null,
         city: x.city || null
       };
@@ -122,32 +110,22 @@
     return out;
   }
 
-  var AVATAR_COLORS = ["#7DD3FC", "#C4B5FD", "#FCA5A5", "#FCD34D", "#86EFAC", "#C8F135"];
-
   function escapeHtml(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  function initialsFromName(name) {
-    return String(name || "?").split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
-  }
-
-  function avatarColorFor(p, i) {
-    var pseudo = displayPseudo(p);
-    return AVATAR_COLORS[(pseudo.length + i) % AVATAR_COLORS.length];
-  }
-
   function renderParticipantRow(p, i, tag) {
     tag = tag || "li";
-    var pseudo = displayPseudo(p);
-    var color = avatarColorFor(p, i);
+    var label = displayName(p);
+    var color = profileApi() ? profileApi().avatarColor(p, i) : "#7DD3FC";
+    var inits = profileApi() ? profileApi().initials(p) : label.slice(0, 2).toUpperCase();
     return (
       "<" + tag + ' class="go-participant-row">' +
       '<span class="go-participant-row__avatar" style="background:' + color + '" title="' +
-      escapeHtml(pseudo) + '">' + escapeHtml(initialsFromName(pseudo)) + "</span>" +
-      '<span class="go-participant-row__pseudo" title="' + escapeHtml(pseudo) + '">' +
-      escapeHtml(pseudo) + "</span>" +
+      escapeHtml(label) + '">' + escapeHtml(inits) + "</span>" +
+      '<span class="go-participant-row__name" title="' + escapeHtml(label) + '">' +
+      escapeHtml(label) + "</span>" +
       "</" + tag + ">"
     );
   }
@@ -164,10 +142,6 @@
     }).join("");
   }
 
-  /**
-   * Aperçu participants pour cartes (sorties.html + team-rider.html).
-   * Liste complète scrollable (max-height CSS).
-   */
   function renderParticipantsPreview(participants, opts) {
     opts = opts || {};
     var list = normalizeList(participants || []);
@@ -202,11 +176,12 @@
     if (!items.length) return "";
     var shown = items.slice(0, max);
     var html = shown.map(function (p, i) {
-      var pseudo = displayPseudo(p);
-      var color = avatarColorFor(p, i);
+      var label = displayName(p);
+      var color = profileApi() ? profileApi().avatarColor(p, i) : "#7DD3FC";
+      var inits = profileApi() ? profileApi().initials(p) : label.slice(0, 2).toUpperCase();
       return (
         '<span class="so-avatar" style="background:' + color + '" title="' +
-        escapeHtml(pseudo) + '">' + escapeHtml(initialsFromName(pseudo)) + "</span>"
+        escapeHtml(label) + '">' + escapeHtml(inits) + "</span>"
       );
     }).join("");
     var more = items.length - shown.length;
@@ -217,13 +192,11 @@
     return html;
   }
 
-  /** Associe les participants Supabase (signups actifs) à chaque carte/route. */
   async function enrichCardsWithParticipants(items, sb) {
     if (!items || !items.length) return items;
     sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
     if (!sb) return items;
 
-    /* Même source que parcours.js : fetchForRoute (signup_list_for_route + fallback). */
     await Promise.all(items.map(function (item) {
       return fetchForRoute(item.id, sb).then(function (r) {
         item.participants = (r && r.participants) ? r.participants : [];
@@ -241,7 +214,6 @@
 
   global.GoeloSignupParticipants = {
     routeKey: routeKey,
-    displayPseudo: displayPseudo,
     displayName: displayName,
     normalizeParticipant: normalizeParticipant,
     normalizeList: normalizeList,

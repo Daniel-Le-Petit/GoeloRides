@@ -57,7 +57,10 @@ function detectRole(){
         const isAdmin=am.goelo_admin===true||am.goelo_admin==='true';
         if(isAdmin){
           const um=p.user_metadata||{};
-          return {role:am.goelo_super_admin?'admin':'teamrider',pseudo:um.pseudo||p.email};
+          return {
+            role: am.goelo_super_admin ? 'admin' : 'teamrider',
+            display_name: um.display_name || 'User'
+          };
         }
       }
     }
@@ -70,8 +73,8 @@ function boot(rider){
   document.getElementById('gate-panel').style.display='none';
   document.getElementById('dashboard').style.display='block';
 
-  document.getElementById('user-name').textContent=rider.role;
-  document.getElementById('user-avatar').textContent=initials(rider.pseudo);
+  document.getElementById('user-name').textContent=rider.display_name||'User';
+  document.getElementById('user-avatar').textContent=initials(rider.display_name||'User');
 
   const badge=document.getElementById('role-badge');
   if(rider.role==='admin'){
@@ -117,8 +120,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   const demo=new URLSearchParams(location.search).get('demo');
   if(!rider){
-    if(demo==='admin') rider={role:'admin',pseudo:'Admin'};
-    if(demo==='teamrider') rider={role:'teamrider',pseudo:'TR'};
+    if(demo==='admin') rider={role:'admin',display_name:'Admin'};
+    if(demo==='teamrider') rider={role:'teamrider',display_name:'Team Rider'};
   }
 
   if(rider) boot(rider);

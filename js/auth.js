@@ -42,6 +42,7 @@ window.goeloGetSb = function () {
      ════════════════════════════════════════════════════════════ */
   window.GOELO_ROLE = "visitor";
   window.GOELO_USER = null;
+  window.GOELO_DISPLAY_NAME = null;
   window.GOELO_AUTH_PENDING = true;
 
   var ROLE_ORDER = { visitor: 0, user: 1, team_rider: 2, admin: 3 };
@@ -70,13 +71,13 @@ window.goeloGetSb = function () {
 
       var profileResult = await sb
         .from("profiles")
-        .select("role")
+        .select("role, display_name")
         .eq("id", user.id)
         .maybeSingle();
 
       if (profileResult.error) {
         console.warn("[GoëloAuth] profiles:", profileResult.error.message);
-        _emitRole("user", user);
+        _emitRole("user", user, null);
         return;
       }
 
@@ -84,7 +85,11 @@ window.goeloGetSb = function () {
         ? profileResult.data.role
         : "user";
 
-      _emitRole(role, user);
+      var displayName = profileResult.data && profileResult.data.display_name
+        ? String(profileResult.data.display_name).trim()
+        : "";
+
+      _emitRole(role, user, displayName || null);
     } catch (err) {
       console.warn("[GoëloAuth] resolveRole:", err.message);
       _emitRole("visitor", null);
@@ -94,14 +99,21 @@ window.goeloGetSb = function () {
   /* ════════════════════════════════════════════════════════════
      4. ÉMISSION DU RÔLE — UNE SEULE DÉCLARATION
      ════════════════════════════════════════════════════════════ */
-  function _emitRole(role, user) {
+  function _emitRole(role, user, displayName) {
     var cleanRole = role || "visitor";
     window.GOELO_ROLE = cleanRole;
     window.GOELO_USER = user;
+    window.GOELO_DISPLAY_NAME = displayName && String(displayName).trim()
+      ? String(displayName).trim()
+      : null;
     window.GOELO_AUTH_PENDING = false;
     console.log("[GoëloAuth] rôle résolu :", cleanRole);
     window.dispatchEvent(new CustomEvent("goelo:role-ready", {
-      detail: { role: cleanRole, user: user }
+      detail: {
+        role: cleanRole,
+        user: user,
+        display_name: window.GOELO_DISPLAY_NAME
+      }
     }));
   }
 
@@ -209,15 +221,15 @@ window.goeloGetSb = function () {
   async function _submitSignup() {
     var emailEl   = document.getElementById("su-email");
     var pwEl      = document.getElementById("su-password");
-    var pseudoEl  = document.getElementById("su-pseudo");
+    var displayNameEl = document.getElementById("su-display-name");
     var submitBtn = document.getElementById("su-submit");
     var label     = document.getElementById("su-btn-label");
     var spinner   = document.getElementById("su-btn-spinner");
     if (!emailEl || !pwEl) return;
 
-    var email    = emailEl.value.trim().toLowerCase();
-    var password = pwEl.value;
-    var pseudo   = pseudoEl ? pseudoEl.value.trim() : "";
+    var email       = emailEl.value.trim().toLowerCase();
+    var password    = pwEl.value;
+    var displayName = displayNameEl ? displayNameEl.value.trim() : "";
     _hideSignupError();
 
     if (!email || !password) {
@@ -239,7 +251,7 @@ window.goeloGetSb = function () {
       var signupResult = await sb.auth.signUp({
         email: email,
         password: password,
-        options: { data: { pseudo: pseudo || email.split("@")[0] } }
+        options: displayName ? { data: { display_name: displayName } } : undefined
       });
       if (signupResult.error) {
         _showSignupError(_friendlySignupError(signupResult.error.message));
@@ -247,9 +259,14 @@ window.goeloGetSb = function () {
       }
 
       if (signupResult.data && signupResult.data.user) {
+        var profileRow = {
+          id: signupResult.data.user.id,
+          role: "user"
+        };
+        if (displayName) profileRow.display_name = displayName;
         var profileResult = await sb
           .from("profiles")
-          .upsert({ id: signupResult.data.user.id, role: "user" }, { onConflict: "id", ignoreDuplicates: true });
+          .upsert(profileRow, { onConflict: "id" });
         if (profileResult.error) {
           console.warn("[GoëloAuth] profile upsert:", profileResult.error.message);
         }
@@ -440,8 +457,8 @@ window.goeloGetSb = function () {
           '<div id="su-error" class="ml-error" role="alert" hidden></div>' +
           '<div id="su-success" class="ml-error ml-error--info" role="status" hidden></div>' +
           '<form id="su-form" novalidate>' +
-            '<label class="ml-label" for="su-pseudo">Pseudo (optionnel)</label>' +
-            '<input id="su-pseudo" class="ml-input" type="text" placeholder="Ton pr\u00e9nom ou pseudo" autocomplete="nickname">' +
+            '<label class="ml-label" for="su-display-name">Nom affiché (optionnel)</label>' +
+            '<input id="su-display-name" class="ml-input" type="text" placeholder="Ton pr\u00e9nom ou surnom" autocomplete="nickname">' +
             '<label class="ml-label" for="su-email">E-mail</label>' +
             '<input id="su-email" class="ml-input" type="email" placeholder="ton@email.com" autocomplete="email" required data-autofocus>' +
             '<label class="ml-label" for="su-password">Mot de passe</label>' +
