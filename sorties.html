@@ -71,6 +71,21 @@
       </label>
     </div>
 
+    <div class="so-weather-bar" role="group" aria-label="Météo et tri des sorties">
+      <label class="so-weather-check">
+        <input type="checkbox" id="so-weather-ideal">
+        <span>Afficher uniquement les sorties avec conditions idéales</span>
+      </label>
+      <label class="so-weather-sort">
+        <span>Trier par</span>
+        <select id="so-sort-by" aria-label="Trier les sorties">
+          <option value="date">Date de départ</option>
+          <option value="weather">Meilleure météo</option>
+          <option value="distance">Plus proche</option>
+        </select>
+      </label>
+    </div>
+
     <!-- Liste + colonne droite Team Rider -->
     <div class="so-layout">
 
@@ -150,7 +165,8 @@
 <script src="js/auth.js"></script>
 <script src="js/goelo-ui.js"></script>
 <script src="js/goelo-profile.js"></script>
-<script src="js/signup-participants.js"></script>
+  <script src="js/signup-participants.js"></script>
+  <script src="js/goelo-weather.js"></script>
   <script src="js/sortie-cards.js"></script>
   <script src="js/sorties.js"></script>
   <script src="js/goelo-swipe-nav.js" defer></script>

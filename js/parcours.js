@@ -417,6 +417,27 @@ async function toggleSignup(routeId) {
     renderHeroPeople(sortie.participants || []);
   }
 
+  function renderWeatherCard() {
+    var section = document.getElementById("pd-weather-section");
+    var host = document.getElementById("pd-weather-card");
+    if (!section || !host || !window.GoeloWeather) return;
+    section.hidden = false;
+    host.innerHTML = window.GoeloWeather.cardHtml(sortie.weather);
+  }
+
+  async function loadWeather() {
+    if (!sortie || !window.GoeloWeather) return;
+    var section = document.getElementById("pd-weather-section");
+    var host = document.getElementById("pd-weather-card");
+    if (section) section.hidden = false;
+    if (host) {
+      host.innerHTML = '<div class="go-wx-card go-wx-card--na"><p class="go-wx-card__unavailable">' +
+        escapeHtml(window.GoeloWeather.t("loading")) + "</p></div>";
+    }
+    sortie.weather = await window.GoeloWeather.getWeatherForSortie(sortie);
+    renderWeatherCard();
+  }
+
   /* =========================================================
      MAP
   ========================================================= */
@@ -524,18 +545,22 @@ async function toggleSignup(routeId) {
         place:     fc.meetPlace             || "",
         date:      fc.rideDateIso           || "",
         rideTime:  fc.rideTime              || fc.meetTime || "",
+        meetTime:  fc.meetTime              || "",
         captain:   fc.captain || fc.rideLeader || "",
         km:        stats.totalKm   != null ? stats.totalKm   + " km"   : (fc.km    != null ? fc.km    + " km"   : "\u2014"),
         dplus:     stats.elevGainM != null ? stats.elevGainM + " m D+" : (fc.dplus != null ? fc.dplus + " m D+" : "\u2014"),
         duration:  fc.estimatedDurationHm   || fc.estimated_duration_hm || "",
-        meetTime:  fc.meetTime              || "",
         startTime: fc.startTime || fc.rideTime || "",
+        embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
+        meetLat:   fc.meetLat != null ? Number(fc.meetLat) : (fc.meet_lat != null ? Number(fc.meet_lat) : null),
+        meetLon:   fc.meetLon != null ? Number(fc.meetLon) : (fc.meet_lon != null ? Number(fc.meet_lon) : null),
         participants: []
       };
 
       await syncParticipantsUI();
       await renderAll();
-      initMap(); /* guard interne si Leaflet pas encore dispo */
+      loadWeather();
+      initMap();
 
     } catch (err) {
       console.error("[parcours.js]", err);

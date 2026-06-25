@@ -94,6 +94,8 @@
   line-height: 1.15;
   color: var(--text, #F0F0F0);
   margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Niveaux sortie (difficulté) — ne pas confondre avec .go-role-badge */

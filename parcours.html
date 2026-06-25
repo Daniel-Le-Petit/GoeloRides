@@ -119,6 +119,12 @@
       </p>
     </header>
 
+    <!-- ── MÉTÉO PRÉVUE AU DÉPART ── -->
+    <section class="pd-section" id="pd-weather-section" aria-labelledby="pd-weather-title" hidden>
+      <h2 class="pd-section__title" id="pd-weather-title">Météo au départ</h2>
+      <div id="pd-weather-card" aria-live="polite"></div>
+    </section>
+
     <!-- ── CARTE DU PARCOURS ── -->
     <section class="pd-section" aria-labelledby="pd-map-title">
       <h2 class="pd-section__title" id="pd-map-title">Carte du parcours</h2>
@@ -368,6 +374,7 @@
   <script src="js/goelo-ui.js"></script>
   <script src="js/goelo-profile.js"></script>
   <script src="js/signup-participants.js"></script>
+  <script src="js/goelo-weather.js"></script>
   <script src="js/parcours.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="goelo-swipe-nav.js" defer></script>

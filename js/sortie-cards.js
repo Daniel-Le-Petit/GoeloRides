@@ -203,8 +203,15 @@
 
     var duration = card.duration || estimateDuration(card.km, card.dplus, card.paceKmh);
 
+    var weatherBadge = "";
+    if (window.GoeloWeather) {
+      weatherBadge = window.GoeloWeather.badgeHtml(card.weather);
+    } else if (card.weather && card.weather.status === "loading") {
+      weatherBadge = '<span class="go-wx-badge go-wx-badge--na">…</span>';
+    }
+
     return (
-      '<article class="go-sc-card' + (cancelled ? " is-cancelled" : "") + '" style="animation-delay:' + (opts.animDelay || 0) + 'ms">' +
+      '<article class="go-sc-card' + (cancelled ? " is-cancelled" : "") + '" style="animation-delay:' + (opts.animDelay || 0) + 'ms" data-route-id="' + escapeAttr(card.id) + '">' +
       '<div class="go-sc-card__body">' +
         '<div class="go-sc-card__top">' +
           calendarHtml(d) +
@@ -217,6 +224,7 @@
           (cancelled ? ' <span class="go-sc-badge go-sc-badge--cancel">Annulée</span>' : "") +
           statutBadge +
           "</h2>" +
+          weatherBadge +
           '<span class="go-sc-badge go-level-badge go-sc-badge--' + gk + '" data-level="' + gk + '">' + escapeHtml(groupShort) + "</span>" +
         "</div>" +
         '<div class="go-sc-metrics">' +
@@ -314,7 +322,10 @@
       status: fc.sortieStatus || "open",
       statut: statut,
       imageUrl: fc.thumbSrc || fc.coverImageUrl || fc.coverImageDataUrl || "",
-      participants: []
+      participants: [],
+      embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
+      meetLat: fc.meetLat != null ? Number(fc.meetLat) : (fc.meet_lat != null ? Number(fc.meet_lat) : null),
+      meetLon: fc.meetLon != null ? Number(fc.meetLon) : (fc.meet_lon != null ? Number(fc.meet_lon) : null)
     };
   }
 

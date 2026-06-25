@@ -1,0 +1,211 @@
+/* ══════════════════════════════════════════════════════════════
+   GoëloRides — Météo sorties (badge liste + carte détail)
+   ══════════════════════════════════════════════════════════════ */
+
+.go-wx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.go-wx-badge--ideal {
+  color: #0a1a0a;
+  background: rgba(200, 241, 53, 0.22);
+  border-color: rgba(200, 241, 53, 0.45);
+}
+
+.go-wx-badge--moderate {
+  color: #f5e6a8;
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.go-wx-badge--difficult {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.38);
+}
+
+.go-wx-badge--na {
+  color: var(--muted, #888);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border, #2e2e2e);
+}
+
+.go-sc-card__title-row .go-wx-badge {
+  margin-left: auto;
+}
+
+/* ── Carte détail ── */
+
+.go-wx-card {
+  background: var(--surface, #1a1a1a);
+  border: 1px solid var(--border, #2e2e2e);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  animation: goWxIn 0.35s ease both;
+}
+
+@keyframes goWxIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.go-wx-card--ideal { border-left: 4px solid #c8f135; }
+.go-wx-card--moderate { border-left: 4px solid #f59e0b; }
+.go-wx-card--difficult { border-left: 4px solid #ef4444; }
+.go-wx-card--na { border-left: 4px solid var(--border, #2e2e2e); }
+
+.go-wx-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.go-wx-card__icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.go-wx-card__head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.go-wx-card__conditions {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text, #f0f0f0);
+}
+
+.go-wx-card__temp {
+  margin: 0.15rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  color: var(--text, #f0f0f0);
+}
+
+.go-wx-card__feels {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted, #888);
+}
+
+.go-wx-card__score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.go-wx-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 0;
+}
+
+.go-wx-card__grid dt {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #888);
+  margin-bottom: 0.15rem;
+}
+
+.go-wx-card__grid dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text, #f0f0f0);
+}
+
+.go-wx-card__when {
+  grid-column: 1 / -1;
+}
+
+.go-wx-card__unavailable {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted, #888);
+}
+
+/* ── Filtres liste sorties ── */
+
+.so-weather-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border, #2e2e2e);
+  border-radius: 10px;
+}
+
+.so-weather-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text, #f0f0f0);
+  cursor: pointer;
+  user-select: none;
+}
+
+.so-weather-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent, #c8f135);
+}
+
+.so-weather-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--muted, #888);
+}
+
+.so-weather-sort select {
+  font: inherit;
+  color: var(--text, #f0f0f0);
+  background: var(--surface-2, #222);
+  border: 1px solid var(--border, #2e2e2e);
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+}
+
+@media (max-width: 560px) {
+  .so-weather-sort {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .so-weather-sort select {
+    flex: 1;
+  }
+
+  .go-sc-card__title-row {
+    flex-wrap: wrap;
+  }
+
+  .go-sc-card__title-row .go-wx-badge {
+    margin-left: 0;
+  }
+}

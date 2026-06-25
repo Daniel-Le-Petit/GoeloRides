@@ -145,7 +145,11 @@
       dplus:          null,
       paceKmh:        parsePaceKmh(row.pace_label),
       imageUrl:       String(fc.thumbSrc || fc.coverImageUrl || fc.coverImageDataUrl || ""),
-      participants:   []
+      participants:   [],
+      embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
+      meetLat:        fc.meetLat != null ? Number(fc.meetLat) : (fc.meet_lat != null ? Number(fc.meet_lat) : null),
+      meetLon:        fc.meetLon != null ? Number(fc.meetLon) : (fc.meet_lon != null ? Number(fc.meet_lon) : null),
+      weather:        null
     };
   }
 
@@ -309,7 +313,10 @@ async function fetchSorties() {
     sorties:         [],
     filter:          "tous",
     search:          "",
-    joinedRouteIds:  new Set()
+    joinedRouteIds:  new Set(),
+    weatherIdealOnly: false,
+    sortBy:          "date",
+    userCoords:      null
   };
 
   function getUserRole() {
@@ -343,8 +350,47 @@ async function fetchSorties() {
       teamRiderPseudo: s.teamRiderPseudo || "",
       status:       s.status,
       imageUrl:     s.imageUrl,
-      participants: s.participants || []
+      participants: s.participants || [],
+      embeddedPoints: s.embeddedPoints || null,
+      meetLat:      s.meetLat,
+      meetLon:      s.meetLon,
+      weather:      s.weather || null,
+      weatherLat:   s.weatherLat,
+      weatherLon:   s.weatherLon
     };
+  }
+
+  function sortedSorties(list) {
+    var copy = list.slice();
+    if (state.sortBy === "weather" && window.GoeloWeather) {
+      copy.sort(function (a, b) {
+        var ka = window.GoeloWeather.weatherSortKey(a.weather);
+        var kb = window.GoeloWeather.weatherSortKey(b.weather);
+        if (ka.tier !== kb.tier) return ka.tier - kb.tier;
+        if (ka.rain !== kb.rain) return ka.rain - kb.rain;
+        return ka.wind - kb.wind;
+      });
+      return copy;
+    }
+    if (state.sortBy === "distance" && state.userCoords && window.GoeloWeather) {
+      var uc = state.userCoords;
+      copy.sort(function (a, b) {
+        var alat = a.weatherLat != null ? a.weatherLat : (window.GoeloWeather.resolveCoords(a) || window.GoeloWeather.DEFAULT_COORDS).lat;
+        var alon = a.weatherLon != null ? a.weatherLon : (window.GoeloWeather.resolveCoords(a) || window.GoeloWeather.DEFAULT_COORDS).lon;
+        var blat = b.weatherLat != null ? b.weatherLat : (window.GoeloWeather.resolveCoords(b) || window.GoeloWeather.DEFAULT_COORDS).lat;
+        var blon = b.weatherLon != null ? b.weatherLon : (window.GoeloWeather.resolveCoords(b) || window.GoeloWeather.DEFAULT_COORDS).lon;
+        var da = window.GoeloWeather.haversineKm(uc.lat, uc.lon, alat, alon);
+        var db = window.GoeloWeather.haversineKm(uc.lat, uc.lon, blat, blon);
+        return da - db;
+      });
+      return copy;
+    }
+    copy.sort(function (a, b) {
+      var ta = a.date ? a.date.getTime() : Infinity;
+      var tb = b.date ? b.date.getTime() : Infinity;
+      return ta - tb;
+    });
+    return copy;
   }
 
   function render() {
@@ -354,7 +400,7 @@ async function fetchSorties() {
       host.innerHTML = '<p class="go-sc-empty">Chargement…</p>';
       return;
     }
-    var list = state.sorties.filter(matchesFilter).map(sortieToCard);
+    var list = sortedSorties(state.sorties.filter(matchesFilter)).map(sortieToCard);
     window.GoeloSortieCards.renderList(list, host, {
       viewMode: "sorties",
       joinedRouteIds: state.joinedRouteIds,
@@ -429,6 +475,9 @@ async function fetchSorties() {
     if (state.search) {
       var hay = (s.title + " " + s.group + " " + s.place).toLowerCase();
       if (hay.indexOf(state.search) === -1) return false;
+    }
+    if (state.weatherIdealOnly) {
+      if (!s.weather || s.weather.status !== "ok" || s.weather.score !== "ideal") return false;
     }
     return true;
   }
@@ -595,6 +644,43 @@ async function fetchSorties() {
         render();
       });
     }
+    var idealChk = document.getElementById("so-weather-ideal");
+    if (idealChk) {
+      idealChk.addEventListener("change", function () {
+        state.weatherIdealOnly = idealChk.checked;
+        render();
+      });
+    }
+    var sortSel = document.getElementById("so-sort-by");
+    if (sortSel) {
+      sortSel.addEventListener("change", function () {
+        state.sortBy = sortSel.value || "date";
+        if (state.sortBy === "distance") requestUserCoords();
+        render();
+      });
+    }
+  }
+
+  function requestUserCoords() {
+    if (state.userCoords || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        state.userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        render();
+      },
+      function () { /* tri distance sans position : fallback date */ },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+    );
+  }
+
+  async function enrichWeather() {
+    if (!window.GoeloWeather || !state.sorties.length) return;
+    try {
+      await window.GoeloWeather.enrichSorties(state.sorties);
+      render();
+    } catch (err) {
+      console.warn("[sorties] enrichWeather:", err.message || err);
+    }
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -623,7 +709,10 @@ async function fetchSorties() {
     });
 
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible") reloadParticipants();
+      if (document.visibilityState === "visible") {
+        reloadParticipants();
+        enrichWeather();
+      }
     });
 
     window.addEventListener("pageshow", function () {
@@ -638,6 +727,7 @@ async function fetchSorties() {
     await fetchJoinedRouteIds();
     await reloadParticipants();
     render();
+    enrichWeather();
     state.sorties.forEach(function (s) {
       loadStats(s).then(function (st) {
         if (st && (st.km != null || st.dplus != null)) {
