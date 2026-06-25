@@ -170,12 +170,17 @@
   async function approveDemand(id) {
     var btns = document.querySelectorAll("#dc-" + id + " button");
     btns.forEach(function (b) { b.disabled = true; });
-    var sb = window.goeloGetSb ? window.goeloGetSb() : null;
-    if (!sb) { showToast("Client Supabase non disponible", "error"); return; }
+    if (typeof window.goeloApproveDemande !== "function") {
+      showToast("Module d'approbation non chargé", "error");
+      btns.forEach(function (b) { b.disabled = false; });
+      return;
+    }
     try {
-      var result = await sb.from("demandes").update({ status: "approved" }).eq("id", id);
-      if (result.error) throw result.error;
-      showToast("Demande approuvée ✓");
+      var data = await window.goeloApproveDemande(id);
+      var msg = "Demande approuvée ✓";
+      if (data.user_created) msg += " — compte créé";
+      else if (data.idempotent) msg += " — déjà traitée";
+      showToast(msg);
       await loadDemands();
     } catch (err) {
       console.error("[admin] approveDemand:", err);

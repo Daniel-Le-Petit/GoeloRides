@@ -270,11 +270,17 @@
 
   async function approveDemand(i, id) {
     var sb = window.goeloGetSb();
-    if (!sb) return;
-    var r = await sb.from("demandes").update({ status: "approved" }).eq("id", id);
-    if (r.error) { toast("Erreur : " + r.error.message); return; }
-    toast("Demande approuv\u00e9e \u2713");
-    renderDemands();
+    if (!sb) { toast("Client Supabase non disponible."); return; }
+    try {
+      var data = await window.goeloApproveDemande(id);
+      var msg = "Demande approuv\u00e9e \u2713";
+      if (data.user_created) msg += " — compte cr\u00e9\u00e9";
+      toast(msg);
+      renderDemands();
+    } catch (err) {
+      console.error("[team-rider.js] approveDemand:", err);
+      toast("Erreur : " + (err.message || err));
+    }
   }
   window.approveDemand = approveDemand;
 

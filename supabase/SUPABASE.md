@@ -200,11 +200,42 @@ Pour **notifier par e-mail** toutes les adresses encore actives dans `signups` l
 
 **[`supabase/NOTIFICATIONS-SORTIES.md`](./NOTIFICATIONS-SORTIES.md)**
 
-## 7. Sécurité (à terme)
+## 7. Approbation demande Team Rider (Auth + OneSignal)
+
+Migration traçabilité :
+
+`supabase/migrations/20250629130000_approve_demande_backend.sql`
+
+Edge Function **`approve-demande`** (service role, idempotent) :
+
+1. Vérifie que l’appelant est **admin** (`profiles.role` ou JWT `goelo_admin`).
+2. Passe la demande à **`approved`** (niveau ex. **vert** conservé sur le profil).
+3. Crée l’utilisateur **`auth.users`** s’il n’existe pas (sinon réutilise l’existant).
+4. Met à jour **`profiles`** (`role = team_rider`, `cyclist_level`).
+5. Envoie **une** notification OneSignal admin (titre / message demandés).
+6. Marque **`approval_processed_at`** pour éviter doublons.
+
+**Déploiement** (CLI Supabase) :
+
+```bash
+supabase functions deploy approve-demande --no-verify-jwt
+```
+
+Secrets (dashboard **Project Settings → Edge Functions**) :
+
+| Secret | Rôle |
+|--------|------|
+| `ONESIGNAL_APP_ID` | App ID OneSignal (même UUID que le site) |
+| `ONESIGNAL_REST_API_KEY` | Clé REST API (jamais côté navigateur) |
+| `ONESIGNAL_ADMIN_SEGMENT` | *(optionnel)* Segment dashboard ex. `Admins` ; sinon filtre tag `role=admin` |
+
+Le frontend (`admin.html`, `team-rider.html`, `gestion-team-rider.html`) appelle `window.goeloApproveDemande(id)` → `functions.invoke('approve-demande')` au lieu d’un `UPDATE` direct sur `demandes`.
+
+## 8. Sécurité (à terme)
 
 La clé **anon** exposée permet d’appeler les RPC d’inscription / listes. `route_create` n’est plus exécutable en **anon** après la migration admin. Pour limiter le spam sur les autres RPC, tu pourras ajouter **Rate limiting** (Edge Function), **CAPTCHA**, ou **clé secrète** dans une Edge Function.
 
-## 8. Codes d’erreur affichés aux utilisateurs (support)
+## 9. Codes d’erreur affichés aux utilisateurs (support)
 
 En cas d’échec d’enregistrement (Supabase ou navigateur), une boîte de dialogue peut indiquer un **numéro d’erreur** à transmettre à l’administrateur :
 
@@ -219,7 +250,7 @@ En cas d’échec d’enregistrement (Supabase ou navigateur), une boîte de dia
 
 Les scripts concernés : **`parcours.js`**, **`sortie.js`** (et la couche RPC alignée dans **`sorties.js`** pour les lectures).
 
-## 9. Compte cycliste (`goelo-auth.js`)
+## 10. Compte cycliste (`goelo-auth.js`)
 
 Toutes les pages qui chargent **`goelo-auth.js`** avec un emplacement **`[data-goelo-auth-home]`** (accueil, sorties, sortie, groupes) affichent le bouton **Se connecter** dans ce slot ; la barre latérale n’est plus utilisée sur la refonte visuelle.
 
@@ -237,10 +268,10 @@ Après correction de la configuration, tu peux **renvoyer** un mail de confirmat
 
 **Note** : la connexion standard Supabase utilise **l’e-mail**, pas le pseudo seul (le pseudo sert au affichage et aux métadonnées). Pour un login « pseudo uniquement », il faudrait une table d’alias dédiée (comme pour les admins).
 
-## 10. Sauvegardes Postgres → Cloudflare R2
+## 11. Sauvegardes Postgres → Cloudflare R2
 
 Guide pas à pas (bucket privé, GitHub Actions gratuit, scripts dump / restore) : **`supabase/BACKUP-R2.md`**.
 
-## 11. Alertes « nouvelles sorties / fiches mises à jour » (navigateur)
+## 12. Alertes « nouvelles sorties / fiches mises à jour » (navigateur)
 
 Sans colonne `updated_at` : le script **`goelo-ride-updates.js`** enregistre une empreinte des champs visibles (liste des sorties) dans **`localStorage`** (`goelo_routes_fingerprint_v1`), affiche un bandeau sur l’accueil et la page Sorties, un encart sur la fiche sortie, et une modale après **création / modification / suppression** admin (**`parcours.js`**) : **message court pour groupe Messenger / Insta** (copier-coller + boutons pour ouvrir les apps), plus **texte story Instagram** et idée visuelle. Aucune publication automatique (pas d’API Meta). URLs optionnelles : `window.GOELO_SHARE_MESSENGER_URL`, `window.GOELO_SHARE_INSTAGRAM_URL`.
