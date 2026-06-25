@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Parcourir les itinéraires vélo réutilisables — bibliothèque GoëloRides.">
+  <meta name="theme-color" content="#0D0D0D">
+  <title>Itinéraires · GoëloRides</title>
+  <meta property="og:title" content="Itinéraires · GoëloRides" />
+  <meta property="og:description" content="Parcourir les itinéraires vélo réutilisables sur la Côte du Goëlo." />
+  <meta property="og:image" content="https://goelorides.onrender.com/assets/hero-accueil.png" />
+  <meta property="og:url" content="https://goelorides.onrender.com/allrides.html" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a3a4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='14' fill='%23e8d5a3' text-anchor='middle'%3EGR%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/sorties.css">
+  <style>
+    .ar-main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+    }
+
+    .ar-filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.65rem 1rem;
+      margin: 1.25rem 0 1.5rem;
+      padding: 1rem 1.1rem;
+      background: var(--surface, #1A1A1A);
+      border: 1px solid var(--border, #2E2E2E);
+      border-radius: 12px;
+    }
+
+    .ar-filter {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 7rem;
+    }
+
+    .ar-filter label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted, #888);
+    }
+
+    .ar-filter input[type="number"] {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--border, #2E2E2E);
+      background: var(--surface-2, #242424);
+      color: var(--text, #F0F0F0);
+      font: inherit;
+      font-size: 0.82rem;
+    }
+
+    .ar-filter--toggle {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.45rem;
+      min-width: auto;
+      padding-bottom: 0.35rem;
+    }
+
+    .ar-filter--toggle label {
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 0.8rem;
+      color: var(--text, #F0F0F0);
+    }
+
+    .ar-count {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: var(--muted, #888);
+      padding-bottom: 0.35rem;
+    }
+
+    .ar-page-header__row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    #ar-create-btn {
+      margin-top: 0.35rem;
+      flex-shrink: 0;
+    }
+
+    .ar-form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .ar-textarea {
+      min-height: 5.5rem;
+      resize: vertical;
+    }
+
+    .ar-gpx-upload {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .ar-gpx-selected {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid var(--border, #2E2E2E);
+      background: var(--surface-2, #242424);
+    }
+
+    .ar-gpx-filename {
+      flex: 1;
+      min-width: 0;
+      font-size: 0.82rem;
+      color: var(--text, #F0F0F0);
+      word-break: break-all;
+    }
+
+    .ar-gpx-remove {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.72rem;
+    }
+
+    .ar-ride-card {
+      align-items: stretch;
+    }
+
+    .ar-ride-card.is-selected {
+      border-color: rgba(200, 241, 53, 0.55);
+      box-shadow: 0 0 0 1px rgba(200, 241, 53, 0.12);
+    }
+
+    .ar-ride-card__map {
+      flex-shrink: 0;
+      width: 108px;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .ar-map-placeholder {
+      flex: 1;
+      min-height: 120px;
+      border-radius: 10px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(200, 241, 53, 0.06), transparent 45%),
+        var(--surface-2, #242424);
+      border: 1px solid var(--border, #2E2E2E);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.5rem;
+      text-align: center;
+    }
+
+    .ar-map-placeholder__icon {
+      font-size: 1.35rem;
+      line-height: 1;
+      opacity: 0.75;
+    }
+
+    .ar-map-placeholder__label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted, #888);
+    }
+
+    .ar-map-preview {
+      width: 100%;
+      height: 52px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px dashed rgba(200, 241, 53, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.25rem;
+    }
+
+    .ar-map-preview svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .ar-ride-card__body {
+      flex: 1;
+      min-width: 0;
+      justify-content: center;
+    }
+
+    .ar-ride-card__actions {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.4rem;
+      min-width: 9.5rem;
+      padding-left: 0.25rem;
+    }
+
+    .ar-ride-card__actions .go-sc-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    #ar-toast-wrap {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      z-index: 8000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .ar-toast {
+      background: var(--surface, #1A1A1A);
+      border: 1px solid rgba(200, 241, 53, 0.45);
+      color: var(--text, #F0F0F0);
+      padding: 0.65rem 0.9rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      animation: arToastIn 0.2s ease;
+    }
+
+    @keyframes arToastIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    @media (max-width: 720px) {
+      .ar-ride-card {
+        flex-wrap: wrap;
+      }
+
+      .ar-ride-card__map {
+        width: 76px;
+      }
+
+      .ar-map-placeholder {
+        min-height: 96px;
+      }
+
+      .ar-ride-card__actions {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding-left: 0;
+        min-width: 0;
+      }
+
+      .ar-ride-card__actions .go-sc-btn {
+        width: auto;
+        flex: 1 1 auto;
+      }
+
+      .ar-count {
+        width: 100%;
+        margin-left: 0;
+        padding-top: 0.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <p class="gr-topstrip">Bibliothèque d'itinéraires réutilisables · GoëloRides</p>
+
+  <nav class="gr-nav" role="navigation" aria-label="Main navigation">
+    <a href="index.html" class="gr-nav__logo">GOËLO<span>RIDES</span></a>
+    <ul class="gr-nav__links">
+      <li><a href="sorties.html">Sorties</a></li>
+      <li><a href="allrides.html" aria-current="page">Itinéraires</a></li>
+      <li><a href="groupes.html">Groupes</a></li>
+      <li><a href="infos-pratiques.html">Infos pratiques</a></li>
+    </ul>
+  </nav>
+
+  <header class="gr-page-header">
+    <div class="ar-page-header__row">
+      <div>
+        <h1>Itinéraires</h1>
+        <p>Parcourir les itinéraires vélo réutilisables</p>
+      </div>
+      <button type="button" class="go-sc-btn go-sc-btn--primary" id="ar-create-btn" hidden>+ Créer un itinéraire</button>
+    </div>
+  </header>
+
+  <main class="ar-main" id="main-content" role="main">
+
+    <div class="ar-filters" role="toolbar" aria-label="Filtres itinéraires">
+      <div class="ar-filter">
+        <label for="ar-min-km">Min distance (km)</label>
+        <input type="number" id="ar-min-km" min="0" step="0.1" placeholder="Any">
+      </div>
+      <div class="ar-filter">
+        <label for="ar-max-km">Max distance (km)</label>
+        <input type="number" id="ar-max-km" min="0" step="0.1" placeholder="Any">
+      </div>
+      <div class="ar-filter">
+        <label for="ar-min-elev">Min elevation (m)</label>
+        <input type="number" id="ar-min-elev" min="0" step="1" placeholder="Any">
+      </div>
+      <div class="ar-filter ar-filter--toggle">
+        <input type="checkbox" id="ar-gpx-only">
+        <label for="ar-gpx-only">GPX available only</label>
+      </div>
+      <p class="ar-count" id="ar-count" aria-live="polite"></p>
+    </div>
+
+    <div id="ar-rides-list" aria-live="polite">
+      <p class="go-sc-empty">Chargement des itinéraires…</p>
+    </div>
+
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-logo">GOËLO<span>RIDES</span></p>
+        <p class="footer-loc">Saint-Quay-Portrieux<br>Côtes-d'Armor · Bretagne</p>
+      </div>
+      <div>
+        <p class="footer-col-title">Follow</p>
+        <div class="footer-links">
+          <a href="https://www.instagram.com/goelo.rides/" target="_blank" rel="noopener" class="footer-link">@goelo.rides</a>
+          <a href="mailto:goelo.rides@gmail.com" class="footer-link">goelo.rides@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div id="ar-toast-wrap" aria-live="polite"></div>
+
+  <div id="modal-ar-create" class="goelo-modal" hidden role="dialog" aria-modal="true" aria-labelledby="ar-create-title">
+    <div class="goelo-modal__backdrop" data-ar-close-modal></div>
+    <div class="goelo-modal__box goelo-modal__box--login">
+      <button type="button" class="goelo-modal__close" data-ar-close-modal aria-label="Fermer">✕</button>
+      <h2 id="ar-create-title" class="ml-title">Créer un itinéraire</h2>
+      <p class="ml-sub">Ajoute un parcours réutilisable au catalogue.</p>
+      <div id="ar-create-error" class="ml-error" role="alert" hidden></div>
+      <form id="ar-create-form" novalidate>
+        <label class="ml-label" for="ar-f-title">Titre *</label>
+        <input id="ar-f-title" class="ml-input" type="text" required maxlength="200" autocomplete="off" data-autofocus>
+
+        <label class="ml-label" for="ar-f-description">Description</label>
+        <textarea id="ar-f-description" class="ml-input ar-textarea" rows="3" maxlength="2000"></textarea>
+
+        <label class="ml-label">Uploader fichier GPX</label>
+        <div class="ar-gpx-upload">
+          <input type="file" id="ar-f-gpx-file" accept=".gpx,application/gpx+xml" hidden>
+          <button type="button" class="go-sc-btn go-sc-btn--ghost" id="ar-gpx-pick">Choisir un fichier GPX</button>
+          <div id="ar-gpx-selected" class="ar-gpx-selected" hidden>
+            <span id="ar-gpx-filename" class="ar-gpx-filename"></span>
+            <button type="button" class="go-sc-btn go-sc-btn--danger ar-gpx-remove" id="ar-gpx-remove">Retirer</button>
+          </div>
+        </div>
+
+        <label class="ml-label" for="ar-f-distance">Distance (km)</label>
+        <input id="ar-f-distance" class="ml-input" type="number" min="0" step="0.1">
+
+        <label class="ml-label" for="ar-f-elevation">Dénivelé (m)</label>
+        <input id="ar-f-elevation" class="ml-input" type="number" min="0" step="1">
+
+        <label class="ml-label" for="ar-f-duration">Durée estimée (min)</label>
+        <input id="ar-f-duration" class="ml-input" type="number" min="0" step="1">
+
+        <div class="ar-form-actions">
+          <button type="submit" class="go-sc-btn go-sc-btn--primary" id="ar-create-submit">Créer l'itinéraire</button>
+          <button type="button" class="go-sc-btn go-sc-btn--ghost" data-ar-close-modal>Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/goelo-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/allrides.js"></script>
+</body>
+</html>
