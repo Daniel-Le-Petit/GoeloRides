@@ -44,7 +44,7 @@ function showToast(msg, type = 'info') {
 }
 
 /* ── PROGRESS ── */
-const FIELDS = ['titre','date','heure-rdv','lieu','capitaine'];
+const FIELDS = ['titre','date','heure-rdv','lieu','capitaine','route-km','route-dplus','route-duree'];
 function updateProgress() {
   let done = 0;
   FIELDS.forEach(id => { const el = document.getElementById(id); if (el && el.value.trim()) done++; });
@@ -165,10 +165,44 @@ async function saveDraft() {
   }
 }
 
+function readRouteStats() {
+  const km = parseFloat(document.getElementById('route-km')?.value);
+  const dplus = parseInt(document.getElementById('route-dplus')?.value, 10);
+  const duree = document.getElementById('route-duree')?.value?.trim() || '';
+  return { km, dplus, duree };
+}
+
+function validateRouteStats() {
+  const { km, dplus, duree } = readRouteStats();
+  if (!km || km <= 0) {
+    showToast('Distance requise (km > 0)', 'error');
+    return false;
+  }
+  if (isNaN(dplus) || dplus < 0) {
+    showToast('Dénivelé requis (m ≥ 0)', 'error');
+    return false;
+  }
+  if (!duree) {
+    showToast('Durée requise (ex : 2h30)', 'error');
+    return false;
+  }
+  return true;
+}
+
+function syncRouteInputs(dist, dplus, dur) {
+  const kmEl = document.getElementById('route-km');
+  const dplusEl = document.getElementById('route-dplus');
+  const durEl = document.getElementById('route-duree');
+  if (kmEl) kmEl.value = dist;
+  if (dplusEl) dplusEl.value = dplus;
+  if (durEl) durEl.value = dur;
+}
+
 async function publishSortie() {
   const titre = document.getElementById('titre').value.trim();
   const date  = document.getElementById('date').value;
   if (!titre || !date) { showToast('Titre et date requis pour publier', 'error'); return; }
+  if (!validateRouteStats()) return;
   try {
     const sb = await getSb();
     const payload = buildPayload('publiee');
@@ -185,7 +219,7 @@ async function publishSortie() {
     } else {
       result = await sb.rpc('route_create', payload);
     }
-    if (error) throw error;
+    if (result.error) throw result.error;
     document.getElementById('statut').value = 'publiee';
     updateStatusBadge('publiee');
     document.getElementById('save-dot').classList.add('saved');
@@ -221,6 +255,9 @@ function buildPayload(statut) {
   // pace_label selon groupe (affiché dans les cartes)
   const pace = { blanc: '18–22 km/h', vert: '22–25 km/h', bleu: '25–30 km/h', rouge: '30+ km/h' };
 
+  const savedFc = window._loadedFrontConfig || {};
+  const { km, dplus, duree } = readRouteStats();
+
   // front_config : tout ce que sorties.js lit pour afficher la carte
   const front_config = {
     visibility: statut === 'publiee' ? 'public' : 'draft',
@@ -238,9 +275,18 @@ function buildPayload(statut) {
     maxParticipants: maxP,
     description: desc,
 
-    // 🔥 AJOUT IMPORTANT
-    embeddedPoints: window.currentEmbeddedPoints || fc?.embeddedPoints || [],
-    coverImageDataUrl: window.currentCoverImage || fc?.coverImageDataUrl || ""
+    km: !isNaN(km) ? km : null,
+    dplus: !isNaN(dplus) ? dplus : null,
+    estimatedDurationHm: duree || null,
+    stats: {
+      totalKm: !isNaN(km) ? Math.round(km * 10) / 10 : null,
+      elevGainM: !isNaN(dplus) ? dplus : null,
+    },
+
+    embeddedPoints: window.currentEmbeddedPoints || savedFc.embeddedPoints || [],
+    routeCities: window.currentRouteCities || savedFc.routeCities || [],
+    file: window.currentGpxFilename || savedFc.file || '',
+    coverImageDataUrl: window.currentCoverImage || savedFc.coverImageDataUrl || ''
   };
 
   return {
@@ -287,12 +333,12 @@ zone.addEventListener('drop', e => {
 });
 
 function loadGpx(file) {
-  const status  = document.getElementById('px-status');
+  const status  = document.getElementById('gpx-status');
   const dot     = document.getElementById('gpx-dot');
   const fname   = document.getElementById('gpx-filename');
   const msg     = document.getElementById('gpx-msg');
 
-  status.classList.add('visible');
+  if (status) status.classList.add('visible');
   dot.classList.add('loading');
   fname.textContent = file.name;
   msg.textContent   = 'Analyse du parcours en cours…';
@@ -345,10 +391,16 @@ function parseGpx(xml, filename) {
   const mm        = Math.round((heures - hh) * 60);
 
   // Affichage stats
+  const durStr = hh + 'h' + String(mm).padStart(2, '0');
+
   document.getElementById('gpx-dist').textContent  = dist.toFixed(1);
   document.getElementById('gpx-dplus').textContent = Math.round(dplus);
-  document.getElementById('gpx-dur').textContent   = hh + 'h' + String(mm).padStart(2,'0');
+  document.getElementById('gpx-dur').textContent   = durStr;
   document.getElementById('gpx-pts').textContent   = pts.length;
+
+  syncRouteInputs(dist.toFixed(1), Math.round(dplus), durStr);
+
+  window.currentGpxFilename = filename;
 
   document.getElementById('gpx-dot').classList.remove('loading');
   document.getElementById('gpx-msg').textContent = '✓ Parcours prêt';
@@ -359,7 +411,48 @@ function parseGpx(xml, filename) {
   // Profil altimétrique
   drawElevation(coords);
 
+  extractRouteCities(coords).then(function (cities) {
+    window.currentRouteCities = cities;
+    if (cities.length) {
+      document.getElementById('gpx-msg').textContent =
+        '✓ Parcours prêt · ' + cities.join(' → ');
+    }
+  });
+
   updateProgress();
+}
+
+async function extractRouteCities(coords) {
+  if (!coords || coords.length < 2) return [];
+  const indices = [
+    0,
+    Math.floor(coords.length / 3),
+    Math.floor((2 * coords.length) / 3),
+    coords.length - 1
+  ];
+  const seen = new Set();
+  const cities = [];
+  for (const i of indices) {
+    const c = coords[i];
+    if (!c) continue;
+    try {
+      const url = 'https://nominatim.openstreetmap.org/reverse?lat=' +
+        c.lat + '&lon=' + c.lng + '&format=json&zoom=10&accept-language=fr';
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const addr = data.address || {};
+      const name = addr.village || addr.town || addr.city || addr.municipality || addr.hamlet;
+      if (name && !seen.has(name)) {
+        seen.add(name);
+        cities.push(name);
+      }
+      await new Promise(r => setTimeout(r, 1100));
+    } catch (e) {
+      console.warn('[extractRouteCities]', e);
+    }
+  }
+  return cities;
 }
 
 function haversine(a, b) {
@@ -469,8 +562,9 @@ function generateFlyer() {
   // Données du formulaire
   const titre  = document.getElementById('titre').value || 'Sortie GoëloRides';
   const date   = document.getElementById('date').value;
-  const dist   = document.getElementById('gpx-dist').textContent;
-  const dplus  = document.getElementById('gpx-dplus').textContent;
+  const stats  = readRouteStats();
+  const dist   = stats.km ? String(stats.km) : (document.getElementById('gpx-dist').textContent || '—');
+  const dplus  = !isNaN(stats.dplus) ? String(stats.dplus) : (document.getElementById('gpx-dplus').textContent || '—');
   const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
   const lieu   = document.getElementById('lieu').value || 'Saint-Quay-Portrieux';
   const hrdv   = document.getElementById('heure-rdv').value || '08:00';
@@ -707,8 +801,9 @@ function copyFlyer() {
 function generateSocial() {
   const titre  = document.getElementById('titre').value || 'Sortie GoëloRides';
   const date   = document.getElementById('date').value;
-  const dist   = document.getElementById('gpx-dist').textContent;
-  const dplus  = document.getElementById('gpx-dplus').textContent;
+  const stats  = readRouteStats();
+  const dist   = stats.km ? String(stats.km) : (document.getElementById('gpx-dist').textContent || '—');
+  const dplus  = !isNaN(stats.dplus) ? String(stats.dplus) : (document.getElementById('gpx-dplus').textContent || '—');
   const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
   const hrdv   = document.getElementById('heure-rdv').value || '08h30';
   const lieu   = document.getElementById('lieu').value || 'Saint-Quay-Portrieux';
@@ -748,41 +843,76 @@ async function loadRoute(routeId) {
 }
 
 function populateForm(route) {
-
-  const fc = route.front_config || {};
+  let fc = route.front_config || {};
+  if (typeof fc === 'string') {
+    try { fc = JSON.parse(fc); } catch (e) { fc = {}; }
+  }
+  window._loadedFrontConfig = fc;
 
   document.getElementById('titre').value = route.track_name || '';
   document.getElementById('date').value = fc.rideDateIso || '';
-  document.getElementById('heure-rdv').value = fc.rideTime || '';
+  document.getElementById('heure-rdv').value = fc.meetTime || '';
+  document.getElementById('heure-depart').value = fc.rideTime || '';
   document.getElementById('lieu').value = fc.meetPlace || '';
   document.getElementById('ville').value = fc.city || '';
   document.getElementById('cp').value = fc.cp || '';
-  document.getElementById('capitaine').value = fc.captain || '';
+  document.getElementById('capitaine').value = fc.captain || fc.rideLeader || '';
+  if (fc.niveau) document.getElementById('niveau').value = fc.niveau;
+
+  const groupe = (fc.levelClass || '').replace('level-', '') ||
+    (route.group_label || '').toLowerCase().match(/blanc|vert|bleu|rouge/)?.[0] || 'vert';
+  const groupeEl = document.querySelector('input[name="groupe"][value="' + groupe + '"]');
+  if (groupeEl) groupeEl.checked = true;
+
+  const type = fc.raceType || 'route';
+  const typeEl = document.querySelector('input[name="type"][value="' + type + '"]');
+  if (typeEl) typeEl.checked = true;
 
   document.getElementById('rte-desc').innerHTML =
     fc.description || fc.shortDesc || '';
 
-  updateStatusBadge(fc.status || 'brouillon');
+  const statut = fc.sortieStatus || (fc.visibility === 'public' ? 'publiee' : 'brouillon');
+  document.getElementById('statut').value = statut;
+  updateStatusBadge(statut);
 
-  // stats GPX
+  const kmVal = fc.stats?.totalKm != null ? fc.stats.totalKm : fc.km;
+  const dplusVal = fc.stats?.elevGainM != null ? fc.stats.elevGainM : fc.dplus;
+  const durVal = fc.estimatedDurationHm || fc.estimated_duration_hm || '';
+
   document.getElementById('gpx-dist').textContent =
-    fc.stats?.totalKm?.toFixed(1) || '—';
-
+    kmVal != null ? Number(kmVal).toFixed(1) : '—';
   document.getElementById('gpx-dplus').textContent =
-    fc.stats?.elevGainM || '—';
+    dplusVal != null ? Math.round(dplusVal) : '—';
+  document.getElementById('gpx-dur').textContent = durVal || '—';
 
-  // GPX preview visible
+  if (kmVal != null || dplusVal != null || durVal) {
+    syncRouteInputs(
+      kmVal != null ? Number(kmVal).toFixed(1) : '',
+      dplusVal != null ? Math.round(dplusVal) : '',
+      durVal
+    );
+  }
+
+  window.currentEmbeddedPoints = Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : [];
+  window.currentRouteCities = Array.isArray(fc.routeCities) ? fc.routeCities : [];
+  window.currentGpxFilename = fc.file || '';
+
+  if (fc.file) {
+    document.getElementById('gpx-filename').textContent = fc.file;
+    document.getElementById('gpx-msg').textContent = '✓ Parcours enregistré';
+  }
+
   document.getElementById('gpx-status')?.classList.add('visible');
 
-  // carte
   if (fc.embeddedPoints?.length) {
     const coords = fc.embeddedPoints.map(p => ({
       lat: p[0],
       lng: p[1],
-      ele: 0
+      ele: Array.isArray(p) && p[2] != null ? p[2] : 0
     }));
-
+    document.getElementById('gpx-pts').textContent = coords.length;
     initMap(coords);
+    drawElevation(coords);
   }
 
   updateProgress();

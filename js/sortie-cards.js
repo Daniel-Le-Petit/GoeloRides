@@ -93,17 +93,17 @@
   }
 
   function fmtKm(km) {
-    if (km == null) return "—";
+    if (km == null) return "Non renseigné";
     return String(Math.round(km * 10) / 10).replace(".", ",") + " km";
   }
 
   function fmtDplus(d) {
-    if (d == null) return "—";
+    if (d == null) return "Non renseigné";
     return Math.round(d) + " m D+";
   }
 
   function estimateDuration(km, dplus, paceKmh) {
-    if (km == null) return "—";
+    if (km == null) return "Non renseigné";
     var speed = paceKmh || 20;
     var min = Math.round((km / speed) * 60 + (dplus || 0) / 18);
     var h = Math.floor(min / 60);
@@ -313,6 +313,7 @@
       meetTime: time,
       km: km,
       dplus: dplus,
+      duration: fc.estimatedDurationHm || fc.estimated_duration_hm || null,
       paceKmh: parsePaceKmh(row.pace_label),
       assigned_team_rider_id: row.assigned_team_rider_id || null,
       teamRiderPseudo: row.team_rider && row.team_rider.pseudo

@@ -239,6 +239,23 @@
             <div class="gpx-stat__val"><span id="gpx-pts">—</span></div>
           </div>
         </div>
+
+        <p class="field__hint" style="margin:.75rem 0 .5rem">Valeurs affichées sur la fiche sortie — ajustables après import GPX.</p>
+        <div class="field-row-3">
+          <div class="field">
+            <label class="field__label" for="route-km">Distance (km) *</label>
+            <input class="field__input" type="number" id="route-km" min="0.1" step="0.1" placeholder="42" required>
+          </div>
+          <div class="field">
+            <label class="field__label" for="route-dplus">Dénivelé (m) *</label>
+            <input class="field__input" type="number" id="route-dplus" min="0" step="1" placeholder="450" required>
+          </div>
+          <div class="field">
+            <label class="field__label" for="route-duree">Durée (ex : 2h30) *</label>
+            <input class="field__input" type="text" id="route-duree" placeholder="2h30" required>
+          </div>
+        </div>
+
         <div id="gpx-map"></div>
         <div class="gpx-elevation" id="gpx-elev">
           <div class="gpx-elevation__title">Profil altimétrique</div>

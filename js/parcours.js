@@ -17,6 +17,8 @@
 
   var sortie    = null;
   var _joinBusy = false;
+  var pdMap     = null;
+  var pdBounds  = null;
 
   /* =========================================================
      HELPERS
@@ -347,6 +349,79 @@ async function toggleSignup(routeId) {
     return t ? label + " · " + t : label;
   }
 
+  function displayMetric(val, suffix) {
+    if (val == null || val === "" || val === "\u2014" || val === "—") {
+      return "Non renseigné";
+    }
+    return suffix ? String(val) + suffix : String(val);
+  }
+
+  function groupKeyFromLabel(group) {
+    var g = String(group || "").toLowerCase();
+    if (g.indexOf("blanc") >= 0) return "blanc";
+    if (g.indexOf("vert") >= 0) return "vert";
+    if (g.indexOf("bleu") >= 0) return "bleu";
+    if (g.indexOf("rouge") >= 0) return "rouge";
+    return "vert";
+  }
+
+  function routeLineColor(s) {
+    var niveau = String(s.niveau || "").toLowerCase();
+    if (niveau === "debutant") return "#22C55E";
+    if (niveau === "intermediaire") return "#F59E0B";
+    if (niveau === "confirme") return "#EF4444";
+    var map = { blanc: "#22C55E", vert: "#22C55E", bleu: "#F59E0B", rouge: "#EF4444" };
+    return map[s.groupKey] || "#C8F135";
+  }
+
+  function normalizeEmbeddedPoints(points) {
+    if (!Array.isArray(points) || !points.length) return [];
+    return points.map(function (p) {
+      if (Array.isArray(p)) return [Number(p[0]), Number(p[1])];
+      if (p && typeof p === "object") {
+        return [Number(p.lat), Number(p.lon != null ? p.lon : p.lng)];
+      }
+      return null;
+    }).filter(function (ll) {
+      return ll && !isNaN(ll[0]) && !isNaN(ll[1]);
+    });
+  }
+
+  async function loadGpxLatLngs(url) {
+    if (!url) return [];
+    try {
+      var res = await fetch(url);
+      if (!res.ok) {
+        console.warn("[parcours] GPX introuvable:", url, res.status);
+        return [];
+      }
+      var xml = new DOMParser().parseFromString(await res.text(), "text/xml");
+      var pts = Array.from(xml.querySelectorAll("trkpt"));
+      return pts.map(function (p) {
+        return [parseFloat(p.getAttribute("lat")), parseFloat(p.getAttribute("lon"))];
+      }).filter(function (ll) {
+        return !isNaN(ll[0]) && !isNaN(ll[1]);
+      });
+    } catch (e) {
+      console.warn("[parcours] erreur chargement GPX:", e);
+      return [];
+    }
+  }
+
+  function renderCities() {
+    var ul = document.getElementById("pd-cities");
+    if (!ul || !sortie) return;
+    var cities = sortie.routeCities || [];
+    if (!cities.length && sortie.city) cities = [sortie.city];
+    if (!cities.length) {
+      ul.innerHTML = '<li class="pd-cities__empty">Non renseigné</li>';
+      return;
+    }
+    ul.innerHTML = cities.map(function (c) {
+      return "<li>" + escapeHtml(c) + "</li>";
+    }).join("");
+  }
+
   function typeLabelFromSortie(s) {
     var rt = String(s.raceType || s.type || "").toLowerCase();
     if (rt === "gravel") return "Gravel";
@@ -406,13 +481,13 @@ async function toggleSignup(routeId) {
 
     var sport = typeLabelFromSortie(sortie);
     setText("pd-metric-sport", "\uD83D\uDEB4 " + sport);
-    setText("pd-metric-group", sortie.group || "—");
-    setText("pd-km",           sortie.km || "—");
-    setText("pd-dplus",        sortie.dplus || "—");
-    setText("pd-meet",         sortie.meetTime || "—");
-    setText("pd-start",        sortie.startTime || "—");
-    setText("pd-duration",     sortie.duration || "—");
-    setText("pd-place",        sortie.place || "—");
+    setText("pd-metric-group", sortie.group || "Non renseigné");
+    setText("pd-km",           displayMetric(sortie.kmRaw, " km"));
+    setText("pd-dplus",        displayMetric(sortie.dplusRaw, " m D+"));
+    setText("pd-meet",         displayMetric(sortie.meetTime));
+    setText("pd-start",        displayMetric(sortie.startTime));
+    setText("pd-duration",     displayMetric(sortie.duration));
+    setText("pd-place",        displayMetric(sortie.place));
 
     renderHeroPeople(sortie.participants || []);
   }
@@ -441,26 +516,66 @@ async function toggleSignup(routeId) {
   /* =========================================================
      MAP
   ========================================================= */
-  function initMap() {
+  async function initMap() {
     if (!sortie) return;
     if (typeof L === "undefined") {
-      /* Leaflet pas encore chargé — retry à window.load */
       window.addEventListener("load", function () { initMap(); }, { once: true });
       return;
     }
     var el = document.getElementById("pd-map");
     if (!el) return;
-    if (el._leaflet_id) return; /* déjà initialisé */
 
-    var map = L.map(el).setView([48.6, -2.8], 10);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19
-    }).addTo(map);
+    var latlngs = normalizeEmbeddedPoints(sortie.embeddedPoints);
+    if (!latlngs.length && sortie.gpxFile) {
+      console.log("[parcours] embeddedPoints vides, tentative GPX:", sortie.gpxFile);
+      latlngs = await loadGpxLatLngs(sortie.gpxFile);
+    }
+    if (!latlngs.length) {
+      console.warn("[parcours] Aucun tracé (embeddedPoints / GPX manquants)");
+    }
+
+    if (!pdMap) {
+      pdMap = L.map(el, { zoomControl: true });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "\u00a9 OpenStreetMap"
+      }).addTo(pdMap);
+    } else {
+      pdMap.eachLayer(function (layer) {
+        if (layer instanceof L.Polyline || layer instanceof L.CircleMarker) {
+          pdMap.removeLayer(layer);
+        }
+      });
+    }
+
+    pdBounds = null;
+    var color = routeLineColor(sortie);
+
+    if (latlngs.length) {
+      var poly = L.polyline(latlngs, { color: color, weight: 4, opacity: 0.9 }).addTo(pdMap);
+      pdBounds = poly.getBounds();
+      L.circleMarker(latlngs[0], {
+        radius: 7, fillColor: "#22C55E", color: "#fff", fillOpacity: 1, weight: 2
+      }).bindTooltip("D\u00e9part").addTo(pdMap);
+      L.circleMarker(latlngs[latlngs.length - 1], {
+        radius: 7, fillColor: "#EF4444", color: "#fff", fillOpacity: 1, weight: 2
+      }).bindTooltip("Arriv\u00e9e").addTo(pdMap);
+      pdMap.fitBounds(pdBounds, { padding: [24, 24] });
+    } else {
+      var center = sortie.meetLat != null && sortie.meetLon != null
+        ? [sortie.meetLat, sortie.meetLon] : [48.6, -2.8];
+      pdMap.setView(center, 11);
+    }
 
     var fitBtn = document.getElementById("pd-map-fit");
     if (fitBtn) {
-      fitBtn.addEventListener("click", function () { map.setView([48.6, -2.8], 10); });
+      fitBtn.onclick = function () {
+        if (pdBounds) pdMap.fitBounds(pdBounds, { padding: [24, 24] });
+        else pdMap.setView([48.6, -2.8], 10);
+      };
     }
+
+    setTimeout(function () { pdMap.invalidateSize(); }, 100);
   }
 
   /* =========================================================
@@ -468,6 +583,7 @@ async function toggleSignup(routeId) {
   ========================================================= */
   async function renderAll() {
     renderHero();
+    renderCities();
     renderParticipants();
     bindJoin();
     await renderJoin();
@@ -535,32 +651,46 @@ async function toggleSignup(routeId) {
       }
 
       var stats = fc.stats || {};
+      var kmVal = stats.totalKm != null ? stats.totalKm : fc.km;
+      var dplusVal = stats.elevGainM != null ? stats.elevGainM : fc.dplus;
+      var groupLabel = result.data.group_label || "";
 
       sortie = {
         id:        result.data.id,
         title:     result.data.track_name   || "Sortie",
-        group:     result.data.group_label  || "",
+        group:     groupLabel,
+        groupKey:  groupKeyFromLabel(groupLabel),
         type:      result.data.route_kind   || "",
         raceType:  fc.raceType              || "",
+        niveau:    fc.niveau                || "",
         place:     fc.meetPlace             || "",
+        city:      fc.city                  || "",
         date:      fc.rideDateIso           || "",
         rideTime:  fc.rideTime              || fc.meetTime || "",
         meetTime:  fc.meetTime              || "",
         captain:   fc.captain || fc.rideLeader || "",
-        km:        stats.totalKm   != null ? stats.totalKm   + " km"   : (fc.km    != null ? fc.km    + " km"   : "\u2014"),
-        dplus:     stats.elevGainM != null ? stats.elevGainM + " m D+" : (fc.dplus != null ? fc.dplus + " m D+" : "\u2014"),
+        kmRaw:     kmVal,
+        dplusRaw:  dplusVal,
         duration:  fc.estimatedDurationHm   || fc.estimated_duration_hm || "",
         startTime: fc.startTime || fc.rideTime || "",
         embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
+        routeCities: Array.isArray(fc.routeCities) ? fc.routeCities : [],
+        gpxFile:   fc.file || "",
         meetLat:   fc.meetLat != null ? Number(fc.meetLat) : (fc.meet_lat != null ? Number(fc.meet_lat) : null),
         meetLon:   fc.meetLon != null ? Number(fc.meetLon) : (fc.meet_lon != null ? Number(fc.meet_lon) : null),
         participants: []
       };
 
+      if (kmVal == null) console.warn("[parcours] distance non renseign\u00e9e pour", sortie.id);
+      if (dplusVal == null) console.warn("[parcours] d\u00e9nivel\u00e9 non renseign\u00e9 pour", sortie.id);
+      if (!sortie.embeddedPoints?.length && !sortie.gpxFile) {
+        console.warn("[parcours] aucune donn\u00e9e de trac\u00e9 pour", sortie.id);
+      }
+
       await syncParticipantsUI();
       await renderAll();
       loadWeather();
-      initMap();
+      await initMap();
 
     } catch (err) {
       console.error("[parcours.js]", err);

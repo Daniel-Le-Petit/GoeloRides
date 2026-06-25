@@ -121,6 +121,9 @@
    */
   function dbRowToSortie(row) {
     var fc = parseFrontConfig(row.front_config);
+    var stats = fc.stats || {};
+    var km = stats.totalKm != null ? stats.totalKm : (fc.km != null ? fc.km : null);
+    var dplus = stats.elevGainM != null ? stats.elevGainM : (fc.dplus != null ? fc.dplus : null);
     return {
       id:             String(row.id),
       title:          String(row.track_name || row.group_label || "Sortie"),
@@ -141,12 +144,12 @@
         : "",
       // CORRECTION 3 : meetTime = heure RDV, rideTime = heure départ
       meetTime:       String(fc.meetTime || fc.rideTime || ""),
-      km:             null,
-      dplus:          null,
+      km:             km,
+      dplus:          dplus,
+      duration:       fc.estimatedDurationHm || fc.estimated_duration_hm || null,
       paceKmh:        parsePaceKmh(row.pace_label),
       imageUrl:       String(fc.thumbSrc || fc.coverImageUrl || fc.coverImageDataUrl || ""),
       participants:   [],
-      embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
       meetLat:        fc.meetLat != null ? Number(fc.meetLat) : (fc.meet_lat != null ? Number(fc.meet_lat) : null),
       meetLon:        fc.meetLon != null ? Number(fc.meetLon) : (fc.meet_lon != null ? Number(fc.meet_lon) : null),
       weather:        null
@@ -344,6 +347,7 @@ async function fetchSorties() {
       meetTime:     s.meetTime,
       km:           s.km,
       dplus:        s.dplus,
+      duration:     s.duration,
       paceKmh:      s.paceKmh,
       captain:      s.captain,
       assigned_team_rider_id: s.assigned_team_rider_id || null,
