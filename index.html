@@ -4387,73 +4387,6 @@
       }
     }
   
-/* ── MOBILE DRAWER ──────────────────────────── */
-.gr-mobile-drawer {
-  position: fixed; inset: 0; z-index: 500;
-  display: flex;
-}
-.gr-mobile-drawer[hidden] { display: none !important; }
-.gr-mobile-drawer__backdrop {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(3px);
-}
-.gr-mobile-drawer__panel {
-  position: relative; z-index: 1;
-  width: min(280px, 85vw);
-  background: #1A1A1A;
-  border-right: 1px solid #2E2E2E;
-  display: flex; flex-direction: column;
-  padding: 1.5rem;
-  animation: drawerIn 0.25s ease;
-}
-@keyframes drawerIn {
-  from { transform: translateX(-100%); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
-}
-.gr-mobile-drawer__head {
-  display: flex; align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-}
-.gr-mobile-drawer__logo {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1.2rem; font-weight: 800;
-  letter-spacing: 0.05em; color: #F0F0F0;
-}
-.gr-mobile-drawer__logo span { color: #C8F135; }
-.gr-mobile-drawer__close {
-  background: none; border: none;
-  color: #888; font-size: 1rem; cursor: pointer;
-  padding: 0.25rem;
-  transition: color 0.15s;
-}
-.gr-mobile-drawer__close:hover { color: #F0F0F0; }
-.gr-mobile-drawer__links {
-  list-style: none;
-  display: flex; flex-direction: column; gap: 0;
-  flex: 1;
-}
-.gr-mobile-drawer__links li a {
-  display: block; padding: 0.85rem 0;
-  border-bottom: 1px solid #2E2E2E;
-  font-size: 1rem; font-weight: 600;
-  color: #F0F0F0; text-decoration: none;
-  transition: color 0.15s;
-}
-.gr-mobile-drawer__links li a:hover { color: #C8F135; }
-.gr-mobile-drawer__cta { margin-top: 2rem; }
-.gr-mobile-drawer__btn {
-  display: block; width: 100%; text-align: center;
-  background: #C8F135; color: #000;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.9rem; font-weight: 800;
-  letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 0.75rem; border-radius: 8px;
-  text-decoration: none;
-  transition: background 0.15s;
-}
-.gr-mobile-drawer__btn:hover { background: #9ABF20; }
 </style>
 </head>
 <body>
@@ -4980,7 +4913,7 @@
         <li><a href="infos-pratiques.html">Infos pratiques</a></li>
       </ul>
       <div class="gr-mobile-drawer__cta">
-        <a class="gr-mobile-drawer__btn" data-goelo-auth-trigger>
+        <a href="#" class="gr-mobile-drawer__btn" data-goelo-auth-trigger>Se connecter</a>
       </div>
     </nav>
   </div>
@@ -4988,12 +4921,14 @@
   function openMobileMenu()  {
     const d = document.getElementById('gr-mobile-drawer');
     d.removeAttribute('hidden');
-    document.body.style.overflow = 'hidden';
+    document.documentElement.classList.add('gr-mobile-menu-open');
+    document.body.classList.add('gr-mobile-menu-open');
   }
   function closeMobileMenu() {
     const d = document.getElementById('gr-mobile-drawer');
     d.setAttribute('hidden','');
-    document.body.style.overflow = '';
+    document.documentElement.classList.remove('gr-mobile-menu-open');
+    document.body.classList.remove('gr-mobile-menu-open');
   }
   // Fermer avec Échap
   document.addEventListener('keydown', e => {

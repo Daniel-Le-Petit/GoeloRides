@@ -616,3 +616,180 @@ html.site-retheme {
     box-shadow: none;
   }
 }
+
+/* ── MOBILE DRAWER (menu latéral) ───────────────────────────── */
+
+html.gr-mobile-menu-open,
+body.gr-mobile-menu-open {
+  overflow: hidden;
+  background-color: var(--color-bg) !important;
+}
+
+body.gr-mobile-menu-open .app-shell,
+body.gr-mobile-menu-open .app-main--home {
+  background: transparent !important;
+}
+
+.gr-mobile-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: block;
+  pointer-events: none;
+}
+
+.gr-mobile-drawer:not([hidden]) {
+  pointer-events: auto;
+}
+
+.gr-mobile-drawer[hidden] {
+  display: none !important;
+}
+
+.gr-mobile-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(0, 0, 0, 0.4);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gr-mobile-drawer__panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1;
+  width: min(280px, 85vw);
+  max-width: 85vw;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  padding-top: max(1.5rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+  animation: grDrawerIn 0.25s ease;
+}
+
+@keyframes grDrawerIn {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+.gr-mobile-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-shrink: 0;
+}
+
+.gr-mobile-drawer__logo {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--color-white);
+}
+
+.gr-mobile-drawer__logo span {
+  color: var(--color-accent);
+}
+
+.gr-mobile-drawer__close {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.15s;
+}
+
+.gr-mobile-drawer__close:hover,
+.gr-mobile-drawer__close:focus-visible {
+  color: var(--color-white);
+  outline: none;
+}
+
+.gr-mobile-drawer__links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.gr-mobile-drawer__links li a {
+  display: block;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-white) !important;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.gr-mobile-drawer__links li a:hover,
+.gr-mobile-drawer__links li a:focus-visible {
+  color: var(--color-accent) !important;
+  outline: none;
+}
+
+.gr-mobile-drawer__cta {
+  margin-top: 2rem;
+  flex-shrink: 0;
+}
+
+.gr-mobile-drawer a.gr-mobile-drawer__btn,
+.gr-mobile-drawer a.gr-mobile-drawer__btn:link,
+.gr-mobile-drawer a.gr-mobile-drawer__btn:visited {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: var(--color-accent) !important;
+  color: #0a0a0a !important;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.gr-mobile-drawer a.gr-mobile-drawer__btn:hover,
+.gr-mobile-drawer a.gr-mobile-drawer__btn:focus-visible {
+  background: var(--color-accent-hover) !important;
+  color: #0a0a0a !important;
+  outline: none;
+}
+
+/* Header « Se connecter » : style stable même menu ouvert (desktop / tablette) */
+body.gr-mobile-menu-open .gr-header-connect,
+.gr-header-connect,
+.gr-header-connect:link,
+.gr-header-connect:visited {
+  color: var(--color-white) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+body.gr-mobile-menu-open .gr-header-connect:hover,
+.gr-header-connect:hover,
+body.gr-mobile-menu-open .gr-header-connect:focus-visible,
+.gr-header-connect:focus-visible {
+  color: var(--color-white) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+}
