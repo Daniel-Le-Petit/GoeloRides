@@ -1,5 +1,5 @@
 /**
- * GoëloRides — identité affichée (display_name uniquement, résolu côté Supabase).
+ * GoëloRides — affichage utilisateur via pseudo (schéma signups / profiles actuel).
  */
 (function (global) {
   "use strict";
@@ -13,8 +13,8 @@
       var s = item.trim();
       return s || FALLBACK;
     }
-    var dn = String(item.display_name || "").trim();
-    return dn || FALLBACK;
+    var pseudo = String(item.pseudo || "").trim();
+    return pseudo || FALLBACK;
   }
 
   function initials(item) {
@@ -28,8 +28,8 @@
   }
 
   function sessionDisplayName() {
-    var dn = global.GOELO_DISPLAY_NAME;
-    if (dn && String(dn).trim()) return String(dn).trim();
+    var p = global.GOELO_DISPLAY_NAME;
+    if (p && String(p).trim()) return String(p).trim();
     return FALLBACK;
   }
 

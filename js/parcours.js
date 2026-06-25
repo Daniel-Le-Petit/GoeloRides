@@ -59,9 +59,9 @@
   }
 
   /**
-   * État inscrit = vérité Supabase (user_id + status actif).
+   * État inscrit = signups actifs (canceled_at IS NULL).
    * 1. SELECT signups si RLS le permet
-   * 2. RPC signup_is_joined (auth.uid())
+   * 2. RPC signup_is_joined (auth.uid() / e-mail)
    */
   async function isJoined(routeId, user) {
     var sb = getSb();
@@ -69,10 +69,10 @@
 
     var direct = await sb
       .from("signups")
-      .select("id, status")
+      .select("id")
       .eq("route_id", routeId)
       .eq("user_id", user.id)
-      .in("status", ["joined", "waiting"])
+      .is("canceled_at", null)
       .maybeSingle();
 
     if (direct.error) {
@@ -98,29 +98,38 @@
 
 
 async function toggleSignup(routeId) {
-  const sb = getSb();
+  var sb = getSb();
+  if (!sb) {
+    console.error("[toggleSignup] client Supabase indisponible");
+    return null;
+  }
 
   try {
-    const { data: sessionData } = await sb.auth.getSession();
-    const session = sessionData?.session;
-
-    if (!session) {
-      console.warn("No session");
+    var sessionResult = await sb.auth.getSession();
+    if (!sessionResult.data || !sessionResult.data.session) {
+      console.warn("[toggleSignup] pas de session");
       return null;
     }
 
-    const { data, error } = await sb.rpc("toggle_signup", {
-      p_route_id: routeId
-    });
+    var rpc = await sb.rpc("toggle_signup", { p_route_id: routeId });
 
-    if (error) throw error;
+    if (rpc.error) {
+      console.error("[toggleSignup] RPC error:", rpc.error.message || rpc.error);
+      return null;
+    }
+
+    var data = rpc.data;
+    console.log("[toggleSignup] data:", data);
+
+    if (data == null || typeof data !== "object") {
+      console.warn("[toggleSignup] réponse vide ou invalide:", data);
+      return null;
+    }
 
     return data;
-
   } catch (e) {
     console.error("[toggleSignup]", e);
     return null;
-
   }
 }
 
@@ -195,24 +204,29 @@ async function toggleSignup(routeId) {
         if (!sortie || !sortie.id) throw new Error("Identifiant sortie manquant");
 
         var res = await toggleSignup(sortie.id);
-        if (!res) throw new Error("Réponse toggle_signup invalide");
+        if (!res || res.ok !== true) {
+          console.error("[JOIN] toggle_signup:", res);
+          throw new Error((res && res.error) ? String(res.error) : "Réponse toggle_signup invalide");
+        }
 
-        var action = res.action;
-        if (!action && res.joined === true) action = "joined";
-        if (!action && res.joined === false) action = "unjoined";
-        if (!action) throw new Error("Réponse toggle_signup sans action");
+        if (res.action !== "joined" && res.action !== "unjoined") {
+          console.error("[JOIN] action invalide:", res);
+          throw new Error("Réponse toggle_signup sans action");
+        }
 
-        btn.textContent = action === "joined" ? "J'annule" : "Je participe !";
-        btn.setAttribute("data-joined", action === "joined" ? "1" : "0");
+        btn.textContent = res.action === "joined" ? "J'annule" : "Je participe !";
+        btn.setAttribute("data-joined", res.action === "joined" ? "1" : "0");
 
-        var n = await syncParticipantsUI();
+        await syncParticipantsUI();
         if (typeof res.count === "number") {
-          n = res.count;
-          updateJoinCount(n);
+          updateJoinCount(res.count);
         }
 
         if (window.GoeloSignupParticipants) {
-          window.GoeloSignupParticipants.emitChanged(sortie.id, n);
+          window.GoeloSignupParticipants.emitChanged(
+            sortie.id,
+            typeof res.count === "number" ? res.count : (sortie.participants || []).length
+          );
         }
 
       } catch (err) {
@@ -235,7 +249,7 @@ async function toggleSignup(routeId) {
     if (window.GoeloProfile) {
       return window.GoeloProfile.displayName(p);
     }
-    return (p && p.display_name) ? String(p.display_name) : "User";
+    return (p && p.pseudo) ? String(p.pseudo) : "User";
   }
 
   async function refreshParticipants() {

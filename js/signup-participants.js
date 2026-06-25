@@ -1,5 +1,5 @@
 /**
- * GoëloRides — Participants (display_name via RPC signup_list_*)
+ * GoëloRides — inscrits signups (RPC signup_list_* → pseudo)
  */
 (function (global) {
   "use strict";
@@ -16,19 +16,18 @@
     if (profileApi()) return profileApi().displayName(p);
     if (!p) return "User";
     if (typeof p === "string") return p.trim() || "User";
-    var dn = String(p.display_name || "").trim();
-    return dn || "User";
+    return String(p.pseudo || "").trim() || "User";
   }
 
   function normalizeParticipant(x) {
     if (x == null) return null;
     if (typeof x === "string") {
       var s = x.trim();
-      return s ? { display_name: s } : null;
+      return s ? { pseudo: s } : null;
     }
     if (typeof x === "object") {
       return {
-        display_name: displayName(x),
+        pseudo: displayName(x),
         cyclist_level: x.cyclist_level || null,
         city: x.city || null
       };
