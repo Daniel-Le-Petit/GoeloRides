@@ -168,6 +168,24 @@ body {
 .gpx-zone__btn { background: var(--surface-3); border: 1px solid var(--border-2); color: var(--text); font-size: 0.8rem; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
 .gpx-zone__btn:hover { background: var(--border); }
 .gpx-file-input { display: none; }
+
+/* ── STATS PARCOURS (toujours visibles) ── */
+.route-stats-block {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r);
+}
+.route-stats-block__title {
+  font-family: var(--font-d);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.35rem;
+}
+.route-stats-block .field__hint { margin-bottom: 0.75rem; }
+
 .gpx-status { display: none; margin-top: 1rem; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r); overflow: hidden; }
 .gpx-status.visible { display: block; }
 .gpx-status__bar { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.82rem; }

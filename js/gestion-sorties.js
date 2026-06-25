@@ -58,7 +58,7 @@ function updateProgress() {
   const stepMap = [
     { step: 1, ids: ['titre'] },
     { step: 2, ids: ['date','heure-rdv','lieu'] },
-    { step: 3, ids: [] },
+    { step: 3, ids: ['route-km','route-dplus','route-duree'] },
     { step: 4, ids: ['capitaine'] },
   ];
   stepMap.forEach(({ step, ids }) => {
