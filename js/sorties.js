@@ -134,7 +134,11 @@
       file:           String(fc.file || "").trim(),
       embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
       // CORRECTION 2 : captain lu depuis les deux clés possibles
-      captain:        String(fc.captain || fc.rideLeader || ""),
+      captain:                String(fc.captain || fc.rideLeader || ""),
+      assigned_team_rider_id: row.assigned_team_rider_id || null,
+      teamRiderPseudo:        row.team_rider && row.team_rider.pseudo
+        ? String(row.team_rider.pseudo)
+        : "",
       // CORRECTION 3 : meetTime = heure RDV, rideTime = heure départ
       meetTime:       String(fc.meetTime || fc.rideTime || ""),
       km:             null,
@@ -181,7 +185,7 @@ async function fetchSorties() {
 
   var res = await sb
     .from("routes")
-    .select("id, track_name, group_label, pace_label, is_active, front_config, created_at")
+    .select("id, track_name, group_label, pace_label, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
@@ -335,6 +339,8 @@ async function fetchSorties() {
       dplus:        s.dplus,
       paceKmh:      s.paceKmh,
       captain:      s.captain,
+      assigned_team_rider_id: s.assigned_team_rider_id || null,
+      teamRiderPseudo: s.teamRiderPseudo || "",
       status:       s.status,
       imageUrl:     s.imageUrl,
       participants: s.participants || []

@@ -125,7 +125,7 @@
 
     var query = sb
       .from("routes")
-      .select("id, track_name, group_label, pace_label, sort_order, is_active, front_config, created_at")
+      .select("id, track_name, group_label, pace_label, sort_order, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)")
       .order("sort_order", { ascending: true })
       .order("created_at",  { ascending: false });
 

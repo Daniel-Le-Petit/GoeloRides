@@ -53,14 +53,13 @@
   }
 
   function isCardOwner(card, user) {
-    if (!user || !card.captain) return false;
-    var cap = String(card.captain).trim().toLowerCase();
-    if (!cap || cap === "—") return false;
-    var pseudo = global.GOELO_DISPLAY_NAME
-      ? String(global.GOELO_DISPLAY_NAME).trim().toLowerCase()
-      : "";
-    var email = (user.email || "").trim().toLowerCase();
-    return (pseudo && cap === pseudo) || (email && cap === email);
+    if (!user || !user.id || !card.assigned_team_rider_id) return false;
+    return String(card.assigned_team_rider_id) === String(user.id);
+  }
+
+  function canEditRoute(card, role, user) {
+    if (role === "admin") return true;
+    return isCardOwner(card, user);
   }
 
   function frDateFull(d, timeStr) {
@@ -136,7 +135,7 @@
     var user = global.GOELO_USER;
     var viewMode = opts.viewMode || "sorties";
     var joined = opts.joinedRouteIds && opts.joinedRouteIds.has(String(card.id));
-    var owner = isCardOwner(card, user);
+    var canEdit = canEditRoute(card, role, user);
     var parts = [];
 
     var voirHref = viewMode === "team-rider"
@@ -152,7 +151,7 @@
           '<button type="button" class="go-sc-btn go-sc-btn--danger" data-go-sc-cancel="' +
           escapeAttr(card.id) + '" data-go-sc-title="' + escapeAttr(card.title) + '">Annuler</button>'
         );
-      } else if (role === "team_rider" && owner) {
+      } else if (role === "team_rider" && canEdit) {
         parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "edit")) + '">Modifier</a>');
       }
       return parts.join("");
@@ -166,7 +165,7 @@
         escapeAttr(card.id) + '" data-go-sc-title="' + escapeAttr(card.title) + '">Annuler</button>'
       );
     } else if (role === "team_rider") {
-      if (owner) {
+      if (canEdit) {
         parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "edit")) + '">Modifier</a>');
       }
     } else if (role === "user") {
@@ -233,6 +232,9 @@
         '<p class="go-sc-card__meta">' +
           '<span>📍 ' + escapeHtml(card.place || "—") + "</span>" +
           (time ? '<span>🕒 ' + escapeHtml(time) + "</span>" : "") +
+          (opts.viewMode === "team-rider" && card.teamRiderPseudo
+            ? '<span>🚴 Team Rider : ' + escapeHtml(card.teamRiderPseudo) + "</span>"
+            : "") +
         "</p>" +
         participantsBlock +
         '<div class="go-sc-card__actions">' + buildActions(card, opts) + "</div>" +
@@ -304,6 +306,10 @@
       km: km,
       dplus: dplus,
       paceKmh: parsePaceKmh(row.pace_label),
+      assigned_team_rider_id: row.assigned_team_rider_id || null,
+      teamRiderPseudo: row.team_rider && row.team_rider.pseudo
+        ? String(row.team_rider.pseudo)
+        : "",
       captain: fc.captain || fc.rideLeader || "",
       status: fc.sortieStatus || "open",
       statut: statut,
@@ -322,6 +328,7 @@
     getUserRole: getUserRole,
     groupKeyFromLabel: groupKeyFromLabel,
     isCardOwner: isCardOwner,
+    canEditRoute: canEditRoute,
     fromRouteRow: fromRouteRow,
     buildCardHtml: buildCardHtml,
     buildActions: buildActions,
