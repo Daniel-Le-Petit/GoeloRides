@@ -28,7 +28,9 @@ window.goeloGetSb = function () {
   }
 
   try {
-    window._goeloSbClient = window.supabase.createClient(url, key);
+    window._goeloSbClient = window.supabase.createClient(url, key, {
+      auth: { detectSessionInUrl: true }
+    });
     console.log("[GoëloAuth] Supabase client initialisé ✔");
     return window._goeloSbClient;
   } catch (e) {
@@ -55,6 +57,7 @@ window.goeloGetSb = function () {
      3. RÉSOLUTION DU RÔLE
      ════════════════════════════════════════════════════════════ */
   async function resolveRole() {
+    if (_recoveryInProgress || _isRecoveryUrl()) return;
     var sb = window.goeloGetSb();
     if (!sb) { _emitRole("visitor", null); return; }
     try {
@@ -137,6 +140,20 @@ window.goeloGetSb = function () {
      ════════════════════════════════════════════════════════════ */
   var _authListenerBound = false;
   var _lastResolvedRole  = null;  /* guard anti-doublon */
+  var _recoveryInProgress = false;
+
+  function _isRecoveryUrl() {
+    var h = String(window.location.hash || "");
+    return h.indexOf("type=recovery") !== -1;
+  }
+
+  function _clearRecoveryHash() {
+    if (!window.history.replaceState) return;
+    var path = window.location.pathname + window.location.search;
+    if (window.location.hash) {
+      window.history.replaceState(null, "", path);
+    }
+  }
 
   function _bindAuthStateChange() {
     if (_authListenerBound) return;
@@ -144,16 +161,22 @@ window.goeloGetSb = function () {
     var sb = window.goeloGetSb();
     if (!sb) return;
     sb.auth.onAuthStateChange(function (event, session) {
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        /* Éviter une double résolution si resolveRole() vient d'être appelé */
-        resolveRole();
-      } else if (event === "SIGNED_OUT") {
-        _lastResolvedRole = null;
-        _emitRole("visitor", null);
-      } else if (event === "PASSWORD_RECOVERY") {
+      if (event === "PASSWORD_RECOVERY") {
+        _recoveryInProgress = true;
         window.dispatchEvent(new CustomEvent("goelo:password-recovery", {
           detail: { session: session }
         }));
+        return;
+      }
+      if (_recoveryInProgress && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        return;
+      }
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        resolveRole();
+      } else if (event === "SIGNED_OUT") {
+        _lastResolvedRole = null;
+        _recoveryInProgress = false;
+        _emitRole("visitor", null);
       }
     });
   }
@@ -331,6 +354,149 @@ window.goeloGetSb = function () {
     );
   }
 
+  function _showResetPasswordModal(session) {
+    _recoveryInProgress = true;
+    document.querySelectorAll(".goelo-modal.is-open").forEach(function (m) {
+      if (m.id === "modal-reset-password") return;
+      m.classList.remove("is-open");
+      m.hidden = true;
+    });
+
+    _hideResetError();
+    _hideResetSuccess();
+    var form = document.getElementById("rp-form");
+    if (form) {
+      form.hidden = false;
+      form.reset();
+    }
+    var pwEl = document.getElementById("rp-password");
+    var pw2El = document.getElementById("rp-password-confirm");
+    if (pwEl) pwEl.value = "";
+    if (pw2El) pw2El.value = "";
+
+    var emailHint = document.getElementById("rp-email-hint");
+    if (emailHint) {
+      var email = session && session.user && session.user.email
+        ? String(session.user.email)
+        : "";
+      emailHint.textContent = email
+        ? "Compte : " + email
+        : "Choisis un nouveau mot de passe sécurisé.";
+    }
+
+    _openModal("modal-reset-password");
+  }
+
+  async function _submitPasswordReset() {
+    var pwEl    = document.getElementById("rp-password");
+    var pw2El   = document.getElementById("rp-password-confirm");
+    var form    = document.getElementById("rp-form");
+    var label   = document.getElementById("rp-btn-label");
+    var spinner = document.getElementById("rp-btn-spinner");
+    var submit  = document.getElementById("rp-submit");
+    if (!pwEl || !pw2El) return;
+
+    var password = pwEl.value;
+    var confirm  = pw2El.value;
+    _hideResetError();
+    _hideResetSuccess();
+
+    if (!password || !confirm) {
+      _showResetError("Remplis les deux champs mot de passe.");
+      return;
+    }
+    if (password.length < 8) {
+      _showResetError("Mot de passe trop court (8 caractères minimum).");
+      return;
+    }
+    if (password !== confirm) {
+      _showResetError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+    if (label)   label.hidden   = true;
+    if (spinner) spinner.hidden = false;
+    if (submit)  submit.disabled = true;
+
+    try {
+      var sb = window.goeloGetSb();
+      if (!sb) {
+        _showResetError("Service temporairement indisponible.");
+        return;
+      }
+
+      var updateResult = await sb.auth.updateUser({ password: password });
+      if (updateResult.error) {
+        _showResetError(_friendlyResetError(updateResult.error.message));
+        return;
+      }
+
+      _recoveryInProgress = false;
+      _clearRecoveryHash();
+
+      if (form) form.hidden = true;
+      _showResetSuccess("Mot de passe mis à jour. Tu peux continuer sur le site.");
+
+      await resolveRole();
+
+      setTimeout(function () {
+        _closeModal("modal-reset-password");
+      }, 2200);
+    } catch (err) {
+      console.error("[GoëloAuth] password reset:", err);
+      _showResetError("Erreur inattendue. Réessaie.");
+    } finally {
+      if (label)   label.hidden   = false;
+      if (spinner) spinner.hidden = true;
+      if (submit)  submit.disabled = false;
+    }
+  }
+
+  function _friendlyResetError(msg) {
+    msg = String(msg || "").toLowerCase();
+    if (msg.includes("same password"))
+      return "Le nouveau mot de passe doit être différent de l'ancien.";
+    if (msg.includes("weak") || msg.includes("password should be"))
+      return "Mot de passe trop faible (8 caractères minimum).";
+    if (msg.includes("session") || msg.includes("jwt") || msg.includes("expired"))
+      return "Lien expiré ou invalide. Redemande un e-mail de réinitialisation.";
+    return "Impossible de mettre à jour le mot de passe. Réessaie.";
+  }
+
+  async function _cancelPasswordRecovery() {
+    _recoveryInProgress = false;
+    _clearRecoveryHash();
+    var sb = window.goeloGetSb();
+    if (sb) {
+      try { await sb.auth.signOut(); } catch (e) { void e; }
+    }
+    _emitRole("visitor", null);
+  }
+
+  function _showResetError(msg) {
+    var box = document.getElementById("rp-error");
+    if (box) {
+      box.textContent = msg;
+      box.classList.remove("ml-error--info");
+      box.hidden = false;
+    }
+  }
+  function _hideResetError() {
+    var box = document.getElementById("rp-error");
+    if (box) box.hidden = true;
+  }
+  function _showResetSuccess(msg) {
+    var box = document.getElementById("rp-success");
+    if (box) {
+      box.textContent = msg;
+      box.hidden = false;
+    }
+  }
+  function _hideResetSuccess() {
+    var box = document.getElementById("rp-success");
+    if (box) box.hidden = true;
+  }
+
   /* ════════════════════════════════════════════════════════════
      10. MODALES
      ════════════════════════════════════════════════════════════ */
@@ -478,18 +644,59 @@ window.goeloGetSb = function () {
           '<div class="ml-separator"><span>ou</span></div>' +
           '<button type="button" class="ml-btn-outline" id="su-go-login">J\'ai d\u00e9j\u00e0 un compte</button>' +
         '</div>' +
+      '</div>' +
+      '<div id="modal-reset-password" class="goelo-modal" hidden role="dialog" aria-modal="true" aria-labelledby="rp-title">' +
+        '<div class="goelo-modal__backdrop" aria-hidden="true"></div>' +
+        '<div class="goelo-modal__box goelo-modal__box--login">' +
+          '<button type="button" class="goelo-modal__close" data-close-modal="modal-reset-password" aria-label="Fermer">\u2715</button>' +
+          '<span class="ml-badge"><span aria-hidden="true">\uD83D\uDD11</span> R\u00e9initialisation</span>' +
+          '<h2 id="rp-title" class="ml-title">Nouveau mot de passe</h2>' +
+          '<p class="ml-sub" id="rp-email-hint">Choisis un nouveau mot de passe s\u00e9curis\u00e9.</p>' +
+          '<div id="rp-error" class="ml-error" role="alert" hidden></div>' +
+          '<div id="rp-success" class="ml-error ml-error--info" role="status" hidden></div>' +
+          '<form id="rp-form" novalidate>' +
+            '<label class="ml-label" for="rp-password">Nouveau mot de passe</label>' +
+            '<input id="rp-password" class="ml-input" type="password" placeholder="8 caract\u00e8res minimum" autocomplete="new-password" required data-autofocus>' +
+            '<label class="ml-label" for="rp-password-confirm">Confirmation</label>' +
+            '<input id="rp-password-confirm" class="ml-input" type="password" placeholder="Confirme le mot de passe" autocomplete="new-password" required>' +
+            '<button type="submit" class="ml-btn-primary" id="rp-submit">' +
+              '<span id="rp-btn-label">Enregistrer le mot de passe</span>' +
+              '<span id="rp-btn-spinner" hidden>\u23f3 Mise \u00e0 jour\u2026</span>' +
+            '</button>' +
+          '</form>' +
+        '</div>' +
       '</div>';
     document.body.insertAdjacentHTML("beforeend", html);
   }
 
   /* Bindings événements ─────────────────────────────────────── */
   function _bindEvents() {
+    window.addEventListener("goelo:password-recovery", function (e) {
+      _showResetPasswordModal(e.detail && e.detail.session);
+    });
+
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") _closeAllModals();
+      if (e.key !== "Escape") return;
+      if (_recoveryInProgress) {
+        var resetOpen = document.getElementById("modal-reset-password");
+        if (resetOpen && resetOpen.classList.contains("is-open")) {
+          _cancelPasswordRecovery();
+          _closeModal("modal-reset-password");
+          return;
+        }
+      }
+      _closeAllModals();
     });
     document.addEventListener("click", function (e) {
       var closer = e.target.closest("[data-close-modal]");
-      if (closer) { _closeModal(closer.getAttribute("data-close-modal")); return; }
+      if (closer) {
+        var modalId = closer.getAttribute("data-close-modal");
+        if (modalId === "modal-reset-password" && _recoveryInProgress) {
+          _cancelPasswordRecovery();
+        }
+        _closeModal(modalId);
+        return;
+      }
       if (e.target.closest("[data-goelo-auth-trigger]")) {
         e.preventDefault();
         if (window.GoeloUI) window.GoeloUI.syncRoleUI();
@@ -537,14 +744,19 @@ window.goeloGetSb = function () {
       if (!e.target) return;
       if (e.target.id === "ml-form") { e.preventDefault(); _submitLogin();  }
       if (e.target.id === "su-form") { e.preventDefault(); _submitSignup(); }
+      if (e.target.id === "rp-form") { e.preventDefault(); _submitPasswordReset(); }
     });
   }
 
   /* ════════════════════════════════════════════════════════════
      11. API PUBLIQUE
      ════════════════════════════════════════════════════════════ */
-  window.openGoeloAuth  = function () { _openModal("modal-teamrider"); };
+  window.openGoeloAuth  = function () {
+    if (_recoveryInProgress) return;
+    _openModal("modal-teamrider");
+  };
   window.closeGoeloAuth = _closeAllModals;
+  window.showResetPasswordModal = _showResetPasswordModal;
   window.goeloSignOut   = async function () {
     var sb = window.goeloGetSb();
     if (sb) await sb.auth.signOut();
@@ -558,7 +770,11 @@ window.goeloGetSb = function () {
     _injectModals();
     _bindEvents();
     _bindAuthStateChange();
-    resolveRole();
+    if (_isRecoveryUrl()) {
+      _recoveryInProgress = true;
+    } else {
+      resolveRole();
+    }
   }
 
   if (document.readyState === "loading") {

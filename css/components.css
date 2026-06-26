@@ -280,7 +280,8 @@ html.goelo-modal-open {
   transform: translateY(0);
 }
 
-#ml-form {
+#ml-form,
+#rp-form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -919,4 +920,51 @@ html.goelo-modal-open {
 .gr-header-connect.is-loading {
   min-width: 6rem;
   min-height: 2rem;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Logique : reset password
+   ═══════════════════════════════════════════════════════════════ */
+
+#modal-reset-password .goelo-modal__box--login {
+  max-width: 420px;
+}
+
+#rp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Labels premium soft SaaS */
+#rp-form label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+/* Erreurs propres mais visibles */
+#rp-error {
+  min-height: 1.2rem;
+  color: #f87171;
+  font-size: 0.82rem;
+}
+
+/* Success doux, pas agressif */
+#rp-success {
+  min-height: 1.2rem;
+  color: var(--modal-accent, #28a745);
+  font-size: 0.82rem;
+}
+
+/* Actions bien espacées */
+#rp-form .form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }

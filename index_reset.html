@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Reset password modal (test)</title>
+    <link rel="stylesheet" href="css/components.css">
+  </head>
+  <body>
+    <main>
+      <h1>Test modale réinitialisation</h1>
+      <p>
+        Cliquez sur le lien de reset envoyé par email pour ouvrir la modale
+        (ou utilisez le debug).
+      </p>
+      <button id="debug-open" class="ml-btn-primary">
+        Ouvrir la modale (debug)
+      </button>
+    </main>
+
+    <div
+      id="modal-reset-password"
+      class="goelo-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div class="goelo-modal__backdrop"></div>
+
+      <div class="goelo-modal__box goelo-modal__box--login" role="document">
+        <button type="button" class="modal-close" aria-label="Fermer">×</button>
+
+        <h2>Réinitialiser le mot de passe</h2>
+
+        <form id="rp-form" novalidate>
+          <label for="rp-password">Nouveau mot de passe</label>
+          <input
+            class="ml-input"
+            id="rp-password"
+            name="rp-password"
+            type="password"
+            autocomplete="new-password"
+            required
+            minlength="8"
+          />
+
+          <label for="rp-password-confirm">Confirmer le mot de passe</label>
+          <input
+            class="ml-input"
+            id="rp-password-confirm"
+            name="rp-password-confirm"
+            type="password"
+            autocomplete="new-password"
+            required
+            minlength="8"
+          />
+
+          <div
+            id="rp-error"
+            class="form-message form-message--error"
+            aria-live="polite"
+          ></div>
+
+          <div
+            id="rp-success"
+            class="form-message form-message--success"
+            aria-live="polite"
+          ></div>
+
+          <div class="form-actions">
+            <button id="rp-save" class="ml-btn-primary" type="submit">
+              Enregistrer le mot de passe
+            </button>
+            <button id="rp-cancel" class="ml-btn" type="button">
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+    <script src="js/auth-recovery.js"></script>
+    <script>
+      document.getElementById('debug-open').addEventListener('click', () => {
+        window.showResetPasswordModal && window.showResetPasswordModal(null);
+      });
+    </script>
+  </body>
+</html>
