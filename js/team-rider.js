@@ -6,7 +6,6 @@
 
   var _currentFilter = "all";
   var _currentRole   = "visitor";
-  var _currentEmail  = "";
   var _bootDone      = false;
 
   var URGENCE_MSGS = {
@@ -55,10 +54,12 @@
     _bootDone = true;
 
     _currentRole  = role;
-    _currentEmail = (user && user.email) ? user.email : "";
 
+    var profile = window.GoeloProfile && user
+      ? window.GoeloProfile.profileFromUser(user)
+      : null;
     var displayName = window.GoeloProfile
-      ? window.GoeloProfile.sessionDisplayName()
+      ? window.GoeloProfile.getDisplayName(profile || { pseudo: window.GOELO_DISPLAY_NAME })
       : (window.GOELO_DISPLAY_NAME || "User");
 
     var dash = document.getElementById("dashboard");
@@ -80,7 +81,7 @@
     if (userNameEl)   userNameEl.textContent   = displayName + " (" + role + ")";
     if (userAvatarEl) {
       userAvatarEl.textContent = window.GoeloProfile
-        ? window.GoeloProfile.initials({ display_name: displayName })
+        ? window.GoeloProfile.initials(profile || { pseudo: displayName })
         : displayName.slice(0, 2).toUpperCase();
     }
     if (badgeEl) {
@@ -94,14 +95,6 @@
 
     await renderSorties();
     if (role === "admin") renderDemands();
-  }
-
-  function _sessionDisplayName() {
-    if (window.GOELO_DISPLAY_NAME && String(window.GOELO_DISPLAY_NAME).trim()) {
-      return String(window.GOELO_DISPLAY_NAME).trim();
-    }
-    if (window.GoeloProfile) return window.GoeloProfile.sessionDisplayName();
-    return "User";
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -208,6 +201,17 @@
   /* ══════════════════════════════════════════════════════════════
      RENDER DEMANDES
      ══════════════════════════════════════════════════════════════ */
+  function _demandDisplayName(d) {
+    var fullName = ((d.first_name || "") + " " + (d.last_name || "")).trim();
+    if (window.GoeloProfile) {
+      return window.GoeloProfile.getDisplayName({
+        pseudo: d.pseudo,
+        user_name: d.name || fullName
+      });
+    }
+    return d.name || fullName || "User";
+  }
+
   async function renderDemands() {
     var section = document.getElementById("demands-section");
     var list    = document.getElementById("demand-list");
@@ -246,8 +250,7 @@
       var statusCls = d.status === "approved" ? "badge-pub"
                     : d.status === "refused"  ? "badge-cancel"
                     : "badge-att";
-      var name  = _esc(d.name || d.first_name || "\u2014");
-      var email = _esc(d.email || "");
+      var displayName = _esc(_demandDisplayName(d));
       var quote = d.message ? "<div class=\"d-quote\">\u201c " + _esc(d.message) + " \u201d</div>" : "";
       var date  = d.created_at ? d.created_at.slice(0, 10) : (d.date || "");
       var actions = isPending
@@ -258,8 +261,8 @@
         : "";
       return [
         "<div class=\"demand-card\" id=\"dc-" + i + "\">",
-        "<div class=\"d-head\"><span class=\"d-name\">" + name + "</span><span class=\"badge " + statusCls + "\" id=\"dbadge-" + i + "\">" + statusLbl + "</span></div>",
-        "<div class=\"d-meta\">" + email + (date ? " \u00b7 " + date : "") + "</div>",
+        "<div class=\"d-head\"><span class=\"d-name\">" + displayName + "</span><span class=\"badge " + statusCls + "\" id=\"dbadge-" + i + "\">" + statusLbl + "</span></div>",
+        "<div class=\"d-meta\">" + (date || "") + "</div>",
         quote,
         actions,
         "</div>"

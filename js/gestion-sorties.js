@@ -951,9 +951,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const sb = await getSb();
     const { data: { user } } = await sb.auth.getUser();
-    if (user?.email) {
-      document.getElementById('nav-username').textContent = user.email.split('@')[0];
-      document.getElementById('capitaine').value = user.email.split('@')[0];
+
+    if (user) {
+      var label = window.GoeloProfile
+        ? window.GoeloProfile.getDisplayName(
+            window.GoeloProfile.profileFromUser(user)
+          )
+        : "User";
+
+      document.getElementById('nav-username').textContent = label;
+      document.getElementById('capitaine').value = label;
     }
   } catch(e) { /* silencieux */ }
 

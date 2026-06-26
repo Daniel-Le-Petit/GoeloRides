@@ -119,6 +119,12 @@
    * CORRECTION 3 : fc.meetTime || fc.rideTime pour l'heure de RDV
    *   gestion-route.js écrit meetTime (heure RDV) et rideTime (heure départ).
    */
+  function teamRiderDisplayName(tr) {
+    if (!tr) return "";
+    if (window.GoeloProfile) return window.GoeloProfile.getDisplayName(tr);
+    return "User";
+  }
+
   function dbRowToSortie(row) {
     var fc = parseFrontConfig(row.front_config);
     var stats = fc.stats || {};
@@ -139,9 +145,7 @@
       // CORRECTION 2 : captain lu depuis les deux clés possibles
       captain:                String(fc.captain || fc.rideLeader || ""),
       assigned_team_rider_id: row.assigned_team_rider_id || null,
-      teamRiderPseudo:        row.team_rider && row.team_rider.pseudo
-        ? String(row.team_rider.pseudo)
-        : "",
+      teamRiderPseudo:        teamRiderDisplayName(row.team_rider),
       // CORRECTION 3 : meetTime = heure RDV, rideTime = heure départ
       meetTime:       String(fc.meetTime || fc.rideTime || ""),
       km:             km,

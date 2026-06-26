@@ -19,10 +19,10 @@
   }
 
   function headerDisplayName() {
+    if (global.GoeloProfile) return global.GoeloProfile.sessionDisplayName();
     if (global.GOELO_DISPLAY_NAME && String(global.GOELO_DISPLAY_NAME).trim()) {
       return String(global.GOELO_DISPLAY_NAME).trim();
     }
-    if (global.GoeloProfile) return global.GoeloProfile.sessionDisplayName();
     return "User";
   }
 

@@ -276,6 +276,12 @@
     }
   }
 
+  function teamRiderDisplayName(tr) {
+    if (!tr) return "";
+    if (global.GoeloProfile) return global.GoeloProfile.getDisplayName(tr);
+    return "User";
+  }
+
   /** Normalise une ligne Supabase `routes` → objet carte */
   function fromRouteRow(row) {
     var fc = row.front_config;
@@ -316,9 +322,7 @@
       duration: fc.estimatedDurationHm || fc.estimated_duration_hm || null,
       paceKmh: parsePaceKmh(row.pace_label),
       assigned_team_rider_id: row.assigned_team_rider_id || null,
-      teamRiderPseudo: row.team_rider && row.team_rider.pseudo
-        ? String(row.team_rider.pseudo)
-        : "",
+      teamRiderPseudo: teamRiderDisplayName(row.team_rider),
       captain: fc.captain || fc.rideLeader || "",
       status: fc.sortieStatus || "open",
       statut: statut,

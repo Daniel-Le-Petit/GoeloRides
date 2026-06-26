@@ -249,9 +249,9 @@ async function toggleSignup(routeId) {
       return window.GoeloSignupParticipants.displayName(p);
     }
     if (window.GoeloProfile) {
-      return window.GoeloProfile.displayName(p);
+      return window.GoeloProfile.getDisplayName(p);
     }
-    return (p && p.pseudo) ? String(p.pseudo) : "User";
+    return "User";
   }
 
   async function refreshParticipants() {

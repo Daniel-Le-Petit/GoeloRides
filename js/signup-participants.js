@@ -12,12 +12,11 @@
     return String(id == null ? "" : id).trim();
   }
 
-  function displayName(p) {
-    if (profileApi()) return profileApi().displayName(p);
-    if (!p) return "User";
-    if (typeof p === "string") return p.trim() || "User";
-    return String(p.pseudo || "").trim() || "User";
-  }
+function displayName(p) {
+  var api = profileApi();
+  if (api) return api.getDisplayName(p);
+  return "User";
+}
 
   function normalizeParticipant(x) {
     if (x == null) return null;

@@ -79,6 +79,17 @@
   }
 
   /* ── Render demand card ──────────────────────────────────── */
+  function _demandDisplayName(d) {
+    var fullName = ((d.first_name || "") + " " + (d.last_name || "")).trim();
+    if (window.GoeloProfile) {
+      return window.GoeloProfile.getDisplayName({
+        pseudo: d.pseudo,
+        user_name: fullName
+      });
+    }
+    return fullName || "User";
+  }
+
   function demandCardHtml(d) {
     var isPending = d.status === "pending";
     var msgHtml = d.message
@@ -98,13 +109,10 @@
 
     return "<div class=\"gtr-demand-card\" id=\"dc-" + _esc(d.id) + "\">" +
       "<div class=\"gtr-demand-card__head\">" +
-        "<span class=\"gtr-demand-card__name\">" + _esc((d.first_name || "") + " " + (d.last_name || "")) + "</span>" +
+        "<span class=\"gtr-demand-card__name\">" + _esc(_demandDisplayName(d)) + "</span>" +
         "<div class=\"gtr-demand-card__badges\">" + levelBadge(d.level) + statusBadge(d.status || "pending") + "</div>" +
       "</div>" +
       "<div class=\"gtr-demand-card__meta\">" +
-        "<div class=\"gtr-demand-card__meta-row\">" +
-          "<span class=\"gtr-demand-card__meta-icon\">✉</span>" +
-          "<span>" + _esc(d.email || "") + "</span></div>" +
         phoneRow +
         "<div class=\"gtr-demand-card__meta-row\">" +
           "<span class=\"gtr-demand-card__meta-icon\">🗓</span>" +
@@ -232,13 +240,17 @@
 
     /* Mettre à jour le nom/avatar dans la topbar */
     if (user) {
-      var displayName = window.GOELO_DISPLAY_NAME
-        || (user.user_metadata && user.user_metadata.display_name)
-        || "User";
+      var displayName = window.GoeloProfile
+        ? window.GoeloProfile.getDisplayName(window.GoeloProfile.profileFromUser(user))
+        : (window.GOELO_DISPLAY_NAME || "User");
       var nameEl = document.getElementById("admin-name");
       var avEl   = document.getElementById("admin-avatar");
       if (nameEl) nameEl.textContent = displayName;
-      if (avEl)   avEl.textContent   = displayName.slice(0, 2).toUpperCase();
+      if (avEl) {
+        avEl.textContent = window.GoeloProfile
+          ? window.GoeloProfile.initials(window.GoeloProfile.profileFromUser(user))
+          : displayName.slice(0, 2).toUpperCase();
+      }
     }
   }
 
