@@ -1,6 +1,6 @@
 /**
  * GoëloRides — Cartes sortie partagées (sorties.html + team-rider.html)
- * Design Strava · calendrier vert acide · photo à droite · boutons par rôle
+ * Layout cinématique · photo plein écran · overlays
  */
 (function (global) {
   "use strict";
@@ -111,6 +111,54 @@
     return h ? "≈ " + h + " h" + (m ? " " + m : "") : "≈ " + m + " min";
   }
 
+  function durationDisplay(card) {
+    if (card.duration) return String(card.duration);
+    var est = estimateDuration(card.km, card.dplus, card.paceKmh);
+    if (est === "Non renseigné") return est;
+    return est.replace(/^≈\s*/, "").replace(/\s+h\s+/i, "h").replace(/\s+min$/, "");
+  }
+
+  function weatherInlineHtml(weather) {
+    var wxLabel = function (score) {
+      if (score === "ideal") return "Idéal";
+      if (score === "moderate") return "Modéré";
+      if (score === "difficult") return "Difficile";
+      return "—";
+    };
+    if (!weather || weather.status === "loading") {
+      return '<span class="go-sc-wx">Temps <span class="go-sc-wx__dot go-sc-wx__dot--na" aria-hidden="true"></span></span>';
+    }
+    if (weather.status !== "ok" || !weather.score) {
+      return '<span class="go-sc-wx">Temps <span class="go-sc-wx__dot go-sc-wx__dot--na" aria-hidden="true"></span></span>';
+    }
+    return (
+      '<span class="go-sc-wx">Temps <span class="go-sc-wx__dot go-sc-wx__dot--' + escapeAttr(weather.score) + '" aria-hidden="true"></span> ' +
+      escapeHtml(wxLabel(weather.score)) + "</span>"
+    );
+  }
+
+  function statKmHtml(km) {
+    if (km == null) return '<span class="go-sc-stat__muted">—</span>';
+    var n = String(Math.round(km * 10) / 10).replace(".", ",");
+    return '<strong class="go-sc-stat__num">' + escapeHtml(n) + "</strong> km";
+  }
+
+  function statDplusHtml(d) {
+    if (d == null) return '<span class="go-sc-stat__muted">—</span>';
+    return '<strong class="go-sc-stat__num">' + Math.round(d) + "</strong> m D+";
+  }
+
+  function statDurationHtml(card) {
+    var d = durationDisplay(card);
+    if (!d || d === "Non renseigné") return '<span class="go-sc-stat__muted">—</span>';
+    return '<strong class="go-sc-stat__num">' + escapeHtml(d) + "</strong>";
+  }
+
+  var CLOCK_SVG =
+    '<svg class="go-sc-card__clock" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>' +
+    '<path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
   function thumbFor(card) {
     if (card.imageUrl) return card.imageUrl;
     return THUMBS[card.type] || THUMBS[card.groupKey] || THUMBS.default;
@@ -124,12 +172,32 @@
     return "gestion-sorties.html?mode=" + (mode || "edit") + "&id=" + encodeURIComponent(id);
   }
 
-  /**
-   * Boutons selon rôle (admin / team_rider / user / visitor).
-   * @param {object} card
-   * @param {object} opts — viewMode: 'sorties'|'team-rider', joinedRouteIds: Set, onCancel: fn name
-   */
-  function buildActions(card, opts) {
+  /** Boutons principaux en haut à droite (Voir · Rejoindre). */
+  function buildTopActions(card, opts) {
+    opts = opts || {};
+    var role = getUserRole();
+    var viewMode = opts.viewMode || "sorties";
+    var joined = opts.joinedRouteIds && opts.joinedRouteIds.has(String(card.id));
+    var voirHref = viewMode === "team-rider"
+      ? gestionHref(card.id, "edit")
+      : parcoursHref(card.id);
+    var parts = [
+      '<a class="go-sc-btn go-sc-btn--voir" href="' + escapeAttr(voirHref) + '">Voir</a>'
+    ];
+
+    if (viewMode === "team-rider") return parts.join("");
+
+    if (role === "user" && !joined) {
+      parts.push('<a class="go-sc-btn go-sc-btn--join" href="' + escapeAttr(parcoursHref(card.id)) + '">Rejoindre</a>');
+    } else if (role === "visitor") {
+      parts.push('<button type="button" class="go-sc-btn go-sc-btn--join" data-goelo-auth-trigger>Rejoindre</button>');
+    }
+
+    return parts.join("");
+  }
+
+  /** Actions secondaires (admin, désinscription) en bas de carte. */
+  function buildSecondaryActions(card, opts) {
     opts = opts || {};
     var role = getUserRole();
     var user = global.GOELO_USER;
@@ -137,12 +205,6 @@
     var joined = opts.joinedRouteIds && opts.joinedRouteIds.has(String(card.id));
     var canEdit = canEditRoute(card, role, user);
     var parts = [];
-
-    var voirHref = viewMode === "team-rider"
-      ? gestionHref(card.id, "edit")
-      : parcoursHref(card.id);
-
-    parts.push('<a class="go-sc-btn go-sc-btn--primary" href="' + escapeAttr(voirHref) + '">Voir</a>');
 
     if (viewMode === "team-rider") {
       if (role === "admin") {
@@ -157,28 +219,24 @@
       return parts.join("");
     }
 
-    /* ── Liste publique sorties.html ── */
     if (role === "admin") {
       parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "edit")) + '">Modifier</a>');
       parts.push(
         '<button type="button" class="go-sc-btn go-sc-btn--danger" data-go-sc-cancel="' +
         escapeAttr(card.id) + '" data-go-sc-title="' + escapeAttr(card.title) + '">Annuler</button>'
       );
-    } else if (role === "team_rider") {
-      if (canEdit) {
-        parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "edit")) + '">Modifier</a>');
-      }
-    } else if (role === "user") {
-      if (joined) {
-        parts.push('<a class="go-sc-btn go-sc-btn--danger" href="' + escapeAttr(parcoursHref(card.id)) + '">J\'annule</a>');
-      } else {
-        parts.push('<a class="go-sc-btn go-sc-btn--accent" href="' + escapeAttr(parcoursHref(card.id)) + '">Rejoindre</a>');
-      }
-    } else {
-      parts.push('<button type="button" class="go-sc-btn go-sc-btn--ghost" data-goelo-auth-trigger>Se connecter</button>');
+    } else if (role === "team_rider" && canEdit) {
+      parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "edit")) + '">Modifier</a>');
+    } else if (role === "user" && joined) {
+      parts.push('<a class="go-sc-btn go-sc-btn--danger" href="' + escapeAttr(parcoursHref(card.id)) + '">J\'annule</a>');
     }
 
     return parts.join("");
+  }
+
+  /** @deprecated compat — top + secondaire */
+  function buildActions(card, opts) {
+    return buildTopActions(card, opts) + buildSecondaryActions(card, opts);
   }
 
   function buildCardHtml(card, opts) {
@@ -187,12 +245,17 @@
     var cancelled = card.status === "cancelled" || card.statut === "annulee";
     var gk = card.groupKey || groupKeyFromLabel(card.group);
     var groupShort = String(card.group || "").replace(/^Groupe\s+/i, "") || "—";
+    var groupFull = /^groupe\s/i.test(String(card.group || ""))
+      ? String(card.group)
+      : "Groupe " + groupShort;
     var time = card.meetTime
       ? String(card.meetTime).replace(":", "h")
       : d ? String(d.getHours()) + "h" + String(d.getMinutes()).padStart(2, "0") : "";
-    var fullDate = frDateFull(d, card.meetTime || (d ? String(d.getHours()) + ":" + String(d.getMinutes()).padStart(2, "0") : ""));
     var participants = card.participants || [];
-    var participantsBlock = participantsPreviewHtml(participants);
+    var participantsBlock = participants.length
+      ? participantsPreviewHtml(participants)
+      : "";
+    var secondaryActions = buildSecondaryActions(card, opts);
 
     var statutBadge = "";
     if (opts.viewMode === "team-rider" && card.statut) {
@@ -201,57 +264,68 @@
       statutBadge = '<span class="go-sc-badge go-sc-badge--statut go-sc-badge--' + sc + '">' + st + "</span>";
     }
 
-    var duration = card.duration || estimateDuration(card.km, card.dplus, card.paceKmh);
+    var cancelBadge = cancelled
+      ? '<span class="go-sc-badge go-sc-badge--cancel">Annulée</span>'
+      : "";
 
-    var weatherBadge = "";
-    if (window.GoeloWeather) {
-      weatherBadge = window.GoeloWeather.badgeHtml(card.weather);
-    } else if (card.weather && card.weather.status === "loading") {
-      weatherBadge = '<span class="go-wx-badge go-wx-badge--na">…</span>';
-    }
+    var teamRiderLine = opts.viewMode === "team-rider" && card.teamRiderPseudo
+      ? '<p class="go-sc-card__rider">🚴 Team Rider : ' + escapeHtml(card.teamRiderPseudo) + "</p>"
+      : "";
+
+    var metaTime = time
+      ? '<span class="go-sc-card__meta-time">' + CLOCK_SVG + escapeHtml(time) + "</span>"
+      : "";
+
+    var metaSep = '<span class="go-sc-card__meta-sep" aria-hidden="true"></span>';
 
     return (
       '<article class="go-sc-card' + (cancelled ? " is-cancelled" : "") + '" style="animation-delay:' + (opts.animDelay || 0) + 'ms" data-route-id="' + escapeAttr(card.id) + '">' +
-      '<div class="go-sc-card__body">' +
-        '<div class="go-sc-card__top">' +
-          calendarHtml(d) +
-          '<div class="go-sc-card__intro">' +
-            '<p class="go-sc-card__datetime">' + escapeHtml(fullDate) + "</p>" +
+        '<img class="go-sc-card__bg" src="' + escapeAttr(thumbFor(card)) + '" alt="" loading="lazy" decoding="async">' +
+        '<div class="go-sc-card__shade" aria-hidden="true"></div>' +
+        '<div class="go-sc-card__inner">' +
+          '<header class="go-sc-card__top">' +
+            '<div class="go-sc-card__top-left">' +
+              '<div class="go-sc-card__cal">' + calendarHtml(d) + "</div>" +
+              '<div class="go-sc-card__meta">' +
+                metaTime +
+                (metaTime ? metaSep : "") +
+                weatherInlineHtml(card.weather) +
+                metaSep +
+                '<span class="go-sc-card__meta-group go-sc-card__meta-group--' + gk + '">' + escapeHtml(groupFull) + "</span>" +
+                statutBadge +
+                cancelBadge +
+              "</div>" +
+            "</div>" +
+            '<div class="go-sc-card__top-actions">' + buildTopActions(card, opts) + "</div>" +
+          "</header>" +
+          '<h2 class="go-sc-card__title">' + escapeHtml(card.title) + "</h2>" +
+          '<div class="go-sc-card__stats" role="group" aria-label="Statistiques">' +
+            '<div class="go-sc-stat"><span class="go-sc-stat__label">Sport</span>' +
+            '<span class="go-sc-stat__val"><span class="go-sc-stat__sport-icon" aria-hidden="true">🚴</span> ' + escapeHtml(typeLabel(card.type)) + "</span></div>" +
+            '<div class="go-sc-stat"><span class="go-sc-stat__label">Dénivelé</span>' +
+            '<span class="go-sc-stat__val">' + statDplusHtml(card.dplus) + "</span></div>" +
+            '<div class="go-sc-stat"><span class="go-sc-stat__label">Distance</span>' +
+            '<span class="go-sc-stat__val">' + statKmHtml(card.km) + "</span></div>" +
+            '<div class="go-sc-stat"><span class="go-sc-stat__label">Durée</span>' +
+            '<span class="go-sc-stat__val">' + statDurationHtml(card) + "</span></div>" +
           "</div>" +
+          '<footer class="go-sc-card__foot">' +
+            '<div class="go-sc-card__foot-main">' +
+              '<div class="go-sc-card__place-block">' +
+                '<span class="go-sc-card__pin" aria-hidden="true"></span>' +
+                '<div class="go-sc-card__place-lines">' +
+                  '<p class="go-sc-card__place">' + escapeHtml(card.place || "—") + "</p>" +
+                  (time ? '<p class="go-sc-card__meet">Rendez-vous ' + escapeHtml(time) + "</p>" : "") +
+                "</div>" +
+              "</div>" +
+              (participantsBlock ? '<div class="go-sc-card__participants">' + participantsBlock + "</div>" : "") +
+            "</div>" +
+            teamRiderLine +
+            (secondaryActions
+              ? '<div class="go-sc-card__actions go-sc-card__actions--secondary">' + secondaryActions + "</div>"
+              : "") +
+          "</footer>" +
         "</div>" +
-        '<div class="go-sc-card__title-row">' +
-          '<h2 class="go-sc-card__title">' + escapeHtml(card.title) +
-          (cancelled ? ' <span class="go-sc-badge go-sc-badge--cancel">Annulée</span>' : "") +
-          statutBadge +
-          "</h2>" +
-          weatherBadge +
-          '<span class="go-sc-badge go-level-badge go-sc-badge--' + gk + '" data-level="' + gk + '">' + escapeHtml(groupShort) + "</span>" +
-        "</div>" +
-        '<div class="go-sc-metrics">' +
-          '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Sport</span>' +
-          '<span class="go-sc-metrics__val">🚴 ' + escapeHtml(typeLabel(card.type)) + "</span></div>" +
-          '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Distance</span>' +
-          '<span class="go-sc-metrics__val">' + escapeHtml(fmtKm(card.km)) + "</span></div>" +
-          '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Dénivelé</span>' +
-          '<span class="go-sc-metrics__val">' + escapeHtml(fmtDplus(card.dplus)) + "</span></div>" +
-          '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Durée</span>' +
-          '<span class="go-sc-metrics__val">' + escapeHtml(duration) + "</span></div>" +
-        "</div>" +
-        '<p class="go-sc-card__meta">' +
-          '<span>📍 ' + escapeHtml(card.place || "—") + "</span>" +
-          (time ? '<span>🕒 ' + escapeHtml(time) + "</span>" : "") +
-          (opts.viewMode === "team-rider" && card.teamRiderPseudo
-            ? '<span>🚴 Team Rider : ' + escapeHtml(card.teamRiderPseudo) + "</span>"
-            : "") +
-        "</p>" +
-        participantsBlock +
-        '<div class="go-sc-card__actions">' + buildActions(card, opts) + "</div>" +
-      "</div>" +
-      '<div class="go-sc-card__visual">' +
-        '<div class="go-sc-card__img-wrap">' +
-        '<img class="go-sc-card__img" src="' + escapeAttr(thumbFor(card)) + '" alt="" loading="lazy" decoding="async">' +
-        "</div>" +
-      "</div>" +
       "</article>"
     );
   }
@@ -348,6 +422,8 @@
     fromRouteRow: fromRouteRow,
     buildCardHtml: buildCardHtml,
     buildActions: buildActions,
+    buildTopActions: buildTopActions,
+    buildSecondaryActions: buildSecondaryActions,
     renderList: renderList,
     renderParticipantsPreview: participantsPreviewHtml
   };

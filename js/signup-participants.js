@@ -147,22 +147,22 @@ function displayName(p) {
 
     if (!count) {
       return (
-        '<div class="go-participants-preview go-participants-preview--empty">' +
-        '<span class="go-participants-preview__empty">Aucun participant pour l\'instant</span>' +
+        '<div class="go-sc-participants go-sc-participants--empty">' +
+        '<span class="go-sc-participants__empty">Aucun participant pour l\'instant</span>' +
         "</div>"
       );
     }
 
-    var rows = list.map(function (p, i) {
-      return renderParticipantRow(p, i, "li");
-    }).join("");
-
+    var stack = renderAvatarStackHtml(list, {
+      max: opts.max || 3,
+      avatarClass: "go-sc-avatar"
+    });
     var countLabel = count + " participant" + (count > 1 ? "s" : "");
 
     return (
-      '<div class="go-participants-preview" aria-label="' + escapeHtml(countLabel) + '">' +
-      '<p class="go-participants-preview__count">' + escapeHtml(countLabel) + "</p>" +
-      '<ul class="go-participants-preview__list">' + rows + "</ul>" +
+      '<div class="go-sc-participants" aria-label="' + escapeHtml(countLabel) + '">' +
+      '<div class="go-sc-participants__stack">' + stack + "</div>" +
+      '<span class="go-sc-participants__label">' + escapeHtml(countLabel) + "</span>" +
       "</div>"
     );
   }
@@ -170,6 +170,7 @@ function displayName(p) {
   function renderAvatarStackHtml(list, opts) {
     opts = opts || {};
     var max = opts.max || 5;
+    var avatarClass = opts.avatarClass || "so-avatar";
     var items = normalizeList(list || []);
     if (!items.length) return "";
     var shown = items.slice(0, max);
@@ -178,14 +179,13 @@ function displayName(p) {
       var color = profileApi() ? profileApi().avatarColor(p, i) : "#7DD3FC";
       var inits = profileApi() ? profileApi().initials(p) : label.slice(0, 2).toUpperCase();
       return (
-        '<span class="so-avatar" style="background:' + color + '" title="' +
+        '<span class="' + avatarClass + '" style="background:' + color + '" title="' +
         escapeHtml(label) + '">' + escapeHtml(inits) + "</span>"
       );
     }).join("");
     var more = items.length - shown.length;
     if (more > 0) {
-      html += '<span class="so-avatar" style="background:var(--surface-2,#242424);color:var(--muted,#888);font-size:0.55rem">+' +
-        more + "</span>";
+      html += '<span class="' + avatarClass + ' ' + avatarClass + '--more">+' + more + "</span>";
     }
     return html;
   }

@@ -41,6 +41,10 @@
   border-color: var(--border, #2e2e2e);
 }
 
+.go-sc-card__hero-badges .go-wx-badge {
+  margin-left: 0;
+}
+
 .go-sc-card__title-row .go-wx-badge {
   margin-left: auto;
 }
