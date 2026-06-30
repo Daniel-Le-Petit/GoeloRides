@@ -1,83 +1,18 @@
--- GoëloRides — Activity events (admin dashboard feed + stats)
--- Scalable : nouveaux event_type → formatter côté js/goelo-activity.js
+-- Patch : activity_admin_dashboard référençait profiles.display_name
+-- (colonne absente si 20250627140000_profiles_display_name.sql non appliquée).
+-- Résolution via get_display_name(pseudo, username, email) — aligné sur le reste du projet.
 
-CREATE TABLE IF NOT EXISTS public.activity_events (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_type    TEXT NOT NULL,
-  actor_user_id UUID,
-  actor_pseudo  TEXT,
-  route_id      TEXT,
-  route_title   TEXT,
-  metadata      JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT activity_events_type_chk CHECK (
-    event_type IN (
-      'USER_REGISTERED', 'USER_LOGIN', 'RIDE_CREATED', 'RIDE_JOINED', 'RIDE_LEFT',
-      'RIDE_VIEWED', 'COMMENT_CREATED', 'LIKE_ADDED', 'LIKE_REMOVED',
-      'ERROR_API', 'SUSPICIOUS_LOGIN'
-    )
-  )
-);
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS display_name TEXT;
 
-CREATE INDEX IF NOT EXISTS activity_events_created_idx
-  ON public.activity_events (created_at DESC);
+UPDATE public.profiles pr
+SET display_name = public.get_display_name(pr.pseudo, pr.username, u.email)
+FROM auth.users u
+WHERE u.id = pr.id
+  AND (pr.display_name IS NULL OR trim(pr.display_name) = '');
 
-CREATE INDEX IF NOT EXISTS activity_events_type_idx
-  ON public.activity_events (event_type);
-
-ALTER TABLE public.activity_events ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "activity_events_deny_anon" ON public.activity_events;
-CREATE POLICY "activity_events_deny_anon"
-  ON public.activity_events FOR ALL TO anon
-  USING (false) WITH CHECK (false);
-
-DROP POLICY IF EXISTS "activity_events_service_role" ON public.activity_events;
-CREATE POLICY "activity_events_service_role"
-  ON public.activity_events FOR ALL TO service_role
-  USING (true) WITH CHECK (true);
-
--- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.activity_event_log(
-  p_event_type text,
-  p_metadata jsonb DEFAULT '{}'::jsonb,
-  p_route_id text DEFAULT NULL,
-  p_route_title text DEFAULT NULL,
-  p_actor_pseudo text DEFAULT NULL
-)
-RETURNS uuid
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  new_id uuid;
-  pseudo text;
-BEGIN
-  pseudo := coalesce(
-    nullif(trim(p_actor_pseudo), ''),
-    nullif(trim((SELECT p.pseudo FROM public.profiles p WHERE p.id = auth.uid())), ''),
-    'User'
-  );
-
-  INSERT INTO public.activity_events (
-    event_type, actor_user_id, actor_pseudo, route_id, route_title, metadata
-  ) VALUES (
-    p_event_type,
-    auth.uid(),
-    pseudo,
-    p_route_id,
-    p_route_title,
-    coalesce(p_metadata, '{}'::jsonb)
-  )
-  RETURNING id INTO new_id;
-
-  RETURN new_id;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.activity_event_log(text, jsonb, text, text, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.activity_event_log(text, jsonb, text, text, text) TO authenticated, service_role;
+COMMENT ON COLUMN public.profiles.display_name IS
+  'Nom affiché résolu (pseudo → username → préfixe e-mail). Source unique pour le frontend.';
 
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.activity_admin_dashboard(p_limit int DEFAULT 60)
