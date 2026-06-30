@@ -274,10 +274,19 @@
     bindFilterTabs();
     loadDemands();
 
+    if (window.GoeloAdminActivity && typeof window.GoeloAdminActivity.init === "function") {
+      window.GoeloAdminActivity.init();
+    }
+
     /* Bouton refresh */
     var refreshBtn = document.getElementById("btn-refresh");
     if (refreshBtn) {
-      refreshBtn.addEventListener("click", function () { loadDemands(); });
+      refreshBtn.addEventListener("click", function () {
+        loadDemands();
+        if (window.GoeloAdminActivity && typeof window.GoeloAdminActivity.refresh === "function") {
+          window.GoeloAdminActivity.refresh();
+        }
+      });
     }
 
     /* Bouton déconnexion */
