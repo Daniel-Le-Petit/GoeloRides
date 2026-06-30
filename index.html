@@ -4407,6 +4407,12 @@
         <li><a href="groupes.html" style="color:#fff;">Groupes</a></li>
         <li><a href="infos-pratiques.html" style="color:#fff;">Infos pratiques</a></li>
         <li><a href="https://www.instagram.com/goelo.rides/" style="color:#fff;" target="_blank" rel="noopener noreferrer">Actualités</a></li>
+        <li class="gr-nav-logout-wrap" hidden>
+          <button type="button" class="gr-nav-logout" data-goelo-logout-btn aria-label="Se déconnecter">
+            <span data-goelo-logout-label>Déconnexion</span>
+            <span data-goelo-logout-spinner hidden aria-hidden="true">Déconnexion…</span>
+          </button>
+        </li>
       </ul>
     </nav>
     <span class="go-role-badge go-role-badge--visitor" data-goelo-role-badge hidden>Visitor</span>
@@ -4915,6 +4921,10 @@
       </ul>
       <div class="gr-mobile-drawer__cta">
         <a href="#" class="gr-mobile-drawer__btn" data-goelo-auth-trigger>Se connecter</a>
+        <button type="button" class="gr-mobile-drawer__btn gr-mobile-drawer__btn--logout" data-goelo-logout-btn hidden aria-label="Se déconnecter">
+          <span data-goelo-logout-label>Déconnexion</span>
+          <span data-goelo-logout-spinner hidden aria-hidden="true">Déconnexion…</span>
+        </button>
       </div>
     </nav>
   </div>

@@ -110,6 +110,17 @@
     }
   }
 
+  function syncLogoutButtons(r) {
+    var isVisitor = r === "visitor";
+    global.document.querySelectorAll("[data-goelo-logout-btn]").forEach(function (btn) {
+      btn.hidden = isVisitor;
+      var wrap = btn.closest(".gr-nav-logout-wrap");
+      if (wrap) wrap.hidden = isVisitor;
+    });
+    var mobileConnect = global.document.querySelector(".gr-mobile-drawer__cta [data-goelo-auth-trigger]");
+    if (mobileConnect) mobileConnect.hidden = !isVisitor;
+  }
+
   function syncNavCreate(r) {
     var createBtn = global.document.getElementById("nav-create-sortie")
       || global.document.querySelector("a.gr-nav__cta[href*='gestion-sorties']");
@@ -202,6 +213,7 @@
     setRoleBadges(r);
     syncHeaderConnect(r, user);
     syncHeroCtas(r);
+    syncLogoutButtons(r);
     syncNavCreate(r);
     syncTeamRiderModal(r);
 

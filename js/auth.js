@@ -757,10 +757,85 @@ window.goeloGetSb = function () {
   };
   window.closeGoeloAuth = _closeAllModals;
   window.showResetPasswordModal = _showResetPasswordModal;
-  window.goeloSignOut   = async function () {
-    var sb = window.goeloGetSb();
-    if (sb) await sb.auth.signOut();
+  function _clearAccessibleCookies() {
+    var cookies = document.cookie ? document.cookie.split(";") : [];
+    var host = window.location.hostname;
+    var baseDomain = host.indexOf(".") !== -1
+      ? "." + host.split(".").slice(-2).join(".")
+      : host;
+    cookies.forEach(function (chunk) {
+      var eq = chunk.indexOf("=");
+      var name = (eq > -1 ? chunk.substr(0, eq) : chunk).trim();
+      if (!name) return;
+      var paths = ["/", window.location.pathname];
+      var domains = ["", host, baseDomain];
+      paths.forEach(function (path) {
+        domains.forEach(function (domain) {
+          var base = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=" + path;
+          document.cookie = domain ? base + ";domain=" + domain : base;
+        });
+      });
+    });
+  }
+
+  async function _clearCacheStorage() {
+    if (!window.caches || typeof window.caches.keys !== "function") return;
+    var keys = await window.caches.keys();
+    await Promise.all(keys.map(function (key) {
+      return window.caches.delete(key);
+    }));
+  }
+
+  function _resetGlobalAuthState() {
+    _lastResolvedRole = null;
+    _recoveryInProgress = false;
+    window._goeloSbClient = null;
     _emitRole("visitor", null);
+  }
+
+  window.goeloSignOut = async function (opts) {
+    opts = opts || {};
+    var redirectTo = opts.redirect != null ? opts.redirect : null;
+
+    async function runStep(label, fn) {
+      console.log("[GoëloAuth] déconnexion — " + label + "…");
+      try {
+        await fn();
+        console.log("[GoëloAuth] déconnexion — " + label + " ✔");
+      } catch (err) {
+        console.warn("[GoëloAuth] déconnexion — " + label + " ✗", err);
+      }
+    }
+
+    await runStep("signOut Supabase", async function () {
+      var sb = window.goeloGetSb();
+      if (sb) await sb.auth.signOut();
+    });
+
+    await runStep("localStorage", function () {
+      localStorage.clear();
+    });
+
+    await runStep("sessionStorage", function () {
+      sessionStorage.clear();
+    });
+
+    await runStep("cookies accessibles", function () {
+      _clearAccessibleCookies();
+    });
+
+    await runStep("Cache Storage", function () {
+      return _clearCacheStorage();
+    });
+
+    await runStep("états globaux", function () {
+      _resetGlobalAuthState();
+    });
+
+    if (redirectTo) {
+      console.log("[GoëloAuth] déconnexion — redirection vers " + redirectTo);
+      window.location.href = redirectTo;
+    }
   };
 
   /* ════════════════════════════════════════════════════════════
