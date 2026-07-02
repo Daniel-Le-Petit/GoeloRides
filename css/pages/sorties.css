@@ -686,3 +686,13 @@ body {
   .goelo-mobile-tabbar a[aria-current],
   .goelo-mobile-tabbar a:hover { color: var(--accent); }
 }
+
+/* Titres cartes — affichage complet (override max-width: 18ch du composant partagé) */
+.so-main .go-sc-card__title {
+  max-width: 100%;
+  width: auto;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
+}

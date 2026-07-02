@@ -223,7 +223,8 @@
       if (title) title.innerHTML = 'Rejoins la communaut\u00e9<br><span class="mtr-title--accent">Go\u00ebloRides</span>';
       if (desc) desc.textContent = "Inscris-toi pour participer aux sorties, suivre les parcours et rejoindre les cyclistes du Go\u00eblo.";
       actions.innerHTML =
-        '<button type="button" class="mtr-btn mtr-btn--primary" id="mtr-go-signup" data-autofocus>Cr\u00e9er un compte</button>';
+        '<button type="button" class="mtr-btn mtr-btn--primary" id="mtr-go-signup" data-autofocus>Cr\u00e9er un compte</button>' +
+        '<button type="button" class="mtr-btn mtr-btn--outline" id="mtr-go-login">Se connecter</button>';
       return;
     }
 

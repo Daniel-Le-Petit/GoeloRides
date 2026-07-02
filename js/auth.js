@@ -598,11 +598,62 @@ window.goeloGetSb = function () {
      10. MODALES
      ════════════════════════════════════════════════════════════ */
   var _lastFocus = null;
+  var _authModalMode = "signup";
+
+  function _setAuthModalMode(mode) {
+    _authModalMode = mode === "login" ? "login" : "signup";
+    var isLogin = _authModalMode === "login";
+    var box = document.querySelector("#modal-login .goelo-modal__box");
+    var badge = document.querySelector("#modal-login .ml-badge");
+    var title = document.getElementById("ml-title");
+    var sub = document.querySelector("#modal-login .ml-sub");
+    var label = document.getElementById("ml-btn-label");
+    var spinner = document.getElementById("ml-btn-spinner");
+    var pw = document.getElementById("ml-password");
+
+    if (box) box.classList.toggle("goelo-modal__box--signup", !isLogin);
+    if (badge) badge.textContent = isLogin ? "Connexion" : "Inscription";
+    if (title) title.textContent = isLogin ? "Connexion" : "Cr\u00e9er un compte";
+    if (sub) {
+      sub.textContent = isLogin
+        ? "Connecte-toi pour acc\u00e9der \u00e0 tes sorties et ton profil."
+        : "Rejoins Go\u00ebloRides en une minute pour participer aux sorties.";
+    }
+    if (label) label.textContent = isLogin ? "Se connecter" : "Cr\u00e9er un compte";
+    if (spinner) spinner.textContent = isLogin ? "\u23f3 Connexion\u2026" : "\u23f3 Inscription\u2026";
+    if (pw) {
+      pw.placeholder = isLogin ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" : "8 caract\u00e8res minimum";
+      pw.setAttribute("autocomplete", isLogin ? "current-password" : "new-password");
+    }
+    document.querySelectorAll("#modal-login .ml-signup-only").forEach(function (el) {
+      el.hidden = isLogin;
+      if (isLogin) el.setAttribute("hidden", "");
+      else el.removeAttribute("hidden");
+    });
+    document.querySelectorAll("#modal-login .ml-signup-only [required]").forEach(function (el) {
+      if (isLogin) el.removeAttribute("required");
+      else el.setAttribute("required", "");
+    });
+  }
+
+  function _resetAuthForm() {
+    var form = document.getElementById("ml-form");
+    if (form) {
+      form.hidden = false;
+      form.reset();
+    }
+    _hideError();
+  }
+
+  function _openAuthForm(mode) {
+    _resetAuthForm();
+    _setAuthModalMode(mode);
+    _openModal("modal-login");
+  }
 
   function _openModal(id) {
     var m = document.getElementById(id);
     if (!m) return;
-    if (id === "modal-login") _resetSignupForm();
     _lastFocus = document.activeElement;
     m.hidden = false;
     requestAnimationFrame(function () {
@@ -629,12 +680,7 @@ window.goeloGetSb = function () {
   }
 
   function _resetSignupForm() {
-    var form = document.getElementById("ml-form");
-    if (form) {
-      form.hidden = false;
-      form.reset();
-    }
-    _hideError();
+    _resetAuthForm();
   }
 
   function _unlockScroll() {
@@ -689,6 +735,7 @@ window.goeloGetSb = function () {
             '<p class="mtr-desc">Inscris-toi pour participer aux sorties, suivre les parcours et rejoindre les cyclistes du Go\u00eblo.</p>' +
             '<div class="mtr-actions">' +
               '<button type="button" class="mtr-btn mtr-btn--primary" id="mtr-go-signup" data-autofocus>Cr\u00e9er un compte</button>' +
+              '<button type="button" class="mtr-btn mtr-btn--outline" id="mtr-go-login">Se connecter</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -714,19 +761,19 @@ window.goeloGetSb = function () {
               '</button>' +
             '</div>' +
             '<a href="#" class="ml-forgot" id="ml-forgot">Mot de passe oubli\u00e9\u00a0?</a>' +
-            '<label class="ml-label" for="ml-pseudo">Pseudo</label>' +
-            '<input id="ml-pseudo" class="ml-input" type="text" placeholder="Ton pseudo" autocomplete="nickname" required maxlength="40">' +
-            '<label class="ml-label" for="ml-fullname">Nom &amp; Pr\u00e9nom</label>' +
-            '<input id="ml-fullname" class="ml-input" type="text" placeholder="Nom et pr\u00e9nom" autocomplete="name" required maxlength="80">' +
-            '<label class="ml-label" for="ml-cyclist-level">Niveau cycliste</label>' +
-            '<select id="ml-cyclist-level" class="ml-input ml-select" required>' +
+            '<label class="ml-label ml-signup-only" for="ml-pseudo">Pseudo</label>' +
+            '<input id="ml-pseudo" class="ml-input ml-signup-only" type="text" placeholder="Ton pseudo" autocomplete="nickname" required maxlength="40">' +
+            '<label class="ml-label ml-signup-only" for="ml-fullname">Nom &amp; Pr\u00e9nom</label>' +
+            '<input id="ml-fullname" class="ml-input ml-signup-only" type="text" placeholder="Nom et pr\u00e9nom" autocomplete="name" required maxlength="80">' +
+            '<label class="ml-label ml-signup-only" for="ml-cyclist-level">Niveau cycliste</label>' +
+            '<select id="ml-cyclist-level" class="ml-input ml-select ml-signup-only" required>' +
               '<option value="" disabled selected>Choisis ton niveau</option>' +
               '<option value="debutant">D\u00e9butant</option>' +
               '<option value="intermediaire">Interm\u00e9diaire</option>' +
               '<option value="confirme">Confirm\u00e9</option>' +
             '</select>' +
-            '<label class="ml-label" for="ml-city">Ville</label>' +
-            '<input id="ml-city" class="ml-input" type="text" placeholder="Ta ville ou commune" autocomplete="address-level2" maxlength="80">' +
+            '<label class="ml-label ml-signup-only" for="ml-city">Ville</label>' +
+            '<input id="ml-city" class="ml-input ml-signup-only" type="text" placeholder="Ta ville ou commune" autocomplete="address-level2" maxlength="80">' +
             '<button type="submit" class="ml-btn-primary" id="ml-submit">' +
               '<span id="ml-btn-label">Cr\u00e9er un compte</span>' +
               '<span id="ml-btn-spinner" hidden>\u23f3 Inscription\u2026</span>' +
@@ -793,7 +840,12 @@ window.goeloGetSb = function () {
       }
       if (e.target.closest("#mtr-go-signup")) {
         _closeModal("modal-teamrider");
-        setTimeout(function () { _openModal("modal-login"); }, 200);
+        setTimeout(function () { _openAuthForm("signup"); }, 200);
+        return;
+      }
+      if (e.target.closest("#mtr-go-login")) {
+        _closeModal("modal-teamrider");
+        setTimeout(function () { _openAuthForm("login"); }, 200);
         return;
       }
       if (e.target.closest("#ml-eye-btn")) {
@@ -816,7 +868,11 @@ window.goeloGetSb = function () {
     });
     document.addEventListener("submit", function (e) {
       if (!e.target) return;
-      if (e.target.id === "ml-form") { e.preventDefault(); _submitSignup(); }
+      if (e.target.id === "ml-form") {
+        e.preventDefault();
+        if (_authModalMode === "login") _submitLogin();
+        else _submitSignup();
+      }
       if (e.target.id === "rp-form") { e.preventDefault(); _submitPasswordReset(); }
     });
   }
@@ -830,7 +886,11 @@ window.goeloGetSb = function () {
   };
   window.openGoeloSignup = function () {
     if (_recoveryInProgress) return;
-    _openModal("modal-login");
+    _openAuthForm("signup");
+  };
+  window.openGoeloLogin = function () {
+    if (_recoveryInProgress) return;
+    _openAuthForm("login");
   };
   window.closeGoeloAuth = _closeAllModals;
   window.showResetPasswordModal = _showResetPasswordModal;
