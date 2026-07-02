@@ -136,6 +136,14 @@ html.site-retheme {
 .gr-header-connect:hover { background: rgba(255,255,255,0.18); }
 .gr-header-connect svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
 
+.gr-header-connect--greeting {
+  cursor: default;
+  pointer-events: none;
+}
+.gr-header-connect--greeting:hover {
+  background: rgba(255,255,255,0.10);
+}
+
 .gr-header-burger {
   display: none;
   background: none; border: none;

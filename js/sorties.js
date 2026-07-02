@@ -321,7 +321,6 @@ async function fetchSorties() {
     filter:          "tous",
     search:          "",
     joinedRouteIds:  new Set(),
-    weatherIdealOnly: false,
     sortBy:          "date",
     userCoords:      null
   };
@@ -479,13 +478,12 @@ async function fetchSorties() {
         s.date.getMonth()    !== now.getMonth()    ||
         s.date.getDate()     !== now.getDate()
       ) return false;
+    } else if (state.filter === "meteo-ideale") {
+      if (!window.GoeloWeather || !window.GoeloWeather.isIdealWeather(s.weather)) return false;
     }
     if (state.search) {
       var hay = (s.title + " " + s.group + " " + s.place).toLowerCase();
       if (hay.indexOf(state.search) === -1) return false;
-    }
-    if (state.weatherIdealOnly) {
-      if (!s.weather || s.weather.status !== "ok" || s.weather.score !== "ideal") return false;
     }
     return true;
   }
@@ -649,13 +647,6 @@ async function fetchSorties() {
     if (input) {
       input.addEventListener("input", function () {
         state.search = input.value.trim().toLowerCase();
-        render();
-      });
-    }
-    var idealChk = document.getElementById("so-weather-ideal");
-    if (idealChk) {
-      idealChk.addEventListener("change", function () {
-        state.weatherIdealOnly = idealChk.checked;
         render();
       });
     }

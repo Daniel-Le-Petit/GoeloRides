@@ -5,12 +5,14 @@
 (function (global) {
   "use strict";
 
-  var ROLE_LABELS = {
-    visitor:     "Visitor",
-    user:        "Cycliste",
-    team_rider:  "Team Rider",
-    admin:       "Admin"
-  };
+  var ROLE_LABELS = global.GoeloAuthState && global.GoeloAuthState.ROLE_LABELS
+    ? global.GoeloAuthState.ROLE_LABELS
+    : {
+      visitor:     "Visitor",
+      user:        "Cycliste",
+      team_rider:  "Team Rider",
+      admin:       "Admin"
+    };
 
   var HERO_SECONDARY = {
     visitor:     { text: "Rejoindre en Team Rider", href: null, auth: true },
@@ -58,14 +60,15 @@
   }
 
   function roleDetail(detail) {
+    var s = readAuthState();
     if (detail && detail.role) {
       return {
         role: detail.role,
-        user: detail.user != null ? detail.user : readAuthState().user
+        user: detail.user != null ? detail.user : s.user,
+        pseudo: detail.pseudo !== undefined ? detail.pseudo : s.pseudo
       };
     }
-    var s = readAuthState();
-    return { role: role(), user: s.user };
+    return { role: role(), user: s.user, pseudo: s.pseudo };
   }
 
   function setRoleBadges(r) {
@@ -77,17 +80,28 @@
     });
   }
 
-  function syncHeaderConnect(r) {
+  function headerGreetingName(pseudo, user) {
+    if (pseudo && String(pseudo).trim()) return String(pseudo).trim();
+    if (global.GoeloProfile && user) {
+      return global.GoeloProfile.getDisplayName(global.GoeloProfile.profileFromUser(user));
+    }
+    if (global.GoeloProfile && global.GoeloProfile.sessionDisplayName) {
+      return global.GoeloProfile.sessionDisplayName();
+    }
+    return "Utilisateur";
+  }
+
+  function syncHeaderConnect(r, pseudo, user) {
     var btn = global.document.querySelector(".gr-header-connect, [data-goelo-connect-btn]");
     if (!btn) return;
 
-    btn.classList.remove("is-loading", "gr-header-connect--static");
+    btn.classList.remove("is-loading", "gr-header-connect--static", "gr-header-connect--greeting");
     btn.removeAttribute("data-goelo-auth-trigger");
     btn.onclick = null;
+    btn.hidden = false;
+    btn.removeAttribute("hidden");
 
     if (r === "visitor") {
-      btn.hidden = false;
-      btn.removeAttribute("hidden");
       btn.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Se connecter';
       btn.setAttribute("data-goelo-auth-trigger", "");
@@ -95,8 +109,15 @@
       return;
     }
 
-    btn.hidden = true;
-    btn.setAttribute("hidden", "");
+    var name = headerGreetingName(pseudo, user);
+    while (btn.firstChild) btn.removeChild(btn.firstChild);
+    btn.appendChild(global.document.createTextNode("Bonjour " + name));
+    btn.classList.add("gr-header-connect--greeting");
+    btn.setAttribute("aria-label", "Connecté en tant que " + name);
+    if (btn.tagName === "A") {
+      btn.removeAttribute("href");
+      btn.onclick = function (e) { e.preventDefault(); };
+    }
   }
 
   function applyHeroCta(el, config) {
@@ -238,7 +259,7 @@
     global.GOELO_AUTH_PENDING = false;
 
     setRoleBadges(r);
-    syncHeaderConnect(r);
+    syncHeaderConnect(r, resolved.pseudo, resolved.user);
     syncHeroCtas(r);
     syncLogoutButtons(r);
     syncNavCreate(r);
@@ -255,7 +276,7 @@
   function catchUpRoleUI() {
     var s = readAuthState();
     if (s.pending) return;
-    syncRoleUI({ role: s.role, user: s.user });
+    syncRoleUI({ role: s.role, user: s.user, pseudo: s.pseudo });
   }
 
   function bindModalLoginShortcut() {
@@ -278,7 +299,7 @@
         global.document.documentElement.classList.add("goelo-auth-pending");
         return;
       }
-      syncRoleUI({ role: s.role, user: s.user });
+      syncRoleUI({ role: s.role, user: s.user, pseudo: s.pseudo });
     }
 
     if (global.GoeloAuthState) {

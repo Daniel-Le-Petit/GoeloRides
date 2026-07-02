@@ -425,6 +425,10 @@
     );
   }
 
+  function isIdealWeather(weather) {
+    return !!(weather && weather.status === "ok" && weather.score === "ideal");
+  }
+
   function weatherSortKey(weather) {
     if (!weather || weather.status !== "ok" || !weather.score) {
       return { tier: 3, rain: 999, wind: 999 };
@@ -458,6 +462,7 @@
     badgeHtml: badgeHtml,
     cardHtml: cardHtml,
     weatherSortKey: weatherSortKey,
+    isIdealWeather: isIdealWeather,
     haversineKm: haversineKm,
     scoreBadgeShort: scoreBadgeShort,
     scoreLabel: scoreLabel

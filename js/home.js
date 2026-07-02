@@ -76,7 +76,11 @@
     if (window.GoeloUI) {
       if (window.GoeloUI.catchUpRoleUI) window.GoeloUI.catchUpRoleUI();
       else if (!window.GOELO_AUTH_PENDING) {
-        window.GoeloUI.syncRoleUI({ role: window.GOELO_ROLE, user: window.GOELO_USER });
+        window.GoeloUI.syncRoleUI({
+          role: window.GOELO_ROLE,
+          user: window.GOELO_USER,
+          pseudo: window.GOELO_DISPLAY_NAME
+        });
       }
     }
   }

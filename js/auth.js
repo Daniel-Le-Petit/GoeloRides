@@ -63,11 +63,15 @@ window.goeloGetSb = function () {
   }
 
   function _roleFromUserAndProfile(user, profile) {
+    if (window.GoeloAuthState && window.GoeloAuthState.resolveRoleFromUserAndProfile) {
+      return window.GoeloAuthState.resolveRoleFromUserAndProfile(user, profile);
+    }
     if (!user) return "visitor";
-    var meta = user.app_metadata || {};
-    if (_isTruthyMetaFlag(meta.goelo_admin)) return "admin";
     var pr = profile && profile.role ? String(profile.role).trim() : "";
     if (pr === "admin" || pr === "team_rider" || pr === "user") return pr;
+    var meta = user.app_metadata || {};
+    if (_isTruthyMetaFlag(meta.goelo_super_admin)) return "admin";
+    if (_isTruthyMetaFlag(meta.goelo_admin)) return "team_rider";
     return "user";
   }
 
