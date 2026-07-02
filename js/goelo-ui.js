@@ -216,10 +216,14 @@
     }
 
     if (r === "visitor") {
-      if (title) title.innerHTML = 'Passez en mode<br><span class="mtr-title--accent">Team Rider</span>';
-      if (desc) desc.textContent = "Connecte-toi pour demander l'accès Team Rider et organiser des sorties.";
+      if (badge) {
+        badge.className = "mtr-badge";
+        badge.textContent = "Bienvenue";
+      }
+      if (title) title.innerHTML = 'Rejoins la communaut\u00e9<br><span class="mtr-title--accent">Go\u00ebloRides</span>';
+      if (desc) desc.textContent = "Inscris-toi pour participer aux sorties, suivre les parcours et rejoindre les cyclistes du Go\u00eblo.";
       actions.innerHTML =
-        '<button type="button" class="mtr-btn mtr-btn--primary" data-goelo-auth-login>Se connecter</button>';
+        '<button type="button" class="mtr-btn mtr-btn--primary" id="mtr-go-signup" data-autofocus>Cr\u00e9er un compte</button>';
       return;
     }
 
@@ -281,13 +285,11 @@
 
   function bindModalLoginShortcut() {
     global.document.addEventListener("click", function (e) {
-      if (e.target.closest("[data-goelo-auth-login]")) {
+      if (e.target.closest("[data-goelo-auth-signup]")) {
         e.preventDefault();
         if (typeof global.closeGoeloAuth === "function") global.closeGoeloAuth();
         setTimeout(function () {
-          var m = global.document.getElementById("modal-login");
-          if (m) m.hidden = false;
-          requestAnimationFrame(function () { m.classList.add("is-open"); });
+          if (typeof global.openGoeloSignup === "function") global.openGoeloSignup();
         }, 180);
       }
     });
