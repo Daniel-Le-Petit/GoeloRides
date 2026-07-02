@@ -8,7 +8,7 @@
  *  - waitForAuthReady() avant le premier renderJoin (session hydratée)
  *  - goelo:role-ready sans { once:true } pour resync après auth tardive
  *  - bindJoin() appelé une seule fois après renderAll(), guard dataset.bound
- *  - bindAccordions() appelée avec typeof guard (fonction externe optionnelle)
+ *  - bindAccordions() dans parcours.js (toggle .is-open + max-height panneau)
  *  - pd-participants-count synchronisé avec renderParticipants()
  *  - initMap() ne plante plus si L absent (Leaflet chargé en dernier)
  */
@@ -251,7 +251,7 @@ async function toggleSignup(routeId) {
     if (window.GoeloProfile) {
       return window.GoeloProfile.getDisplayName(p);
     }
-    return "User";
+    return "Utilisateur";
   }
 
   async function refreshParticipants() {
@@ -387,7 +387,10 @@ async function toggleSignup(routeId) {
     });
   }
 
-  async function loadGpxLatLngs(url) {
+  async function loadGpxLatLngs(fileRef) {
+    var url = window.GoeloGpx
+      ? window.GoeloGpx.resolveGpxUrl(fileRef, getSb())
+      : fileRef;
     if (!url) return [];
     try {
       var res = await fetch(url);
@@ -579,6 +582,41 @@ async function toggleSignup(routeId) {
   }
 
   /* =========================================================
+     ACCORDÉONS
+  ========================================================= */
+  function bindAccordions() {
+    var root = document.getElementById("pd-accordions");
+    if (!root || root.dataset.bound === "1") return;
+    root.dataset.bound = "1";
+
+    root.querySelectorAll(".pd-acc__item").forEach(function (item) {
+      var btn = item.querySelector(".pd-acc__head");
+      var panel = item.querySelector(".pd-acc__panel");
+      if (!btn || !panel) return;
+
+      panel.style.maxHeight = "0";
+
+      btn.addEventListener("click", function () {
+        var open = item.classList.toggle("is-open");
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        panel.style.maxHeight = open ? panel.scrollHeight + "px" : "0";
+      });
+    });
+  }
+
+  function bindGpxDownload() {
+    if (!window.GoeloGpx) return;
+    window.GoeloGpx.bindDownloadButton("pd-gpx-btn", function () {
+      return {
+        fileRef: sortie && (sortie.gpxUrl || sortie.gpxFile),
+        title: sortie && sortie.title,
+        sb: getSb(),
+        messageEl: "pd-gpx-msg"
+      };
+    });
+  }
+
+  /* =========================================================
      RENDER ALL
   ========================================================= */
   async function renderAll() {
@@ -586,8 +624,9 @@ async function toggleSignup(routeId) {
     renderCities();
     renderParticipants();
     bindJoin();
+    bindGpxDownload();
     await renderJoin();
-    if (typeof bindAccordions === "function") bindAccordions();
+    bindAccordions();
   }
 
   /* =========================================================
@@ -675,7 +714,8 @@ async function toggleSignup(routeId) {
         startTime: fc.startTime || fc.rideTime || "",
         embeddedPoints: Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : null,
         routeCities: Array.isArray(fc.routeCities) ? fc.routeCities : [],
-        gpxFile:   fc.file || "",
+        gpxFile:   fc.file || fc.gpx_url || "",
+        gpxUrl:    fc.gpx_url || fc.file || "",
         meetLat:   fc.meetLat != null ? Number(fc.meetLat) : (fc.meet_lat != null ? Number(fc.meet_lat) : null),
         meetLon:   fc.meetLon != null ? Number(fc.meetLon) : (fc.meet_lon != null ? Number(fc.meet_lon) : null),
         participants: []

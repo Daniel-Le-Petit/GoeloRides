@@ -77,6 +77,66 @@
   padding: 0.25rem 0;
 }
 
+/* Aperçu hero (parcours + gestion-sorties) */
+.pd-hero__people {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.pd-hero__avatars {
+  display: flex;
+  align-items: center;
+}
+
+.so-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--surface, #1A1A1A);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #000;
+}
+
+.pd-hero__avatars .so-avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 0.68rem;
+  margin-left: -8px;
+  border: 2px solid var(--surface, #1A1A1A);
+}
+
+.pd-hero__avatars .so-avatar:first-child { margin-left: 0; }
+
+.so-avatar--more,
+.go-sc-avatar--more {
+  background: var(--surface-2, #222);
+  color: var(--muted, #888);
+  font-size: 0.62rem;
+  border-color: var(--border, #2E2E2E);
+}
+
+.pd-hero__people-text {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted, #888);
+}
+
+.pd-participants-count {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted, #888);
+  vertical-align: 3px;
+  margin-left: 0.4rem;
+}
+
 /* Aperçu cartes sorties */
 .go-participants-preview {
   margin-top: 0.35rem;

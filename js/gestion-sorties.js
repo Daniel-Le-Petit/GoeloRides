@@ -44,7 +44,7 @@ function showToast(msg, type = 'info') {
 }
 
 /* ── PROGRESS ── */
-const FIELDS = ['titre','date','heure-rdv','lieu','capitaine','route-km','route-dplus','route-duree'];
+const FIELDS = ['titre','date','heure-rdv','lieu','capitaine'];
 function updateProgress() {
   let done = 0;
   FIELDS.forEach(id => { const el = document.getElementById(id); if (el && el.value.trim()) done++; });
@@ -58,14 +58,16 @@ function updateProgress() {
   const stepMap = [
     { step: 1, ids: ['titre'] },
     { step: 2, ids: ['date','heure-rdv','lieu'] },
-    { step: 3, ids: ['route-km','route-dplus','route-duree'] },
+    { step: 3, gpx: true },
     { step: 4, ids: ['capitaine'] },
   ];
-  stepMap.forEach(({ step, ids }) => {
+  stepMap.forEach(({ step, ids, gpx }) => {
     const el = document.querySelector(`.step-item[data-step="${step}"]`);
     if (!el) return;
-    const filled = ids.every(id => { const f = document.getElementById(id); return f && f.value.trim(); });
-    if (filled && ids.length > 0) { el.classList.add('done'); el.classList.remove('active'); }
+    const filled = gpx
+      ? document.getElementById('gpx-status')?.classList.contains('visible')
+      : ids.every(id => { const f = document.getElementById(id); return f && f.value.trim(); });
+    if (filled && (gpx || ids.length > 0)) { el.classList.add('done'); el.classList.remove('active'); }
   });
 }
 
@@ -158,6 +160,7 @@ async function saveDraft() {
       'Sauvegardé ' +
       new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     showToast('Brouillon sauvegardé');
+    if (window.routeId) await loadRouteParticipants(window.routeId);
   } catch (e) {
     console.error(e);
     label.textContent = 'Erreur';
@@ -165,44 +168,20 @@ async function saveDraft() {
   }
 }
 
-function readRouteStats() {
-  const km = parseFloat(document.getElementById('route-km')?.value);
-  const dplus = parseInt(document.getElementById('route-dplus')?.value, 10);
-  const duree = document.getElementById('route-duree')?.value?.trim() || '';
+function readGpxStats() {
+  const distTxt = document.getElementById('gpx-dist')?.textContent?.trim();
+  const dplusTxt = document.getElementById('gpx-dplus')?.textContent?.trim();
+  const durTxt = document.getElementById('gpx-dur')?.textContent?.trim();
+  const km = distTxt && distTxt !== '—' ? parseFloat(distTxt) : NaN;
+  const dplus = dplusTxt && dplusTxt !== '—' ? parseInt(dplusTxt, 10) : NaN;
+  const duree = durTxt && durTxt !== '—' ? durTxt : '';
   return { km, dplus, duree };
-}
-
-function validateRouteStats() {
-  const { km, dplus, duree } = readRouteStats();
-  if (!km || km <= 0) {
-    showToast('Distance requise (km > 0)', 'error');
-    return false;
-  }
-  if (isNaN(dplus) || dplus < 0) {
-    showToast('Dénivelé requis (m ≥ 0)', 'error');
-    return false;
-  }
-  if (!duree) {
-    showToast('Durée requise (ex : 2h30)', 'error');
-    return false;
-  }
-  return true;
-}
-
-function syncRouteInputs(dist, dplus, dur) {
-  const kmEl = document.getElementById('route-km');
-  const dplusEl = document.getElementById('route-dplus');
-  const durEl = document.getElementById('route-duree');
-  if (kmEl) kmEl.value = dist;
-  if (dplusEl) dplusEl.value = dplus;
-  if (durEl) durEl.value = dur;
 }
 
 async function publishSortie() {
   const titre = document.getElementById('titre').value.trim();
   const date  = document.getElementById('date').value;
   if (!titre || !date) { showToast('Titre et date requis pour publier', 'error'); return; }
-  if (!validateRouteStats()) return;
   try {
     const sb = await getSb();
     const payload = buildPayload('publiee');
@@ -256,7 +235,7 @@ function buildPayload(statut) {
   const pace = { blanc: '18–22 km/h', vert: '22–25 km/h', bleu: '25–30 km/h', rouge: '30+ km/h' };
 
   const savedFc = window._loadedFrontConfig || {};
-  const { km, dplus, duree } = readRouteStats();
+  const { km, dplus, duree } = readGpxStats();
 
   // front_config : tout ce que sorties.js lit pour afficher la carte
   const front_config = {
@@ -397,8 +376,6 @@ function parseGpx(xml, filename) {
   document.getElementById('gpx-dplus').textContent = Math.round(dplus);
   document.getElementById('gpx-dur').textContent   = durStr;
   document.getElementById('gpx-pts').textContent   = pts.length;
-
-  syncRouteInputs(dist.toFixed(1), Math.round(dplus), durStr);
 
   window.currentGpxFilename = filename;
 
@@ -562,7 +539,7 @@ function generateFlyer() {
   // Données du formulaire
   const titre  = document.getElementById('titre').value || 'Sortie GoëloRides';
   const date   = document.getElementById('date').value;
-  const stats  = readRouteStats();
+  const stats  = readGpxStats();
   const dist   = stats.km ? String(stats.km) : (document.getElementById('gpx-dist').textContent || '—');
   const dplus  = !isNaN(stats.dplus) ? String(stats.dplus) : (document.getElementById('gpx-dplus').textContent || '—');
   const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
@@ -801,7 +778,7 @@ function copyFlyer() {
 function generateSocial() {
   const titre  = document.getElementById('titre').value || 'Sortie GoëloRides';
   const date   = document.getElementById('date').value;
-  const stats  = readRouteStats();
+  const stats  = readGpxStats();
   const dist   = stats.km ? String(stats.km) : (document.getElementById('gpx-dist').textContent || '—');
   const dplus  = !isNaN(stats.dplus) ? String(stats.dplus) : (document.getElementById('gpx-dplus').textContent || '—');
   const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
@@ -840,6 +817,30 @@ async function loadRoute(routeId) {
   }
 
   populateForm(data);
+  await loadRouteParticipants(routeId);
+}
+
+async function loadRouteParticipants(routeId) {
+  var block = document.getElementById("gs-route-participants");
+  if (!block || !routeId || !window.GoeloSignupParticipants) return;
+
+  try {
+    var sb = await getSb();
+    var result = await window.GoeloSignupParticipants.fetchForRoute(routeId, sb);
+    block.hidden = false;
+    window.GoeloSignupParticipants.renderRouteParticipantsUi({
+      participants: (result && result.participants) ? result.participants : [],
+      blockEl: "gs-route-participants",
+      hideWhenEmpty: false,
+      heroWrapEl: "gs-participants-preview",
+      heroAvatarsEl: "gs-participants-avatars",
+      heroTextEl: "gs-participants-preview-text",
+      countEl: "gs-participants-count",
+      listEl: "gs-participants-list"
+    });
+  } catch (e) {
+    console.warn("[gestion-sorties] participants:", e);
+  }
 }
 
 function populateForm(route) {
@@ -884,14 +885,6 @@ function populateForm(route) {
   document.getElementById('gpx-dplus').textContent =
     dplusVal != null ? Math.round(dplusVal) : '—';
   document.getElementById('gpx-dur').textContent = durVal || '—';
-
-  if (kmVal != null || dplusVal != null || durVal) {
-    syncRouteInputs(
-      kmVal != null ? Number(kmVal).toFixed(1) : '',
-      dplusVal != null ? Math.round(dplusVal) : '',
-      durVal
-    );
-  }
 
   window.currentEmbeddedPoints = Array.isArray(fc.embeddedPoints) ? fc.embeddedPoints : [];
   window.currentRouteCities = Array.isArray(fc.routeCities) ? fc.routeCities : [];
@@ -957,12 +950,22 @@ window.addEventListener('DOMContentLoaded', async () => {
         ? window.GoeloProfile.getDisplayName(
             window.GoeloProfile.profileFromUser(user)
           )
-        : "User";
+        : "Utilisateur";
 
       document.getElementById('nav-username').textContent = label;
-      document.getElementById('capitaine').value = label;
+
+      var capEl = document.getElementById('capitaine');
+      if (capEl && window.mode !== 'edit' && !capEl.value.trim()) {
+        capEl.value = label;
+      }
     }
   } catch(e) { /* silencieux */ }
 
   updateProgress();
+});
+
+window.addEventListener("goelo:signup-changed", function (e) {
+  var detail = e && e.detail;
+  if (!detail || !window.routeId || detail.routeId !== window.routeId) return;
+  loadRouteParticipants(window.routeId);
 });

@@ -218,7 +218,11 @@ window.goeloGetSb = function () {
       _closeAllModals();
 
       window.dispatchEvent(new CustomEvent("goelo:auth-success", {
-        detail: { user: loginResult.data.user, role: window.GOELO_ROLE }
+        detail: {
+          user: loginResult.data.user,
+          role: window.GOELO_ROLE,
+          pseudo: window.GOELO_DISPLAY_NAME
+        }
       }));
 
       _redirectForRole(window.GOELO_ROLE);
@@ -585,7 +589,6 @@ window.goeloGetSb = function () {
             '<p class="mtr-desc">Publier, modifier ou organiser une sortie\u2026 Le mode Team Rider est fait pour vous\u00a0!</p>' +
             '<div class="mtr-actions">' +
               '<button type="button" class="mtr-btn mtr-btn--primary" id="mtr-go-login" data-autofocus>Se connecter</button>' +
-              '<a class="mtr-btn mtr-btn--outline" id="mtr-go-access" href="gestion-team-rider.html">Demander l\'acc\u00e8s</a>' +
             '</div>' +
             '<p class="mtr-lock-note"><span aria-hidden="true">\uD83D\uDD12</span> Acc\u00e8s r\u00e9serv\u00e9 aux Team Riders</p>' +
           '</div>' +
@@ -718,7 +721,7 @@ window.goeloGetSb = function () {
         setTimeout(function () { _openModal("modal-login"); }, 200);
         return;
       }
-      if (e.target.closest("#mtr-go-access") || e.target.closest("#ml-go-access")) {
+      if (e.target.closest("#ml-go-access")) {
         _closeAllModals();
         return;
       }

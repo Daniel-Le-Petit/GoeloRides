@@ -5,7 +5,7 @@
 (function (global) {
   "use strict";
 
-  var FALLBACK = "User";
+  var FALLBACK = "Utilisateur";
   var AVATAR_COLORS = ["#7DD3FC", "#C4B5FD", "#FCA5A5", "#FCD34D", "#86EFAC", "#C8F135"];
 
   function getDisplayName(profiles) {
@@ -18,6 +18,8 @@
     if (pseudo) return pseudo;
     var userName = profiles.user_name && String(profiles.user_name).trim();
     if (userName) return userName;
+    var username = profiles.username && String(profiles.username).trim();
+    if (username) return username;
     return FALLBACK;
   }
 

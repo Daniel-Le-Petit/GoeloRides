@@ -1,6 +1,8 @@
 /**
- * GoëloRides — Activity events : formatage humain + enrichissement metadata.
- * UI-agnostic : consommable par admin, logs, futures vues sans refonte.
+ * GoëloRides — Activity feed : labels depuis activity_feed_human (Supabase).
+ *
+ * Le texte affiché vient exclusivement du champ `label` (vue SQL).
+ * event_type sert uniquement à l'icône et à la sévérité.
  */
 (function (global) {
   "use strict";
@@ -47,75 +49,33 @@
       || "Quelqu'un";
   }
 
-  function rideTitle(row) {
-    var m = row.metadata || {};
-    return (row.route_title && String(row.route_title).trim())
-      || (m.title && String(m.title).trim())
-      || (row.route_id && String(row.route_id))
-      || "une sortie";
+  function containsTechnicalRouteId(text) {
+    return /c_[0-9a-f]{8,}/i.test(String(text || ""));
   }
 
-  function enrichMetadata(eventType, metadata, row) {
-    var m = Object.assign({}, metadata || {});
-    row = row || {};
-
-    if (row.route_id && !m.route_id) m.route_id = row.route_id;
-    if (row.route_title && !m.route_title) m.route_title = row.route_title;
-    if (row.actor_pseudo && !m.actor_pseudo) m.actor_pseudo = row.actor_pseudo;
-
-    if (eventType === "RIDE_CREATED" && m.km != null && m.km !== "") {
-      m.distance_label = String(m.km) + " km";
+  function eventLabel(row) {
+    var label = row.label && String(row.label).trim();
+    var title = row.route_title && String(row.route_title).trim();
+    if (label && containsTechnicalRouteId(label)) {
+      if (title && !containsTechnicalRouteId(title)) {
+        label = label.replace(/c_[0-9a-f]+/gi, title);
+      } else {
+        label = label.replace(/\s*c_[0-9a-f]+/gi, " une sortie");
+      }
     }
-    if (eventType === "COMMENT_CREATED" && m.preview && !m.excerpt) {
-      m.excerpt = String(m.preview);
-    }
-    if (eventType === "SUSPICIOUS_LOGIN" && m.ip && !m.location_hint) {
-      m.location_hint = String(m.ip);
-    }
-    if (eventType === "ERROR_API" && m.endpoint && !m.source) {
-      m.source = String(m.endpoint);
-    }
-
-    return m;
+    if (label) return label;
+    return actorName(row) + " a effectué une action";
   }
 
-  function humanText(eventType, row) {
-    var m = enrichMetadata(eventType, row.metadata || {}, row);
-    var who = actorName(row);
-    var ride = rideTitle(row);
-
-    switch (eventType) {
-      case EVENT_TYPES.USER_REGISTERED:
-        return who + " a créé un compte";
-      case EVENT_TYPES.USER_LOGIN:
-        return who + " s'est connecté";
-      case EVENT_TYPES.RIDE_CREATED:
-        return who + " a créé la sortie « " + ride + " »"
-          + (m.distance_label ? " (" + m.distance_label + ")" : "");
-      case EVENT_TYPES.RIDE_JOINED:
-        return who + " s'est inscrit·e à « " + ride + " »";
-      case EVENT_TYPES.RIDE_LEFT:
-        return who + " s'est désinscrit·e de « " + ride + " »";
-      case EVENT_TYPES.RIDE_VIEWED:
-        return who + " a consulté « " + ride + " »";
-      case EVENT_TYPES.COMMENT_CREATED:
-        return who + " a commenté sur « " + ride + " »"
-          + (m.excerpt ? " : « " + m.excerpt + " »" : "");
-      case EVENT_TYPES.LIKE_ADDED:
-        return who + " a aimé « " + ride + " »";
-      case EVENT_TYPES.LIKE_REMOVED:
-        return who + " a retiré son like sur « " + ride + " »";
-      case EVENT_TYPES.ERROR_API:
-        return "Erreur API"
-          + (m.source ? " (" + m.source + ")" : "")
-          + (m.message ? " : " + m.message : "");
-      case EVENT_TYPES.SUSPICIOUS_LOGIN:
-        return "Connexion suspecte"
-          + (m.location_hint ? " depuis " + m.location_hint : "")
-          + (who !== "Quelqu'un" ? " — " + who : "");
-      default:
-        return eventType + (who !== "Quelqu'un" ? " — " + who : "");
-    }
+  function labelHtml(label, actorPseudo) {
+    var safeLabel = _esc(label);
+    var pseudo = actorPseudo && String(actorPseudo).trim();
+    if (!pseudo) return safeLabel;
+    var idx = label.indexOf(pseudo);
+    if (idx === -1) return safeLabel;
+    return _esc(label.slice(0, idx))
+      + "<strong class=\"act-feed__actor\">" + _esc(pseudo) + "</strong>"
+      + _esc(label.slice(idx + pseudo.length));
   }
 
   function severity(eventType) {
@@ -127,17 +87,17 @@
   function formatEvent(row) {
     if (!row) return null;
     var type = row.event_type || row.type || "UNKNOWN";
-    var meta = enrichMetadata(type, row.metadata || {}, row);
+    var who = actorName(row);
+    var label = eventLabel(row);
     return {
       id: row.id,
       event_type: type,
       icon: ICONS[type] || "•",
-      text: humanText(type, row),
+      label: label,
+      text: label,
+      textHtml: labelHtml(label, who),
       severity: severity(type),
-      actor_pseudo: actorName(row),
-      route_id: row.route_id || null,
-      route_title: row.route_title || null,
-      metadata: meta,
+      actor_pseudo: who,
       created_at: row.created_at
     };
   }
@@ -194,12 +154,17 @@
     if (!sb || !eventType) return null;
     extras = extras || {};
     try {
+      var meta = Object.assign({}, metadata || {});
+      if (extras.route_id && !meta.route_id) meta.route_id = extras.route_id;
+      if (extras.route_title && !meta.route_title) meta.route_title = extras.route_title;
+      if (extras.actor_pseudo && !meta.actor_pseudo) meta.actor_pseudo = extras.actor_pseudo;
+
       var result = await sb.rpc("activity_event_log", {
         p_event_type: eventType,
-        p_metadata: metadata || {},
-        p_route_id: extras.route_id || null,
-        p_route_title: extras.route_title || null,
-        p_actor_pseudo: extras.actor_pseudo || null
+        p_metadata: meta,
+        p_actor_id: extras.actor_id || null,
+        p_entity_type: extras.entity_type || (extras.route_id ? "route" : null),
+        p_entity_id: extras.entity_id || extras.route_id || null
       });
       if (result.error) throw result.error;
       return result.data;
@@ -219,7 +184,9 @@
       var payload = result.data || {};
       return {
         stats: payload.stats || {},
-        events: formatEvents(payload.events || [])
+        events: formatEvents(payload.events || []),
+        feedMode: (payload.stats && payload.stats.feed_mode) || "activity_feed_human",
+        eventTypes: (payload.stats && payload.stats.event_types) || null
       };
     } catch (err) {
       console.warn("[GoeloActivity] fetchDashboard:", err.message || err);
@@ -229,8 +196,9 @@
 
   global.GoeloActivity = {
     EVENT_TYPES: EVENT_TYPES,
-    enrichMetadata: enrichMetadata,
-    humanText: humanText,
+    actorName: actorName,
+    eventLabel: eventLabel,
+    labelHtml: labelHtml,
     formatEvent: formatEvent,
     formatEvents: formatEvents,
     groupByDay: groupByDay,

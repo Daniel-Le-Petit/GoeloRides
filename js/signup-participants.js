@@ -15,7 +15,7 @@
 function displayName(p) {
   var api = profileApi();
   if (api) return api.getDisplayName(p);
-  return "User";
+  return "Utilisateur";
 }
 
   function normalizeParticipant(x) {
@@ -26,7 +26,9 @@ function displayName(p) {
     }
     if (typeof x === "object") {
       return {
-        pseudo: displayName(x),
+        pseudo: x.pseudo || x.display_name || null,
+        username: x.username || x.user_name || null,
+        user_name: x.user_name || x.username || null,
         cyclist_level: x.cyclist_level || null,
         city: x.city || null
       };
@@ -210,6 +212,52 @@ function displayName(p) {
     }));
   }
 
+  function renderRouteParticipantsUi(cfg) {
+    cfg = cfg || {};
+    var list = normalizeList(cfg.participants || []);
+    var count = list.length;
+    var avatarMax = cfg.avatarMax || 5;
+
+    var badge = cfg.countEl ? document.getElementById(cfg.countEl) : null;
+    if (badge) badge.textContent = count > 0 ? "(" + count + ")" : "";
+
+    var joinCount = cfg.joinCountEl ? document.getElementById(cfg.joinCountEl) : null;
+    if (joinCount) {
+      joinCount.textContent = count > 0
+        ? count + " participant" + (count > 1 ? "s" : "")
+        : "";
+    }
+
+    var wrap = cfg.heroWrapEl ? document.getElementById(cfg.heroWrapEl) : null;
+    var av = cfg.heroAvatarsEl ? document.getElementById(cfg.heroAvatarsEl) : null;
+    var text = cfg.heroTextEl ? document.getElementById(cfg.heroTextEl) : null;
+    if (wrap && av && text) {
+      if (!count) {
+        wrap.hidden = true;
+      } else {
+        wrap.hidden = false;
+        av.innerHTML = renderAvatarStackHtml(list, { max: avatarMax });
+        var more = count - Math.min(count, avatarMax);
+        text.textContent = count + " participant" + (count > 1 ? "s" : "") +
+          (more > 0 ? " (+" + more + " autres)" : "");
+      }
+    }
+
+    var host = cfg.listEl ? document.getElementById(cfg.listEl) : null;
+    if (host) {
+      host.innerHTML = renderParticipantsListHtml(list, {
+        emptyMsg: cfg.emptyMsg || "Aucun participant pour l'instant."
+      });
+    }
+
+    if (cfg.blockEl) {
+      var block = document.getElementById(cfg.blockEl);
+      if (block) block.hidden = cfg.hideWhenEmpty === true && !count;
+    }
+
+    return count;
+  }
+
   global.GoeloSignupParticipants = {
     routeKey: routeKey,
     displayName: displayName,
@@ -222,6 +270,7 @@ function displayName(p) {
     renderParticipantsListHtml: renderParticipantsListHtml,
     renderParticipantsPreview: renderParticipantsPreview,
     renderAvatarStackHtml: renderAvatarStackHtml,
+    renderRouteParticipantsUi: renderRouteParticipantsUi,
     emitChanged: emitChanged
   };
 })(typeof window !== "undefined" ? window : globalThis);

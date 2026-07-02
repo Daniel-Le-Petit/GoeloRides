@@ -545,6 +545,10 @@ body {
   transition: max-height 0.3s ease;
 }
 
+.pd-acc__item.is-open .pd-acc__panel {
+  max-height: 1200px;
+}
+
 .pd-acc__body {
   padding: 0 1.1rem 1.05rem;
   font-size: 0.86rem;

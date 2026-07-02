@@ -922,6 +922,12 @@ html.goelo-modal-open {
   min-height: 2rem;
 }
 
+.gr-header-connect--static {
+  pointer-events: none;
+  cursor: default;
+  text-decoration: none;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    Logique : reset password

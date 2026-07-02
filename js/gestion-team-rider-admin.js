@@ -192,7 +192,11 @@
       await loadDemands();
     } catch (err) {
       console.error("[admin] approveDemand:", err);
-      showToast("Erreur : " + err.message, "error");
+      var msg = err.message || String(err);
+      if (msg === "auth_user_missing") {
+        msg = "Compte Auth introuvable — déployer la Edge Function approve-demande.";
+      }
+      showToast("Erreur : " + msg, "error");
       btns.forEach(function (b) { b.disabled = false; });
     }
   }

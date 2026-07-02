@@ -57,12 +57,21 @@
     var heroCta = document.querySelector(".gr-hero-ctas .gr-btn--ghost[data-goelo-auth-trigger]");
     if (heroCta) heroCta.setAttribute("data-goelo-tr-cta", "");
 
+    function onAuthUi(detail) {
+      if (window.GoeloUI) window.GoeloUI.syncRoleUI(detail);
+      _bindLogoutButtons();
+    }
+
+    window.addEventListener("goelo:role-ready", function (e) {
+      onAuthUi(e.detail);
+    });
+    window.addEventListener("goelo:auth-success", function (e) {
+      onAuthUi(e.detail);
+    });
+
     if (window.GoeloUI) {
-      window.addEventListener("goelo:role-ready", function (e) {
-        window.GoeloUI.syncRoleUI(e.detail);
-        _bindLogoutButtons();
-      });
-      if (!window.GOELO_AUTH_PENDING) {
+      if (window.GoeloUI.catchUpRoleUI) window.GoeloUI.catchUpRoleUI();
+      else if (!window.GOELO_AUTH_PENDING) {
         window.GoeloUI.syncRoleUI({ role: window.GOELO_ROLE, user: window.GOELO_USER });
       }
     }

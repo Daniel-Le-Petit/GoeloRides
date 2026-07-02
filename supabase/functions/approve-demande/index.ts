@@ -159,7 +159,7 @@ async function sendAdminOneSignalNotification(demande: DemandeRow, userCreated: 
   if (!res.ok) {
     const text = await res.text();
     console.error("[approve-demande] OneSignal error:", res.status, text);
-    throw new Error("onesignal_send_failed");
+    return { sent: false, reason: "onesignal_send_failed" };
   }
 
   return { sent: true };
@@ -316,6 +316,7 @@ Deno.serve(async (req) => {
       userId,
       userCreated,
       notification_sent: notifyResult.sent,
+      activity_via: "trigger:demandes",
       level: row.level,
     });
 

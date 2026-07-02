@@ -36,37 +36,69 @@
     });
   }
 
+  function isHomePage() {
+    var path = global.location.pathname || "";
+    return path === "/" || path.endsWith("/index.html") || /\/index\.html$/i.test(path);
+  }
+
+  function roleDetail(detail) {
+    return {
+      role: (detail && detail.role) || role(),
+      user: (detail && detail.user) || global.GOELO_USER || null
+    };
+  }
+
   function setRoleBadges(r) {
     global.document.querySelectorAll("[data-goelo-role-badge]").forEach(function (el) {
-      el.className = "go-role-badge go-role-badge--" + r;
-      el.textContent = ROLE_LABELS[r] || r;
+      var badgeRole = r;
+      var label = ROLE_LABELS[r] || r;
+      if (isHomePage() && r !== "visitor") {
+        badgeRole = "user";
+        label = "Cycliste";
+      }
+      el.className = "go-role-badge go-role-badge--" + badgeRole;
+      el.textContent = label;
       el.hidden = false;
+      el.removeAttribute("hidden");
     });
   }
 
-  function syncHeaderConnect(r, user) {
+  function syncHeaderConnect(r) {
     var btn = global.document.querySelector(".gr-header-connect, [data-goelo-connect-btn]");
     if (!btn) return;
 
-    btn.classList.remove("is-loading");
+    btn.classList.remove("is-loading", "gr-header-connect--static");
     btn.removeAttribute("data-goelo-auth-trigger");
+    btn.hidden = false;
+    btn.removeAttribute("hidden");
+    btn.onclick = null;
 
     if (r === "visitor") {
       btn.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Se connecter';
       btn.setAttribute("data-goelo-auth-trigger", "");
       btn.removeAttribute("href");
-      btn.onclick = null;
+      return;
+    }
+
+    btn.textContent = headerDisplayName();
+
+    if (isHomePage()) {
+      btn.removeAttribute("href");
+      btn.classList.add("gr-header-connect--static");
+      btn.setAttribute("aria-live", "polite");
+      btn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      };
       return;
     }
 
     if (r === "user") {
-      btn.textContent = headerDisplayName();
       btn.href = "sorties.html";
       return;
     }
     if (r === "team_rider") {
-      btn.textContent = "Mon cockpit";
       btn.href = "team-rider.html";
       return;
     }
@@ -114,11 +146,20 @@
     var isVisitor = r === "visitor";
     global.document.querySelectorAll("[data-goelo-logout-btn]").forEach(function (btn) {
       btn.hidden = isVisitor;
+      if (!isVisitor) btn.removeAttribute("hidden");
       var wrap = btn.closest(".gr-nav-logout-wrap");
-      if (wrap) wrap.hidden = isVisitor;
+      if (wrap) {
+        wrap.hidden = isVisitor;
+        if (!isVisitor) wrap.removeAttribute("hidden");
+      }
     });
-    var mobileConnect = global.document.querySelector(".gr-mobile-drawer__cta [data-goelo-auth-trigger]");
-    if (mobileConnect) mobileConnect.hidden = !isVisitor;
+    global.document.querySelectorAll(".gr-mobile-drawer__cta [data-goelo-auth-trigger]").forEach(function (el) {
+      el.hidden = !isVisitor;
+    });
+    global.document.querySelectorAll(".gr-mobile-drawer__cta [data-goelo-logout-btn]").forEach(function (el) {
+      el.hidden = isVisitor;
+      if (!isVisitor) el.removeAttribute("hidden");
+    });
   }
 
   function syncNavCreate(r) {
@@ -171,8 +212,7 @@
       if (title) title.innerHTML = 'Passez en mode<br><span class="mtr-title--accent">Team Rider</span>';
       if (desc) desc.textContent = "Connecte-toi pour demander l'accès Team Rider et organiser des sorties.";
       actions.innerHTML =
-        '<button type="button" class="mtr-btn mtr-btn--primary" data-goelo-auth-login>Se connecter</button>' +
-        '<a class="mtr-btn mtr-btn--outline" href="gestion-team-rider.html">En savoir plus</a>';
+        '<button type="button" class="mtr-btn mtr-btn--primary" data-goelo-auth-login>Se connecter</button>';
       return;
     }
 
@@ -204,14 +244,15 @@
   }
 
   function syncRoleUI(detail) {
-    var r = (detail && detail.role) || role();
-    var user = (detail && detail.user) || global.GOELO_USER || null;
+    var resolved = roleDetail(detail);
+    var r = resolved.role;
+    var user = resolved.user;
 
     global.document.documentElement.classList.remove("goelo-auth-pending");
     global.GOELO_AUTH_PENDING = false;
 
     setRoleBadges(r);
-    syncHeaderConnect(r, user);
+    syncHeaderConnect(r);
     syncHeroCtas(r);
     syncLogoutButtons(r);
     syncNavCreate(r);
@@ -223,6 +264,14 @@
       var lockDiv = aside.querySelector(".so-aside__lock");
       if (lockDiv) lockDiv.textContent = "✓";
     }
+  }
+
+  function catchUpRoleUI() {
+    if (global.GOELO_AUTH_PENDING) return;
+    syncRoleUI({
+      role: global.GOELO_ROLE,
+      user: global.GOELO_USER
+    });
   }
 
   function bindModalLoginShortcut() {
@@ -240,7 +289,6 @@
   }
 
   function init() {
-    global.document.documentElement.classList.add("goelo-auth-pending");
     bindModalLoginShortcut();
 
     global.addEventListener("goelo:role-ready", function (e) {
@@ -251,15 +299,20 @@
       syncRoleUI(e.detail);
     });
 
-    if (!global.GOELO_AUTH_PENDING && global.GOELO_ROLE) {
-      syncRoleUI({ role: global.GOELO_ROLE, user: global.GOELO_USER });
+    if (global.GOELO_AUTH_PENDING) {
+      global.document.documentElement.classList.add("goelo-auth-pending");
+    } else {
+      catchUpRoleUI();
     }
+
+    global.setTimeout(catchUpRoleUI, 0);
   }
 
   global.GoeloUI = {
     role: role,
     waitForRole: waitForRole,
-    syncRoleUI: syncRoleUI
+    syncRoleUI: syncRoleUI,
+    catchUpRoleUI: catchUpRoleUI
   };
 
   if (global.document.readyState === "loading") {

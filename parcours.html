@@ -150,10 +150,10 @@
 
       <!-- Téléchargement GPX -->
       <div class="pd-gpx">
-        <a class="pd-gpx__btn" id="pd-gpx-btn" href="#" download>
+        <a class="pd-gpx__btn" id="pd-gpx-btn" href="#" role="button">
           <span aria-hidden="true">⬇</span> Télécharger la trace GPX
         </a>
-        <p class="pd-gpx__text">
+        <p class="pd-gpx__text" id="pd-gpx-msg" role="status" aria-live="polite">
           Même trace que sur la carte. À ouvrir dans ton appli vélo ou ton GPS
           pour rouler avec le bon itinéraire.
         </p>
@@ -373,6 +373,7 @@
   <script src="js/auth.js"></script>
   <script src="js/goelo-profile.js"></script>
   <script src="js/goelo-ui.js"></script>
+  <script src="js/goelo-gpx.js"></script>
   <script src="js/signup-participants.js"></script>
   <script src="js/goelo-weather.js"></script>
   <script src="js/parcours.js"></script>

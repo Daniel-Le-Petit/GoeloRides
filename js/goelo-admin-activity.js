@@ -40,7 +40,7 @@
     return "<li class=\"" + cls + "\">" +
       "<span class=\"act-feed__time\">" + esc(GA ? GA.fmtTime(ev.created_at) : "") + "</span>" +
       "<span class=\"act-feed__icon\" aria-hidden=\"true\">" + esc(ev.icon) + "</span>" +
-      "<span class=\"act-feed__text\">" + esc(ev.text) + "</span>" +
+      "<span class=\"act-feed__text\">" + (ev.textHtml || esc(ev.label || ev.text)) + "</span>" +
       verifyBtn +
       "</li>";
   }
@@ -78,7 +78,7 @@
       return "<div class=\"act-ticker__row\">" +
         "<span class=\"act-ticker__time\">" + GA._esc(GA.fmtTime(ev.created_at)) + "</span>" +
         "<span class=\"act-ticker__icon\" aria-hidden=\"true\">" + GA._esc(ev.icon) + "</span>" +
-        "<span class=\"act-ticker__text\">" + GA._esc(ev.text) + "</span>" +
+        "<span class=\"act-ticker__text\">" + (ev.textHtml || GA._esc(ev.label || ev.text)) + "</span>" +
         "</div>";
     }).join("");
   }
@@ -101,11 +101,14 @@
     var data = await window.GoeloActivity.fetchDashboard(sb, 60);
     renderStats(data.stats);
     renderFeed(data.events);
+    if (data.feedMode === "activity_feed_human" && data.eventTypes) {
+      console.info("[GoeloAdminActivity] Feed activity_feed_human", data.eventTypes);
+    }
     if (data.error) {
       var errEl = _$("act-feed-error");
       if (errEl) {
         errEl.hidden = false;
-        errEl.textContent = "Flux limité : " + data.error + " — appliquez la migration activity_events si besoin.";
+        errEl.textContent = "Flux limité : " + data.error;
       }
     } else {
       var errBox = _$("act-feed-error");

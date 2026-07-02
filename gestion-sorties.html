@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="css/components/participants.css">
 <link rel="stylesheet" href="css/pages/gestion-sorties.css">
 
 </head>
@@ -205,26 +206,6 @@
         <h2 class="section__title">Parcours GPX</h2>
       </div>
 
-      <div class="route-stats-block">
-        <h3 class="route-stats-block__title">Caractéristiques du parcours</h3>
-        <p class="field__hint">Obligatoires pour publier la sortie. Pré-remplies automatiquement après import GPX.</p>
-        <div class="field-row-3">
-          <div class="field">
-            <label class="field__label" for="route-km">Distance (km) *</label>
-            <input class="field__input" type="number" id="route-km" name="route_km" min="0.1" step="0.1" placeholder="42" required>
-          </div>
-          <div class="field">
-            <label class="field__label" for="route-dplus">Dénivelé (m) *</label>
-            <input class="field__input" type="number" id="route-dplus" name="route_dplus" min="0" step="1" placeholder="450" required>
-          </div>
-          <div class="field">
-            <label class="field__label" for="route-duree">Durée estimée *</label>
-            <input class="field__input" type="text" id="route-duree" name="route_duree" placeholder="2h30" inputmode="numeric" required>
-            <div class="field__hint">Format : 2h30</div>
-          </div>
-        </div>
-      </div>
-
       <div class="gpx-zone" id="gpx-zone" onclick="document.getElementById('gpx-file').click()">
         <div class="gpx-zone__icon">📂</div>
         <div class="gpx-zone__title">Importer un fichier GPX</div>
@@ -305,6 +286,17 @@
             <label for="illimite" style="font-size:.82rem;color:var(--text)">Illimité</label>
           </label>
         </div>
+      </div>
+
+      <div class="field gs-route-participants" id="gs-route-participants" hidden>
+        <div class="pd-hero__people" id="gs-participants-preview">
+          <div class="pd-hero__avatars" id="gs-participants-avatars"></div>
+          <p class="pd-hero__people-text" id="gs-participants-preview-text"></p>
+        </div>
+        <label class="field__label">
+          Inscrits <span class="pd-participants-count" id="gs-participants-count"></span>
+        </label>
+        <ul class="pd-participants" id="gs-participants-list"></ul>
       </div>
     </section>
 
@@ -470,6 +462,7 @@
   }
 </script>
 <script src="js/goelo-profile.js"></script>
+<script src="js/signup-participants.js"></script>
 <script src="js/gestion-sorties.js" defer></script>
 
 </body>

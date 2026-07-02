@@ -1,85 +1,9 @@
--- GoëloRides — Activity events (journal unifié) + RPC activity_admin_dashboard.
--- Feed admin : activity_events uniquement (triggers + backfill : 20250630210000).
+-- GoëloRides — Source canonique du feed d'activité admin
+--
+-- Il n'existe PAS de table audit_log_entries dans ce projet (ni vue Supabase Auth).
+-- La chronologie UI appelle RPC activity_admin_dashboard() qui lit uniquement
+-- activity_events (voir 20250630210000_activity_unified_events.sql).
 
-CREATE TABLE IF NOT EXISTS public.activity_events (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_type    TEXT NOT NULL,
-  actor_user_id UUID,
-  actor_pseudo  TEXT,
-  route_id      TEXT,
-  route_title   TEXT,
-  metadata      JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT activity_events_type_chk CHECK (
-    event_type IN (
-      'USER_REGISTERED', 'USER_LOGIN', 'RIDE_CREATED', 'RIDE_JOINED', 'RIDE_LEFT',
-      'RIDE_VIEWED', 'COMMENT_CREATED', 'LIKE_ADDED', 'LIKE_REMOVED',
-      'ERROR_API', 'SUSPICIOUS_LOGIN'
-    )
-  )
-);
-
-CREATE INDEX IF NOT EXISTS activity_events_created_idx
-  ON public.activity_events (created_at DESC);
-
-CREATE INDEX IF NOT EXISTS activity_events_type_idx
-  ON public.activity_events (event_type);
-
-ALTER TABLE public.activity_events ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "activity_events_deny_anon" ON public.activity_events;
-CREATE POLICY "activity_events_deny_anon"
-  ON public.activity_events FOR ALL TO anon
-  USING (false) WITH CHECK (false);
-
-DROP POLICY IF EXISTS "activity_events_service_role" ON public.activity_events;
-CREATE POLICY "activity_events_service_role"
-  ON public.activity_events FOR ALL TO service_role
-  USING (true) WITH CHECK (true);
-
--- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.activity_event_log(
-  p_event_type text,
-  p_metadata jsonb DEFAULT '{}'::jsonb,
-  p_route_id text DEFAULT NULL,
-  p_route_title text DEFAULT NULL,
-  p_actor_pseudo text DEFAULT NULL
-)
-RETURNS uuid
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  new_id uuid;
-  pseudo text;
-BEGIN
-  pseudo := coalesce(
-    nullif(trim(p_actor_pseudo), ''),
-    nullif(trim((SELECT p.pseudo FROM public.profiles p WHERE p.id = auth.uid())), ''),
-    'User'
-  );
-
-  INSERT INTO public.activity_events (
-    event_type, actor_user_id, actor_pseudo, route_id, route_title, metadata
-  ) VALUES (
-    p_event_type,
-    auth.uid(),
-    pseudo,
-    p_route_id,
-    p_route_title,
-    coalesce(p_metadata, '{}'::jsonb)
-  )
-  RETURNING id INTO new_id;
-
-  RETURN new_id;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.activity_event_log(text, jsonb, text, text, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.activity_event_log(text, jsonb, text, text, text) TO authenticated, service_role;
-
--- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.activity_admin_dashboard(p_limit int DEFAULT 60)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -91,10 +15,13 @@ DECLARE
   today_start timestamptz := date_trunc('day', now() AT TIME ZONE 'Europe/Paris') AT TIME ZONE 'Europe/Paris';
   events jsonb;
   stats jsonb;
+  logged_total int;
 BEGIN
   IF NOT public._goelo_caller_is_admin() THEN
     RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
   END IF;
+
+  SELECT count(*)::int INTO logged_total FROM public.activity_events;
 
   WITH logged AS (
     SELECT
@@ -103,7 +30,7 @@ BEGIN
       ae.actor_pseudo,
       ae.route_id,
       ae.route_title,
-      ae.metadata,
+      coalesce(ae.metadata, '{}'::jsonb) || jsonb_build_object('feed_source', 'activity_events') AS metadata,
       ae.created_at
     FROM public.activity_events ae
     ORDER BY ae.created_at DESC
@@ -117,6 +44,7 @@ BEGIN
       r.id AS route_id,
       coalesce(r.front_config->>'title', r.id) AS route_title,
       jsonb_build_object(
+        'feed_source', 'routes',
         'route_kind', r.route_kind,
         'km', r.front_config->'profile'->>'totalKm'
       ) AS metadata,
@@ -143,7 +71,7 @@ BEGIN
       ) AS actor_pseudo,
       s.route_id,
       coalesce(rt.front_config->>'title', s.route_id) AS route_title,
-      jsonb_build_object('status', s.status) AS metadata,
+      jsonb_build_object('feed_source', 'signups', 'status', s.status) AS metadata,
       s.created_at
     FROM public.signups s
     LEFT JOIN public.profiles pr ON pr.id = s.user_id
@@ -163,7 +91,7 @@ BEGIN
       ) AS actor_pseudo,
       NULL::text AS route_id,
       NULL::text AS route_title,
-      jsonb_build_object('role', pr.role) AS metadata,
+      jsonb_build_object('feed_source', 'profiles', 'role', pr.role) AS metadata,
       pr.created_at
     FROM public.profiles pr
     LEFT JOIN auth.users au ON au.id = pr.id
@@ -178,7 +106,10 @@ BEGIN
       c.pseudo AS actor_pseudo,
       c.route_id,
       coalesce(rt.front_config->>'title', c.route_id) AS route_title,
-      jsonb_build_object('preview', left(trim(c.body), 80)) AS metadata,
+      jsonb_build_object(
+        'feed_source', 'route_comments',
+        'preview', left(trim(c.body), 80)
+      ) AS metadata,
       c.created_at
     FROM public.route_comments c
     LEFT JOIN public.routes rt ON rt.id = c.route_id
@@ -196,7 +127,11 @@ BEGIN
       ) AS actor_pseudo,
       NULL::text AS route_id,
       NULL::text AS route_title,
-      jsonb_build_object('demande_status', d.status, 'level', d.level) AS metadata,
+      jsonb_build_object(
+        'feed_source', 'demandes',
+        'demande_status', d.status,
+        'level', d.level
+      ) AS metadata,
       coalesce(d.approved_at, d.created_at) AS created_at
     FROM public.demandes d
     ORDER BY coalesce(d.approved_at, d.created_at) DESC NULLS LAST
@@ -273,12 +208,29 @@ BEGIN
     ),
     'pending_demands', (
       SELECT count(*)::int FROM public.demandes d WHERE d.status = 'pending'
-    )
+    ),
+    'activity_events_total', logged_total,
+    'feed_sources', jsonb_build_object(
+      'activity_events', logged_total,
+      'routes', (SELECT count(*)::int FROM public.routes WHERE is_active AND route_kind = 'custom'),
+      'signups', (SELECT count(*)::int FROM public.signups WHERE status IN ('joined', 'active')),
+      'profiles', (SELECT count(*)::int FROM public.profiles WHERE role IN ('user', 'team_rider', 'admin')),
+      'route_comments', (SELECT count(*)::int FROM public.route_comments),
+      'demandes', (SELECT count(*)::int FROM public.demandes)
+    ),
+    'feed_mode', CASE
+      WHEN logged_total = 0 THEN 'synthesized_legacy_tables'
+      ELSE 'activity_events_plus_synthesis'
+    END
   ) INTO stats;
 
   RETURN jsonb_build_object('stats', stats, 'events', coalesce(events, '[]'::jsonb));
 END;
 $$;
+
+COMMENT ON FUNCTION public.activity_admin_dashboard(int) IS
+  'Feed admin : UNION de activity_events + synthèse routes/signups/profiles/route_comments/demandes. '
+  'Pas de audit_log_entries. Voir migration 20250630190000_activity_feed_canonical.sql.';
 
 REVOKE ALL ON FUNCTION public.activity_admin_dashboard(int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.activity_admin_dashboard(int) TO authenticated, service_role;

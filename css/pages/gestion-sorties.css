@@ -1,7 +1,3 @@
-/* ═══════════════════════════════════════════════════════
-   GoëloRides — css/pages/gestion-sorties.css
-   ═══════════════════════════════════════════════════════ */
-
 :root {
   --bg: #0D0D0D;
   --surface: #1A1A1A;
@@ -169,24 +165,7 @@ body {
 .gpx-zone__btn:hover { background: var(--border); }
 .gpx-file-input { display: none; }
 
-/* ── STATS PARCOURS (toujours visibles) ── */
-.route-stats-block {
-  margin-bottom: 1.25rem;
-  padding: 1rem 1.1rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  border-radius: var(--r);
-}
-.route-stats-block__title {
-  font-family: var(--font-d);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 0.35rem;
-}
-.route-stats-block .field__hint { margin-bottom: 0.75rem; }
-
-.gpx-status { display: none; margin-top: 1rem; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r); overflow: hidden; }
+/* ── GPX IMPORT ── */ display: none; margin-top: 1rem; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r); overflow: hidden; }
 .gpx-status.visible { display: block; }
 .gpx-status__bar { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
 .gpx-status__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
@@ -303,4 +282,14 @@ body {
   .gpx-stats { grid-template-columns: 1fr 1fr; }
   .flyer-wrap { grid-template-columns: 1fr; }
   .action-bar { padding: 0.85rem 1rem; flex-wrap: wrap; }
+}
+
+.gs-route-participants {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.gs-route-participants .pd-hero__people {
+  margin-bottom: 0.75rem;
 }

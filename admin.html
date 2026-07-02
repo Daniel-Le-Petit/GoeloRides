@@ -399,6 +399,8 @@
     .act-feed__time { color: var(--muted); font-size: .72rem; font-variant-numeric: tabular-nums; }
     .act-feed__icon { text-align: center; }
     .act-feed__text { line-height: 1.35; }
+    .act-feed__text .act-feed__actor,
+    .act-ticker__text .act-feed__actor { font-weight: 700; }
     .act-feed__verify {
       background: var(--accent); color: #0D0D0D; border: none;
       font-family: var(--font-display); font-size: .65rem; font-weight: 700;
@@ -478,7 +480,7 @@
       <div class="admin-section__head">
         <div>
           <h2 class="admin-section__title">Feed <span>d'activité</span></h2>
-          <p class="admin-section__sub">Événements récents — inscriptions, sorties, commentaires, alertes</p>
+          <p class="admin-section__sub">Journal unifié activity_events — routes, inscriptions, profils, commentaires, demandes</p>
         </div>
         <button class="btn-refresh" id="act-refresh-btn" type="button">
           <span class="btn-refresh__icon">↻</span> Actualiser
