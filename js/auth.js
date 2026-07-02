@@ -56,42 +56,75 @@ window.goeloGetSb = function () {
   /* ════════════════════════════════════════════════════════════
      3. RÉSOLUTION DU RÔLE
      ════════════════════════════════════════════════════════════ */
+  var _resolveRolePromise = null;
+
+  function _isTruthyMetaFlag(value) {
+    return value === true || value === "true" || value === "t" || value === "1" || value === 1;
+  }
+
+  function _roleFromUserAndProfile(user, profile) {
+    if (!user) return "visitor";
+    var meta = user.app_metadata || {};
+    if (_isTruthyMetaFlag(meta.goelo_admin)) return "admin";
+    var pr = profile && profile.role ? String(profile.role).trim() : "";
+    if (pr === "admin" || pr === "team_rider" || pr === "user") return pr;
+    return "user";
+  }
+
   async function resolveRole() {
     if (_recoveryInProgress || _isRecoveryUrl()) return;
-    var sb = window.goeloGetSb();
-    if (!sb) { _emitRole("visitor", null); return; }
-    try {
-      var sessionResult = await sb.auth.getSession();
-      var session = sessionResult.data && sessionResult.data.session;
-      if (!session) { _emitRole("visitor", null); return; }
+    if (_resolveRolePromise) return _resolveRolePromise;
 
-      var userResult = await sb.auth.getUser();
-      if (userResult.error || !userResult.data || !userResult.data.user) {
+    _resolveRolePromise = (async function () {
+      var sb = window.goeloGetSb();
+      if (!sb) {
         _emitRole("visitor", null);
         return;
       }
-      var user = userResult.data.user;
 
-      var profileResult = await sb
-        .from("profiles")
-        .select("role, pseudo")
-        .eq("id", user.id)
-        .maybeSingle();
+      try {
+        var sessionResult = await sb.auth.getSession();
+        var session = sessionResult.data && sessionResult.data.session;
+        if (!session || !session.user) {
+          _emitRole("visitor", null);
+          return;
+        }
 
-      if (profileResult.error) {
-        console.warn("[GoëloAuth] profiles:", profileResult.error.message);
-        _emitRole("user", user, _pseudoFromUser(user, null));
-        return;
+        var user = session.user;
+        try {
+          var userResult = await sb.auth.getUser();
+          if (userResult.data && userResult.data.user) user = userResult.data.user;
+        } catch (refreshErr) {
+          console.warn("[GoëloAuth] getUser:", refreshErr.message || refreshErr);
+        }
+
+        var profileResult = await sb
+          .from("profiles")
+          .select("role, pseudo")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileResult.error) {
+          console.warn("[GoëloAuth] profiles:", profileResult.error.message);
+        }
+
+        var resolvedRole = _roleFromUserAndProfile(user, profileResult.data || null);
+        _emitRole(
+          resolvedRole,
+          user,
+          _pseudoFromUser(user, profileResult.error ? null : profileResult.data)
+        );
+      } catch (err) {
+        console.warn("[GoëloAuth] resolveRole:", err.message || err);
+        if (window.GOELO_USER) return;
+        _emitRole("visitor", null);
       }
+    })();
 
-      var role = (profileResult.data && profileResult.data.role)
-        ? profileResult.data.role
-        : "user";
-
-      _emitRole(role, user, _pseudoFromUser(user, profileResult.data));
-    } catch (err) {
-      console.warn("[GoëloAuth] resolveRole:", err.message);
-      _emitRole("visitor", null);
+    try {
+      await _resolveRolePromise;
+    } finally {
+      _resolveRolePromise = null;
     }
   }
 
@@ -110,19 +143,32 @@ window.goeloGetSb = function () {
   }
 
   function _emitRole(role, user, pseudo) {
-    var cleanRole = role || "visitor";
-    window.GOELO_ROLE = cleanRole;
-    window.GOELO_USER = user;
-    window.GOELO_DISPLAY_NAME = pseudo && String(pseudo).trim()
-      ? String(pseudo).trim()
-      : null;
-    window.GOELO_AUTH_PENDING = false;
+    var cleanRole = user ? (role || "user") : "visitor";
+    if (cleanRole !== "admin" && cleanRole !== "team_rider" && cleanRole !== "user") {
+      cleanRole = user ? "user" : "visitor";
+    }
+    var cleanPseudo = pseudo && String(pseudo).trim() ? String(pseudo).trim() : null;
+
+    if (window.GoeloAuthState) {
+      window.GoeloAuthState.setState({
+        pending: false,
+        role: cleanRole,
+        user: user || null,
+        pseudo: cleanPseudo
+      });
+    } else {
+      window.GOELO_ROLE = cleanRole;
+      window.GOELO_USER = user || null;
+      window.GOELO_DISPLAY_NAME = cleanPseudo;
+      window.GOELO_AUTH_PENDING = false;
+    }
+
     console.log("[GoëloAuth] rôle résolu :", cleanRole);
     window.dispatchEvent(new CustomEvent("goelo:role-ready", {
       detail: {
         role: cleanRole,
-        user: user,
-        pseudo: window.GOELO_DISPLAY_NAME
+        user: user || null,
+        pseudo: cleanPseudo
       }
     }));
   }
@@ -171,7 +217,11 @@ window.goeloGetSb = function () {
       if (_recoveryInProgress && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
         return;
       }
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+      if (
+        event === "INITIAL_SESSION" ||
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED"
+      ) {
         resolveRole();
       } else if (event === "SIGNED_OUT") {
         _lastResolvedRole = null;
@@ -702,7 +752,6 @@ window.goeloGetSb = function () {
       }
       if (e.target.closest("[data-goelo-auth-trigger]")) {
         e.preventDefault();
-        if (window.GoeloUI) window.GoeloUI.syncRoleUI();
         _openModal("modal-teamrider");
         return;
       }

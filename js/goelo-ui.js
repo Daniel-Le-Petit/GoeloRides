@@ -12,52 +12,66 @@
     admin:       "Admin"
   };
 
-  function role() {
-    var r = global.GOELO_ROLE;
-    if (r === "admin" || r === "team_rider" || r === "user") return r;
-    return "visitor";
+  var HERO_SECONDARY = {
+    visitor:     { text: "Rejoindre en Team Rider", href: null, auth: true },
+    user:        { text: "Devenir Team Rider", href: "gestion-team-rider.html", auth: false },
+    team_rider:  { text: "Team Rider actif ✓", href: "team-rider.html", auth: false },
+    admin:       { text: "Panneau Admin", href: "admin.html", auth: false }
+  };
+
+  function readAuthState() {
+    if (global.GoeloAuthState) return global.GoeloAuthState.getState();
+    return {
+      pending: !!global.GOELO_AUTH_PENDING,
+      role: global.GOELO_ROLE || "visitor",
+      user: global.GOELO_USER || null,
+      pseudo: global.GOELO_DISPLAY_NAME || null
+    };
   }
 
-  function headerDisplayName() {
-    if (global.GoeloProfile) return global.GoeloProfile.sessionDisplayName();
-    if (global.GOELO_DISPLAY_NAME && String(global.GOELO_DISPLAY_NAME).trim()) {
-      return String(global.GOELO_DISPLAY_NAME).trim();
-    }
-    return "User";
+  function role() {
+    var r = readAuthState().role;
+    if (r === "admin" || r === "team_rider" || r === "user") return r;
+    return readAuthState().user ? "user" : "visitor";
   }
 
   function waitForRole() {
-    if (!global.GOELO_AUTH_PENDING) return Promise.resolve(role());
+    var current = readAuthState();
+    if (!current.pending) return Promise.resolve(role());
     return new Promise(function (resolve) {
-      global.addEventListener("goelo:role-ready", function handler(e) {
+      function done() {
+        resolve(role());
+      }
+      if (global.GoeloAuthState) {
+        var unsub = global.GoeloAuthState.subscribe(function (s) {
+          if (!s.pending) {
+            unsub();
+            done();
+          }
+        });
+      }
+      global.addEventListener("goelo:role-ready", function handler() {
         global.removeEventListener("goelo:role-ready", handler);
-        resolve((e.detail && e.detail.role) || role());
+        done();
       });
     });
   }
 
-  function isHomePage() {
-    var path = global.location.pathname || "";
-    return path === "/" || path.endsWith("/index.html") || /\/index\.html$/i.test(path);
-  }
-
   function roleDetail(detail) {
-    return {
-      role: (detail && detail.role) || role(),
-      user: (detail && detail.user) || global.GOELO_USER || null
-    };
+    if (detail && detail.role) {
+      return {
+        role: detail.role,
+        user: detail.user != null ? detail.user : readAuthState().user
+      };
+    }
+    var s = readAuthState();
+    return { role: role(), user: s.user };
   }
 
   function setRoleBadges(r) {
     global.document.querySelectorAll("[data-goelo-role-badge]").forEach(function (el) {
-      var badgeRole = r;
-      var label = ROLE_LABELS[r] || r;
-      if (isHomePage() && r !== "visitor") {
-        badgeRole = "user";
-        label = "Cycliste";
-      }
-      el.className = "go-role-badge go-role-badge--" + badgeRole;
-      el.textContent = label;
+      el.className = "go-role-badge go-role-badge--" + r;
+      el.textContent = ROLE_LABELS[r] || r;
       el.hidden = false;
       el.removeAttribute("hidden");
     });
@@ -69,11 +83,11 @@
 
     btn.classList.remove("is-loading", "gr-header-connect--static");
     btn.removeAttribute("data-goelo-auth-trigger");
-    btn.hidden = false;
-    btn.removeAttribute("hidden");
     btn.onclick = null;
 
     if (r === "visitor") {
+      btn.hidden = false;
+      btn.removeAttribute("hidden");
       btn.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Se connecter';
       btn.setAttribute("data-goelo-auth-trigger", "");
@@ -81,59 +95,31 @@
       return;
     }
 
-    btn.textContent = headerDisplayName();
+    btn.hidden = true;
+    btn.setAttribute("hidden", "");
+  }
 
-    if (isHomePage()) {
-      btn.removeAttribute("href");
-      btn.classList.add("gr-header-connect--static");
-      btn.setAttribute("aria-live", "polite");
-      btn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      };
+  function applyHeroCta(el, config) {
+    if (!el || !config) return;
+    var svg = el.querySelector("svg");
+    while (el.firstChild) el.removeChild(el.firstChild);
+    el.appendChild(document.createTextNode(config.text));
+    if (svg) el.appendChild(svg);
+    el.removeAttribute("data-goelo-auth-trigger");
+    el.onclick = null;
+    if (config.auth) {
+      el.setAttribute("data-goelo-auth-trigger", "");
+      el.removeAttribute("href");
       return;
     }
-
-    if (r === "user") {
-      btn.href = "sorties.html";
-      return;
-    }
-    if (r === "team_rider") {
-      btn.href = "team-rider.html";
-      return;
-    }
-    if (r === "admin") {
-      btn.textContent = "Gestion admin";
-      btn.href = "admin.html";
-    }
+    if (el.tagName === "A") el.href = config.href;
+    else el.onclick = function () { global.location.href = config.href; };
   }
 
   function syncHeroCtas(r) {
+    var secondary = HERO_SECONDARY[r] || HERO_SECONDARY.visitor;
     global.document.querySelectorAll("[data-goelo-tr-cta]").forEach(function (el) {
-      el.removeAttribute("data-goelo-auth-trigger");
-      if (r === "visitor") {
-        el.textContent = "Rejoindre en Team Rider";
-        el.setAttribute("data-goelo-auth-trigger", "");
-        el.removeAttribute("href");
-        return;
-      }
-      if (r === "user") {
-        el.textContent = "Devenir Team Rider";
-        if (el.tagName === "A") el.href = "gestion-team-rider.html";
-        else el.onclick = function () { global.location.href = "gestion-team-rider.html"; };
-        return;
-      }
-      if (r === "team_rider") {
-        el.textContent = "Team Rider actif ✓";
-        if (el.tagName === "A") el.href = "team-rider.html";
-        else el.onclick = function () { global.location.href = "team-rider.html"; };
-        return;
-      }
-      if (r === "admin") {
-        el.textContent = "Panneau admin";
-        if (el.tagName === "A") el.href = "admin.html";
-        else el.onclick = function () { global.location.href = "admin.html"; };
-      }
+      applyHeroCta(el, secondary);
     });
 
     var heroTr = global.document.querySelector(".gr-hero-ctas [data-goelo-auth-trigger].gr-btn--ghost");
@@ -246,7 +232,7 @@
   function syncRoleUI(detail) {
     var resolved = roleDetail(detail);
     var r = resolved.role;
-    var user = resolved.user;
+    if (resolved.user && r === "visitor") r = "user";
 
     global.document.documentElement.classList.remove("goelo-auth-pending");
     global.GOELO_AUTH_PENDING = false;
@@ -267,11 +253,9 @@
   }
 
   function catchUpRoleUI() {
-    if (global.GOELO_AUTH_PENDING) return;
-    syncRoleUI({
-      role: global.GOELO_ROLE,
-      user: global.GOELO_USER
-    });
+    var s = readAuthState();
+    if (s.pending) return;
+    syncRoleUI({ role: s.role, user: s.user });
   }
 
   function bindModalLoginShortcut() {
@@ -288,8 +272,19 @@
     });
   }
 
-  function init() {
-    bindModalLoginShortcut();
+  function bindAuthSubscriptions() {
+    function onAuthChange(s) {
+      if (s.pending) {
+        global.document.documentElement.classList.add("goelo-auth-pending");
+        return;
+      }
+      syncRoleUI({ role: s.role, user: s.user });
+    }
+
+    if (global.GoeloAuthState) {
+      global.GoeloAuthState.subscribe(onAuthChange);
+      onAuthChange(global.GoeloAuthState.getState());
+    }
 
     global.addEventListener("goelo:role-ready", function (e) {
       syncRoleUI(e.detail);
@@ -299,13 +294,22 @@
       syncRoleUI(e.detail);
     });
 
-    if (global.GOELO_AUTH_PENDING) {
+    global.addEventListener("goelo:auth-state", function (e) {
+      if (e.detail) syncRoleUI(e.detail);
+    });
+  }
+
+  function init() {
+    bindModalLoginShortcut();
+    bindAuthSubscriptions();
+
+    var s = readAuthState();
+    if (s.pending) {
       global.document.documentElement.classList.add("goelo-auth-pending");
-    } else {
-      catchUpRoleUI();
     }
 
     global.setTimeout(catchUpRoleUI, 0);
+    global.setTimeout(catchUpRoleUI, 100);
   }
 
   global.GoeloUI = {

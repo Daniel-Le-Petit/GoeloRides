@@ -69,6 +69,10 @@
       onAuthUi(e.detail);
     });
 
+    window.addEventListener("goelo:auth-state", function (e) {
+      onAuthUi(e.detail);
+    });
+
     if (window.GoeloUI) {
       if (window.GoeloUI.catchUpRoleUI) window.GoeloUI.catchUpRoleUI();
       else if (!window.GOELO_AUTH_PENDING) {
