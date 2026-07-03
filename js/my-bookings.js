@@ -1,5 +1,5 @@
 /**
- * GoëloRides — mes inscriptions
+ * GoëloRides — mes inscriptions (Supabase RPC)
  */
 (function () {
   "use strict";
@@ -15,36 +15,125 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
+  function hide(id) {
+    var el = $(id);
+    if (el) el.hidden = true;
+  }
+
+  function show(id) {
+    var el = $(id);
+    if (el) el.hidden = false;
+  }
+
   function showGate() {
-    $("bookings-gate").hidden = false;
-    $("bookings-content").hidden = true;
+    show("bookings-gate");
+    hide("bookings-content");
+    hide("bookings-fatal");
   }
 
   function showContent() {
-    $("bookings-gate").hidden = true;
-    $("bookings-content").hidden = false;
+    hide("bookings-gate");
+    show("bookings-content");
+    hide("bookings-fatal");
   }
 
-  function formatDate(iso) {
-    if (!iso) return "Date à confirmer";
-    try {
-      return new Date(iso).toLocaleDateString("fr-FR", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      });
-    } catch (e) {
-      return iso;
+  function showFatal(msg) {
+    hide("bookings-gate");
+    hide("bookings-content");
+    var box = $("bookings-fatal");
+    if (box) {
+      box.textContent = msg;
+      box.hidden = false;
     }
+  }
+
+  function showListError(msg) {
+    showContent();
+    var list = $("bookings-list");
+    if (list) list.innerHTML = '<div class="ac-error" role="alert">' + escapeHtml(msg) + "</div>";
+  }
+
+  function showLoading() {
+    showContent();
+    var list = $("bookings-list");
+    if (list) list.innerHTML = '<div class="ac-loading">Chargement de tes inscriptions…</div>';
+  }
+
+  function firstNonEmpty(values) {
+    for (var i = 0; i < values.length; i++) {
+      if (values[i] != null && String(values[i]).trim()) return String(values[i]).trim();
+    }
+    return null;
+  }
+
+  function parseFrontConfig(route) {
+    if (!route || !route.front_config) return null;
+    var fc = route.front_config;
+    if (typeof fc === "string") {
+      try { fc = JSON.parse(fc); } catch (e) { return null; }
+    }
+    return fc && typeof fc === "object" ? fc : null;
+  }
+
+  function extractTitle(route) {
+    if (!route) return "Sortie";
+    var fc = parseFrontConfig(route);
+    return firstNonEmpty([route.title, route.track_name, route.name, fc && fc.title, fc && fc.track_name]) || "Sortie";
+  }
+
+  function extractLocation(route) {
+    if (!route) return "Lieu à confirmer";
+    var fc = parseFrontConfig(route);
+    return firstNonEmpty([
+      route.location, route.start_location, route.departure_location,
+      route.meeting_point, route.city, fc && fc.location, fc && fc.meeting_point, fc && fc.city
+    ]) || "Lieu à confirmer";
+  }
+
+  function extractGroup(route) {
+    if (!route) return "";
+    var fc = parseFrontConfig(route);
+    var g = firstNonEmpty([route.group_label, fc && fc.group_label]);
+    return g ? " · Groupe " + g : "";
+  }
+
+  function extractDepartureIso(route) {
+    if (!route) return null;
+    var fc = parseFrontConfig(route);
+    return firstNonEmpty([route.departure_at, route.event_date, route.start_at, fc && fc.departure_at, fc && fc.event_date]);
+  }
+
+  function formatDateTime(iso) {
+    if (!iso) return "Date à confirmer";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "Date à confirmer";
+    try {
+      return d.toLocaleDateString("fr-FR", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric"
+      }) + " · " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    } catch (e) {
+      return String(iso);
+    }
+  }
+
+  function isWaiting(row) {
+    return row.status === "waiting" || row.waitlist === true;
+  }
+
+  function normalizeRows(data) {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.bookings)) return data.bookings;
+    if (Array.isArray(data.rows)) return data.rows;
+    return [];
   }
 
   function renderEmpty() {
     var list = $("bookings-list");
     if (!list) return;
     list.innerHTML =
-      '<div class="ac-empty">Aucune inscription pour le moment.<br>' +
-      '<a href="sorties.html">Voir les sorties</a></div>';
+      '<div class="ac-empty">Aucune inscription pour le moment 🚴' +
+      '<br><a href="sorties.html">Voir les sorties disponibles</a></div>';
   }
 
   function renderBookings(rows) {
@@ -57,58 +146,110 @@
     }
 
     list.innerHTML = rows.map(function (row) {
-      var route = row.routes || {};
-      var title = route.track_name || route.title || row.route_id || "Sortie";
-      var group = route.group_label ? " · Groupe " + route.group_label : "";
-      var date = formatDate(route.departure_at || route.event_date);
-      var badgeClass = row.waitlist ? "ac-booking__badge--wait" : "ac-booking__badge--ok";
-      var badgeLabel = row.waitlist ? "File d'attente" : "Inscrit";
-      var href = "parcours.html?id=" + encodeURIComponent(row.route_id);
+      var route = row.routes || row.route || null;
+      var title = extractTitle(route);
+      var when = formatDateTime(extractDepartureIso(route));
+      var group = extractGroup(route);
+      var location = extractLocation(route);
+      var waiting = isWaiting(row);
+      var badgeClass = waiting ? "ac-booking__badge--wait" : "ac-booking__badge--ok";
+      var badgeLabel = waiting ? "File d'attente" : "Inscrit";
+      var routeId = row.route_id || (route && route.id) || "";
+      var linkHtml = routeId
+        ? '<a class="ac-booking__link" href="parcours.html?id=' + encodeURIComponent(routeId) + '">Voir la sortie</a>'
+        : "";
 
       return (
-        '<article class="ac-booking">' +
-          '<div>' +
+        '<article class="ac-booking" data-signup-id="' + escapeHtml(row.id || routeId) + '">' +
+          '<div class="ac-booking__body">' +
             '<p class="ac-booking__title">' + escapeHtml(title) + "</p>" +
-            '<p class="ac-booking__meta">' + escapeHtml(date) + escapeHtml(group) + "</p>" +
-            '<a class="ac-booking__link" href="' + href + '">Voir la sortie</a>' +
+            '<p class="ac-booking__meta">' + escapeHtml(when) + escapeHtml(group) + "</p>" +
+            '<p class="ac-booking__meta">📍 ' + escapeHtml(location) + "</p>" +
+            linkHtml +
           "</div>" +
-          '<span class="ac-booking__badge ' + badgeClass + '">' + badgeLabel + "</span>" +
+          '<div class="ac-booking__side">' +
+            '<span class="ac-booking__badge ' + badgeClass + '">' + badgeLabel + "</span>" +
+            '<button type="button" class="ac-booking__unsub" data-route-id="' + escapeHtml(routeId) + '">Se désinscrire</button>' +
+          "</div>" +
         "</article>"
       );
     }).join("");
   }
 
-  async function loadBookings(user) {
+  async function fetchBookings(user) {
     var sb = getSb();
-    if (!sb || !user) {
+    if (!sb) throw new Error("Client Supabase indisponible.");
+
+    var result = await sb.rpc("signup_list_my_bookings", { uid: user.id });
+    if (result.error) throw new Error(result.error.message);
+
+    return normalizeRows(result.data);
+  }
+
+  async function handleUnsubscribe(routeId, btn) {
+    if (!routeId) return;
+    if (!window.confirm("Te désinscrire de cette sortie ?")) return;
+
+    var sb = getSb();
+    if (!sb) return;
+
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Désinscription…";
+
+    try {
+      var result = await sb.rpc("toggle_signup", { p_route_id: routeId });
+      if (result.error) throw new Error(result.error.message);
+
+      var payload = result.data;
+      if (payload && payload.ok === false) {
+        throw new Error(payload.error || "toggle_failed");
+      }
+
+      var card = btn.closest(".ac-booking");
+      if (card && card.parentNode) card.parentNode.removeChild(card);
+
+      var list = $("bookings-list");
+      if (list && !list.querySelector(".ac-booking")) renderEmpty();
+    } catch (err) {
+      console.warn("[my-bookings] unsubscribe:", err.message);
+      btn.disabled = false;
+      btn.textContent = label;
+      window.alert("Impossible de te désinscrire pour le moment. Réessaie.");
+    }
+  }
+
+  function bindUnsubscribe() {
+    var list = $("bookings-list");
+    if (!list || list.getAttribute("data-bound") === "1") return;
+    list.setAttribute("data-bound", "1");
+    list.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-route-id]");
+      if (!btn) return;
+      handleUnsubscribe(btn.getAttribute("data-route-id"), btn);
+    });
+  }
+
+  async function loadBookings(user) {
+    if (!user || !user.id) {
       showGate();
       return;
     }
 
-    showContent();
-    var list = $("bookings-list");
-    if (list) list.innerHTML = '<div class="ac-empty">Chargement…</div>';
-
-    var query = sb
-      .from("signups")
-      .select("id, route_id, waitlist, created_at, routes(track_name, group_label, departure_at, event_date)")
-      .is("canceled_at", null)
-      .order("created_at", { ascending: false });
-
-    if (user.id) query = query.eq("user_id", user.id);
-    else if (user.email) query = query.ilike("email", user.email.trim());
-
-    var result = await query;
-
-    if (result.error) {
-      console.warn("[my-bookings]", result.error.message);
-      if (list) {
-        list.innerHTML = '<div class="ac-empty">Impossible de charger tes inscriptions.</div>';
-      }
+    if (!getSb()) {
+      showFatal("Client Supabase indisponible.");
       return;
     }
 
-    renderBookings(result.data || []);
+    showLoading();
+
+    try {
+      var rows = await fetchBookings(user);
+      renderBookings(rows);
+    } catch (err) {
+      console.warn("[my-bookings]", err.message);
+      showListError("Impossible de charger tes inscriptions. " + (err.message || "Réessaie plus tard."));
+    }
   }
 
   function onAuth(detail) {
@@ -122,6 +263,8 @@
   }
 
   function init() {
+    bindUnsubscribe();
+
     if (window.GoeloAuthState && !window.GoeloAuthState.getState().pending) {
       onAuth(window.GoeloAuthState.getState());
     }

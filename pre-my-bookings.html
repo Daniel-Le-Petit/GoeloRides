@@ -22,59 +22,10 @@
       --r: 10px;
     }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; margin: 0; }
-
-    .ac-loading, .ac-error { padding: 16px; border-radius: var(--r); font-size: 14px; }
-    .ac-loading { color: var(--muted); }
-    .ac-error {
-      color: #ff8f8f;
-      background: rgba(255, 107, 107, 0.08);
-      border: 1px solid rgba(255, 107, 107, 0.25);
-    }
-
-    .ac-booking {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-    .ac-booking:last-child { border-bottom: none; }
-    .ac-booking__body { flex: 1 1 240px; min-width: 0; }
-    .ac-booking__title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; margin: 0 0 4px; }
-    .ac-booking__meta { color: var(--muted); font-size: 13px; margin: 0 0 4px; }
-    .ac-booking__link { color: var(--accent); text-decoration: none; font-size: 13px; }
-    .ac-booking__link:hover { text-decoration: underline; }
-    .ac-booking__side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: 0 0 auto; }
-    .ac-booking__badge {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      white-space: nowrap;
-    }
-    .ac-booking__badge--ok { color: var(--accent); border-color: var(--accent); }
-    .ac-booking__badge--wait { color: #f0c040; border-color: #f0c040; }
-    .ac-booking__unsub {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .ac-booking__unsub:hover { border-color: #ff6b6b; color: #ff6b6b; }
-    .ac-booking__unsub:disabled { opacity: .5; cursor: not-allowed; }
   </style>
 </head>
 <body>
+
   <div data-goelo-navbar data-goelo-navbar-active="bookings"></div>
 
   <header class="gr-page-header">
@@ -83,20 +34,16 @@
   </header>
 
   <main class="ac-main" id="main-content" role="main">
-
     <div id="bookings-gate" class="ac-gate" hidden>
       <h2>Connexion requise</h2>
       <p>Connecte-toi pour voir tes inscriptions.</p>
       <button type="button" class="ac-gate__btn" data-goelo-auth-trigger>Se connecter</button>
     </div>
 
-    <div id="bookings-fatal" class="ac-error" role="alert" hidden></div>
-
     <section class="ac-card" id="bookings-content" hidden>
       <p class="ac-card__title">Sorties inscrites</p>
       <div id="bookings-list"></div>
     </section>
-
   </main>
 
   <script src="js/goelo-config.js"></script>

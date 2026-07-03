@@ -22,10 +22,22 @@
       --r: 10px;
     }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; margin: 0; }
+
+    .ac-loading, .ac-error, .ac-banner {
+      padding: 16px;
+      border-radius: var(--r);
+      font-size: 14px;
+    }
+    .ac-loading { color: var(--muted); }
+    .ac-error, .ac-banner {
+      color: #ff8f8f;
+      background: rgba(255, 107, 107, 0.08);
+      border: 1px solid rgba(255, 107, 107, 0.25);
+      margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
-
   <div data-goelo-navbar data-goelo-navbar-active="profile"></div>
 
   <header class="gr-page-header">
@@ -34,13 +46,20 @@
   </header>
 
   <main class="ac-main" id="main-content" role="main">
+
     <div id="profile-gate" class="ac-gate" hidden>
       <h2>Connexion requise</h2>
       <p>Connecte-toi pour voir ton profil.</p>
       <button type="button" class="ac-gate__btn" data-goelo-auth-trigger>Se connecter</button>
     </div>
 
+    <div id="profile-loading" class="ac-loading" hidden>Chargement du profil…</div>
+
+    <div id="profile-fatal" class="ac-error" role="alert" hidden></div>
+
     <div id="profile-content" hidden>
+      <div id="profile-banner" class="ac-banner" role="alert" hidden></div>
+
       <section class="ac-card">
         <div class="ac-profile-head">
           <div class="ac-avatar" id="profile-avatar">GR</div>
@@ -54,6 +73,10 @@
       <section class="ac-card">
         <p class="ac-card__title">Informations</p>
         <div class="ac-fields">
+          <div class="ac-field">
+            <label>E-mail</label>
+            <p id="profile-email">—</p>
+          </div>
           <div class="ac-field">
             <label>Pseudo</label>
             <p id="profile-pseudo">—</p>
@@ -69,6 +92,7 @@
         </div>
       </section>
     </div>
+
   </main>
 
   <script src="js/goelo-config.js"></script>
