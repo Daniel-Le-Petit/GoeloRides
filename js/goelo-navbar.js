@@ -16,12 +16,20 @@
     { label: "Mes inscriptions", href: "my-bookings.html" }
   ];
 
+  var ROLE_ICON = "\uD83D\uDC65 ";
   var USER_ICON = '<span class="gr-nav__user-icon" aria-hidden="true">\uD83D\uDC64</span>';
   var CHEVRON = '<svg class="gr-nav__user-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   var BURGER = '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
   var CONNECT_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>';
 
   var mounted = false;
+
+  function roleLabels() {
+    if (global.GoeloAuthState && global.GoeloAuthState.ROLE_LABELS) {
+      return global.GoeloAuthState.ROLE_LABELS;
+    }
+    return { user: "Cycliste", team_rider: "Team Rider", admin: "Admin" };
+  }
 
   function pageIdFromPath() {
     var path = (global.location.pathname || "").split("/").pop() || "index.html";
@@ -71,7 +79,6 @@
 
   function buildNavbarHtml(activeId, variant) {
     var links = NAV_LINKS.map(function (l) { return navLinkHtml(l, activeId); }).join("");
-    links += '<li class="gr-nav__tr-item"><span class="gr-nav__tr-label" data-goelo-nav-tr-label>Team Rider</span></li>';
 
     var accountDesktop = ACCOUNT_LINKS.map(function (l) {
       return '<a role="menuitem" href="' + l.href + '">' + l.label + "</a>";
@@ -87,19 +94,22 @@
         '<button type="button" class="gr-nav__connect" data-goelo-navbar-connect data-goelo-auth-trigger hidden>' +
           CONNECT_ICON + " Se connecter" +
         "</button>" +
-        '<div class="gr-nav__user" data-goelo-user-menu hidden>' +
-          '<button type="button" class="gr-nav__user-btn" data-goelo-user-toggle aria-haspopup="menu" aria-expanded="false">' +
-            USER_ICON +
-            '<span data-goelo-navbar-greeting>Bonjour Utilisateur</span>' +
-            CHEVRON +
-          "</button>" +
-          '<div class="gr-nav__dropdown" role="menu" data-goelo-user-dropdown hidden>' +
-            accountDesktop +
-            '<hr class="gr-nav__dropdown-sep" aria-hidden="true">' +
-            '<button type="button" class="gr-nav__dropdown-logout" role="menuitem" data-goelo-logout-btn aria-label="Se d\u00E9connecter">' +
-              '<span data-goelo-logout-label>D\u00E9connexion</span>' +
-              '<span data-goelo-logout-spinner hidden aria-hidden="true">D\u00E9connexion\u2026</span>' +
+        '<div class="gr-nav__session" data-goelo-user-session hidden>' +
+          '<span class="gr-nav__role-badge" data-goelo-nav-role-badge hidden></span>' +
+          '<div class="gr-nav__user" data-goelo-user-menu>' +
+            '<button type="button" class="gr-nav__user-btn" data-goelo-user-toggle aria-haspopup="menu" aria-expanded="false">' +
+              USER_ICON +
+              '<span data-goelo-navbar-greeting></span>' +
+              CHEVRON +
             "</button>" +
+            '<div class="gr-nav__dropdown" role="menu" data-goelo-user-dropdown hidden>' +
+              accountDesktop +
+              '<hr class="gr-nav__dropdown-sep" aria-hidden="true">' +
+              '<button type="button" class="gr-nav__dropdown-logout" role="menuitem" data-goelo-logout-btn aria-label="Se d\u00E9connecter">' +
+                '<span data-goelo-logout-label>D\u00E9connexion</span>' +
+                '<span data-goelo-logout-spinner hidden aria-hidden="true">D\u00E9connexion\u2026</span>' +
+              "</button>" +
+            "</div>" +
           "</div>" +
         "</div>" +
         '<button type="button" class="gr-nav__burger" data-goelo-navbar-burger aria-label="Menu" aria-controls="gr-mobile-drawer">' +
@@ -111,7 +121,6 @@
 
   function buildDrawerHtml(activeId) {
     var mainLinks = NAV_LINKS.map(function (l) { return navLinkHtml(l, activeId); }).join("");
-    mainLinks += '<li><span class="gr-mobile-drawer__label" data-goelo-nav-tr-label>Team Rider</span></li>';
 
     var accountLinks = ACCOUNT_LINKS.map(function (l) {
       return '<li><a href="' + l.href + '">' + l.label + "</a></li>";
@@ -169,6 +178,53 @@
       el.setAttribute("hidden", "");
       el.classList.add("is-hidden");
     }
+  }
+
+  function clearRoleBadge() {
+    global.document.querySelectorAll("[data-goelo-nav-role-badge]").forEach(function (el) {
+      el.textContent = "";
+      el.className = "gr-nav__role-badge";
+      el.hidden = true;
+      el.setAttribute("hidden", "");
+      el.removeAttribute("aria-label");
+    });
+  }
+
+  function clearGreeting() {
+    global.document.querySelectorAll("[data-goelo-navbar-greeting]").forEach(function (el) {
+      el.textContent = "";
+    });
+  }
+
+  function resetAuthUi() {
+    clearRoleBadge();
+    clearGreeting();
+    closeUserDropdown();
+
+    setVisible(global.document.querySelector("[data-goelo-navbar-connect]"), true);
+    setVisible(global.document.querySelector("[data-goelo-user-session]"), false);
+    setVisible(global.document.querySelector("[data-goelo-mobile-connect-wrap]"), true);
+    setVisible(global.document.querySelector("ul[data-goelo-mobile-account]"), false);
+    setVisible(global.document.querySelector("[data-goelo-mobile-account-sep]"), false);
+    setVisible(global.document.querySelector("[data-goelo-mobile-logout-wrap]"), false);
+    setVisible(global.document.querySelector("[data-goelo-mobile-logout-sep]"), false);
+  }
+
+  function syncRoleBadge(role, isVisitor) {
+    clearRoleBadge();
+    if (isVisitor || !role || role === "visitor") return;
+
+    var labels = roleLabels();
+    var label = labels[role];
+    if (!label) return;
+
+    global.document.querySelectorAll("[data-goelo-nav-role-badge]").forEach(function (el) {
+      el.textContent = ROLE_ICON + label;
+      el.className = "gr-nav__role-badge go-role-badge go-role-badge--" + role;
+      el.hidden = false;
+      el.removeAttribute("hidden");
+      el.setAttribute("aria-label", "R\u00F4le : " + label);
+    });
   }
 
   function mountNavbar() {
@@ -255,6 +311,9 @@
     if (global.document.querySelector("[data-goelo-logout-btn]:disabled")) return;
     closeUserDropdown();
     closeMobileMenu();
+
+    syncAuth({ role: "visitor", user: null, pseudo: null, pending: false });
+
     setLogoutLoading(true);
 
     var signOut = global.goeloSignOut;
@@ -307,18 +366,6 @@
     });
   }
 
-  function syncTrLabel(role) {
-    global.document.querySelectorAll("[data-goelo-nav-tr-label]").forEach(function (el) {
-      el.textContent = "Team Rider";
-      el.className = el.classList.contains("gr-mobile-drawer__label")
-        ? "gr-mobile-drawer__label"
-        : "gr-nav__tr-label";
-      if (role === "team_rider" || role === "admin") {
-        el.classList.add("go-role-badge", "go-role-badge--" + role);
-      }
-    });
-  }
-
   function syncAuth(detail) {
     if (!mounted) return;
 
@@ -328,19 +375,19 @@
     var user = s.user;
     var pseudo = s.pseudo;
 
-    if (!r && global.GoeloAuthState) {
+    if (global.GoeloAuthState && (r === undefined || user === undefined)) {
       var state = global.GoeloAuthState.getState();
-      pending = state.pending;
-      r = state.role;
-      user = state.user;
-      pseudo = state.pseudo;
+      if (s.pending === undefined) pending = state.pending;
+      if (r === undefined) r = state.role;
+      if (user === undefined) user = state.user;
+      if (pseudo === undefined) pseudo = state.pseudo;
     }
 
     if (user && r === "visitor") r = "user";
     var isVisitor = !user || r === "visitor";
 
     var connect = global.document.querySelector("[data-goelo-navbar-connect]");
-    var userMenu = global.document.querySelector("[data-goelo-user-menu]");
+    var session = global.document.querySelector("[data-goelo-user-session]");
     var mobileConnectWrap = global.document.querySelector("[data-goelo-mobile-connect-wrap]");
     var mobileAccount = global.document.querySelector("ul[data-goelo-mobile-account]");
     var accountSep = global.document.querySelector("[data-goelo-mobile-account-sep]");
@@ -349,27 +396,33 @@
 
     if (pending) {
       setVisible(connect, false);
-      setVisible(userMenu, false);
+      setVisible(session, false);
       setVisible(mobileConnectWrap, false);
+      clearRoleBadge();
+      clearGreeting();
       return;
     }
 
-    setVisible(connect, isVisitor);
-    setVisible(userMenu, !isVisitor);
-    setVisible(mobileConnectWrap, isVisitor);
-    setVisible(mobileAccount, !isVisitor);
-    setVisible(accountSep, !isVisitor);
-    setVisible(mobileLogoutWrap, !isVisitor);
-    setVisible(mobileLogoutSep, !isVisitor);
-
-    if (!isVisitor) {
-      var name = greetingName(pseudo, user);
-      global.document.querySelectorAll("[data-goelo-navbar-greeting]").forEach(function (el) {
-        el.textContent = "Bonjour " + name;
-      });
+    if (isVisitor) {
+      resetAuthUi();
+      bindLogoutButtons();
+      return;
     }
 
-    syncTrLabel(r);
+    setVisible(connect, false);
+    setVisible(session, true);
+    setVisible(mobileConnectWrap, false);
+    setVisible(mobileAccount, true);
+    setVisible(accountSep, true);
+    setVisible(mobileLogoutWrap, true);
+    setVisible(mobileLogoutSep, true);
+
+    var name = greetingName(pseudo, user);
+    global.document.querySelectorAll("[data-goelo-navbar-greeting]").forEach(function (el) {
+      el.textContent = "Bonjour " + name;
+    });
+
+    syncRoleBadge(r, false);
     bindLogoutButtons();
   }
 
@@ -381,7 +434,7 @@
       if (global.GoeloUI && global.GoeloUI.syncNavCreate) {
         var role = detail && detail.role;
         if (!role && global.GoeloAuthState) role = global.GoeloAuthState.getState().role;
-        global.GoeloUI.syncNavCreate(role);
+        global.GoeloUI.syncNavCreate(role || "visitor");
       }
     }
 
@@ -408,6 +461,7 @@
     init: init,
     mount: mountNavbar,
     syncAuth: syncAuth,
+    resetAuthUi: resetAuthUi,
     openMobileMenu: openMobileMenu,
     closeMobileMenu: closeMobileMenu
   };

@@ -80,24 +80,21 @@
   border-bottom-color: var(--accent, var(--goelo-accent, #c8f135));
 }
 
-.goelo-navbar .gr-nav__tr-item {
-  list-style: none;
+.goelo-navbar .gr-nav__session {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
-.goelo-navbar .gr-nav__tr-label {
-  font-family: var(--font-body, 'Inter', sans-serif);
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
-  white-space: nowrap;
-  cursor: default;
-  user-select: none;
+.goelo-navbar .gr-nav__session[hidden],
+.goelo-navbar [data-goelo-nav-role-badge][hidden] {
+  display: none !important;
 }
 
-.goelo-navbar .gr-nav__tr-label.go-role-badge {
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: inherit;
+.goelo-navbar .gr-nav__role-badge {
+  flex-shrink: 0;
 }
 
 .goelo-navbar .gr-nav__extras {
@@ -109,7 +106,7 @@
 
 /* Auth : visibilité stricte */
 .goelo-navbar [data-goelo-navbar-connect][hidden],
-.goelo-navbar [data-goelo-user-menu][hidden],
+.goelo-navbar [data-goelo-user-session][hidden],
 .goelo-navbar .is-hidden {
   display: none !important;
 }
@@ -118,6 +115,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  margin-left: auto;
   font-family: var(--font-body, 'Inter', sans-serif);
   font-size: 0.85rem;
   font-weight: 500;
@@ -384,24 +382,6 @@
   color: var(--accent, var(--goelo-accent, #c8f135));
 }
 
-.gr-mobile-drawer__label {
-  display: block;
-  padding: 0.85rem 1.25rem;
-  font-family: var(--font-body, 'Inter', sans-serif);
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
-  cursor: default;
-  user-select: none;
-}
-
-.gr-mobile-drawer__label.go-role-badge {
-  display: inline-flex;
-  margin: 0.85rem 1.25rem;
-  padding: 0.28rem 0.65rem;
-  font-size: 0.68rem;
-}
-
 .gr-mobile-drawer__sep {
   border: none;
   border-top: 1px solid #2e2e2e;
@@ -456,17 +436,42 @@ body.gr-mobile-menu-open {
 @media (max-width: 960px) {
   .goelo-navbar .gr-nav__links,
   .goelo-navbar .gr-nav__extras,
-  .goelo-navbar .gr-nav__connect,
-  .goelo-navbar .gr-nav__user {
+  .goelo-navbar .gr-nav__connect {
     display: none !important;
+  }
+
+  .goelo-navbar .gr-nav__session:not([hidden]) {
+    display: flex !important;
+    align-items: center;
+    gap: 0.45rem;
+    margin-left: auto;
+    min-width: 0;
+  }
+
+  .goelo-navbar .gr-nav__role-badge {
+    font-size: 0.62rem;
+    padding: 0.22rem 0.5rem;
+  }
+
+  .goelo-navbar .gr-nav__user-btn {
+    padding: 0.4rem 0.65rem 0.4rem 0.55rem;
+    font-size: 0.8rem;
+    max-width: 52vw;
+  }
+
+  .goelo-navbar [data-goelo-navbar-greeting] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .goelo-navbar .gr-nav__burger {
     display: block;
+    flex-shrink: 0;
   }
 
   .goelo-navbar.gr-nav {
     padding: 0 1rem;
-    justify-content: space-between;
+    gap: 0.5rem;
   }
 }
