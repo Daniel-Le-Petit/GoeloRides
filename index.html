@@ -4427,7 +4427,7 @@
       </ul>
     </nav>
     <span class="go-role-badge go-role-badge--visitor" data-goelo-role-badge hidden>Visitor</span>
-    <a class="gr-header-connect is-loading" data-goelo-auth-trigger>
+    <a class="gr-header-connect is-loading" data-goelo-auth-trigger onclick="trackEvent('login_click', 'header_login');">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
       Se connecter
     </a>
@@ -4456,7 +4456,7 @@
           Voir les sorties
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
         </a>
-        <a class="gr-btn gr-btn--ghost" data-goelo-tr-cta data-goelo-auth-trigger>
+        <a class="gr-btn gr-btn--ghost" data-goelo-tr-cta data-goelo-auth-trigger onclick="trackEvent('join_race', 'team_rider_cta');">
           Rejoindre en Team Rider
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
         </a>
