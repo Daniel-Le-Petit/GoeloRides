@@ -4452,7 +4452,7 @@
         il y a une place pour toi dans le groupe.
       </p>
       <div class="gr-hero-ctas">
-        <a href="sorties.html" class="gr-btn gr-btn--accent">
+        <a href="sorties.html" class="gr-btn gr-btn--accent" onclick="trackEvent('view_race_list', 'homepage_cta');">
           Voir les sorties
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
         </a>
@@ -4900,6 +4900,18 @@
   <script src="js/goelo-ui.js"></script>
   <script src="js/home.js"></script>
   <script src="parcours.js"></script>
+
+  <!-- google analytics -->
+  <script>
+  function trackEvent(action, label) {
+    if (typeof gtag !== "undefined") {
+      gtag('event', action, {
+        'event_category': 'GoeloRides',
+        'event_label': label
+      });
+    }
+  }
+  </script>
 
   <script>
     window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";
