@@ -4407,34 +4407,7 @@
   <div class="app-shell">
     <main class="app-main app-main--home" id="main-content" role="main">
   <!-- ── HEADER NAV ── -->
-  <header class="gr-header" id="accueil" role="banner">
-    <a href="index.html" class="gr-header-logo" aria-label="GoëloRides — Accueil">
-      <span class="gr-header-logo-main">GOËLO</span>
-      <span class="gr-header-logo-sub">RIDES</span>
-    </a>
-    <nav>
-      <ul class="gr-nav">
-        <li><a href="sorties.html" style="color:#fff;">Sorties</a></li>
-        <li><a href="groupes.html" style="color:#fff;">Groupes</a></li>
-        <li><a href="infos-pratiques.html" style="color:#fff;">Infos pratiques</a></li>
-        <li><a href="https://www.instagram.com/goelo.rides/" style="color:#fff;" target="_blank" rel="noopener noreferrer">Actualités</a></li>
-        <li class="gr-nav-logout-wrap" hidden>
-          <button type="button" class="gr-nav-logout" data-goelo-logout-btn aria-label="Se déconnecter">
-            <span data-goelo-logout-label>Déconnexion</span>
-            <span data-goelo-logout-spinner hidden aria-hidden="true">Déconnexion…</span>
-          </button>
-        </li>
-      </ul>
-    </nav>
-    <span class="go-role-badge go-role-badge--visitor" data-goelo-role-badge hidden>Visitor</span>
-    <a class="gr-header-connect is-loading" data-goelo-auth-trigger onclick="trackEvent('login_click', 'header_login');">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
-      Se connecter
-    </a>
-    <button class="gr-header-burger" aria-label="Menu" type="button" onclick="openMobileMenu()">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
-  </header>
+  <div data-goelo-navbar data-goelo-navbar-variant="hero"></div>
 
   <!-- ── HERO ── -->
   <section class="gr-hero">
@@ -4898,6 +4871,7 @@
   <script src="js/auth.js"></script>
   <script src="js/goelo-profile.js"></script>
   <script src="js/goelo-ui.js"></script>
+  <script src="js/goelo-navbar.js"></script>
   <script src="js/home.js"></script>
   <script src="parcours.js"></script>
 
@@ -4930,45 +4904,5 @@
   <script src="js/ui.js" defer></script>
 
 
-  <!-- ── MOBILE DRAWER ── -->
-  <div id="gr-mobile-drawer" class="gr-mobile-drawer" hidden aria-modal="true" role="dialog">
-    <div class="gr-mobile-drawer__backdrop" onclick="closeMobileMenu()"></div>
-    <nav class="gr-mobile-drawer__panel">
-      <div class="gr-mobile-drawer__head">
-        <span class="gr-mobile-drawer__logo">GOËLO<span>RIDES</span></span>
-        <button class="gr-mobile-drawer__close" onclick="closeMobileMenu()" aria-label="Fermer">✕</button>
-      </div>
-      <ul class="gr-mobile-drawer__links">
-        <li><a href="sorties.html">Sorties</a></li>
-        <li><a href="groupes.html">Groupes</a></li>
-        <li><a href="infos-pratiques.html">Infos pratiques</a></li>
-      </ul>
-      <div class="gr-mobile-drawer__cta">
-        <a href="#" class="gr-mobile-drawer__btn" data-goelo-auth-trigger>Se connecter</a>
-        <button type="button" class="gr-mobile-drawer__btn gr-mobile-drawer__btn--logout" data-goelo-logout-btn hidden aria-label="Se déconnecter">
-          <span data-goelo-logout-label>Déconnexion</span>
-          <span data-goelo-logout-spinner hidden aria-hidden="true">Déconnexion…</span>
-        </button>
-      </div>
-    </nav>
-  </div>
-  <script>
-  function openMobileMenu()  {
-    const d = document.getElementById('gr-mobile-drawer');
-    d.removeAttribute('hidden');
-    document.documentElement.classList.add('gr-mobile-menu-open');
-    document.body.classList.add('gr-mobile-menu-open');
-  }
-  function closeMobileMenu() {
-    const d = document.getElementById('gr-mobile-drawer');
-    d.setAttribute('hidden','');
-    document.documentElement.classList.remove('gr-mobile-menu-open');
-    document.body.classList.remove('gr-mobile-menu-open');
-  }
-  // Fermer avec Échap
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeMobileMenu();
-  });
-  </script>
 </body>
 </html>

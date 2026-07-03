@@ -503,8 +503,431 @@ function drawElevation(coords) {
   ctx.stroke();
 }
 
-/* ── FLYER GENERATOR ── */
+/* ── FLYER GENERATOR (cross-platform 4:5 + safe zone) ── */
+const FLYER_CONFIG = {
+  format: 'cross_platform_flyer',
+  width: 1080,
+  height: 1350,
+  aspectRatio: '4:5',
+  safeZone: true,
+  platforms: ['instagram', 'facebook', 'strava'],
+  fallbackSquare: true,
+  squareSize: 1080
+};
+
 let _flyerBgImage = null;
+let _flyerLastValidation = null;
+let _flyerExportCanvas = null;
+
+function flyerViolatingIds(validation) {
+  const ids = {};
+  (validation.violations || []).forEach(function (v) { ids[v.id] = true; });
+  return ids;
+}
+
+function flyerValidateSafeZone(boxes, safe) {
+  const violations = [];
+  const byId = {};
+
+  boxes.forEach(function (b) {
+    if (!b.critical) return;
+    const edges = [];
+    if (b.x < safe.left - 0.5) edges.push('left');
+    if (b.y < safe.top - 0.5) edges.push('top');
+    if (b.x + b.w > safe.right + 0.5) edges.push('right');
+    if (b.y + b.h > safe.bottom + 0.5) edges.push('bottom');
+    if (!edges.length) return;
+
+    edges.forEach(function (edge) {
+      violations.push({ id: b.id, edge: edge, box: b });
+    });
+
+    if (!byId[b.id]) {
+      byId[b.id] = { elementId: b.id, edges: [], box: b };
+    }
+    edges.forEach(function (edge) {
+      if (byId[b.id].edges.indexOf(edge) === -1) byId[b.id].edges.push(edge);
+    });
+  });
+
+  const issues = Object.keys(byId).map(function (key) {
+    const item = byId[key];
+    return {
+      elementId: item.elementId,
+      edges: item.edges.slice(),
+      message: 'Élément « ' + item.elementId + ' » hors zone sûre (' + item.edges.join(', ') + ')'
+    };
+  });
+
+  const ok = violations.length === 0;
+  return {
+    status: ok ? 'ok' : 'warning',
+    ok: ok,
+    violations: violations,
+    issues: issues
+  };
+}
+
+function flyerDrawSafeZoneOverlay(ctx, safe, W, H) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(248, 113, 113, 0.22)';
+  ctx.fillRect(0, 0, W, safe.top);
+  ctx.fillRect(0, safe.bottom, W, H - safe.bottom);
+  ctx.fillRect(0, safe.top, safe.left, safe.height);
+  ctx.fillRect(safe.right, safe.top, W - safe.right, safe.height);
+
+  ctx.fillStyle = 'rgba(74, 222, 128, 0.12)';
+  ctx.fillRect(safe.left, safe.top, safe.width, safe.height);
+
+  ctx.strokeStyle = 'rgba(74, 222, 128, 0.85)';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([12, 8]);
+  ctx.strokeRect(safe.left + 1.5, safe.top + 1.5, safe.width - 3, safe.height - 3);
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function flyerDrawElementBoxes(ctx, boxes, violatingIds) {
+  ctx.save();
+  boxes.forEach(function (b) {
+    if (!b.critical) return;
+    const bad = !!violatingIds[b.id];
+    ctx.strokeStyle = bad ? 'rgba(248, 113, 113, 0.95)' : 'rgba(74, 222, 128, 0.75)';
+    ctx.lineWidth = bad ? 4 : 2;
+    if (!bad) ctx.setLineDash([6, 4]);
+    ctx.strokeRect(b.x - 2, b.y - 2, b.w + 4, b.h + 4);
+    ctx.setLineDash([]);
+    if (bad) {
+      ctx.fillStyle = 'rgba(248, 113, 113, 0.18)';
+      ctx.fillRect(b.x - 2, b.y - 2, b.w + 4, b.h + 4);
+    }
+  });
+  ctx.restore();
+}
+
+function flyerDrawDebugOverlay(ctx, boxes, safe, validation, W, H) {
+  flyerDrawSafeZoneOverlay(ctx, safe, W, H);
+  flyerDrawElementBoxes(ctx, boxes, flyerViolatingIds(validation));
+}
+
+function flyerRenderIssuesUi(validation) {
+  const wrap = document.getElementById('flyer-issues');
+  const list = document.getElementById('flyer-issues-list');
+  if (!wrap || !list) return;
+
+  if (!validation || validation.status === 'ok' || !validation.issues.length) {
+    wrap.hidden = true;
+    list.innerHTML = '';
+    return;
+  }
+
+  wrap.hidden = false;
+  list.innerHTML = validation.issues.map(function (issue) {
+    return '<li><strong>' + issue.elementId + '</strong> — ' + issue.edges.join(', ') + '</li>';
+  }).join('');
+}
+
+function flyerSafeZone(W, H) {
+  return {
+    left: Math.round(W * 0.08),
+    right: Math.round(W * 0.92),
+    top: Math.round(H * 0.15),
+    bottom: Math.round(H * 0.85),
+    width: Math.round(W * 0.84),
+    height: Math.round(H * 0.70)
+  };
+}
+
+function flyerFontSize(font) {
+  const m = String(font).match(/(\d+(?:\.\d+)?)px/);
+  return m ? parseFloat(m[1]) : 24;
+}
+
+function flyerScaledFont(font, scale) {
+  const px = Math.round(flyerFontSize(font) * scale);
+  return String(font).replace(/(\d+(?:\.\d+)?)px/, px + 'px');
+}
+
+function flyerTextBox(ctx, text, x, y, font, id, align) {
+  ctx.font = font;
+  const m = ctx.measureText(text);
+  const size = flyerFontSize(font);
+  const ascent = m.actualBoundingBoxAscent ?? size * 0.75;
+  const descent = m.actualBoundingBoxDescent ?? size * 0.25;
+  let bx = x;
+  if (align === 'center') bx = x - m.width / 2;
+  if (align === 'right') bx = x - m.width;
+  return { id: id, x: bx, y: y - ascent, w: m.width, h: ascent + descent, critical: true };
+}
+
+function flyerRectBox(x, y, w, h, id) {
+  return { id: id, x: x, y: y, w: w, h: h, critical: true };
+}
+
+function flyerCircleBox(cx, cy, r, id) {
+  return { id: id, x: cx - r, y: cy - r, w: r * 2, h: r * 2, critical: true };
+}
+
+function flyerSplitTitle(ctx, text, maxW, baseFont, scale) {
+  const words = text.toUpperCase().split(/\s+/).filter(Boolean);
+  let fontSize = Math.round(flyerFontSize(baseFont) * scale);
+  while (fontSize >= 56) {
+    const font = `900 ${fontSize}px "Arial Black", Impact, sans-serif`;
+    ctx.font = font;
+    let lines = [];
+    if (words.length <= 2) {
+      words.forEach(function (w) { lines.push({ text: w, font: font }); });
+    } else {
+      let line = '';
+      words.forEach(function (w) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > maxW && line) {
+          lines.push({ text: line, font: font });
+          line = w;
+        } else {
+          line = test;
+        }
+      });
+      if (line) lines.push({ text: line, font: font });
+    }
+    const tooWide = lines.some(function (ln) { return ctx.measureText(ln.text).width > maxW; });
+    if (!tooWide && lines.length <= 4) return lines;
+    fontSize -= 6;
+  }
+  const font = `900 56px "Arial Black", Impact, sans-serif`;
+  return words.map(function (w) { return { text: w, font: font }; });
+}
+
+function flyerMeasureTitleBlock(ctx, lines) {
+  let h = 0;
+  lines.forEach(function (ln, i) {
+    const size = flyerFontSize(ln.font);
+    h += size * (i === 0 ? 0.95 : 0.88);
+  });
+  return h;
+}
+
+function flyerReadFormData() {
+  const titre  = document.getElementById('titre').value || 'Sortie GoëloRides';
+  const date   = document.getElementById('date').value;
+  const stats  = readGpxStats();
+  const dist   = stats.km ? String(stats.km) : (document.getElementById('gpx-dist').textContent || '—');
+  const dplus  = !isNaN(stats.dplus) ? String(stats.dplus) : (document.getElementById('gpx-dplus').textContent || '—');
+  const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
+  const lieu   = document.getElementById('lieu').value || 'Saint-Quay-Portrieux';
+  const hrdv   = document.getElementById('heure-rdv').value || '08:00';
+  const niveau = document.getElementById('niveau');
+  const niveauLabel = niveau.options[niveau.selectedIndex]?.text || 'Tous niveaux';
+  return { titre, date, dist, dplus, groupe, lieu, hrdv, niveauLabel };
+}
+
+function renderCrossPlatformFlyer(ctx, data, scale) {
+  const W = FLYER_CONFIG.width;
+  const H = FLYER_CONFIG.height;
+  const safe = flyerSafeZone(W, H);
+  const pad = 20;
+  const contentLeft = safe.left + pad;
+  const contentW = safe.width - pad * 2;
+  const boxes = [];
+  scale = scale || 1;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const imgRatio = _flyerBgImage.width / _flyerBgImage.height;
+  const canvRatio = W / H;
+  let sx = 0, sy = 0, sw = _flyerBgImage.width, sh = _flyerBgImage.height;
+  if (imgRatio > canvRatio) {
+    sw = _flyerBgImage.height * canvRatio;
+    sx = (_flyerBgImage.width - sw) / 2;
+  } else {
+    sh = _flyerBgImage.width / canvRatio;
+    sy = (_flyerBgImage.height - sh) / 2;
+  }
+  ctx.drawImage(_flyerBgImage, sx, sy, sw, sh, 0, 0, W, H);
+
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+  grad.addColorStop(0.3, 'rgba(0,0,0,0.18)');
+  grad.addColorStop(0.6, 'rgba(0,0,0,0.30)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.78)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  const headerH = Math.round(88 * scale);
+  const footerH = Math.round(82 * scale);
+  const statsH = Math.round(96 * scale);
+  const infoLineH = Math.round(82 * scale);
+
+  const titleLines = flyerSplitTitle(ctx, data.titre, contentW, '900 120px "Arial Black", Impact, sans-serif', scale);
+  const titleBlockH = flyerMeasureTitleBlock(ctx, titleLines);
+  const taglineFont = flyerScaledFont('400 26px Arial', scale);
+  const taglineH = Math.round(flyerFontSize(taglineFont) * 1.35);
+
+  const infos = [];
+  if (data.date) {
+    const d = new Date(data.date + 'T00:00:00');
+    const jour = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }).toUpperCase();
+    infos.push({ main: jour, sub: data.hrdv.replace(':', 'H') });
+  }
+  infos.push({ main: data.lieu.toUpperCase(), sub: 'DEPART' });
+  infos.push({ main: data.niveauLabel.toUpperCase(), sub: 'TOUS NIVEAUX' });
+
+  const infosH = infos.length * infoLineH;
+  const middleH = safe.height - headerH - footerH;
+  const contentH = titleBlockH + taglineH + infosH + statsH + Math.round(24 * scale);
+  let blockY = safe.top + headerH + Math.max(0, (middleH - contentH) / 2);
+
+  const logoY = safe.top + Math.round(52 * scale);
+  const logoIconFont = flyerScaledFont('700 34px Arial', scale);
+  const logoTextFont = flyerScaledFont('700 36px Arial, sans-serif', scale);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#C8F135';
+  ctx.font = logoIconFont;
+  ctx.fillText('≋', contentLeft, logoY);
+  boxes.push(flyerTextBox(ctx, '≋', contentLeft, logoY, logoIconFont, 'logo-icon'));
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = logoTextFont;
+  const logoTextX = contentLeft + Math.round(52 * scale);
+  ctx.fillText('GOËLORIDES', logoTextX, logoY);
+  boxes.push(flyerTextBox(ctx, 'GOËLORIDES', logoTextX, logoY, logoTextFont, 'logo-text'));
+
+  const badgeR = Math.round(72 * scale);
+  const badgeCx = safe.right - pad - badgeR;
+  const badgeCy = safe.top + Math.round(52 * scale);
+  ctx.beginPath();
+  ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,0.42)';
+  ctx.fill();
+  boxes.push(flyerCircleBox(badgeCx, badgeCy, badgeR, 'badge'));
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  const badgeFont1 = flyerScaledFont('700 15px Arial', scale);
+  const badgeFont2 = flyerScaledFont('700 15px Arial', scale);
+  ctx.font = badgeFont1;
+  ctx.fillText('COMMUNAUTE', badgeCx, badgeCy - Math.round(14 * scale));
+  boxes.push(flyerTextBox(ctx, 'COMMUNAUTE', badgeCx, badgeCy - Math.round(14 * scale), badgeFont1, 'badge-t1', 'center'));
+  ctx.font = badgeFont2;
+  ctx.fillText('RIDE', badgeCx, badgeCy + Math.round(18 * scale));
+  boxes.push(flyerTextBox(ctx, 'RIDE', badgeCx, badgeCy + Math.round(18 * scale), badgeFont2, 'badge-t2', 'center'));
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = 'rgba(0,0,0,0.55)';
+  ctx.shadowBlur = 10;
+  let ty = blockY;
+  titleLines.forEach(function (ln) {
+    ctx.font = ln.font;
+    ctx.fillText(ln.text, contentLeft, ty);
+    boxes.push(flyerTextBox(ctx, ln.text, contentLeft, ty, ln.font, 'title-' + ln.text));
+    ty += flyerFontSize(ln.font) * 0.9;
+  });
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.72)';
+  ctx.font = taglineFont;
+  ctx.fillText('DÉCOUVRIR | RENCONTRER', contentLeft, ty + Math.round(8 * scale));
+  boxes.push(flyerTextBox(ctx, 'DÉCOUVRIR | RENCONTRER', contentLeft, ty + Math.round(8 * scale), taglineFont, 'tagline'));
+  ty += taglineH + Math.round(12 * scale);
+
+  const infoMainFont = flyerScaledFont('700 38px "Arial Black", sans-serif', scale);
+  const infoSubFont = flyerScaledFont('400 20px Arial', scale);
+  const infoBlockW = contentW;
+  infos.forEach(function (info, i) {
+    const y = ty + i * infoLineH;
+    const blockH = info.sub ? Math.round(68 * scale) : Math.round(50 * scale);
+    ctx.fillStyle = '#C8F135';
+    ctx.fillRect(contentLeft, y - Math.round(30 * scale), 6, blockH);
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(contentLeft + 6, y - Math.round(32 * scale), infoBlockW - 6, blockH + 4);
+    boxes.push(flyerRectBox(contentLeft, y - Math.round(32 * scale), infoBlockW, blockH + 4, 'info-bg-' + i));
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = infoMainFont;
+    ctx.fillText(info.main, contentLeft + Math.round(16 * scale), y);
+    boxes.push(flyerTextBox(ctx, info.main, contentLeft + Math.round(16 * scale), y, infoMainFont, 'info-main-' + i));
+    if (info.sub) {
+      ctx.fillStyle = 'rgba(255,255,255,0.58)';
+      ctx.font = infoSubFont;
+      ctx.fillText(info.sub, contentLeft + Math.round(16 * scale), y + Math.round(26 * scale));
+      boxes.push(flyerTextBox(ctx, info.sub, contentLeft + Math.round(16 * scale), y + Math.round(26 * scale), infoSubFont, 'info-sub-' + i));
+    }
+  });
+  ty += infosH + Math.round(8 * scale);
+
+  const statsY = ty;
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  ctx.fillRect(contentLeft, statsY, contentW, statsH);
+  boxes.push(flyerRectBox(contentLeft, statsY, contentW, statsH, 'stats-bar'));
+
+  const statsData = [
+    { icon: '≋', label: 'TOTAL', val: data.dist !== '—' ? data.dist + ' km' : '—' },
+    { icon: '◎', label: 'ALLURE GROUPE', val: data.groupe.toUpperCase() },
+    { icon: '△', label: 'PAS DE COURSE, JUST RIDE', val: data.dplus !== '—' ? data.dplus + ' m' : '' }
+  ];
+  const statLabelFont = flyerScaledFont('700 22px Arial', scale);
+  const statValFont = flyerScaledFont('700 26px Arial', scale);
+  const statIconFont = flyerScaledFont('400 20px Arial', scale);
+  statsData.forEach(function (s, i) {
+    const x = contentLeft + contentW * (i + 0.5) / 3;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = statIconFont;
+    ctx.fillText(s.icon, x, statsY + Math.round(24 * scale));
+    boxes.push(flyerTextBox(ctx, s.icon, x, statsY + Math.round(24 * scale), statIconFont, 'stat-icon-' + i, 'center'));
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = statLabelFont;
+    ctx.fillText(s.label, x, statsY + Math.round(50 * scale));
+    boxes.push(flyerTextBox(ctx, s.label, x, statsY + Math.round(50 * scale), statLabelFont, 'stat-label-' + i, 'center'));
+    if (s.val) {
+      ctx.fillStyle = '#C8F135';
+      ctx.font = statValFont;
+      ctx.fillText(s.val, x, statsY + Math.round(78 * scale));
+      boxes.push(flyerTextBox(ctx, s.val, x, statsY + Math.round(78 * scale), statValFont, 'stat-val-' + i, 'center'));
+    }
+  });
+  ctx.textAlign = 'left';
+
+  const footerY = safe.bottom - footerH;
+  ctx.fillStyle = '#C8F135';
+  ctx.fillRect(contentLeft, footerY, contentW, footerH);
+  boxes.push(flyerRectBox(contentLeft, footerY, contentW, footerH, 'footer'));
+  ctx.fillStyle = '#000000';
+  const footerMainFont = flyerScaledFont('700 36px "Arial Black", sans-serif', scale);
+  const footerSubFont = flyerScaledFont('400 22px Arial', scale);
+  ctx.textAlign = 'center';
+  ctx.font = footerMainFont;
+  const footerMainY = footerY + Math.round(36 * scale);
+  ctx.fillText('goelorides.onrender.com', safe.left + safe.width / 2, footerMainY);
+  boxes.push(flyerTextBox(ctx, 'goelorides.onrender.com', safe.left + safe.width / 2, footerMainY, footerMainFont, 'footer-url', 'center'));
+  ctx.font = footerSubFont;
+  const footerSubY = footerY + Math.round(64 * scale);
+  ctx.fillText('@goelo.rides  #GoëloRides', safe.left + safe.width / 2, footerSubY);
+  boxes.push(flyerTextBox(ctx, '@goelo.rides  #GoëloRides', safe.left + safe.width / 2, footerSubY, footerSubFont, 'footer-social', 'center'));
+  ctx.textAlign = 'left';
+
+  return { boxes: boxes, safe: safe, scale: scale };
+}
+
+function assertFlyerExportReady() {
+  if (!_flyerExportCanvas) {
+    showToast('Génère d\'abord le flyer', 'error');
+    return false;
+  }
+  return true;
+}
+
+function flyerCanvasToSquare(sourceCanvas) {
+  const size = FLYER_CONFIG.squareSize;
+  const cropY = Math.round((FLYER_CONFIG.height - size) / 2);
+  const out = document.createElement('canvas');
+  out.width = size;
+  out.height = size;
+  const octx = out.getContext('2d');
+  octx.drawImage(sourceCanvas, 0, cropY, size, size, 0, 0, size, size);
+  return out;
+}
 
 function onFlyerBgSelected(input) {
   const file = input.files[0];
@@ -531,198 +954,61 @@ function generateFlyer() {
     return;
   }
 
+  const W = FLYER_CONFIG.width;
+  const H = FLYER_CONFIG.height;
+  const data = flyerReadFormData();
+  let bestScale = 1;
+  let bestResult = null;
+  let bestValidation = null;
+  let fewestViolations = Infinity;
+
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const scale = 1 - attempt * 0.07;
+    const probe = document.createElement('canvas');
+    probe.width = W;
+    probe.height = H;
+    const probeCtx = probe.getContext('2d');
+    const result = renderCrossPlatformFlyer(probeCtx, data, scale);
+    const validation = flyerValidateSafeZone(result.boxes, result.safe);
+    const count = validation.violations.length;
+    if (count < fewestViolations) {
+      fewestViolations = count;
+      bestScale = scale;
+      bestResult = result;
+      bestValidation = validation;
+    }
+    if (validation.ok) break;
+  }
+
+  const clean = document.createElement('canvas');
+  clean.width = W;
+  clean.height = H;
+  const cleanCtx = clean.getContext('2d');
+  bestResult = renderCrossPlatformFlyer(cleanCtx, data, bestScale);
+  bestValidation = flyerValidateSafeZone(bestResult.boxes, bestResult.safe);
+  _flyerExportCanvas = clean;
+  _flyerLastValidation = bestValidation;
+
   const canvas = document.getElementById('flyer-canvas');
-  const ctx    = canvas.getContext('2d');
-  const W = 1080, H = 1350;
-  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  canvas.width = W;
+  canvas.height = H;
+  ctx.drawImage(clean, 0, 0);
+  flyerDrawDebugOverlay(ctx, bestResult.boxes, bestResult.safe, bestValidation, W, H);
 
-  // Données du formulaire
-  const titre  = document.getElementById('titre').value || 'Sortie GoëloRides';
-  const date   = document.getElementById('date').value;
-  const stats  = readGpxStats();
-  const dist   = stats.km ? String(stats.km) : (document.getElementById('gpx-dist').textContent || '—');
-  const dplus  = !isNaN(stats.dplus) ? String(stats.dplus) : (document.getElementById('gpx-dplus').textContent || '—');
-  const groupe = document.querySelector('input[name="groupe"]:checked')?.value || 'vert';
-  const lieu   = document.getElementById('lieu').value || 'Saint-Quay-Portrieux';
-  const hrdv   = document.getElementById('heure-rdv').value || '08:00';
-  const niveau = document.getElementById('niveau');
-  const niveauLabel = niveau.options[niveau.selectedIndex]?.text || 'Tous niveaux';
-
-  const groupeColors = { blanc: '#9CA3AF', vert: '#3A7D44', bleu: '#1E3A8A', rouge: '#8B1A1A' };
-  const gc = groupeColors[groupe] || '#3A7D44';
-
-  // ── 1. PHOTO DE FOND (cover) ──────────────────────────────────
-  const imgRatio = _flyerBgImage.width / _flyerBgImage.height;
-  const canvRatio = W / H;
-  let sx = 0, sy = 0, sw = _flyerBgImage.width, sh = _flyerBgImage.height;
-  if (imgRatio > canvRatio) {
-    sw = _flyerBgImage.height * canvRatio;
-    sx = (_flyerBgImage.width - sw) / 2;
-  } else {
-    sh = _flyerBgImage.width / canvRatio;
-    sy = (_flyerBgImage.height - sh) / 2;
-  }
-  ctx.drawImage(_flyerBgImage, sx, sy, sw, sh, 0, 0, W, H);
-
-  // ── 2. OVERLAY GRADIENT sombre (bas → haut + haut) ───────────
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0,   'rgba(0,0,0,0.55)');
-  grad.addColorStop(0.3, 'rgba(0,0,0,0.15)');
-  grad.addColorStop(0.6, 'rgba(0,0,0,0.25)');
-  grad.addColorStop(1,   'rgba(0,0,0,0.80)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  // ── 3. BANDE VERTE EN HAUT (semi-transparente) ────────────────
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(0, 0, W, 130);
-
-  // ── 4. LOGO GOËLORIDES ───────────────────────────────────────
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '700 48px Arial, sans-serif';
-  ctx.textAlign = 'left';
-  // Icône vélo stylisée (chevron)
-  ctx.fillStyle = '#C8F135';
-  ctx.font = '700 40px Arial';
-  ctx.fillText('≋', 48, 88);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '700 42px Arial, sans-serif';
-  ctx.fillText('GOËLORIDES', 110, 88);
-
-  // ── 5. BADGE ROND EN HAUT À DROITE ───────────────────────────
-  const badgeCx = W - 110, badgeCy = 100, badgeR = 90;
-  ctx.beginPath();
-  ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(badgeCx, badgeCy, badgeR - 12, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.beginPath();
-  ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2);
-  ctx.fill();
-  // Texte badge
-  ctx.fillStyle = '#FFFFFF';
-  ctx.textAlign = 'center';
-  ctx.font = '700 18px Arial';
-  ctx.fillText('COMMUNITY', badgeCx, badgeCy - 18);
-  ctx.font = '700 13px Arial';
-  ctx.fillText('▲', badgeCx, badgeCy + 2);
-  ctx.font = '700 18px Arial';
-  ctx.fillText('RIDE', badgeCx, badgeCy + 26);
-
-  // ── 6. GRAND TITRE (style flyer de référence) ────────────────
-  ctx.textAlign = 'left';
-  const titreUpper = titre.toUpperCase();
-  // Taille adaptée
-  let titreSize = 165;
-  ctx.font = `900 ${titreSize}px "Arial Black", Impact, sans-serif`;
-  while (ctx.measureText(titreUpper.split(' ')[0]).width > W - 60 && titreSize > 80) {
-    titreSize -= 5;
-    ctx.font = `900 ${titreSize}px "Arial Black", Impact, sans-serif`;
-  }
-  ctx.fillStyle = '#FFFFFF';
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur = 12;
-  const mots = titreUpper.split(' ');
-  let ty = 310;
-  mots.forEach(mot => {
-    ctx.fillText(mot, 40, ty);
-    ty += titreSize * 0.95;
-  });
-  ctx.shadowBlur = 0;
-
-  // ── 7. TAGLINE ───────────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.font = '400 30px Arial';
-  ctx.fillText('DISCOVER. CONNECT.', 48, ty + 10);
-
-  // ── 8. BLOCS D'INFOS (style référence) ──────────────────────
-  const infoY0 = ty + 70;
-  const infoLineH = 110;
-  const infos = [];
-
-  if (date) {
-    const d = new Date(date + 'T00:00:00');
-    const jour = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }).toUpperCase();
-    infos.push({ main: jour, sub: hrdv.replace(':', 'H') });
-  }
-  infos.push({ main: lieu.toUpperCase(), sub: null });
-  infos.push({ main: niveauLabel.toUpperCase(), sub: 'ALL LEVELS WELCOME' });
-
-  infos.forEach((info, i) => {
-    const y = infoY0 + i * infoLineH;
-
-    // Barre verte à gauche
-    ctx.fillStyle = '#C8F135';
-    ctx.fillRect(0, y - 36, 8, info.sub ? 75 : 55);
-
-    // Fond léger
-    ctx.fillStyle = 'rgba(0,0,0,0.40)';
-    ctx.fillRect(8, y - 38, 560, info.sub ? 78 : 58);
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '700 46px "Arial Black", sans-serif';
-    ctx.fillText(info.main, 30, y);
-
-    if (info.sub) {
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.font = '400 24px Arial';
-      ctx.fillText(info.sub, 30, y + 30);
-    }
-  });
-
-  // ── 9. STATS EN BAS (distance / D+ / groupe) ─────────────────
-  const statsY = H - 220;
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(0, statsY - 10, W, 120);
-
-  const statsData = [
-    { icon: '≋', label: 'TOTAL', val: dist !== '—' ? dist + ' km' : '—' },
-    { icon: '◎', label: 'COMMUNITY PACE', val: groupe.toUpperCase() },
-    { icon: '△', label: 'NO RACE JUST RIDE', val: dplus !== '—' ? dplus + ' m' : '' },
-  ];
-  statsData.forEach((s, i) => {
-    const x = 80 + i * 340;
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '400 22px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(s.icon, x, statsY + 28);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '700 26px Arial';
-    ctx.fillText(s.label, x, statsY + 58);
-    if (s.val) {
-      ctx.fillStyle = '#C8F135';
-      ctx.font = '700 30px Arial';
-      ctx.fillText(s.val, x, statsY + 92);
-    }
-  });
-  ctx.textAlign = 'left';
-
-  // ── 10. FOOTER VERT ─────────────────────────────────────────
-  ctx.fillStyle = '#C8F135';
-  ctx.fillRect(0, H - 110, W, 110);
-  ctx.fillStyle = '#000000';
-  ctx.font = '700 44px "Arial Black", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('goelorides.onrender.com', W / 2, H - 62);
-  ctx.font = '400 26px Arial';
-  ctx.fillText('@goelo.rides', W / 2, H - 26);
-
-  // ── 11. HASHTAG COIN BAS DROITE ──────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = '400 22px Arial';
-  ctx.textAlign = 'right';
-  ctx.fillText('#GoëloRides', W - 30, H - 120);
-  ctx.textAlign = 'left';
-
-  // Afficher le résultat
+  flyerRenderIssuesUi(bestValidation);
   document.getElementById('flyer-wrap').style.display = 'grid';
-  showToast('Flyer généré !');
+
+  if (bestValidation.status === 'warning') {
+    console.warn('[flyer] safe zone warnings', bestValidation.issues);
+    showToast(
+      'Flyer généré avec ' + bestValidation.issues.length + ' avertissement(s) zone sûre'
+    );
+  } else {
+    showToast('Flyer 4:5 validé (Instagram · Facebook · Strava)');
+  }
+
+  return _flyerLastValidation;
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -755,22 +1041,30 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   ctx.fillText(line, x, y);
 }
 
-function downloadFlyer() {
-  const canvas = document.getElementById('flyer-canvas');
-  const titre  = document.getElementById('titre').value || 'sortie';
-  const link   = document.createElement('a');
-  link.download = 'flyer-' + titre.replace(/\s+/g,'-').toLowerCase() + '.png';
-  link.href = canvas.toDataURL('image/png');
+function downloadFlyer(platform) {
+  if (!assertFlyerExportReady()) return;
+
+  const titre = document.getElementById('titre').value || 'sortie';
+  const slug = titre.replace(/\s+/g, '-').toLowerCase();
+  const src = _flyerExportCanvas || document.getElementById('flyer-canvas');
+  const isStrava = platform === 'strava' && FLYER_CONFIG.fallbackSquare;
+
+  const exportCanvas = isStrava ? flyerCanvasToSquare(src) : src;
+  const link = document.createElement('a');
+  link.download = 'flyer-' + slug + (isStrava ? '-strava-1080' : '-4x5') + '.png';
+  link.href = exportCanvas.toDataURL('image/png');
   link.click();
-  showToast('Flyer téléchargé');
+  showToast(isStrava ? 'Flyer carré Strava téléchargé' : 'Flyer 4:5 téléchargé');
 }
 
 function copyFlyer() {
-  const canvas = document.getElementById('flyer-canvas');
-  canvas.toBlob(blob => {
+  if (!assertFlyerExportReady()) return;
+
+  const canvas = _flyerExportCanvas;
+  canvas.toBlob(function (blob) {
     navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-      .then(() => showToast('Image copiée dans le presse-papiers'))
-      .catch(() => showToast('Copie non supportée — télécharge le PNG', 'error'));
+      .then(function () { showToast('Image copiée dans le presse-papiers'); })
+      .catch(function () { showToast('Copie non supportée — télécharge le PNG', 'error'); });
   });
 }
 

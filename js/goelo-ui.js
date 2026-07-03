@@ -92,6 +92,17 @@
   }
 
   function syncHeaderConnect(r, pseudo, user) {
+    if (global.GoeloNavbar && global.GoeloNavbar.syncAuth) {
+      var s = global.GoeloAuthState ? global.GoeloAuthState.getState() : {};
+      global.GoeloNavbar.syncAuth({
+        role: r,
+        pseudo: pseudo,
+        user: user,
+        pending: s.pending
+      });
+      return;
+    }
+
     var btn = global.document.querySelector(".gr-header-connect, [data-goelo-connect-btn]");
     if (!btn) return;
 
@@ -151,6 +162,23 @@
 
   function syncLogoutButtons(r) {
     var isVisitor = r === "visitor";
+    if (global.GoeloNavbar && global.GoeloNavbar.syncAuth) {
+      var s = global.GoeloAuthState
+        ? global.GoeloAuthState.getState()
+        : {
+          user: global.GOELO_USER || null,
+          pseudo: global.GOELO_DISPLAY_NAME || null,
+          pending: !!global.GOELO_AUTH_PENDING
+        };
+      global.GoeloNavbar.syncAuth({
+        role: r,
+        user: isVisitor ? null : s.user,
+        pseudo: s.pseudo,
+        pending: s.pending
+      });
+      return;
+    }
+
     global.document.querySelectorAll("[data-goelo-logout-btn]").forEach(function (btn) {
       btn.hidden = isVisitor;
       if (!isVisitor) btn.removeAttribute("hidden");
@@ -334,6 +362,10 @@
 
     global.setTimeout(catchUpRoleUI, 0);
     global.setTimeout(catchUpRoleUI, 100);
+
+    global.addEventListener("goelo:navbar-ready", function () {
+      catchUpRoleUI();
+    });
   }
 
   global.GoeloUI = {

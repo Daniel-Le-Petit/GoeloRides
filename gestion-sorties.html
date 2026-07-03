@@ -379,10 +379,15 @@
           <div class="flyer-preview-wrap">
             <canvas id="flyer-canvas" width="1080" height="1350"></canvas>
           </div>
+          <div class="flyer-issues" id="flyer-issues" hidden>
+            <p class="flyer-issues__title">Avertissements zone sûre</p>
+            <ul class="flyer-issues-list" id="flyer-issues-list"></ul>
+          </div>
           <div class="flyer-actions">
             <button class="btn btn--ghost" onclick="generateFlyer()">🔄 Regénérer</button>
             <button class="btn btn--ghost" onclick="copyFlyer()">📋 Copier l'image</button>
-            <button class="btn btn--accent" onclick="downloadFlyer()">⬇ Télécharger PNG</button>
+            <button class="btn btn--accent" onclick="downloadFlyer()">⬇ PNG (4:5)</button>
+            <button class="btn btn--ghost" onclick="downloadFlyer('strava')">⬇ PNG Strava (carré)</button>
           </div>
         </div>
       </div>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Mon profil GoëloRides — pseudo, niveau et ville.">
+  <meta name="theme-color" content="#0D0D0D">
+  <title>Mon profil · GoëloRides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/account.css">
+  <style>
+    :root {
+      --bg: #0D0D0D;
+      --surface: #1A1A1A;
+      --border: #2E2E2E;
+      --accent: #C8F135;
+      --text: #F0F0F0;
+      --muted: #888888;
+      --r: 10px;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; margin: 0; }
+  </style>
+</head>
+<body>
+
+  <div data-goelo-navbar data-goelo-navbar-active="profile"></div>
+
+  <header class="gr-page-header">
+    <h1>Mon profil</h1>
+    <p>Ton identité sur GoëloRides.</p>
+  </header>
+
+  <main class="ac-main" id="main-content" role="main">
+    <div id="profile-gate" class="ac-gate" hidden>
+      <h2>Connexion requise</h2>
+      <p>Connecte-toi pour voir ton profil.</p>
+      <button type="button" class="ac-gate__btn" data-goelo-auth-trigger>Se connecter</button>
+    </div>
+
+    <div id="profile-content" hidden>
+      <section class="ac-card">
+        <div class="ac-profile-head">
+          <div class="ac-avatar" id="profile-avatar">GR</div>
+          <div>
+            <p class="ac-profile-name" id="profile-name">—</p>
+            <p class="ac-profile-role" id="profile-role">—</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="ac-card">
+        <p class="ac-card__title">Informations</p>
+        <div class="ac-fields">
+          <div class="ac-field">
+            <label>Pseudo</label>
+            <p id="profile-pseudo">—</p>
+          </div>
+          <div class="ac-field">
+            <label>Niveau cycliste</label>
+            <p id="profile-level">—</p>
+          </div>
+          <div class="ac-field">
+            <label>Ville</label>
+            <p id="profile-city">—</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/goelo-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/goelo-auth-state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/goelo-profile.js"></script>
+  <script src="js/goelo-ui.js"></script>
+  <script src="js/goelo-navbar.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>

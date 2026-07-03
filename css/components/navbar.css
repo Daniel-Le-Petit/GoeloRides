@@ -1,0 +1,472 @@
+/* ═══════════════════════════════════════════════════════════════
+   GoëloRides — Navbar partagée (extension gr-nav / sorties.html)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Base gr-nav (pages sans sorties.css) */
+.goelo-navbar.gr-nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--bg, var(--goelo-bg, #0d0d0d));
+  border-bottom: 1px solid var(--border, var(--goelo-border, #2e2e2e));
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 0 2rem;
+  height: 56px;
+}
+
+.goelo-navbar.gr-nav--hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(13, 13, 13, 0.78) 0%, transparent 100%);
+  border-bottom: none;
+}
+
+.goelo-navbar .gr-nav__logo {
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text, #f0f0f0);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.goelo-navbar .gr-nav__logo span {
+  color: var(--accent, var(--goelo-accent, #c8f135));
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.goelo-navbar .gr-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  list-style: none;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.goelo-navbar .gr-nav__links a,
+.goelo-navbar .gr-nav__links a:link,
+.goelo-navbar .gr-nav__links a:visited {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #fff !important;
+  text-decoration: none;
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+.goelo-navbar .gr-nav__links a:hover {
+  color: #fff;
+  opacity: 0.92;
+}
+
+.goelo-navbar .gr-nav__links a[aria-current="page"] {
+  color: #fff;
+  border-bottom-color: var(--accent, var(--goelo-accent, #c8f135));
+}
+
+.goelo-navbar .gr-nav__tr-item {
+  list-style: none;
+}
+
+.goelo-navbar .gr-nav__tr-label {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+}
+
+.goelo-navbar .gr-nav__tr-label.go-role-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+.goelo-navbar .gr-nav__extras {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Auth : visibilité stricte */
+.goelo-navbar [data-goelo-navbar-connect][hidden],
+.goelo-navbar [data-goelo-user-menu][hidden],
+.goelo-navbar .is-hidden {
+  display: none !important;
+}
+
+.goelo-navbar .gr-nav__connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.goelo-navbar .gr-nav__connect:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.goelo-navbar .gr-nav__connect svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.goelo-navbar .gr-nav__user {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.goelo-navbar .gr-nav__user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem 0.45rem 0.7rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.goelo-navbar .gr-nav__user-btn:hover,
+.goelo-navbar .gr-nav__user-btn[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.goelo-navbar .gr-nav__user-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.goelo-navbar .gr-nav__user-chevron {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.75;
+  transition: transform 0.2s;
+}
+
+.goelo-navbar .gr-nav__user-btn[aria-expanded="true"] .gr-nav__user-chevron {
+  transform: rotate(180deg);
+}
+
+.goelo-navbar .gr-nav__dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 210px;
+  background: #1a1a1a;
+  border: 1px solid #2e2e2e;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  padding: 0.35rem 0;
+  z-index: 300;
+}
+
+.goelo-navbar .gr-nav__dropdown[hidden] {
+  display: none !important;
+}
+
+.goelo-navbar .gr-nav__dropdown a,
+.goelo-navbar .gr-nav__dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #f0f0f0;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0.62rem 1rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.goelo-navbar .gr-nav__dropdown a:hover,
+.goelo-navbar .gr-nav__dropdown button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.goelo-navbar .gr-nav__dropdown-sep {
+  border: none;
+  border-top: 1px solid #2e2e2e;
+  margin: 0.35rem 0;
+}
+
+.goelo-navbar .gr-nav__dropdown-logout {
+  color: #f87171 !important;
+}
+
+.goelo-navbar .gr-nav__dropdown-logout:disabled,
+.goelo-navbar .gr-nav__dropdown-logout.is-logging-out {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.goelo-navbar .gr-nav__burger {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.25rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.goelo-navbar .gr-nav__burger svg {
+  width: 26px;
+  height: 26px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* ── Mobile drawer ─────────────────────────────────────────── */
+
+.gr-mobile-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.gr-mobile-drawer:not([hidden]) {
+  pointer-events: auto;
+}
+
+.gr-mobile-drawer[hidden] {
+  display: none !important;
+}
+
+.gr-mobile-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.gr-mobile-drawer:not([hidden]) .gr-mobile-drawer__backdrop {
+  opacity: 1;
+}
+
+.gr-mobile-drawer__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(320px, 88vw);
+  height: 100%;
+  background: #141414;
+  border-left: 1px solid #2e2e2e;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+  overflow-y: auto;
+}
+
+.gr-mobile-drawer:not([hidden]) .gr-mobile-drawer__panel {
+  transform: translateX(0);
+}
+
+.gr-mobile-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid #2e2e2e;
+}
+
+.gr-mobile-drawer__logo {
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #f0f0f0;
+}
+
+.gr-mobile-drawer__logo span {
+  color: var(--accent, var(--goelo-accent, #c8f135));
+}
+
+.gr-mobile-drawer__close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.gr-mobile-drawer__links,
+.gr-mobile-drawer__account {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.gr-mobile-drawer__links a,
+.gr-mobile-drawer__account a,
+.gr-mobile-drawer__account button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0.85rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.gr-mobile-drawer__links a:link,
+.gr-mobile-drawer__links a:visited,
+.gr-mobile-drawer__account a:link,
+.gr-mobile-drawer__account a:visited {
+  color: #fff;
+}
+
+.gr-mobile-drawer__links a:hover,
+.gr-mobile-drawer__account a:hover,
+.gr-mobile-drawer__account button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.gr-mobile-drawer__links a[aria-current="page"] {
+  color: var(--accent, var(--goelo-accent, #c8f135));
+}
+
+.gr-mobile-drawer__label {
+  display: block;
+  padding: 0.85rem 1.25rem;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: default;
+  user-select: none;
+}
+
+.gr-mobile-drawer__label.go-role-badge {
+  display: inline-flex;
+  margin: 0.85rem 1.25rem;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.68rem;
+}
+
+.gr-mobile-drawer__sep {
+  border: none;
+  border-top: 1px solid #2e2e2e;
+  margin: 0.35rem 0;
+}
+
+.gr-mobile-drawer__logout {
+  color: #f87171 !important;
+}
+
+.gr-mobile-drawer__logout:disabled,
+.gr-mobile-drawer__logout.is-logging-out {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.gr-mobile-drawer__cta[hidden] {
+  display: none !important;
+}
+
+.gr-mobile-drawer__cta {
+  margin-top: auto;
+  padding: 1rem 1.25rem 1.5rem;
+  border-top: 1px solid #2e2e2e;
+}
+
+.gr-mobile-drawer__btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+
+.gr-mobile-drawer__btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+body.gr-mobile-menu-open {
+  overflow: hidden;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .goelo-navbar .gr-nav__links,
+  .goelo-navbar .gr-nav__extras,
+  .goelo-navbar .gr-nav__connect,
+  .goelo-navbar .gr-nav__user {
+    display: none !important;
+  }
+
+  .goelo-navbar .gr-nav__burger {
+    display: block;
+  }
+
+  .goelo-navbar.gr-nav {
+    padding: 0 1rem;
+    justify-content: space-between;
+  }
+}
