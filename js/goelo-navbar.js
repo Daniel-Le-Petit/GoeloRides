@@ -134,6 +134,10 @@
             '<span class="gr-mobile-drawer__logo">GO\u00CBLO<span>RIDES</span></span>' +
             '<button type="button" class="gr-mobile-drawer__close" data-goelo-mobile-close aria-label="Fermer">\u2715</button>' +
           "</div>" +
+          '<div class="gr-mobile-drawer__user" data-goelo-mobile-user hidden>' +
+            '<span class="gr-nav__role-badge" data-goelo-nav-role-badge hidden></span>' +
+            '<span class="gr-mobile-drawer__greeting" data-goelo-navbar-greeting></span>' +
+          "</div>" +
           '<ul class="gr-mobile-drawer__links">' + mainLinks + "</ul>" +
           '<hr class="gr-mobile-drawer__sep" data-goelo-mobile-account-sep hidden aria-hidden="true">' +
           '<ul class="gr-mobile-drawer__account" data-goelo-mobile-account hidden>' + accountLinks + "</ul>" +
@@ -204,6 +208,7 @@
     setVisible(global.document.querySelector("[data-goelo-navbar-connect]"), true);
     setVisible(global.document.querySelector("[data-goelo-user-session]"), false);
     setVisible(global.document.querySelector("[data-goelo-mobile-connect-wrap]"), true);
+    setVisible(global.document.querySelector("[data-goelo-mobile-user]"), false);
     setVisible(global.document.querySelector("ul[data-goelo-mobile-account]"), false);
     setVisible(global.document.querySelector("[data-goelo-mobile-account-sep]"), false);
     setVisible(global.document.querySelector("[data-goelo-mobile-logout-wrap]"), false);
@@ -398,6 +403,7 @@
       setVisible(connect, false);
       setVisible(session, false);
       setVisible(mobileConnectWrap, false);
+      setVisible(global.document.querySelector("[data-goelo-mobile-user]"), false);
       clearRoleBadge();
       clearGreeting();
       return;
@@ -412,6 +418,7 @@
     setVisible(connect, false);
     setVisible(session, true);
     setVisible(mobileConnectWrap, false);
+    setVisible(global.document.querySelector("[data-goelo-mobile-user]"), true);
     setVisible(mobileAccount, true);
     setVisible(accountSep, true);
     setVisible(mobileLogoutWrap, true);
