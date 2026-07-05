@@ -307,6 +307,327 @@ html.site-retheme {
   letter-spacing: 0.02em;
 }
 
+/* ── UPCOMING RIDES (hero intégré · Supabase) ─ */
+
+.gr-upcoming {
+  --gr-acid: #B6FF2E;
+  --gr-acid-hover: #9de625;
+  --gr-acid-soft: rgba(182, 255, 46, 0.14);
+  --gr-acid-border: rgba(182, 255, 46, 0.32);
+  --gr-acid-glow: rgba(182, 255, 46, 0.22);
+  --gr-fade: rgba(5, 15, 25, 0.72);
+
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 0 1.65rem;
+  padding: 0;
+  background: transparent !important;
+  border: none;
+  box-shadow: none;
+  animation: heroFadeIn 0.7s ease 0.15s both;
+}
+
+.gr-upcoming__inner,
+.gr-upcoming__head,
+.gr-upcoming__head-text,
+.gr-upcoming__scroll {
+  background: transparent !important;
+  box-shadow: none;
+  border: none;
+}
+
+.gr-upcoming__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.gr-upcoming__head-text {
+  min-width: 0;
+}
+
+.gr-upcoming__title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+  font-weight: 700;
+  color: var(--color-white);
+  margin: 0 0 0.2rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.25);
+}
+
+.gr-upcoming__title-icon {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.gr-upcoming__sub {
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.gr-upcoming__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.gr-upcoming__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.gr-upcoming__nav-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.gr-upcoming__nav-btn:hover,
+.gr-upcoming__nav-btn:focus-visible {
+  border-color: var(--gr-acid-border);
+  background: var(--gr-acid-soft);
+  color: var(--gr-acid);
+  box-shadow: 0 0 14px var(--gr-acid-glow);
+  outline: none;
+}
+
+/* Carousel : masque + scroll */
+.gr-upcoming__scroll {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+}
+
+.gr-upcoming__scroll::before,
+.gr-upcoming__scroll::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0.65rem;
+  width: clamp(1.5rem, 4vw, 2.75rem);
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.gr-upcoming__scroll::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--gr-fade) 0%, transparent 100%);
+}
+
+.gr-upcoming__scroll::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--gr-fade) 0%, transparent 100%);
+}
+
+.gr-upcoming__track {
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.15rem;
+  cursor: grab;
+  background: transparent !important;
+}
+
+.gr-upcoming__track:active {
+  cursor: grabbing;
+}
+
+.gr-upcoming__track .go-sc-list {
+  display: flex;
+  flex-direction: row;
+  gap: 1.15rem;
+  list-style: none;
+  margin: 0;
+  padding: 0.15rem 0.25rem 0.35rem;
+  width: max-content;
+  min-width: 100%;
+  background: transparent !important;
+}
+
+.gr-upcoming__track .go-sc-list > li {
+  flex: 0 0 clamp(280px, 78vw, 360px);
+  width: clamp(280px, 78vw, 360px);
+  scroll-snap-align: start;
+  background: transparent !important;
+}
+
+/* Cartes : fusion hero — pas de panneau blanc */
+.gr-upcoming .go-sc-card {
+  min-height: 228px;
+  border-color: rgba(182, 255, 46, 0.18);
+  background: transparent !important;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: heroFadeIn 0.5s ease both;
+}
+
+.gr-upcoming .go-sc-card__inner {
+  background: transparent !important;
+}
+
+.gr-upcoming .go-sc-list > li:nth-child(1) .go-sc-card { animation-delay: 0.08s; }
+.gr-upcoming .go-sc-list > li:nth-child(2) .go-sc-card { animation-delay: 0.16s; }
+.gr-upcoming .go-sc-list > li:nth-child(3) .go-sc-card { animation-delay: 0.24s; }
+
+@media (hover: hover) {
+  .gr-upcoming .go-sc-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--gr-acid-border);
+    box-shadow: 0 10px 28px var(--gr-acid-glow), 0 4px 16px rgba(0, 0, 0, 0.28);
+  }
+}
+
+.gr-upcoming .go-sc-card__shade {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.42) 0%,
+    rgba(0, 0, 0, 0.22) 40%,
+    rgba(0, 0, 0, 0.58) 72%,
+    rgba(0, 0, 0, 0.88) 100%
+  );
+}
+
+/* Calendrier : glass sombre (pas de #fff / #f4f4f5) */
+.gr-upcoming .go-cal {
+  background: rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(182, 255, 46, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.gr-upcoming .go-cal__head {
+  background: var(--gr-acid);
+  color: #0d1200;
+}
+
+.gr-upcoming .go-cal__body {
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+
+.gr-upcoming .go-cal__day {
+  color: #ffffff;
+}
+
+.gr-upcoming .go-cal__wd {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.gr-upcoming .go-sc-card__meta-time,
+.gr-upcoming .go-sc-card__meet {
+  color: var(--gr-acid);
+}
+
+.gr-upcoming .go-sc-wx__dot--ideal {
+  background: var(--gr-acid);
+  box-shadow: 0 0 8px var(--gr-acid-glow);
+}
+
+.gr-upcoming .go-sc-stat__sport-icon {
+  color: var(--gr-acid);
+}
+
+/* Bouton Voir : texte blanc obligatoire */
+.gr-upcoming .go-sc-btn--voir,
+.gr-upcoming .go-sc-btn--voir:link,
+.gr-upcoming .go-sc-btn--voir:visited {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.88);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.gr-upcoming .go-sc-btn--voir:hover,
+.gr-upcoming .go-sc-btn--voir:focus-visible {
+  color: #ffffff !important;
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
+}
+
+.gr-upcoming .go-sc-btn--join,
+.gr-upcoming .go-sc-btn--primary {
+  background: var(--gr-acid);
+  border-color: var(--gr-acid);
+  color: #0d1200;
+}
+
+.gr-upcoming .go-sc-btn--join:hover,
+.gr-upcoming .go-sc-btn--primary:hover {
+  background: var(--gr-acid-hover);
+  border-color: var(--gr-acid-hover);
+  box-shadow: 0 0 16px var(--gr-acid-glow);
+}
+
+.gr-upcoming .go-sc-stat__num {
+  color: var(--gr-acid);
+}
+
+/* Desktop : carousel plus lisible */
+@media (min-width: 769px) {
+  .gr-upcoming__scroll::before,
+  .gr-upcoming__scroll::after {
+    opacity: 0.9;
+  }
+
+  .gr-upcoming__track {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gr-acid) rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.55rem;
+  }
+
+  .gr-upcoming__track::-webkit-scrollbar {
+    display: block;
+    height: 7px;
+  }
+
+  .gr-upcoming__track::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, rgba(182, 255, 46, 0.55), var(--gr-acid));
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+  }
+
+  .gr-upcoming__track::-webkit-scrollbar-thumb:hover {
+    background: var(--gr-acid);
+  }
+
+  .gr-upcoming__track::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 999px;
+    margin: 0 0.25rem;
+  }
+
+  .gr-upcoming__track .go-sc-list {
+    gap: 1.35rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
 /* ── STATS STRIP ────────────────────────────── */
 
 .gr-stats {
@@ -527,6 +848,41 @@ html.site-retheme {
   .gr-stat + .gr-stat { border-left: none; border-top: 1px solid rgba(255,255,255,0.07); }
 
   .gr-sticky-banner { flex-wrap: wrap; padding: 0.75rem 1rem; font-size: 0.78rem; gap: 0.5rem; }
+
+  .gr-upcoming {
+    margin-bottom: 1.25rem;
+  }
+
+  .gr-upcoming__scroll::before,
+  .gr-upcoming__scroll::after {
+    width: 1.25rem;
+    bottom: 0.15rem;
+  }
+
+  .gr-upcoming__track {
+    margin: 0 -1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    scrollbar-width: none;
+    cursor: default;
+  }
+
+  .gr-upcoming__track:active {
+    cursor: default;
+  }
+
+  .gr-upcoming__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gr-upcoming__track .go-sc-list {
+    gap: 1rem;
+  }
+
+  .gr-upcoming__track .go-sc-list > li {
+    flex: 0 0 min(82vw, 18.5rem);
+    width: min(82vw, 18.5rem);
+  }
 
   /* Footer mobile : 1 colonne */
   .gr-footer { padding: 2rem 1.25rem 1.5rem; }

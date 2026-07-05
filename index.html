@@ -4424,6 +4424,30 @@
         Que tu reprennes le vélo ou que tu roules chaque semaine,
         il y a une place pour toi dans le groupe.
       </p>
+      <section class="gr-upcoming" aria-labelledby="gr-upcoming-title">
+        <div class="gr-upcoming__inner">
+          <header class="gr-upcoming__head">
+            <div class="gr-upcoming__head-text">
+              <h2 id="gr-upcoming-title" class="gr-upcoming__title">
+                <span class="gr-upcoming__title-icon" aria-hidden="true">🚴</span>
+                Prochaines sorties
+              </h2>
+              <p class="gr-upcoming__sub" id="gr-upcoming-sub">Chargement…</p>
+            </div>
+            <div class="gr-upcoming__nav" id="gr-upcoming-nav" hidden>
+              <button type="button" class="gr-upcoming__nav-btn" id="gr-upcoming-prev" aria-label="Sortie précédente">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" class="gr-upcoming__nav-btn" id="gr-upcoming-next" aria-label="Sortie suivante">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </header>
+          <div class="gr-upcoming__scroll" id="gr-upcoming-scroll">
+            <div class="gr-upcoming__track" id="gr-upcoming-rides" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
       <div class="gr-hero-ctas">
         <a href="sorties.html" class="gr-btn gr-btn--accent" onclick="trackEvent('view_race_list', 'homepage_cta');">
           Voir les sorties
@@ -4872,6 +4896,9 @@
   <script src="js/goelo-profile.js"></script>
   <script src="js/goelo-ui.js"></script>
   <script src="js/goelo-navbar.js"></script>
+  <script src="js/signup-participants.js"></script>
+  <script src="js/goelo-weather.js"></script>
+  <script src="js/sortie-cards.js"></script>
   <script src="js/home.js"></script>
   <script src="parcours.js"></script>
 
