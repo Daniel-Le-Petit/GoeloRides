@@ -30,11 +30,23 @@ cleanup() { rm -f "$TMP"; }
 trap cleanup EXIT
 
 echo "→ pg_dump (format custom, sans owner/acl)…"
-pg_dump "$SUPABASE_DATABASE_URL" \
+PG_DUMP_BIN="/usr/lib/postgresql/17/bin/pg_dump"
+
+if [[ ! -x "$PG_DUMP_BIN" ]]; then
+  echo "Erreur: pg_dump PostgreSQL 17 introuvable"
+  exit 1
+fi
+
+echo "→ pg_dump version:"
+"$PG_DUMP_BIN" --version
+
+echo "→ pg_dump (format custom, sans owner/acl)…"
+"$PG_DUMP_BIN" "$SUPABASE_DATABASE_URL" \
   -Fc \
   --no-owner \
   --no-acl \
   -f "$TMP"
+
 
 echo "→ Upload s3://${R2_BUCKET_NAME}/${KEY}"
 export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
