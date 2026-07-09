@@ -19,6 +19,7 @@
   var _joinBusy = false;
   var pdMap     = null;
   var pdBounds  = null;
+  var _openedInfoSections = {};
 
   /* =========================================================
      HELPERS
@@ -188,6 +189,14 @@ async function toggleSignup(routeId) {
 
       /* Visiteur → ouvrir modale auth */
       if (btn.getAttribute("data-auth-pending") === "1") {
+        if (window.GoeloActivity && sortie) {
+          window.GoeloActivity.logEvent(
+            null,
+            window.GoeloActivity.EVENT_TYPES.RIDE_PARTICIPATE_CLICKED,
+            { route_id: sortie.id, route_title: sortie.title },
+            { route_id: sortie.id, route_title: sortie.title }
+          );
+        }
         if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
         return;
       }
@@ -204,6 +213,17 @@ async function toggleSignup(routeId) {
         }
 
         if (!sortie || !sortie.id) throw new Error("Identifiant sortie manquant");
+
+        if (btn.getAttribute("data-joined") === "0") {
+          if (window.GoeloActivity) {
+            window.GoeloActivity.logEvent(
+              null,
+              window.GoeloActivity.EVENT_TYPES.RIDE_PARTICIPATE_CLICKED,
+              { route_id: sortie.id, route_title: sortie.title },
+              { route_id: sortie.id, route_title: sortie.title }
+            );
+          }
+        }
 
         var res = await toggleSignup(sortie.id);
         if (!res || res.ok !== true) {
@@ -600,6 +620,20 @@ async function toggleSignup(routeId) {
         var open = item.classList.toggle("is-open");
         btn.setAttribute("aria-expanded", open ? "true" : "false");
         panel.style.maxHeight = open ? panel.scrollHeight + "px" : "0";
+
+        if (open) {
+          var section = item.getAttribute("data-section");
+          if (section && !_openedInfoSections[section]) {
+            _openedInfoSections[section] = true;
+            if (window.GoeloActivity) {
+              window.GoeloActivity.logEvent(
+                null,
+                window.GoeloActivity.EVENT_TYPES.RIDE_INFO_OPENED,
+                { section: section }
+              );
+            }
+          }
+        }
       });
     });
   }

@@ -325,6 +325,38 @@ async function fetchSorties() {
     userCoords:      null
   };
 
+  var _sortiesPageViewLogged = false;
+  var _sortiesScrollTracker = null;
+
+  function initSortiesPageTracking() {
+    if (_sortiesPageViewLogged) return;
+    var GA = window.GoeloActivity;
+    if (!GA) {
+      setTimeout(initSortiesPageTracking, 100);
+      return;
+    }
+
+    _sortiesPageViewLogged = true;
+    GA.logEvent(null, GA.EVENT_TYPES.PAGE_SORTIES_VIEWED, {});
+
+    _sortiesScrollTracker = GA.trackScrollDepth(
+      null,
+      GA.EVENT_TYPES.SORTIES_SCROLL_DEPTH,
+      "sorties"
+    );
+
+    var footer = document.querySelector("footer.footer, .footer");
+    if (footer) {
+      GA.observeFooterOnce(null, footer, GA.EVENT_TYPES.SORTIES_FOOTER_VIEWED);
+    }
+  }
+
+  function refreshSortiesScrollTracking() {
+    if (_sortiesScrollTracker && _sortiesScrollTracker.refresh) {
+      _sortiesScrollTracker.refresh();
+    }
+  }
+
   function getUserRole() {
     return window.GoeloSortieCards
       ? window.GoeloSortieCards.getUserRole()
@@ -413,6 +445,7 @@ async function fetchSorties() {
       joinedRouteIds: state.joinedRouteIds,
       emptyHtml: '<p class="go-sc-empty" role="status">Aucune sortie pour ce filtre.</p>'
     });
+    requestAnimationFrame(refreshSortiesScrollTracking);
   }
 
   async function fetchJoinedRouteIds() {
@@ -686,6 +719,8 @@ async function fetchSorties() {
      Init
      ════════════════════════════════════════════════════════════ */
   document.addEventListener("DOMContentLoaded", async function () {
+    initSortiesPageTracking();
+
     if (window.GoeloUI) await window.GoeloUI.waitForRole();
 
     applyTeamRiderState();
@@ -727,6 +762,7 @@ async function fetchSorties() {
     await reloadParticipants();
     render();
     enrichWeather();
+    refreshSortiesScrollTracking();
     state.sorties.forEach(function (s) {
       loadStats(s).then(function (st) {
         if (st && (st.km != null || st.dplus != null)) {

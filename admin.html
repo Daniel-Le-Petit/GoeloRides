@@ -362,6 +362,31 @@
       display: flex; align-items: center; justify-content: space-between;
       gap: 8px; margin-bottom: 12px;
     }
+    .act-feed__filter {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .72rem; color: var(--muted); cursor: pointer; user-select: none;
+    }
+    .act-feed__filter input { accent-color: var(--accent); }
+    .act-visitor-group {
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .act-visitor-group__title {
+      font-family: var(--font-display); font-size: .78rem; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .act-visitor-journey {
+      list-style: none; display: flex; flex-direction: column; gap: 4px;
+    }
+    .act-visitor-journey__item {
+      display: grid; grid-template-columns: 42px 1fr; gap: 8px;
+      font-size: .76rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 4px 0;
+    }
+    .act-visitor-journey__time {
+      color: var(--muted); font-variant-numeric: tabular-nums;
+    }
+    .act-visitor-journey__type { color: var(--text); }
     .act-feed__title, .act-ticker__title {
       font-family: var(--font-display); font-size: .85rem; font-weight: 700;
       letter-spacing: .08em; text-transform: uppercase;
@@ -516,6 +541,10 @@
         <div class="act-feed">
           <div class="act-feed__toolbar">
             <span class="act-feed__title">Chronologie</span>
+            <label class="act-feed__filter" for="act-group-visitor">
+              <input type="checkbox" id="act-group-visitor" />
+              Regrouper par visiteur
+            </label>
           </div>
           <div id="act-feed-list">
             <div class="gtr-loading">

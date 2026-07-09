@@ -11,7 +11,10 @@ window.__GOELO_AUTH_V2__ = true;
      1. SINGLETON SUPABASE
      ════════════════════════════════════════════════════════════ */
 window.goeloGetSb = function () {
-  if (window._goeloSbClient) return window._goeloSbClient;
+  if (window._goeloSbClient) {
+    if (!window.supabaseClient) window.supabaseClient = window._goeloSbClient;
+    return window._goeloSbClient;
+  }
 
   var cfg = window.GOELO_CONFIG || {};
   var url = (cfg.SUPABASE_URL || "").trim();
@@ -31,6 +34,7 @@ window.goeloGetSb = function () {
     window._goeloSbClient = window.supabase.createClient(url, key, {
       auth: { detectSessionInUrl: true }
     });
+    window.supabaseClient = window._goeloSbClient;
     console.log("[GoëloAuth] Supabase client initialisé ✔");
     return window._goeloSbClient;
   } catch (e) {

@@ -348,6 +348,53 @@
     } else {
       container.innerHTML = html;
     }
+    bindCardTracking(container, opts);
+  }
+
+  function cardMetaFromEl(card) {
+    var routeId = card.getAttribute("data-route-id") || "";
+    var titleEl = card.querySelector(".go-sc-card__title");
+    return {
+      route_id: routeId,
+      route_title: titleEl ? titleEl.textContent.trim() : ""
+    };
+  }
+
+  function bindCardTracking(container, opts) {
+    if (!container || !opts || !opts.trackSource) return;
+    if (container.dataset.goScTrackBound === "1") return;
+    container.dataset.goScTrackBound = "1";
+
+    container.addEventListener("click", function (e) {
+      var GA = global.GoeloActivity;
+      if (!GA) return;
+
+      var card = e.target.closest(".go-sc-card[data-route-id]");
+      if (!card) return;
+
+      var cardMeta = cardMetaFromEl(card);
+      var meta = {
+        source: opts.trackSource,
+        route_id: cardMeta.route_id,
+        route_title: cardMeta.route_title
+      };
+      var extras = {
+        route_id: cardMeta.route_id,
+        route_title: cardMeta.route_title
+      };
+
+      if (e.target.closest(".go-sc-btn--voir")) {
+        GA.logEvent(null, GA.EVENT_TYPES.UPCOMING_RIDE_VIEW_CLICKED, meta, extras);
+        return;
+      }
+      if (e.target.closest(".go-sc-btn--join")) {
+        GA.logEvent(null, GA.EVENT_TYPES.UPCOMING_RIDE_JOIN_CLICKED, meta, extras);
+        return;
+      }
+      if (e.target.closest("a, button, .go-sc-btn")) return;
+
+      GA.logEvent(null, GA.EVENT_TYPES.UPCOMING_RIDE_CARD_CLICKED, meta, extras);
+    });
   }
 
   function teamRiderDisplayName(tr) {

@@ -7,6 +7,7 @@
   var _tickerTimer = null;
   var _tickerPaused = false;
   var _lastEvents = [];
+  var _groupByVisitor = false;
 
   function _$(id) { return document.getElementById(id); }
 
@@ -45,7 +46,51 @@
       "</li>";
   }
 
+  function visitorJourneyItemHtml(ev) {
+    var GA = window.GoeloActivity;
+    var esc = GA ? GA._esc : function (s) { return s; };
+    return "<li class=\"act-visitor-journey__item\">" +
+      "<span class=\"act-visitor-journey__time\">" + esc(GA ? GA.fmtTime(ev.created_at) : "") + "</span>" +
+      "<span class=\"act-visitor-journey__type\">" + esc(GA ? GA.visitorJourneyLine(ev) : ev.event_type) + "</span>" +
+      "</li>";
+  }
+
+  function renderFeedByVisitor(events) {
+    var host = _$("act-feed-list");
+    if (!host || !window.GoeloActivity) return;
+    _lastEvents = events || [];
+    if (!_lastEvents.length) {
+      host.innerHTML = "<p class=\"gtr-empty\">Aucune activité récente.</p>";
+      renderTicker([]);
+      return;
+    }
+
+    var groups = window.GoeloActivity.groupByVisitorSession(_lastEvents);
+    var withSession = groups.filter(function (g) { return !!g.visitor_session_id; });
+    var withoutSession = groups.filter(function (g) { return !g.visitor_session_id; });
+
+    host.innerHTML = withSession.map(function (g) {
+      return "<section class=\"act-visitor-group\">" +
+        "<h3 class=\"act-visitor-group__title\">Visiteur " + window.GoeloActivity._esc(g.shortId) + "</h3>" +
+        "<ul class=\"act-visitor-journey\">" + g.items.map(visitorJourneyItemHtml).join("") + "</ul>" +
+        "</section>";
+    }).join("") + (withoutSession.length
+      ? withoutSession.map(function (g) {
+        return "<section class=\"act-visitor-group act-visitor-group--orphan\">" +
+          "<h3 class=\"act-visitor-group__title\">Sans session visiteur</h3>" +
+          "<ul class=\"act-visitor-journey\">" + g.items.map(visitorJourneyItemHtml).join("") + "</ul>" +
+          "</section>";
+      }).join("")
+      : "");
+
+    renderTicker(_lastEvents.slice(0, 8));
+  }
+
   function renderFeed(events) {
+    if (_groupByVisitor) {
+      renderFeedByVisitor(events);
+      return;
+    }
     var host = _$("act-feed-list");
     if (!host || !window.GoeloActivity) return;
     _lastEvents = events || [];
@@ -120,6 +165,13 @@
     var refreshBtn = _$("act-refresh-btn");
     if (refreshBtn) {
       refreshBtn.addEventListener("click", function () { loadActivity(); });
+    }
+    var groupCb = _$("act-group-visitor");
+    if (groupCb) {
+      groupCb.addEventListener("change", function () {
+        _groupByVisitor = !!groupCb.checked;
+        renderFeed(_lastEvents);
+      });
     }
     var pauseBtn = _$("act-ticker-pause");
     if (pauseBtn) {

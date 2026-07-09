@@ -15,6 +15,43 @@
     joinedRouteIds: new Set()
   };
 
+  var _homeScrollTracker = null;
+  var _homePageViewLogged = false;
+
+  function logHomeActivity(eventType, metadata, extras) {
+    if (!window.GoeloActivity) return;
+    window.GoeloActivity.logEvent(null, eventType, metadata || {}, extras || {});
+  }
+
+  function initHomePageTracking() {
+    if (_homePageViewLogged) return;
+    var GA = window.GoeloActivity;
+    if (!GA) {
+      setTimeout(initHomePageTracking, 100);
+      return;
+    }
+
+    _homePageViewLogged = true;
+    logHomeActivity(GA.EVENT_TYPES.PAGE_HOME_VIEWED, {});
+
+    _homeScrollTracker = GA.trackScrollDepth(
+      null,
+      GA.EVENT_TYPES.HOME_SCROLL_DEPTH,
+      "home"
+    );
+
+    var footer = document.querySelector(".gr-footer");
+    if (footer) {
+      GA.observeFooterOnce(null, footer, GA.EVENT_TYPES.HOME_FOOTER_VIEWED);
+    }
+  }
+
+  function refreshHomeScrollTracking() {
+    if (_homeScrollTracker && _homeScrollTracker.refresh) {
+      _homeScrollTracker.refresh();
+    }
+  }
+
   function getSb() {
     return window.goeloGetSb ? window.goeloGetSb() : null;
   }
@@ -270,10 +307,14 @@
       viewMode: "sorties",
       joinedRouteIds: upcomingState.joinedRouteIds,
       asList: true,
-      emptyHtml: ""
+      emptyHtml: "",
+      trackSource: "home"
     });
 
-    requestAnimationFrame(function () { _syncUpcomingNav(); });
+    requestAnimationFrame(function () {
+      _syncUpcomingNav();
+      refreshHomeScrollTracking();
+    });
   }
 
   function _getUpcomingScroller() {
@@ -339,10 +380,12 @@
     }
 
     _bindUpcomingNav();
+    refreshHomeScrollTracking();
   }
 
   function _init() {
     _bindLogoutButtons();
+    initHomePageTracking();
     initUpcomingSorties();
 
     var heroCta = document.querySelector(".gr-hero-ctas .gr-btn--ghost[data-goelo-auth-trigger]");

@@ -351,9 +351,24 @@
     });
   }
 
+  function bindTeamRiderCtaTracking() {
+    global.document.addEventListener("click", function (e) {
+      var el = e.target.closest("[data-goelo-tr-cta]");
+      if (!el) return;
+      if (role() !== "visitor") return;
+      if (!el.hasAttribute("data-goelo-auth-trigger")) return;
+
+      var GA = global.GoeloActivity;
+      if (!GA) return;
+
+      GA.logEvent(null, GA.EVENT_TYPES.TEAM_RIDER_JOIN_CLICKED, { source: "home" });
+    });
+  }
+
   function init() {
     bindModalLoginShortcut();
     bindAuthSubscriptions();
+    bindTeamRiderCtaTracking();
 
     var s = readAuthState();
     if (s.pending) {
