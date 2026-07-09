@@ -367,26 +367,202 @@
       font-size: .72rem; color: var(--muted); cursor: pointer; user-select: none;
     }
     .act-feed__filter input { accent-color: var(--accent); }
-    .act-visitor-group {
-      margin-bottom: 16px; padding-bottom: 12px;
+
+    .act-analytics {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 240px;
+      gap: 14px;
+    }
+    .act-analytics__main {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      min-height: 280px;
+    }
+    .act-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
     }
-    .act-visitor-group__title {
-      font-family: var(--font-display); font-size: .78rem; font-weight: 700;
-      letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px;
+    .act-tab {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
     }
-    .act-visitor-journey {
-      list-style: none; display: flex; flex-direction: column; gap: 4px;
+    .act-tab.is-active {
+      color: #0D0D0D;
+      background: var(--accent);
+      border-color: var(--accent);
     }
-    .act-visitor-journey__item {
-      display: grid; grid-template-columns: 42px 1fr; gap: 8px;
-      font-size: .76rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      padding: 4px 0;
+    .act-journey-table-wrap { overflow-x: auto; }
+    .act-journey-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
     }
-    .act-visitor-journey__time {
-      color: var(--muted); font-variant-numeric: tabular-nums;
+    .act-journey-table th,
+    .act-journey-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
     }
-    .act-visitor-journey__type { color: var(--text); }
+    .act-journey-table th {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .act-journey-row {
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+    .act-journey-row:hover,
+    .act-journey-row.is-selected {
+      background: var(--surface2);
+    }
+    .act-journey-table__time,
+    .act-journey-table__sid {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .act-journey-table__sid {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--accent);
+    }
+    .act-journey-table__count {
+      text-align: center;
+      font-weight: 700;
+    }
+    .act-journey-table__path,
+    .act-scenario-table__path {
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .act-scenario-table__count {
+      text-align: right;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .act-session-detail {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface2);
+    }
+    .act-session-detail__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .act-session-detail__title {
+      font-family: var(--font-display);
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin: 0 0 4px;
+    }
+    .act-session-detail__sub {
+      margin: 0;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+    .act-session-detail__close {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .act-session-detail__summary {
+      margin: 0 0 10px;
+      font-size: .78rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+    .act-session-detail__timeline {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+    }
+    .act-session-detail__item {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 8px;
+      font-size: .76rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 3px 0;
+    }
+    .act-session-detail__item.is-synthetic .act-session-detail__event {
+      color: var(--muted);
+      font-style: italic;
+    }
+    .act-session-detail__time {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .act-funnel {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: 520px;
+    }
+    .act-funnel__step {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface2);
+    }
+    .act-funnel__label {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .76rem;
+      margin-bottom: 6px;
+    }
+    .act-funnel__metrics {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .act-funnel__count {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .act-funnel__rate {
+      font-size: .72rem;
+      color: var(--muted);
+    }
+    .act-funnel__arrow {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1;
+      padding: 6px 0;
+    }
+
     .act-feed__title, .act-ticker__title {
       font-family: var(--font-display); font-size: .85rem; font-weight: 700;
       letter-spacing: .08em; text-transform: uppercase;
@@ -455,7 +631,7 @@
     @media (max-width: 600px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
       .act-stats { grid-template-columns: repeat(2, 1fr); }
-      .act-grid { grid-template-columns: 1fr; }
+      .act-grid, .act-analytics { grid-template-columns: 1fr; }
       .gtr-demand-card__head { flex-direction: column; gap: 8px; }
       .page-title { font-size: 1.6rem; }
       .topbar-nav { display: none; }
@@ -504,8 +680,8 @@
     <section class="admin-section" id="act-dashboard">
       <div class="admin-section__head">
         <div>
-          <h2 class="admin-section__title">Feed <span>d'activité</span></h2>
-          <p class="admin-section__sub">Journal unifié activity_events — routes, inscriptions, profils, commentaires, demandes</p>
+          <h2 class="admin-section__title">Analyse <span>visiteurs</span></h2>
+          <p class="admin-section__sub">Parcours, scénarios et funnel — données activity_events (200 derniers événements)</p>
         </div>
         <button class="btn-refresh" id="act-refresh-btn" type="button">
           <span class="btn-refresh__icon">↻</span> Actualiser
@@ -537,26 +713,31 @@
 
       <p class="act-feed-error" id="act-feed-error" hidden></p>
 
-      <div class="act-grid">
-        <div class="act-feed">
-          <div class="act-feed__toolbar">
-            <span class="act-feed__title">Chronologie</span>
-            <label class="act-feed__filter" for="act-group-visitor">
-              <input type="checkbox" id="act-group-visitor" />
-              Regrouper par visiteur
-            </label>
-          </div>
-          <div id="act-feed-list">
+      <div class="act-analytics">
+        <div class="act-analytics__main">
+          <nav class="act-tabs" role="tablist" aria-label="Analyses visiteurs">
+            <button type="button" class="act-tab is-active" data-act-tab="journeys" aria-selected="true">
+              Parcours visiteurs
+            </button>
+            <button type="button" class="act-tab" data-act-tab="scenarios" aria-selected="false">
+              Scénarios utilisateurs
+            </button>
+            <button type="button" class="act-tab" data-act-tab="funnel" aria-selected="false">
+              Funnel global
+            </button>
+          </nav>
+          <div id="act-analytics-panel">
             <div class="gtr-loading">
               <div class="gtr-loading__dot"></div>
               <div class="gtr-loading__dot"></div>
               <div class="gtr-loading__dot"></div>
             </div>
           </div>
+          <div id="act-session-detail" class="act-session-detail" hidden></div>
         </div>
-        <aside class="act-ticker" aria-label="Fil en direct">
+        <aside class="act-ticker" aria-label="Alertes récentes">
           <div class="act-ticker__head">
-            <span class="act-ticker__title">En direct</span>
+            <span class="act-ticker__title">Alertes</span>
             <span class="act-ticker__live"><span class="act-ticker__dot"></span> Live</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">

@@ -147,6 +147,238 @@
     });
   }
 
+  var JOURNEY_STEP_LABELS = {
+    PAGE_HOME_VIEWED: "Accueil",
+    UPCOMING_RIDE_CARD_CLICKED: "Carte sortie",
+    UPCOMING_RIDE_VIEW_CLICKED: "Voir sortie",
+    UPCOMING_RIDE_JOIN_CLICKED: "Rejoindre",
+    TEAM_RIDER_JOIN_CLICKED: "Team Rider",
+    PAGE_SORTIES_VIEWED: "Sorties",
+    PAGE_PARCOURS_VIEWED: "Parcours",
+    NAVIGATE_TO_SORTIES_CLICKED: "Vers sorties",
+    RIDE_INFO_OPENED: "Infos",
+    RIDE_PARTICIPATE_CLICKED: "Participation",
+    RIDE_JOINED: "Join",
+    USER_REGISTERED: "Inscription",
+    USER_LOGIN: "Connexion",
+    RIDE_VIEWED: "Consultation sortie",
+    HOME_FOOTER_VIEWED: "Footer accueil",
+    SORTIES_FOOTER_VIEWED: "Footer sorties"
+  };
+
+  var FUNNEL_STEPS = [
+    {
+      key: "home",
+      title: "PAGE_HOME_VIEWED",
+      types: ["PAGE_HOME_VIEWED"]
+    },
+    {
+      key: "view",
+      title: "UPCOMING_RIDE_VIEW_CLICKED / RIDE_VIEWED",
+      types: ["UPCOMING_RIDE_VIEW_CLICKED", "RIDE_VIEWED", "UPCOMING_RIDE_CARD_CLICKED"]
+    },
+    {
+      key: "participate",
+      title: "RIDE_PARTICIPATE_CLICKED",
+      types: ["RIDE_PARTICIPATE_CLICKED"]
+    },
+    {
+      key: "joined",
+      title: "RIDE_JOINED",
+      types: ["RIDE_JOINED"]
+    }
+  ];
+
+  function isScrollDepthEvent(type) {
+    return type === "HOME_SCROLL_DEPTH" || type === "SORTIES_SCROLL_DEPTH";
+  }
+
+  function maxScrollDepth(events, eventType) {
+    var max = 0;
+    (events || []).forEach(function (ev) {
+      if (ev.event_type !== eventType) return;
+      var d = parseInt((ev.metadata || {}).depth, 10);
+      if (!isNaN(d) && d > max) max = d;
+    });
+    return max;
+  }
+
+  function journeyStepLabel(ev) {
+    if (!ev) return null;
+    var type = ev.event_type || "";
+    if (isScrollDepthEvent(type)) return null;
+    if (JOURNEY_STEP_LABELS[type]) return JOURNEY_STEP_LABELS[type];
+    if (type === "RIDE_INFO_OPENED") return "Infos";
+    return null;
+  }
+
+  function sessionUserLabel(session) {
+    var items = (session && session.items) || [];
+    for (var i = 0; i < items.length; i++) {
+      var ev = items[i];
+      var meta = ev.metadata || {};
+      var pseudo = (ev.actor_pseudo && String(ev.actor_pseudo).trim())
+        || (meta.actor_pseudo && String(meta.actor_pseudo).trim())
+        || "";
+      if (pseudo && pseudo !== "Quelqu'un" && pseudo !== "Utilisateur") return pseudo;
+    }
+    return "Visiteur";
+  }
+
+  function buildJourneySummary(events) {
+    var sorted = (events || []).slice().sort(function (a, b) {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+    var parts = [];
+    var homeScroll = maxScrollDepth(sorted, "HOME_SCROLL_DEPTH");
+    var sortiesScroll = maxScrollDepth(sorted, "SORTIES_SCROLL_DEPTH");
+    var homeScrollAdded = false;
+    var sortiesScrollAdded = false;
+
+    sorted.forEach(function (ev) {
+      if (isScrollDepthEvent(ev.event_type)) return;
+      var label = journeyStepLabel(ev);
+      if (!label) return;
+
+      if (label === "Accueil" && homeScroll > 0 && !homeScrollAdded) {
+        if (parts.length && parts[parts.length - 1] === "Accueil") {
+          parts.push("Scroll");
+          homeScrollAdded = true;
+        }
+      }
+      if (label === "Sorties" && sortiesScroll > 0 && !sortiesScrollAdded) {
+        if (parts.length && parts[parts.length - 1] === "Sorties") {
+          parts.push("Scroll");
+          sortiesScrollAdded = true;
+        }
+      }
+
+      if (parts[parts.length - 1] !== label) parts.push(label);
+    });
+
+    if (!parts.length) return "—";
+    return parts.join(" → ");
+  }
+
+  function buildScenarioKey(events) {
+    return buildJourneySummary(events);
+  }
+
+  function buildVisitorSessions(events) {
+    return groupByVisitorSession(events).filter(function (g) {
+      return !!g.visitor_session_id;
+    });
+  }
+
+  function analyzeScenarios(sessions) {
+    var map = {};
+    (sessions || []).forEach(function (session) {
+      var key = buildScenarioKey(session.items);
+      if (!key || key === "—") return;
+      if (!map[key]) map[key] = 0;
+      map[key]++;
+    });
+    return Object.keys(map).map(function (key) {
+      return { scenario: key, count: map[key] };
+    }).sort(function (a, b) {
+      return b.count - a.count;
+    });
+  }
+
+  function sessionHasEventType(session, types) {
+    return (session.items || []).some(function (ev) {
+      return types.indexOf(ev.event_type) >= 0;
+    });
+  }
+
+  function analyzeFunnel(sessions) {
+    var steps = FUNNEL_STEPS.map(function (step) {
+      var count = (sessions || []).filter(function (session) {
+        return sessionHasEventType(session, step.types);
+      }).length;
+      return {
+        key: step.key,
+        title: step.title,
+        count: count
+      };
+    });
+
+    return steps.map(function (step, i) {
+      var prev = i > 0 ? steps[i - 1].count : null;
+      var rate = null;
+      if (i > 0 && prev > 0) {
+        rate = Math.round((step.count / prev) * 1000) / 10;
+      }
+      return {
+        key: step.key,
+        title: step.title,
+        count: step.count,
+        conversionRate: rate
+      };
+    });
+  }
+
+  function collapseScrollDepthTimeline(events) {
+    var sorted = (events || []).slice().sort(function (a, b) {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+    var out = [];
+    var i = 0;
+
+    function pushSynthetic(label, createdAt) {
+      out.push({
+        synthetic: true,
+        label: label,
+        created_at: createdAt,
+        event_type: "SCROLL_SUMMARY"
+      });
+    }
+
+    while (i < sorted.length) {
+      var ev = sorted[i];
+      var type = ev.event_type;
+
+      if (type === "HOME_SCROLL_DEPTH") {
+        var homeMax = 0;
+        var homeAt = ev.created_at;
+        while (i < sorted.length && sorted[i].event_type === "HOME_SCROLL_DEPTH") {
+          homeMax = Math.max(homeMax, parseInt((sorted[i].metadata || {}).depth, 10) || 0);
+          homeAt = sorted[i].created_at;
+          i++;
+        }
+        if (homeMax > 0) pushSynthetic("Lecture page : " + homeMax + "%", homeAt);
+        continue;
+      }
+
+      if (type === "SORTIES_SCROLL_DEPTH") {
+        var sortiesMax = 0;
+        var sortiesAt = ev.created_at;
+        while (i < sorted.length && sorted[i].event_type === "SORTIES_SCROLL_DEPTH") {
+          sortiesMax = Math.max(sortiesMax, parseInt((sorted[i].metadata || {}).depth, 10) || 0);
+          sortiesAt = sorted[i].created_at;
+          i++;
+        }
+        if (sortiesMax > 0) pushSynthetic("Lecture sorties : " + sortiesMax + "%", sortiesAt);
+        continue;
+      }
+
+      out.push(ev);
+      i++;
+    }
+
+    return out;
+  }
+
+  function detailTimelineLabel(ev) {
+    if (ev.synthetic) return ev.label;
+    if (isScrollDepthEvent(ev.event_type)) return null;
+    var meta = ev.metadata || {};
+    if (ev.event_type === "RIDE_INFO_OPENED" && meta.section) {
+      return ev.event_type + " (" + meta.section + ")";
+    }
+    return visitorJourneyLine(ev);
+  }
+
   function _esc(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -431,6 +663,15 @@
     }
   }
 
+  async function fetchAnalyticsEvents(sb, limit) {
+    var data = await fetchDashboard(sb, limit || 200);
+    return {
+      events: data.events || [],
+      stats: data.stats || {},
+      error: data.error || null
+    };
+  }
+
   async function fetchDashboard(sb, limit) {
     if (!sb) return { stats: {}, events: [] };
     try {
@@ -461,6 +702,15 @@
     formatEvents: formatEvents,
     groupByDay: groupByDay,
     groupByVisitorSession: groupByVisitorSession,
+    buildVisitorSessions: buildVisitorSessions,
+    buildJourneySummary: buildJourneySummary,
+    analyzeScenarios: analyzeScenarios,
+    analyzeFunnel: analyzeFunnel,
+    collapseScrollDepthTimeline: collapseScrollDepthTimeline,
+    detailTimelineLabel: detailTimelineLabel,
+    sessionUserLabel: sessionUserLabel,
+    isScrollDepthEvent: isScrollDepthEvent,
+    FUNNEL_STEPS: FUNNEL_STEPS,
     visitorSessionShortId: visitorSessionShortId,
     visitorJourneyLine: visitorJourneyLine,
     getVisitorSessionId: getVisitorSessionId,
@@ -472,6 +722,7 @@
     observeFooterOnce: observeFooterOnce,
     trackScrollDepth: trackScrollDepth,
     fetchDashboard: fetchDashboard,
+    fetchAnalyticsEvents: fetchAnalyticsEvents,
     _esc: _esc
   };
 })(typeof window !== "undefined" ? window : globalThis);
