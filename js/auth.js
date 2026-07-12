@@ -231,6 +231,9 @@ window.goeloGetSb = function () {
       if (_recoveryInProgress && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
         return;
       }
+      if (event === "SIGNED_IN" && session && session.user) {
+        _syncProfileAfterAuth(sb, session.user, {}, "signed-in");
+      }
       if (
         event === "INITIAL_SESSION" ||
         event === "SIGNED_IN" ||
@@ -243,6 +246,93 @@ window.goeloGetSb = function () {
         _emitRole("visitor", null);
       }
     });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     6b. SYNCHRONISATION PROFIL (profiles)
+     ════════════════════════════════════════════════════════════ */
+  function _profileFieldsFromForm() {
+    var pseudoEl   = document.getElementById("ml-pseudo");
+    var fullnameEl = document.getElementById("ml-fullname");
+    var levelEl    = document.getElementById("ml-cyclist-level");
+    var cityEl     = document.getElementById("ml-city");
+    return {
+      pseudo: pseudoEl ? pseudoEl.value.trim() : "",
+      username: fullnameEl ? fullnameEl.value.trim() : "",
+      cyclist_level: levelEl ? levelEl.value.trim() : "",
+      city: cityEl ? cityEl.value.trim() : ""
+    };
+  }
+
+  function _profileFieldsFromUser(user) {
+    var um = user && user.user_metadata ? user.user_metadata : {};
+    return {
+      pseudo: um.pseudo ? String(um.pseudo).trim() : "",
+      username: um.username ? String(um.username).trim()
+        : (um.name ? String(um.name).trim() : ""),
+      cyclist_level: um.cyclist_level ? String(um.cyclist_level).trim() : "",
+      city: um.city ? String(um.city).trim() : ""
+    };
+  }
+
+  function _mergeProfileFields(formFields, metaFields) {
+    formFields = formFields || {};
+    metaFields = metaFields || {};
+    return {
+      pseudo: formFields.pseudo || metaFields.pseudo || "",
+      username: formFields.username || metaFields.username || "",
+      cyclist_level: formFields.cyclist_level || metaFields.cyclist_level || "",
+      city: formFields.city || metaFields.city || ""
+    };
+  }
+
+  function _buildProfilePayload(userId, fields) {
+    var patch = { id: userId };
+    if (fields.pseudo) patch.pseudo = fields.pseudo;
+    if (fields.username) patch.username = fields.username;
+    if (fields.cyclist_level) patch.cyclist_level = fields.cyclist_level;
+    if (fields.city) patch.city = fields.city;
+    return patch;
+  }
+
+  async function _persistUserProfile(sb, user, fields, context) {
+    if (!sb || !user || !user.id) {
+      console.warn("[GoëloAuth] profile sync (" + context + ") — utilisateur manquant");
+      return { ok: false, error: "missing_user" };
+    }
+
+    fields = fields || {};
+    console.log("[GoëloAuth] profile sync (" + context + ") — champs formulaire/metadata:", fields);
+
+    var payload = _buildProfilePayload(user.id, fields);
+    console.log("[GoëloAuth] profile sync (" + context + ") — payload Supabase:", payload);
+
+    if (Object.keys(payload).length <= 1) {
+      console.log("[GoëloAuth] profile sync (" + context + ") — ignoré (aucun champ à enregistrer)");
+      return { ok: true, skipped: true };
+    }
+
+    var result = await sb
+      .from("profiles")
+      .upsert(payload, { onConflict: "id" });
+
+    console.log(
+      "[GoëloAuth] profile sync (" + context + ") — réponse Supabase data:",
+      result.data,
+      "error:",
+      result.error
+    );
+
+    if (result.error) {
+      console.warn("[GoëloAuth] profile sync (" + context + "):", result.error.message);
+    }
+
+    return { ok: !result.error, data: result.data, error: result.error };
+  }
+
+  async function _syncProfileAfterAuth(sb, user, formFields, context) {
+    var merged = _mergeProfileFields(formFields, _profileFieldsFromUser(user));
+    return _persistUserProfile(sb, user, merged, context);
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -276,6 +366,15 @@ window.goeloGetSb = function () {
       if (loginResult.error) {
         _showError(_friendlyLoginError(loginResult.error.message));
         return;
+      }
+
+      if (loginResult.data && loginResult.data.user) {
+        await _syncProfileAfterAuth(
+          sb,
+          loginResult.data.user,
+          _profileFieldsFromForm(),
+          "login"
+        );
       }
 
       await resolveRole();
@@ -319,10 +418,6 @@ window.goeloGetSb = function () {
   async function _submitSignup() {
     var emailEl    = document.getElementById("ml-email");
     var pwEl       = document.getElementById("ml-password");
-    var pseudoEl   = document.getElementById("ml-pseudo");
-    var fullnameEl = document.getElementById("ml-fullname");
-    var levelEl    = document.getElementById("ml-cyclist-level");
-    var cityEl     = document.getElementById("ml-city");
     var submitBtn  = document.getElementById("ml-submit");
     var label      = document.getElementById("ml-btn-label");
     var spinner    = document.getElementById("ml-btn-spinner");
@@ -330,10 +425,11 @@ window.goeloGetSb = function () {
 
     var email    = emailEl.value.trim().toLowerCase();
     var password = pwEl.value;
-    var pseudo   = pseudoEl ? pseudoEl.value.trim() : "";
-    var fullname = fullnameEl ? fullnameEl.value.trim() : "";
-    var level    = levelEl ? levelEl.value.trim() : "";
-    var city     = cityEl ? cityEl.value.trim() : "";
+    var formFields = _profileFieldsFromForm();
+    var pseudo   = formFields.pseudo;
+    var fullname = formFields.username;
+    var level    = formFields.cyclist_level;
+    var city     = formFields.city;
     _hideSignupError();
 
     if (!email || !password) {
@@ -383,20 +479,12 @@ window.goeloGetSb = function () {
       }
 
       if (signupResult.data && signupResult.data.user) {
-        var profileRow = {
-          id: signupResult.data.user.id,
-          role: "user",
-          pseudo: pseudo,
-          username: fullname,
-          cyclist_level: level
-        };
-        if (city) profileRow.city = city;
-        var profileResult = await sb
-          .from("profiles")
-          .upsert(profileRow, { onConflict: "id" });
-        if (profileResult.error) {
-          console.warn("[GoëloAuth] profile upsert:", profileResult.error.message);
-        }
+        await _syncProfileAfterAuth(
+          sb,
+          signupResult.data.user,
+          formFields,
+          signupResult.data.session ? "signup" : "signup-pending-confirmation"
+        );
       }
 
       if (signupResult.data.user && !signupResult.data.session) {

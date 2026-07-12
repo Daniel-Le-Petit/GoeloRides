@@ -148,7 +148,7 @@
           "<td class=\"act-journey-table__time\">" + esc(fmtDateTime((start && start.created_at) || (last && last.created_at))) + "</td>" +
           "<td class=\"act-journey-table__sid\">" + esc(session.shortId) + "</td>" +
           "<td>" + esc(GA.sessionUserLabel(session)) + "</td>" +
-          "<td class=\"act-journey-table__count\">" + session.items.length + "</td>" +
+          "<td class=\"act-journey-table__count\">" + GA.sessionActionCount(session.items) + "</td>" +
           "<td class=\"act-journey-table__path\">" + esc(GA.buildJourneySummary(session.items)) + "</td>" +
           "</tr>";
       }).join("") +

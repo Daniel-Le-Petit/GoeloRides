@@ -264,6 +264,12 @@
     return buildJourneySummary(events);
   }
 
+  function sessionActionCount(items) {
+    return (items || []).filter(function (ev) {
+      return !isScrollDepthEvent(ev.event_type);
+    }).length;
+  }
+
   function buildVisitorSessions(events) {
     return groupByVisitorSession(events).filter(function (g) {
       return !!g.visitor_session_id;
@@ -372,9 +378,13 @@
   function detailTimelineLabel(ev) {
     if (ev.synthetic) return ev.label;
     if (isScrollDepthEvent(ev.event_type)) return null;
-    var meta = ev.metadata || {};
-    if (ev.event_type === "RIDE_INFO_OPENED" && meta.section) {
-      return ev.event_type + " (" + meta.section + ")";
+    var step = journeyStepLabel(ev);
+    if (step) {
+      var meta = ev.metadata || {};
+      if (ev.event_type === "RIDE_INFO_OPENED" && meta.section) {
+        return step + " (" + meta.section + ")";
+      }
+      return step;
     }
     return visitorJourneyLine(ev);
   }
@@ -546,8 +556,14 @@
     var fired = {};
     var markers = [];
     var observer = null;
+    var hasScrolled = false;
+
+    function onScroll() {
+      hasScrolled = true;
+    }
 
     function cleanup() {
+      window.removeEventListener("scroll", onScroll, { passive: true });
       markers.forEach(function (m) {
         if (m.parentNode) m.parentNode.removeChild(m);
       });
@@ -574,9 +590,12 @@
         return;
       }
 
+      window.addEventListener("scroll", onScroll, { passive: true });
+
       observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
           if (!entry.isIntersecting) return;
+          if (!hasScrolled && (window.scrollY || window.pageYOffset || 0) < 4) return;
           var d = parseInt(entry.target.getAttribute("data-depth"), 10);
           if (!d || fired[d]) return;
           fired[d] = true;
@@ -592,7 +611,7 @@
         marker.setAttribute("aria-hidden", "true");
         marker.style.cssText =
           "position:absolute;width:1px;height:1px;pointer-events:none;visibility:hidden;left:0;";
-        marker.style.top = Math.max(0, (scrollHeight - viewport) * depth / 100) + "px";
+        marker.style.top = Math.max(0, scrollHeight * depth / 100) + "px";
         document.body.appendChild(marker);
         markers.push(marker);
         observer.observe(marker);
@@ -709,6 +728,7 @@
     collapseScrollDepthTimeline: collapseScrollDepthTimeline,
     detailTimelineLabel: detailTimelineLabel,
     sessionUserLabel: sessionUserLabel,
+    sessionActionCount: sessionActionCount,
     isScrollDepthEvent: isScrollDepthEvent,
     FUNNEL_STEPS: FUNNEL_STEPS,
     visitorSessionShortId: visitorSessionShortId,
