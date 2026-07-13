@@ -74,7 +74,7 @@
     if (global.GoeloProfile && global.GoeloProfile.sessionDisplayName) {
       return global.GoeloProfile.sessionDisplayName();
     }
-    return "Utilisateur";
+    return global.GoeloProfile ? global.GoeloProfile.FALLBACK : "?";
   }
 
   function buildNavbarHtml(activeId, variant) {

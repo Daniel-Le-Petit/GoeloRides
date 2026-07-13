@@ -118,7 +118,9 @@
         window.GoeloProfile.profileFromUser(user)
       )) ||
       (user.user_metadata && (user.user_metadata.pseudo || user.user_metadata.name)) ||
-      (user.email ? user.email.split("@")[0] : "Utilisateur");
+      (window.GoeloProfile ? window.GoeloProfile.getParticipantInitials(
+        window.GoeloProfile.profileFromUser(user)
+      ) : "?");
 
     var role = profile.role || window.GOELO_ROLE || "user";
 

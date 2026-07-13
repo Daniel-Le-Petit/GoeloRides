@@ -12,23 +12,29 @@
     return String(id == null ? "" : id).trim();
   }
 
-function displayName(p) {
-  var api = profileApi();
-  if (api) return api.getDisplayName(p);
-  return "Utilisateur";
-}
+  function displayName(p) {
+    var api = profileApi();
+    if (api && api.getParticipantLabel) return api.getParticipantLabel(p);
+    if (api) return api.getDisplayName(p);
+    return "?";
+  }
 
   function normalizeParticipant(x) {
     if (x == null) return null;
     if (typeof x === "string") {
       var s = x.trim();
-      return s ? { pseudo: s } : null;
+      if (!s || (profileApi() && profileApi().isPlaceholderIdentity(s))) return null;
+      return { pseudo: s };
     }
     if (typeof x === "object") {
+      var pseudo = x.pseudo || x.display_name || null;
+      if (pseudo && profileApi() && profileApi().isPlaceholderIdentity(pseudo)) pseudo = null;
       return {
-        pseudo: x.pseudo || x.display_name || null,
+        pseudo: pseudo,
         username: x.username || x.user_name || null,
         user_name: x.user_name || x.username || null,
+        first_name: x.first_name || x.firstName || null,
+        last_name: x.last_name || x.lastName || null,
         cyclist_level: x.cyclist_level || null,
         city: x.city || null
       };
@@ -117,9 +123,12 @@ function displayName(p) {
 
   function renderParticipantRow(p, i, tag) {
     tag = tag || "li";
+    var api = profileApi();
     var label = displayName(p);
-    var color = profileApi() ? profileApi().avatarColor(p, i) : "#7DD3FC";
-    var inits = profileApi() ? profileApi().initials(p) : label.slice(0, 2).toUpperCase();
+    var color = api ? api.avatarColor(p, i) : "#7DD3FC";
+    var inits = api && api.getParticipantInitials
+      ? api.getParticipantInitials(p)
+      : (api ? api.initials(p) : label.slice(0, 2).toUpperCase());
     return (
       "<" + tag + ' class="go-participant-row">' +
       '<span class="go-participant-row__avatar" style="background:' + color + '" title="' +
@@ -179,7 +188,9 @@ function displayName(p) {
     var html = shown.map(function (p, i) {
       var label = displayName(p);
       var color = profileApi() ? profileApi().avatarColor(p, i) : "#7DD3FC";
-      var inits = profileApi() ? profileApi().initials(p) : label.slice(0, 2).toUpperCase();
+      var inits = profileApi() && profileApi().getParticipantInitials
+        ? profileApi().getParticipantInitials(p)
+        : (profileApi() ? profileApi().initials(p) : label.slice(0, 2).toUpperCase());
       return (
         '<span class="' + avatarClass + '" style="background:' + color + '" title="' +
         escapeHtml(label) + '">' + escapeHtml(inits) + "</span>"

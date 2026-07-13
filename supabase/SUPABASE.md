@@ -78,6 +78,12 @@ Puis exécuter **pour nettoyer `signups` et centraliser les données utilisateur
 
 **Important** : cette migration supprime les colonnes `pseudo`, `email`, `waitlist`, `canceled_at`, `cyclist_level` et `participant_city` de `signups`. Les inscriptions sans `user_id` mappable vers `auth.users` sont supprimées. Appliquer **après** les migrations `signup_list_for_route` et `signup_is_joined`.
 
+Puis exécuter **pour la sortie de lancement GoëloRides #1** (~46 km, GPX + fiche sortie avec carte) :
+
+`supabase/migrations/20250712180000_goelorides_1_launch_route.sql`
+
+(GPX : `gpx/GoeloRides-1-Boucle-Ports-du-Goelo.gpx` · regénérer : `python3 scripts/generate-goelorides-1-gpx.py` · URL : `parcours.html?id=goelorides_1`.)
+
 Puis exécuter **pour masquer aussi les parcours intégrés** (`falaises`, `brehec`, `boucle`) depuis la même modale **« Gérer les sorties »** / liste **« Corriger une sortie »** :
 
 `supabase/migrations/20250611140000_goelo_hidden_builtins.sql`

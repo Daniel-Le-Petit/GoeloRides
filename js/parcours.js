@@ -268,10 +268,13 @@ async function toggleSignup(routeId) {
     if (window.GoeloSignupParticipants) {
       return window.GoeloSignupParticipants.displayName(p);
     }
+    if (window.GoeloProfile && window.GoeloProfile.getParticipantLabel) {
+      return window.GoeloProfile.getParticipantLabel(p);
+    }
     if (window.GoeloProfile) {
       return window.GoeloProfile.getDisplayName(p);
     }
-    return "Utilisateur";
+    return "?";
   }
 
   async function refreshParticipants() {
@@ -322,7 +325,9 @@ async function toggleSignup(routeId) {
       var label = escapeHtml(participantLabel(p));
       var GP = window.GoeloProfile;
       var color = GP ? GP.avatarColor(p, i) : "#7DD3FC";
-      var inits = GP ? GP.initials(p) : label.slice(0, 2).toUpperCase();
+      var inits = GP && GP.getParticipantInitials
+        ? GP.getParticipantInitials(p)
+        : (GP ? GP.initials(p) : label.slice(0, 2).toUpperCase());
       return "<li class=\"go-participant-row\">" +
         "<span class=\"go-participant-row__avatar\" style=\"background:" + color + "\">" +
         inits + "</span>" +
@@ -471,7 +476,9 @@ async function toggleSignup(routeId) {
         var label = participantLabel(p);
         var GP = window.GoeloProfile;
         var color = GP ? GP.avatarColor(p, i) : "#7DD3FC";
-        var inits = GP ? GP.initials(p) : label.slice(0, 2).toUpperCase();
+        var inits = GP && GP.getParticipantInitials
+        ? GP.getParticipantInitials(p)
+        : (GP ? GP.initials(p) : label.slice(0, 2).toUpperCase());
         return '<span class="so-avatar" style="background:' + color + '">' +
           escapeHtml(inits) + "</span>";
       }).join("");
