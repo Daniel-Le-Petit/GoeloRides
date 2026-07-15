@@ -48,3 +48,5 @@ supabase/.config
 *.swp
 *.swo
 
+# Exports Strava avec tokens potentiels
+SortiesGoeloRides/**/strava/*.html
