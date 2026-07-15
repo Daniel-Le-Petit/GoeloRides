@@ -65,6 +65,9 @@
   }
 
   function rideDateFromFc(fc) {
+    if (window.GoeloSortieDates && window.GoeloSortieDates.rideDateFromFc) {
+      return window.GoeloSortieDates.rideDateFromFc(fc);
+    }
     var iso = typeof fc.rideDateIso === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fc.rideDateIso.trim())
       ? fc.rideDateIso.trim() : "";
     var time = typeof fc.rideTime === "string" && /^\d{2}:\d{2}$/.test(fc.rideTime.trim())
@@ -205,7 +208,11 @@ async function fetchSorties() {
     return [];
   }
 
-  return (res.data || []).map(dbRowToSortie);
+  return (res.data || [])
+    .map(dbRowToSortie)
+    .filter(function (s) {
+      return !window.GoeloSortieDates || window.GoeloSortieDates.isActiveListSortie(s);
+    });
 }
 
   /* ── Participants : signups actifs via Supabase (même flux que parcours.js) ── */
@@ -499,18 +506,16 @@ async function fetchSorties() {
   }
 
   function matchesFilter(s) {
-    var now = new Date();
+    var SD = window.GoeloSortieDates;
+    if (SD && !SD.isActiveListSortie(s)) return false;
+
     if (state.filter === "route" || state.filter === "gravel" || state.filter === "vtt") {
       if (s.type !== state.filter) return false;
     } else if (state.filter === "a-venir") {
-      if (!s.date || s.date.getTime() < now.getTime()) return false;
+      if (!s.date) return false;
     } else if (state.filter === "aujourdhui") {
       if (!s.date) return false;
-      if (
-        s.date.getFullYear() !== now.getFullYear() ||
-        s.date.getMonth()    !== now.getMonth()    ||
-        s.date.getDate()     !== now.getDate()
-      ) return false;
+      if (SD && !SD.isTodayParisSortie(s)) return false;
     } else if (state.filter === "meteo-ideale") {
       if (!window.GoeloWeather || !window.GoeloWeather.isIdealWeather(s.weather)) return false;
     }

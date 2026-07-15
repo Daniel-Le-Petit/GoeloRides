@@ -403,6 +403,20 @@
     return "User";
   }
 
+  function rideDateFromFc(fc) {
+    if (global.GoeloSortieDates && global.GoeloSortieDates.rideDateFromFc) {
+      return global.GoeloSortieDates.rideDateFromFc(fc);
+    }
+    var dateIso = fc.rideDateIso;
+    var date = dateIso ? new Date(dateIso + "T12:00:00") : null;
+    var time = fc.meetTime || fc.rideTime || "";
+    if (date && time && /^\d{2}:\d{2}$/.test(time)) {
+      var p = time.split(":");
+      date.setHours(+p[0], +p[1], 0, 0);
+    }
+    return date;
+  }
+
   /** Normalise une ligne Supabase `routes` → objet carte */
   function fromRouteRow(row) {
     var fc = row.front_config;
@@ -411,13 +425,8 @@
     }
     fc = fc || {};
     var stats = fc.stats || {};
-    var dateIso = fc.rideDateIso;
-    var date = dateIso ? new Date(dateIso + "T12:00:00") : null;
+    var date = rideDateFromFc(fc);
     var time = fc.meetTime || fc.rideTime || "";
-    if (date && time && /^\d{2}:\d{2}$/.test(time)) {
-      var p = time.split(":");
-      date.setHours(+p[0], +p[1], 0, 0);
-    }
     var group = row.group_label || "";
     var statut = fc.sortieStatus === "cancelled" ? "annulee"
       : fc.visibility === "public" ? "publiee" : "brouillon";

@@ -217,6 +217,9 @@
       .filter(function (s) {
         if (s.status === "cancelled") return false;
         if (s.visibility && s.visibility !== "public") return false;
+        if (window.GoeloSortieDates) {
+          return window.GoeloSortieDates.isActiveListSortie(s);
+        }
         if (!s.date || s.date.getTime() < now) return false;
         return true;
       })

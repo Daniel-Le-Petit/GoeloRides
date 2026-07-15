@@ -133,9 +133,13 @@
       return;
     }
 
-    var cards = (result.data || []).map(function (row) {
-      return window.GoeloSortieCards.fromRouteRow(row);
-    });
+    var cards = (result.data || [])
+      .map(function (row) {
+        return window.GoeloSortieCards.fromRouteRow(row);
+      })
+      .filter(function (c) {
+        return !window.GoeloSortieDates || window.GoeloSortieDates.isActiveListSortie(c);
+      });
 
     if (_currentFilter === "publiee") {
       cards = cards.filter(function (c) { return c.statut === "publiee"; });
