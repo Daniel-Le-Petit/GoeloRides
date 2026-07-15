@@ -119,6 +119,18 @@
       </p>
     </header>
 
+    <!-- ── GROUPE MESSENGER ── -->
+    <section class="pd-section go-messenger go-messenger--full" id="go-messenger-block" hidden aria-labelledby="go-messenger-title">
+      <h2 class="pd-section__title" id="go-messenger-title">💬 Échanger avec les Riders</h2>
+      <p class="go-messenger__text">
+        Rejoignez le groupe Messenger GoëloRides pour les infos de dernière minute,
+        les changements et les échanges avant les sorties.
+      </p>
+      <button type="button" class="go-sc-btn go-sc-btn--primary go-messenger__btn" data-goelo-messenger-open>
+        💬 Rejoindre le groupe Messenger
+      </button>
+    </section>
+
     <!-- ── MÉTÉO PRÉVUE AU DÉPART ── -->
     <section class="pd-section" id="pd-weather-section" aria-labelledby="pd-weather-title" hidden>
       <h2 class="pd-section__title" id="pd-weather-title">Météo au départ</h2>
@@ -341,6 +353,7 @@
   4. ***-rider.js    → écoute goelo:role-ready, lit GOELO_ROLE
 -->
   <script src="js/goelo-config.js"></script>
+  <script src="js/goelo-messenger.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/goelo-auth-state.js"></script>
   <script src="js/auth.js"></script>

@@ -991,3 +991,87 @@ select.ml-input,
   gap: 0.5rem;
   margin-top: 0.25rem;
 }
+
+/* ── Bloc Messenger (visiteurs) ─────────────────────────────── */
+.go-messenger--full {
+  background: var(--surface, #1A1A1A);
+  border: 1px solid var(--border, #2E2E2E);
+  border-radius: var(--radius, 12px);
+  padding: 1.15rem 1.25rem;
+}
+
+.go-messenger__text {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--muted, #888);
+  margin-bottom: 1rem;
+  max-width: 42rem;
+}
+
+.go-messenger__btn {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 480px) {
+  .go-messenger__btn { width: auto; }
+}
+
+/* ── Modale Messenger ───────────────────────────────────────── */
+.go-messenger-modal__panel {
+  max-width: 420px;
+  width: 100%;
+  text-align: left;
+}
+
+.go-messenger-modal__title {
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--modal-text, #F0F0F0);
+  margin: 0 0 0.75rem;
+  padding-right: 1.5rem;
+  line-height: 1.25;
+}
+
+.go-messenger-modal__intro {
+  font-size: 0.88rem;
+  color: var(--modal-muted, #999);
+  margin-bottom: 0.45rem;
+}
+
+.go-messenger-modal__list {
+  margin: 0 0 1rem 1.1rem;
+  padding: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--modal-text, #F0F0F0);
+}
+
+.go-messenger-modal__list li { margin-bottom: 0.25rem; }
+
+.go-messenger-modal__open {
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+}
+
+.go-messenger-modal__note {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--modal-muted, #999);
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .go-messenger-modal__panel {
+    padding: 1.1rem 1rem 1rem;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+  }
+
+  .go-messenger-modal__title { font-size: 1.1rem; }
+}

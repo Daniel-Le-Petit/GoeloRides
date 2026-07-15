@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cyclistes · Admin GoëloRides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    :root {
+      --bg: #0D0D0D; --surface: #161616; --surface2: #1e1e1e;
+      --border: rgba(255,255,255,.08); --accent: #C8F135;
+      --accent-dim: rgba(200,241,53,.12); --text: #f0f0f0;
+      --muted: #6b7280; --red: #f87171; --green: #86efac;
+      --blue: #60a5fa; --yellow: #fcd34d;
+      --font-display: "Barlow Condensed", sans-serif;
+      --font-body: "Inter", sans-serif;
+      --radius: 10px; --topbar-h: 56px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+    body { min-height: 100dvh; padding-top: var(--topbar-h); padding-bottom: 2rem; }
+
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--topbar-h); background: rgba(13,13,13,.92);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; padding: 0 16px;
+    }
+    .topbar-logo {
+      font-family: var(--font-display); font-size: 1.25rem; font-weight: 800;
+      color: var(--text); text-decoration: none; letter-spacing: .04em;
+    }
+    .topbar-logo span { color: var(--accent); }
+    .topbar-crown {
+      background: var(--accent-dim); border: 1px solid var(--accent);
+      color: var(--accent); font-family: var(--font-display);
+      font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+      padding: 2px 8px; border-radius: 4px;
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .topbar-nav a {
+      color: var(--muted); text-decoration: none; font-size: .78rem;
+      padding: 4px 10px; border-radius: 6px; border: 1px solid transparent;
+    }
+    .topbar-nav a:hover, .topbar-nav a.is-active {
+      color: var(--accent); border-color: rgba(200,241,53,.25); background: var(--accent-dim);
+    }
+    .topbar-user { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); }
+    .topbar-av {
+      width: 30px; height: 30px; border-radius: 50%; background: var(--accent);
+      color: #0D0D0D; font-family: var(--font-display); font-size: .75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logout {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-size: .75rem; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    }
+
+    .page { max-width: 960px; margin: 0 auto; padding: 24px 16px 0; }
+    .page-header { margin-bottom: 24px; }
+    .page-title {
+      font-family: var(--font-display); font-size: 2rem; font-weight: 800; line-height: 1;
+    }
+    .page-title span { color: var(--accent); }
+    .page-sub { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+    }
+    .stat-card__label {
+      font-size: .68rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    }
+    .stat-card__value {
+      font-family: var(--font-display); font-size: 2rem; font-weight: 800; line-height: 1;
+    }
+
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cyc-tab, .btn-refresh {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-family: var(--font-display); font-size: .78rem; font-weight: 700;
+      letter-spacing: .06em; padding: 5px 14px; border-radius: 6px; cursor: pointer;
+      text-transform: uppercase;
+    }
+    .cyc-tab.is-active { background: var(--accent); border-color: var(--accent); color: #0D0D0D; }
+    .btn-refresh { display: inline-flex; align-items: center; gap: 6px; }
+
+    .cyc-search-wrap { margin-bottom: 16px; }
+    .cyc-search {
+      width: 100%; max-width: 420px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: var(--font-body); font-size: .88rem;
+      padding: .65rem .85rem;
+    }
+
+    .cyc-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+    }
+    .cyc-card__main { display: flex; gap: 14px; align-items: flex-start; }
+    .cyc-avatar {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: .85rem; font-weight: 800; color: #0D0D0D;
+    }
+    .cyc-card__body { flex: 1; min-width: 0; }
+    .cyc-card__head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
+    }
+    .cyc-card__name {
+      font-family: var(--font-display); font-size: 1.05rem; font-weight: 700;
+    }
+    .cyc-role {
+      font-family: var(--font-display); font-size: .62rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);
+    }
+    .cyc-role--admin { color: var(--yellow); border-color: rgba(252,211,77,.35); background: rgba(252,211,77,.1); }
+    .cyc-role--team { color: var(--accent); border-color: rgba(200,241,53,.35); background: var(--accent-dim); }
+    .cyc-role--member { color: var(--blue); border-color: rgba(96,165,250,.35); background: rgba(96,165,250,.1); }
+
+    .cyc-meta {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px 16px; margin-bottom: 6px;
+    }
+    .cyc-meta dt { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .cyc-meta dd { font-size: .82rem; word-break: break-word; }
+    .cyc-meta__email dd { font-family: ui-monospace, monospace; font-size: .78rem; }
+    .cyc-card__sub { font-size: .75rem; color: var(--muted); }
+    .cyc-muted { color: var(--muted); }
+
+    .gtr-empty { text-align: center; padding: 40px 20px; font-size: .85rem; color: var(--muted); }
+    .gtr-loading { display: flex; justify-content: center; gap: 8px; padding: 48px 0; }
+    .gtr-loading__dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      opacity: .3; animation: pulse 1.2s ease-in-out infinite;
+    }
+    .gtr-loading__dot:nth-child(2) { animation-delay: .2s; }
+    .gtr-loading__dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes pulse {
+      0%, 100% { opacity: .2; transform: scale(.85); }
+      50% { opacity: .9; transform: scale(1.1); }
+    }
+
+    #gtr-admin-gate {
+      min-height: calc(100dvh - var(--topbar-h));
+      display: none; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; gap: 16px; padding: 32px;
+    }
+    .gate-icon { font-size: 2.5rem; }
+    .gate-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
+    .gate-sub { font-size: .85rem; color: var(--muted); max-width: 320px; }
+    .gate-btn {
+      background: var(--accent); color: #0D0D0D; border: none;
+      font-family: var(--font-display); font-size: .9rem; font-weight: 700;
+      padding: 10px 22px; border-radius: 8px; cursor: pointer;
+    }
+
+    @media (max-width: 720px) {
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .cyc-meta { grid-template-columns: 1fr; }
+      .topbar-nav { display: none; }
+      .page-title { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
+  <span class="topbar-crown">👑 ADMIN</span>
+  <nav class="topbar-nav" aria-label="Sections admin">
+    <a href="admin.html">Activité</a>
+    <a href="admin.html#gtr-approvals">Approbations</a>
+    <a href="admin-cyclistes.html" class="is-active">Cyclistes</a>
+    <a href="allrides.html">Itinéraires</a>
+    <a href="gestion-sorties.html">Sorties</a>
+  </nav>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <div class="topbar-av" id="admin-avatar">AD</div>
+    <span id="admin-name">Admin</span>
+    <button type="button" class="topbar-logout" id="admin-logout-btn">Déconnexion</button>
+  </div>
+</header>
+
+<div id="gtr-admin-gate">
+  <div class="gate-icon">🔒</div>
+  <div class="gate-title">Accès restreint</div>
+  <p class="gate-sub">Cette page est réservée aux administrateurs GoëloRides.</p>
+  <button type="button" class="gate-btn" data-goelo-auth-trigger>Se connecter</button>
+</div>
+
+<div id="gtr-admin-panel" style="display:none">
+  <div class="page">
+    <div class="page-header">
+      <h1 class="page-title">Cyclistes <span>GoëloRides</span></h1>
+      <p class="page-sub">Membres inscrits · e-mail visible uniquement côté admin</p>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-card__label">Total</div>
+        <div class="stat-card__value" id="cyc-stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Membres</div>
+        <div class="stat-card__value" id="cyc-stat-members">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Team Riders</div>
+        <div class="stat-card__value" id="cyc-stat-team">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Admins</div>
+        <div class="stat-card__value" id="cyc-stat-admin">—</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="tabs">
+        <button type="button" class="cyc-tab is-active" data-filter="all">Tous</button>
+        <button type="button" class="cyc-tab" data-filter="member">Membres</button>
+        <button type="button" class="cyc-tab" data-filter="team_rider">Team Riders</button>
+        <button type="button" class="cyc-tab" data-filter="admin">Admins</button>
+      </div>
+      <button type="button" class="btn-refresh" id="cyc-refresh"><span>↻</span> Actualiser</button>
+    </div>
+
+    <div class="cyc-search-wrap">
+      <label>
+        <span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;">Rechercher</span>
+        <input type="search" class="cyc-search" id="cyc-search" placeholder="Rechercher pseudo, username, e-mail…" autocomplete="off">
+      </label>
+    </div>
+
+    <div id="cyc-list">
+      <div class="gtr-loading">
+        <div class="gtr-loading__dot"></div>
+        <div class="gtr-loading__dot"></div>
+        <div class="gtr-loading__dot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/goelo-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/goelo-auth-state.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/goelo-profile.js"></script>
+<script src="js/goelo-admin-cyclistes.js"></script>
+
+</body>
+</html>
