@@ -314,3 +314,39 @@ body {
 .gs-route-participants .pd-hero__people {
   margin-bottom: 0.75rem;
 }
+
+.gs-guest-add {
+  margin-top: 1rem;
+}
+
+.gs-guest-add__toggle {
+  font-size: 0.88rem;
+}
+
+.gs-guest-add__form {
+  margin-top: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #fafafa);
+}
+
+.gs-guest-add__hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--muted, #666);
+  line-height: 1.4;
+}
+
+.gs-guest-add__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.gs-guest-add__error {
+  margin: 0.65rem 0 0;
+  font-size: 0.82rem;
+  color: var(--red, #c0392b);
+}

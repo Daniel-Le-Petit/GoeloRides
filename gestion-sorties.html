@@ -297,6 +297,34 @@
           Inscrits <span class="pd-participants-count" id="gs-participants-count"></span>
         </label>
         <ul class="pd-participants" id="gs-participants-list"></ul>
+
+        <div class="gs-guest-add">
+          <button type="button" class="btn btn--ghost gs-guest-add__toggle" id="gs-guest-add-toggle">
+            Ajouter un participant
+          </button>
+          <form class="gs-guest-add__form" id="gs-guest-add-form" hidden>
+            <p class="gs-guest-add__hint">Participant hors compte (SMS / téléphone) — aucun profil créé.</p>
+            <div class="field-row">
+              <div class="field">
+                <label class="field__label" for="gs-guest-first">Prénom <span class="req">*</span></label>
+                <input class="field__input" type="text" id="gs-guest-first" name="first_name" required maxlength="80" autocomplete="given-name" placeholder="Daniel">
+              </div>
+              <div class="field">
+                <label class="field__label" for="gs-guest-last">Nom <span>(optionnel)</span></label>
+                <input class="field__input" type="text" id="gs-guest-last" name="last_name" maxlength="80" autocomplete="family-name" placeholder="Martin">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="gs-guest-phone">Téléphone <span>(optionnel)</span></label>
+              <input class="field__input" type="tel" id="gs-guest-phone" name="phone" maxlength="30" autocomplete="tel" placeholder="06 12 34 56 78">
+            </div>
+            <div class="gs-guest-add__actions">
+              <button type="submit" class="btn btn--primary" id="gs-guest-submit">Enregistrer</button>
+              <button type="button" class="btn btn--ghost" id="gs-guest-cancel">Annuler</button>
+            </div>
+            <p class="gs-guest-add__error" id="gs-guest-error" hidden></p>
+          </form>
+        </div>
       </div>
     </section>
 

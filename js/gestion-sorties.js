@@ -1137,6 +1137,115 @@ async function loadRouteParticipants(routeId) {
   }
 }
 
+function setGuestFormOpen(open) {
+  var form = document.getElementById("gs-guest-add-form");
+  var toggle = document.getElementById("gs-guest-add-toggle");
+  if (!form) return;
+  form.hidden = !open;
+  if (toggle) toggle.hidden = !!open;
+  if (open) {
+    var first = document.getElementById("gs-guest-first");
+    if (first) first.focus();
+  }
+}
+
+function resetGuestForm() {
+  var form = document.getElementById("gs-guest-add-form");
+  if (form) form.reset();
+  var err = document.getElementById("gs-guest-error");
+  if (err) {
+    err.hidden = true;
+    err.textContent = "";
+  }
+}
+
+function showGuestError(msg) {
+  var err = document.getElementById("gs-guest-error");
+  if (!err) return;
+  err.textContent = msg || "Erreur.";
+  err.hidden = false;
+}
+
+async function submitGuestParticipant(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!window.routeId) {
+    showGuestError("Enregistre d'abord la sortie avant d'ajouter un participant.");
+    return;
+  }
+  if (!window.GoeloSignupParticipants || !window.GoeloSignupParticipants.addGuestParticipant) {
+    showGuestError("Module participants indisponible.");
+    return;
+  }
+
+  var firstEl = document.getElementById("gs-guest-first");
+  var lastEl = document.getElementById("gs-guest-last");
+  var phoneEl = document.getElementById("gs-guest-phone");
+  var submitBtn = document.getElementById("gs-guest-submit");
+  var first = firstEl ? firstEl.value.trim() : "";
+  var last = lastEl ? lastEl.value.trim() : "";
+  var phone = phoneEl ? phoneEl.value.trim() : "";
+
+  if (!first) {
+    showGuestError("Le prénom est obligatoire.");
+    if (firstEl) firstEl.focus();
+    return;
+  }
+
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    var sb = await getSb();
+    var result = await window.GoeloSignupParticipants.addGuestParticipant(
+      window.routeId,
+      { first_name: first, last_name: last, phone: phone },
+      sb
+    );
+    if (!result || !result.ok) {
+      var code = result && result.error;
+      var msg = "Impossible d'ajouter le participant.";
+      if (code === "forbidden") msg = "Accès refusé — admin ou Ride Leader requis.";
+      else if (code === "first_name_required") msg = "Le prénom est obligatoire.";
+      else if (code === "route_not_found") msg = "Sortie introuvable.";
+      else if (code) msg = String(code);
+      showGuestError(msg);
+      return;
+    }
+
+    resetGuestForm();
+    setGuestFormOpen(false);
+    await loadRouteParticipants(window.routeId);
+    if (window.GoeloSignupParticipants.emitChanged) {
+      window.GoeloSignupParticipants.emitChanged(window.routeId);
+    }
+    if (typeof showToast === "function") showToast("Participant ajouté", "success");
+  } catch (err) {
+    console.warn("[gestion-sorties] guest add:", err);
+    showGuestError(err && err.message ? err.message : "Erreur inattendue.");
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+function bindGuestParticipantUi() {
+  var toggle = document.getElementById("gs-guest-add-toggle");
+  var cancel = document.getElementById("gs-guest-cancel");
+  var form = document.getElementById("gs-guest-add-form");
+  if (toggle) {
+    toggle.addEventListener("click", function () {
+      resetGuestForm();
+      setGuestFormOpen(true);
+    });
+  }
+  if (cancel) {
+    cancel.addEventListener("click", function () {
+      resetGuestForm();
+      setGuestFormOpen(false);
+    });
+  }
+  if (form) {
+    form.addEventListener("submit", submitGuestParticipant);
+  }
+}
+
 function populateForm(route) {
   let fc = route.front_config || {};
   if (typeof fc === 'string') {
@@ -1263,3 +1372,5 @@ window.addEventListener("goelo:signup-changed", function (e) {
   if (!detail || !window.routeId || detail.routeId !== window.routeId) return;
   loadRouteParticipants(window.routeId);
 });
+
+bindGuestParticipantUi();

@@ -72,9 +72,13 @@
     return initialsFromNameParts(parseNameParts(p));
   }
 
-  /** Label convivial dans les listes de participants : pseudo ou initiales. */
+  /** Label convivial dans les listes de participants : pseudo, sinon prénom+nom, sinon initiales. */
   function getParticipantLabel(p) {
     if (hasRealPseudo(p)) return String(p.pseudo).trim();
+    var parts = parseNameParts(p);
+    if (parts.first || parts.last) {
+      return [parts.first, parts.last].filter(Boolean).join(" ");
+    }
     return getParticipantInitials(p);
   }
 
@@ -83,6 +87,11 @@
     if (!p) return FALLBACK;
 
     if (hasRealPseudo(p)) return String(p.pseudo).trim();
+
+    var parts = parseNameParts(p);
+    if (parts.first || parts.last) {
+      return [parts.first, parts.last].filter(Boolean).join(" ");
+    }
 
     var userName = p.user_name && String(p.user_name).trim();
     if (userName && !isPlaceholderIdentity(userName)) return userName;

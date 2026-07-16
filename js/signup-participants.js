@@ -1,5 +1,5 @@
 /**
- * GoëloRides — inscrits signups (RPC signup_list_* → pseudo)
+ * GoëloRides — inscrits signups (RPC signup_list_*) + invités guest_participants
  */
 (function (global) {
   "use strict";
@@ -29,14 +29,22 @@
     if (typeof x === "object") {
       var pseudo = x.pseudo || x.display_name || null;
       if (pseudo && profileApi() && profileApi().isPlaceholderIdentity(pseudo)) pseudo = null;
+      var first = x.first_name || x.firstName || null;
+      var last = x.last_name || x.lastName || null;
+      if (first) first = String(first).trim() || null;
+      if (last) last = String(last).trim() || null;
+      if (!pseudo && !first && !(x.username || x.user_name)) return null;
       return {
+        id: x.id || null,
         pseudo: pseudo,
         username: x.username || x.user_name || null,
         user_name: x.user_name || x.username || null,
-        first_name: x.first_name || x.firstName || null,
-        last_name: x.last_name || x.lastName || null,
+        first_name: first,
+        last_name: last,
         cyclist_level: x.cyclist_level || null,
-        city: x.city || null
+        city: x.city || null,
+        is_guest: !!(x.is_guest || x.source === "guest"),
+        source: x.source || (x.is_guest ? "guest" : "signup")
       };
     }
     return null;
@@ -45,6 +53,10 @@
   function normalizeList(arr) {
     if (!Array.isArray(arr)) return [];
     return arr.map(normalizeParticipant).filter(Boolean);
+  }
+
+  function mergeParticipants(signups, guests) {
+    return normalizeList(signups || []).concat(normalizeList(guests || []));
   }
 
   function bucketFromAllNames(data, routeId) {
@@ -61,36 +73,49 @@
     };
   }
 
+  async function fetchGuestsForRoute(routeId, sb) {
+    sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
+    var key = routeKey(routeId);
+    if (!sb || !key) return [];
+
+    var rpc = await sb.rpc("guest_participants_list_for_route", { p_route_id: key });
+    if (rpc.error) {
+      if (rpc.error.code !== "PGRST202") {
+        console.warn("[signup-participants] guest_participants_list_for_route:", rpc.error.message);
+      }
+      return [];
+    }
+    var payload = rpc.data || {};
+    return normalizeList(payload.participants || []);
+  }
+
   async function fetchForRoute(routeId, sb) {
     sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
     var key = routeKey(routeId);
     if (!sb || !key) return { participants: [], count: 0 };
 
+    var signups = [];
     var routeRpc = await sb.rpc("signup_list_for_route", { p_route_id: key });
     if (!routeRpc.error && routeRpc.data) {
       var payload = routeRpc.data;
-      var list = normalizeList(payload.participants || payload);
-      var count = typeof payload.count === "number" ? payload.count : list.length;
-      return { participants: list, count: count };
+      signups = normalizeList(payload.participants || payload);
+    } else {
+      if (routeRpc.error && routeRpc.error.code !== "PGRST202") {
+        console.warn("[signup-participants] signup_list_for_route:", routeRpc.error.message);
+      }
+
+      var allRpc = await sb.rpc("signup_list_all_names", {});
+      if (!allRpc.error && allRpc.data != null) {
+        var bucket = bucketFromAllNames(allRpc.data, key);
+        if (bucket) signups = normalizeList(bucket.participants);
+      } else if (allRpc.error) {
+        console.warn("[signup-participants] signup_list_all_names:", allRpc.error.message);
+      }
     }
 
-    if (routeRpc.error && routeRpc.error.code !== "PGRST202") {
-      console.warn("[signup-participants] signup_list_for_route:", routeRpc.error.message);
-    }
-
-    var allRpc = await sb.rpc("signup_list_all_names", {});
-    if (allRpc.error || allRpc.data == null) {
-      console.warn("[signup-participants] signup_list_all_names:", allRpc.error && allRpc.error.message);
-      return { participants: [], count: 0 };
-    }
-
-    var bucket = bucketFromAllNames(allRpc.data, key);
-    if (!bucket) return { participants: [], count: 0 };
-    var participants = normalizeList(bucket.participants);
-    return {
-      participants: participants,
-      count: typeof bucket.count === "number" ? bucket.count : participants.length
-    };
+    var guests = await fetchGuestsForRoute(key, sb);
+    var participants = mergeParticipants(signups, guests);
+    return { participants: participants, count: participants.length };
   }
 
   async function fetchAllByRoute(sb) {
@@ -108,12 +133,49 @@
     if (!data || typeof data !== "object") return {};
 
     var out = {};
-    Object.keys(data).forEach(function (id) {
+    var ids = Object.keys(data);
+    await Promise.all(ids.map(function (id) {
       var bucket = data[id];
       var arr = Array.isArray(bucket) ? bucket : (bucket && bucket.participants) || [];
-      out[routeKey(id)] = normalizeList(arr);
-    });
+      var key = routeKey(id);
+      return fetchGuestsForRoute(key, sb).then(function (guests) {
+        out[key] = mergeParticipants(arr, guests);
+      });
+    }));
     return out;
+  }
+
+  async function addGuestParticipant(routeId, fields, sb) {
+    sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
+    var key = routeKey(routeId);
+    fields = fields || {};
+    if (!sb || !key) return { ok: false, error: "missing_client" };
+
+    var first = String(fields.first_name || fields.firstName || "").trim();
+    var last = String(fields.last_name || fields.lastName || "").trim();
+    var phone = String(fields.phone || "").trim();
+    if (!first) return { ok: false, error: "first_name_required" };
+
+    var rpc = await sb.rpc("guest_participant_add", {
+      p_route_id: key,
+      p_first_name: first,
+      p_last_name: last || null,
+      p_phone: phone || null
+    });
+
+    if (rpc.error) {
+      console.warn("[signup-participants] guest_participant_add:", rpc.error.message);
+      return { ok: false, error: rpc.error.message };
+    }
+
+    var payload = rpc.data || {};
+    if (payload.ok === false) {
+      return { ok: false, error: payload.error || "add_failed" };
+    }
+    return {
+      ok: true,
+      participant: normalizeParticipant(payload.participant || null)
+    };
   }
 
   function escapeHtml(s) {
@@ -274,8 +336,11 @@
     displayName: displayName,
     normalizeParticipant: normalizeParticipant,
     normalizeList: normalizeList,
+    mergeParticipants: mergeParticipants,
+    fetchGuestsForRoute: fetchGuestsForRoute,
     fetchForRoute: fetchForRoute,
     fetchAllByRoute: fetchAllByRoute,
+    addGuestParticipant: addGuestParticipant,
     enrichCardsWithParticipants: enrichCardsWithParticipants,
     renderParticipantRow: renderParticipantRow,
     renderParticipantsListHtml: renderParticipantsListHtml,
