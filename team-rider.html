@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>GoëloRides – Team Rider Dashboard</title>
+  <title>GoëloRides – Membres GoëloRides</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/components.css">
@@ -14,7 +14,7 @@
 <!-- TOPBAR -->
 <header class="topbar">
   <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
-  <div class="topbar-badge go-role-badge go-role-badge--team_rider" id="role-badge">TEAM RIDER</div>
+  <div class="topbar-badge go-role-badge go-role-badge--team_rider" id="role-badge">RIDE LEADER</div>
   <div class="topbar-spacer"></div>
   <div class="topbar-user">
     <div class="av" id="user-avatar">TR</div>
@@ -25,8 +25,8 @@
 <!-- GATE : visible par défaut, masqué par team-rider.js si rôle OK -->
 <div id="gate-panel" style="display:none">
   <div class="gate">
-    <h2>Accès Team Rider requis</h2>
-    <p>Cette page est réservée aux Team Riders et Admins GoëloRides.<br>
+    <h2>Accès Membres GoëloRides requis</h2>
+    <p>Cette page est réservée aux Ride Leaders et aux Admins GoëloRides.<br>
        Connecte-toi pour accéder au tableau de bord.</p>
     <button class="gate-btn" data-goelo-auth-trigger>🔒 Se connecter</button>
   </div>
@@ -88,7 +88,7 @@
 
   <!-- DEMANDES : admin uniquement, rendu par team-rider.js -->
   <div id="demands-section" style="display:none">
-    <p class="slabel">Demandes Team Rider <em id="demands-count-label"></em></p>
+    <p class="slabel">Demandes Ride Leaders <em id="demands-count-label"></em></p>
     <div id="demand-list"></div>
   </div>
 

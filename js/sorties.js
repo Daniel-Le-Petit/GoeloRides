@@ -5,17 +5,17 @@
      ════════════════════════════════════════════════════════════ */
   var ACCESS_MAILTO =
     "mailto:goelo.rides@gmail.com" +
-    "?subject=Demande%20acc%C3%A8s%20Team%20Rider" +
-    "&body=Bonjour%2C%0A%0AJe%20souhaite%20demander%20l%27acc%C3%A8s%20Team%20Rider.%0A%0A";
+    "?subject=Demande%20acc%C3%A8s%20Membres%20Go%C3%ABloRides" +
+    "&body=Bonjour%2C%0A%0AJe%20souhaite%20demander%20l%27acc%C3%A8s%20Membres%20Go%C3%ABloRides.%0A%0A";
 
   var LOCK_CONTENT = {
     create: {
-      title: "Mode Team Rider requis",
-      text: "Créer et publier une sortie est réservé aux Team Riders. Connecte-toi pour continuer."
+      title: "Membres GoëloRides requis",
+      text: "Créer et publier une sortie est réservé aux Ride Leaders. Connecte-toi pour continuer."
     },
     manage: {
-      title: "Mode Team Rider requis",
-      text: "Modifier ou annuler une sortie est réservé aux Team Riders organisateurs."
+      title: "Membres GoëloRides requis",
+      text: "Modifier ou annuler une sortie est réservé aux Ride Leaders organisateurs."
     },
     join: {
       title: "Connexion requise",
@@ -662,7 +662,7 @@ async function fetchSorties() {
       aside.classList.add("is-unlocked");
       aside.innerHTML =
         '<div class="so-aside__lock" aria-hidden="true">✓</div>' +
-        '<p class="so-aside__title">Mode Team Rider<br>actif</p>' +
+        '<p class="so-aside__title">Membres GoëloRides<br>actif</p>' +
         '<p class="so-aside__text">Tu peux créer, modifier et annuler des sorties.</p>' +
         '<a class="gr-popover__btn" href="gestion-sorties.html?mode=create">Créer une sortie</a>';
     }

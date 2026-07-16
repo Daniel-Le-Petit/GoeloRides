@@ -23,7 +23,7 @@
 
   function roleLabel(role) {
     if (role === "admin") return "Admin";
-    if (role === "team_rider") return "Team Rider";
+    if (role === "team_rider") return "Ride Leader";
     return "Membre";
   }
 

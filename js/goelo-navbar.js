@@ -28,7 +28,7 @@
     if (global.GoeloAuthState && global.GoeloAuthState.ROLE_LABELS) {
       return global.GoeloAuthState.ROLE_LABELS;
     }
-    return { user: "Cycliste", team_rider: "Team Rider", admin: "Admin" };
+    return { user: "Cycliste", team_rider: "Ride Leader", admin: "Admin" };
   }
 
   function pageIdFromPath() {

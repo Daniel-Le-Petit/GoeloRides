@@ -152,7 +152,7 @@
     UPCOMING_RIDE_CARD_CLICKED: "Carte sortie",
     UPCOMING_RIDE_VIEW_CLICKED: "Voir sortie",
     UPCOMING_RIDE_JOIN_CLICKED: "Rejoindre",
-    TEAM_RIDER_JOIN_CLICKED: "Team Rider",
+    TEAM_RIDER_JOIN_CLICKED: "Ride Leader",
     PAGE_SORTIES_VIEWED: "Sorties",
     PAGE_PARCOURS_VIEWED: "Parcours",
     NAVIGATE_TO_SORTIES_CLICKED: "Vers sorties",

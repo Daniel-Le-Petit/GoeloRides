@@ -505,7 +505,7 @@ async function toggleSignup(routeId) {
     var cap = document.getElementById("pd-captain");
     if (cap) {
       cap.innerHTML = sortie.captain
-        ? 'Capitaine · Team Rider : <strong>' + escapeHtml(sortie.captain) + "</strong>"
+        ? 'Capitaine : <strong>' + escapeHtml(sortie.captain) + "</strong>"
         : "";
     }
 

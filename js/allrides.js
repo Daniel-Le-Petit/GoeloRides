@@ -170,7 +170,7 @@
     hideCreateError();
 
     if (!canCreateRide()) {
-      showCreateError("Accès réservé aux Team Riders et Admins.");
+      showCreateError("Accès réservé aux Ride Leaders et aux Admins.");
       return;
     }
 

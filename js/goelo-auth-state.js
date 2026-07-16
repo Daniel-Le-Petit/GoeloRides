@@ -36,7 +36,7 @@
   var ROLE_LABELS = {
     visitor: "Visitor",
     user: "Cycliste",
-    team_rider: "Team Rider",
+    team_rider: "Ride Leader",
     admin: "Admin"
   };
 

@@ -269,7 +269,7 @@
       : "";
 
     var teamRiderLine = opts.viewMode === "team-rider" && card.teamRiderPseudo
-      ? '<p class="go-sc-card__rider">🚴 Team Rider : ' + escapeHtml(card.teamRiderPseudo) + "</p>"
+      ? '<p class="go-sc-card__rider">🚴 Ride Leader : ' + escapeHtml(card.teamRiderPseudo) + "</p>"
       : "";
 
     var metaTime = time

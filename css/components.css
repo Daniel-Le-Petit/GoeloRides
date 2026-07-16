@@ -560,13 +560,13 @@ select.ml-input,
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   POPOVER CONTEXTUEL — « Mode Team Rider requis »
+   POPOVER CONTEXTUEL — « Membres GoëloRides requis »
    Composant réutilisable : à placer dans un conteneur
    position:relative, à côté de l'action verrouillée.
 
-   <div class="gr-popover" hidden role="dialog" aria-label="Mode Team Rider requis">
+   <div class="gr-popover" hidden role="dialog" aria-label="Membres GoëloRides requis">
      <span class="gr-popover__lock">🔒</span>
-     <p class="gr-popover__title">Mode Team Rider requis</p>
+     <p class="gr-popover__title">Membres GoëloRides requis</p>
      <p class="gr-popover__text">Connecte-toi pour créer un groupe…</p>
      <button class="gr-popover__btn" data-goelo-auth-trigger>Se connecter</button>
    </div>

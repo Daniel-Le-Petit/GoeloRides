@@ -9,7 +9,7 @@
   var _bootDone      = false;
 
   var URGENCE_MSGS = {
-    retard:    "\u23f1 GOËLORIDES \u2014 Retard\n\nD\u00e9part retard\u00e9 de 15 min.\nMerci de patienter au Parking du Kasino.\n\n\uD83D\uDCAC Message du Team Rider",
+    retard:    "\u23f1 GOËLORIDES \u2014 Retard\n\nD\u00e9part retard\u00e9 de 15 min.\nMerci de patienter au Parking du Kasino.\n\n\uD83D\uDCAC Message du Ride Leader",
     annulation:"\u274C GOËLORIDES \u2014 Annulation\n\nSortie annul\u00e9e \u2014 conditions m\u00e9t\u00e9o.\n\nProchaine sortie bient\u00f4t\u00a0:\ngoelorides.onrender.com",
     meteo:     "\uD83C\uDF27 GOËLORIDES \u2014 M\u00e9t\u00e9o\n\nSortie maintenue \u2705\nAverses possibles \u2014 coupe-vent recommand\u00e9.\n\n\u23f0 Horaire inchang\u00e9",
     rdv:       "\uD83D\uDCCD GOËLORIDES \u2014 Changement RDV\n\n\u26A0\uFE0F Nouveau point de d\u00e9part\u00a0:\nParking de la plage du Ch\u00e2telet\n(et non le Kasino)\n\n\u23f0 Horaire inchang\u00e9"
@@ -89,7 +89,7 @@
       if (role === "admin") {
         badgeEl.textContent = "ADMIN";
       } else {
-        badgeEl.textContent = "TEAM RIDER";
+        badgeEl.textContent = "RIDE LEADER";
       }
     }
 
@@ -393,7 +393,7 @@
       setTimeout(function () {
         var dash = document.getElementById("dashboard");
         if (!dash || !dash.style.display || dash.style.display === "none") {
-          window.GOELO_DISPLAY_NAME = demo === "admin" ? "Admin" : "Team Rider";
+          window.GOELO_DISPLAY_NAME = demo === "admin" ? "Admin" : "Ride Leader";
           boot(demo, {
             email: demo + "@demo.local",
             user_metadata: { display_name: window.GOELO_DISPLAY_NAME }

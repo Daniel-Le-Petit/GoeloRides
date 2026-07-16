@@ -10,14 +10,14 @@
     : {
       visitor:     "Visitor",
       user:        "Cycliste",
-      team_rider:  "Team Rider",
+      team_rider:  "Ride Leader",
       admin:       "Admin"
     };
 
   var HERO_SECONDARY = {
-    visitor:     { text: "Rejoindre en Team Rider", href: null, auth: true },
-    user:        { text: "Devenir Team Rider", href: "gestion-team-rider.html", auth: false },
-    team_rider:  { text: "Team Rider actif ✓", href: "team-rider.html", auth: false },
+    visitor:     { text: "Espace membres", href: null, auth: true },
+    user:        { text: "Espace membres", href: "gestion-team-rider.html", auth: false },
+    team_rider:  { text: "Espace Team Leader ✓", href: "team-rider.html", auth: false },
     admin:       { text: "Panneau Admin", href: "admin.html", auth: false }
   };
 
@@ -240,7 +240,7 @@
 
     if (badge) {
       badge.className = "mtr-badge go-role-badge go-role-badge--" + r;
-      badge.textContent = ROLE_LABELS[r] || "Mode Team Rider";
+      badge.textContent = ROLE_LABELS[r] || "Ride Leader";
     }
 
     if (r === "visitor") {
@@ -257,29 +257,29 @@
     }
 
     if (r === "user") {
-      if (title) title.innerHTML = 'Demande<br><span class="mtr-title--accent">Team Rider</span>';
-      if (desc) desc.textContent = "Tu peux déposer une demande pour devenir Team Rider et créer des sorties.";
+      if (title) title.innerHTML = 'Rejoins l\'\u00e9quipe des<br><span class="mtr-title--accent">Team Leaders</span>';
+      if (desc) desc.textContent = "Les Ride Leaders organisent les sorties GoëloRides, préparent les parcours et accompagnent les groupes pendant les sorties.";
       actions.innerHTML =
-        '<a class="mtr-btn mtr-btn--primary" href="gestion-team-rider.html">Devenir Team Rider</a>' +
+        '<a class="mtr-btn mtr-btn--primary" href="gestion-team-rider.html">Rejoindre les Team Leaders</a>' +
         '<button type="button" class="mtr-btn mtr-btn--outline" data-close-modal="modal-teamrider">Fermer</button>';
       return;
     }
 
     if (r === "team_rider") {
-      if (title) title.innerHTML = 'Mode<br><span class="mtr-title--accent">Team Rider actif</span>';
-      if (desc) desc.textContent = "Tu peux créer, modifier et publier des sorties depuis ton cockpit.";
+      if (title) title.innerHTML = 'Membres<br><span class="mtr-title--accent">Go\u00ebloRides</span>';
+      if (desc) desc.textContent = "Tu peux créer, modifier et publier des sorties depuis Membres GoëloRides.";
       actions.innerHTML =
-        '<a class="mtr-btn mtr-btn--primary" href="team-rider.html">Mon cockpit</a>' +
+        '<a class="mtr-btn mtr-btn--primary" href="team-rider.html">Mon espace</a>' +
         '<a class="mtr-btn mtr-btn--outline" href="gestion-sorties.html?mode=create">Nouvelle sortie</a>';
       return;
     }
 
     if (r === "admin") {
       if (title) title.innerHTML = 'Espace<br><span class="mtr-title--accent">Administration</span>';
-      if (desc) desc.textContent = "Gère les demandes Team Rider et l'ensemble des sorties.";
+      if (desc) desc.textContent = "Gère les demandes Ride Leaders et l'ensemble des sorties.";
       actions.innerHTML =
         '<a class="mtr-btn mtr-btn--primary" href="admin.html">Panneau admin</a>' +
-        '<a class="mtr-btn mtr-btn--outline" href="team-rider.html">Cockpit sorties</a>';
+        '<a class="mtr-btn mtr-btn--outline" href="team-rider.html">Membres GoëloRides</a>';
     }
   }
 
