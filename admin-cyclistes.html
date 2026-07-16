@@ -169,10 +169,40 @@
     }
 
     @media (max-width: 720px) {
+      :root { --topbar-h: 100px; }
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
       .cyc-meta { grid-template-columns: 1fr; }
-      .topbar-nav { display: none; }
       .page-title { font-size: 1.6rem; }
+
+      /* Même menu Admin qu'en desktop : 2e rangée scrollable (plus de display:none) */
+      .topbar {
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 8px 12px;
+        gap: 8px 10px;
+      }
+      .topbar-spacer { display: none; }
+      .topbar-user > span { display: none; }
+      .topbar-nav {
+        display: flex;
+        order: 10;
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+      }
+      .topbar-nav::-webkit-scrollbar { display: none; }
+      .topbar-nav a {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        font-size: .75rem;
+        padding: 6px 10px;
+      }
     }
   </style>
 </head>

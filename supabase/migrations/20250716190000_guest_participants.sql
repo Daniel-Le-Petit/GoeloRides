@@ -82,18 +82,22 @@ BEGIN
     RETURN jsonb_build_object('ok', true, 'participants', '[]'::jsonb, 'count', 0);
   END IF;
 
-  SELECT coalesce(jsonb_agg(
-    jsonb_build_object(
-      'id', g.id,
-      'route_id', g.route_id,
-      'first_name', trim(g.first_name),
-      'last_name', nullif(trim(g.last_name), ''),
-      'is_guest', true,
-      'source', 'guest'
-    )
-    ORDER BY g.created_at ASC
-  ), '[]'::jsonb),
-  count(*)::int
+  SELECT
+    coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'id', g.id,
+          'route_id', g.route_id,
+          'first_name', trim(g.first_name),
+          'last_name', nullif(trim(g.last_name), ''),
+          'is_guest', true,
+          'source', 'guest'
+        )
+        ORDER BY g.created_at ASC
+      ),
+      '[]'::jsonb
+    ),
+    count(*)::int
   INTO v_rows, v_cnt
   FROM public.guest_participants g
   WHERE g.route_id = v_rid;
