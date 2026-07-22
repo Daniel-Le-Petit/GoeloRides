@@ -113,6 +113,52 @@
      TOGGLE RPC
   ========================================================= */
 
+  /** Normalise la réponse RPC (objet, tableau d'un objet, ou JSON string). */
+  function normalizeTogglePayload(data) {
+    if (data == null) return null;
+    if (typeof data === "string") {
+      try { data = JSON.parse(data); } catch (e) { return null; }
+    }
+    if (Array.isArray(data)) data = data.length ? data[0] : null;
+    if (!data || typeof data !== "object") return null;
+    return data;
+  }
+
+  function toggleActionKind(action) {
+    var a = String(action == null ? "" : action).trim().toLowerCase();
+    if (a === "added" || a === "joined") return "added";
+    if (a === "removed" || a === "unjoined") return "removed";
+    return "";
+  }
+
+  function setJoinFeedback(message) {
+    var host = document.querySelector(".pd-join");
+    if (!host) return;
+    var el = document.getElementById("pd-join-feedback");
+    if (!el) {
+      el = document.createElement("p");
+      el.id = "pd-join-feedback";
+      el.className = "pd-join__feedback";
+      el.setAttribute("role", "status");
+      el.setAttribute("aria-live", "polite");
+      host.appendChild(el);
+    }
+    el.textContent = message || "";
+  }
+
+  function applyJoinButtonState(btn, isJoined) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.setAttribute("data-auth-pending", "0");
+    btn.setAttribute("data-joined", isJoined ? "1" : "0");
+    if (isJoined) {
+      btn.classList.add("is-registered");
+      btn.textContent = "Inscrit";
+    } else {
+      btn.classList.remove("is-registered");
+      btn.textContent = "Je participe !";
+    }
+  }
 
 async function toggleSignup(routeId) {
   var sb = getSb();
@@ -135,11 +181,11 @@ async function toggleSignup(routeId) {
       return null;
     }
 
-    var data = rpc.data;
+    var data = normalizeTogglePayload(rpc.data);
     console.log("[toggleSignup] data:", data);
 
-    if (data == null || typeof data !== "object") {
-      console.warn("[toggleSignup] réponse vide ou invalide:", data);
+    if (!data) {
+      console.warn("[toggleSignup] réponse vide ou invalide:", rpc.data);
       return null;
     }
 
@@ -169,6 +215,7 @@ async function toggleSignup(routeId) {
 
     if (!user) {
       /* Visiteur : bouton actif qui ouvre la modale auth */
+      btn.classList.remove("is-registered");
       btn.textContent = "Se connecter pour participer";
       btn.disabled    = false;
       btn.setAttribute("data-joined",       "0");
@@ -177,11 +224,9 @@ async function toggleSignup(routeId) {
     }
 
     btn.setAttribute("data-auth-pending", "0");
-    /* Dernière action seule : si cancelled → "Je participe !", sinon "J'annule" */
+    /* Dernière action seule : si cancelled → "Je participe !", sinon "Inscrit" */
     var joined = await isJoined(sortie.id, user);
-    btn.disabled    = false;
-    btn.textContent = joined ? "J'annule" : "Je participe !";
-    btn.setAttribute("data-joined", joined ? "1" : "0");
+    applyJoinButtonState(btn, joined);
 
     if (count) {
       var n = Array.isArray(sortie.participants) ? sortie.participants.length : 0;
@@ -240,25 +285,43 @@ async function toggleSignup(routeId) {
           }
         }
 
-        var res = await toggleSignup(sortie.id);
+        var res = normalizeTogglePayload(await toggleSignup(sortie.id));
+        console.log("[JOIN] toggle_signup réponse:", res);
+
+        /* Compat ancienne RPC : already_registered → désinscription réussie */
+        if (res && res.ok === false && res.error === "already_registered") {
+          console.warn("[JOIN] already_registered → traité comme removed");
+          res = { ok: true, action: "removed", joined: false, count: res.count };
+        }
+
         if (!res || res.ok !== true) {
           console.error("[JOIN] toggle_signup:", res);
           throw new Error((res && res.error) ? String(res.error) : "Réponse toggle_signup invalide");
         }
 
-        if (res.action !== "joined" && res.action !== "unjoined") {
-          console.error("[JOIN] action invalide:", res);
-          throw new Error("Réponse toggle_signup sans action");
-        }
+        var kind = toggleActionKind(res.action);
+        /* joined:false après suppression = état non inscrit (même si action absente) */
+        if (!kind && res.joined === false) kind = "removed";
+        if (!kind && res.joined === true) kind = "added";
 
-        /* action unjoined → "Je participe !" même si d'anciennes lignes existent */
-        var nowJoined = res.action === "joined";
-        btn.textContent = nowJoined ? "J'annule" : "Je participe !";
-        btn.setAttribute("data-joined", nowJoined ? "1" : "0");
-
-        await syncParticipantsUI();
-        if (typeof res.count === "number") {
-          updateJoinCount(res.count);
+        if (kind === "added") {
+          console.log("[JOIN] added");
+          applyJoinButtonState(btn, true);
+          setJoinFeedback("Tu es inscrit·e à cette sortie.");
+          await syncParticipantsUI();
+          if (typeof res.count === "number") updateJoinCount(res.count);
+          console.log("[JOIN] UI refreshed");
+        } else if (kind === "removed") {
+          console.log("[JOIN] removed");
+          applyJoinButtonState(btn, false);
+          setJoinFeedback("Tu es désinscrit·e de cette sortie.");
+          /* joined: false → rafraîchir la liste sans cet utilisateur */
+          await syncParticipantsUI();
+          if (typeof res.count === "number") updateJoinCount(res.count);
+          console.log("[JOIN] UI refreshed");
+        } else {
+          console.error("[JOIN] action inconnue (ni added ni removed):", res);
+          throw new Error("Réponse toggle_signup action inconnue: " + String(res.action));
         }
 
         if (window.GoeloSignupParticipants) {

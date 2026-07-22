@@ -355,6 +355,7 @@ $$;
 
 -- ---------------------------------------------------------------------------
 -- Listes participants : une entrée par user, uniquement si dernière action joined
+-- (pas de imported_participant_names — table absente ; voir 20250722170000)
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.signup_list_for_route(p_route_id text)
 RETURNS jsonb
@@ -373,40 +374,20 @@ BEGIN
 
   SELECT coalesce(jsonb_agg(x.obj ORDER BY x.k, x.obj->>'display_name'), '[]'::jsonb) INTO part
   FROM (
-    SELECT DISTINCT ON (sq.k)
-      sq.k,
-      sq.obj
+    SELECT
+      lower(coalesce(sq_profile.obj->>'display_name', latest.user_id::text)) AS k,
+      coalesce(sq_profile.obj, '{}'::jsonb) AS obj
     FROM (
-      SELECT
-        0 AS pri,
-        lower(coalesce(sq_profile.obj->>'display_name', latest.user_id::text)) AS k,
-        sq_profile.obj
-      FROM (
-        SELECT DISTINCT ON (s.user_id) s.*
-        FROM public.signups s
-        WHERE s.route_id = v_rid AND s.user_id IS NOT NULL
-        ORDER BY s.user_id, s.created_at DESC NULLS LAST, s.id DESC
-      ) latest
-      CROSS JOIN LATERAL (
-        SELECT coalesce(public._signup_profile_json(latest.user_id), '{}'::jsonb) AS obj
-      ) sq_profile
-      WHERE latest.status = 'joined'
-        AND latest.canceled_at IS NULL
-      UNION ALL
-      SELECT
-        1 AS pri,
-        lower(trim(i.display_name)),
-        jsonb_build_object(
-          'pseudo', trim(i.display_name),
-          'username', null,
-          'display_name', trim(i.display_name),
-          'cyclist_level', null,
-          'city', null
-        )
-      FROM public.imported_participant_names i
-      WHERE i.route_id = v_rid AND length(trim(i.display_name)) > 0
-    ) sq
-    ORDER BY sq.k, sq.pri, sq.obj->>'display_name'
+      SELECT DISTINCT ON (s.user_id) s.*
+      FROM public.signups s
+      WHERE s.route_id = v_rid AND s.user_id IS NOT NULL
+      ORDER BY s.user_id, s.created_at DESC NULLS LAST, s.id DESC
+    ) latest
+    CROSS JOIN LATERAL (
+      SELECT coalesce(public._signup_profile_json(latest.user_id), '{}'::jsonb) AS obj
+    ) sq_profile
+    WHERE latest.status = 'joined'
+      AND latest.canceled_at IS NULL
   ) x;
 
   SELECT count(*)::int INTO cnt

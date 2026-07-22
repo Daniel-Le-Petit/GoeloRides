@@ -63,6 +63,15 @@
   }
 
   function getParticipantInitials(p) {
+    p = asProfileObject(p) || {};
+    if (p.initials && String(p.initials).trim()) {
+      return String(p.initials).trim().toUpperCase().slice(0, 2);
+    }
+    /* Priorité avatar : username (ex. "Daniel Le Petit" → "DL") */
+    var fromUsername = initialsFromNameParts(parseNameParts({
+      username: p.username || p.user_name || ""
+    }));
+    if (fromUsername && fromUsername !== FALLBACK) return fromUsername;
     if (hasRealPseudo(p)) {
       var ps = String(p.pseudo).trim();
       return ps.length >= 2
@@ -72,13 +81,18 @@
     return initialsFromNameParts(parseNameParts(p));
   }
 
-  /** Label convivial dans les listes de participants : pseudo, sinon prénom+nom, sinon initiales. */
+  /** Label : pseudo → username → display_name (email prefix côté RPC) → initiales. */
   function getParticipantLabel(p) {
     if (hasRealPseudo(p)) return String(p.pseudo).trim();
     var parts = parseNameParts(p);
     if (parts.first || parts.last) {
       return [parts.first, parts.last].filter(Boolean).join(" ");
     }
+    p = asProfileObject(p) || {};
+    var dn = p.display_name && String(p.display_name).trim();
+    if (dn && !isPlaceholderIdentity(dn) && dn.indexOf("@") === -1) return dn;
+    var prefix = p.email_prefix && String(p.email_prefix).trim();
+    if (prefix && !isPlaceholderIdentity(prefix)) return prefix;
     return getParticipantInitials(p);
   }
 

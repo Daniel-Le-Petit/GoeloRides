@@ -33,12 +33,16 @@
       var last = x.last_name || x.lastName || null;
       if (first) first = String(first).trim() || null;
       if (last) last = String(last).trim() || null;
-      if (!pseudo && !first && !(x.username || x.user_name)) return null;
+      var username = x.username || x.user_name || null;
+      if (!pseudo && !first && !username) return null;
       return {
-        id: x.id || null,
+        id: x.id || x.user_id || null,
+        user_id: x.user_id || x.id || null,
         pseudo: pseudo,
-        username: x.username || x.user_name || null,
+        username: username,
         user_name: x.user_name || x.username || null,
+        initials: x.initials || null,
+        created_at: x.created_at || null,
         first_name: first,
         last_name: last,
         cyclist_level: x.cyclist_level || null,
@@ -99,6 +103,12 @@
     if (!routeRpc.error && routeRpc.data) {
       var payload = routeRpc.data;
       signups = normalizeList(payload.participants || payload);
+      console.log(
+        "[signup-participants] liste participants récupérée pour",
+        key + ":",
+        signups.length,
+        signups
+      );
     } else {
       if (routeRpc.error && routeRpc.error.code !== "PGRST202") {
         console.warn("[signup-participants] signup_list_for_route:", routeRpc.error.message);

@@ -324,10 +324,17 @@ window.goeloGetSb = function () {
     );
 
     if (result.error) {
-      console.warn("[GoëloAuth] profile sync (" + context + "):", result.error.message);
+      console.warn(
+        "[GoëloAuth] profile sync (" + context + ") — échec RLS/upsert:",
+        result.error.message,
+        result.error.code || "",
+        result.error.details || ""
+      );
+      return { ok: false, data: result.data, error: result.error };
     }
 
-    return { ok: !result.error, data: result.data, error: result.error };
+    console.log("[GoëloAuth] profil synchronisé (" + context + ") pour", user.id, payload);
+    return { ok: true, data: result.data, error: null };
   }
 
   async function _syncProfileAfterAuth(sb, user, formFields, context) {

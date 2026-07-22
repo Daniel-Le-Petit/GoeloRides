@@ -202,9 +202,14 @@
       if (result.error) throw new Error(result.error.message);
 
       var payload = result.data;
+      if (payload && payload.ok === false && payload.error === "already_registered") {
+        console.warn("[my-bookings] already_registered → traité comme removed");
+        payload = { ok: true, action: "removed" };
+      }
       if (payload && payload.ok === false) {
         throw new Error(payload.error || "toggle_failed");
       }
+      console.log("[my-bookings] inscription supprimée:", routeId, payload);
 
       var card = btn.closest(".ac-booking");
       if (card && card.parentNode) card.parentNode.removeChild(card);
