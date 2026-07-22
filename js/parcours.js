@@ -21,6 +21,8 @@
   var pdMap     = null;
   var pdBounds  = null;
   var _openedInfoSections = {};
+  /* Source de vérité UI du bouton (null = pas encore connue ; true/false après toggle ou isJoined) */
+  var _uiJoined = null;
 
   /* =========================================================
      HELPERS
@@ -110,8 +112,12 @@
   }
 
   /* =========================================================
-     TOGGLE RPC
+     TOGGLE RPC + UI
+     Si console n'affiche PAS "[parcours.js] toggle build=2026-07-22-toggle-v4"
+     → le navigateur charge encore un ancien parcours.js (cache / déploiement).
   ========================================================= */
+  var PARCOURS_TOGGLE_BUILD = "2026-07-22-toggle-v4";
+  console.info("[parcours.js] toggle build=", PARCOURS_TOGGLE_BUILD);
 
   /** Normalise la réponse RPC (objet, tableau d'un objet, ou JSON string). */
   function normalizeTogglePayload(data) {
@@ -124,11 +130,58 @@
     return data;
   }
 
-  function toggleActionKind(action) {
-    var a = String(action == null ? "" : action).trim().toLowerCase();
+  function isRpcOk(payload) {
+    return !!(payload && (payload.ok === true || payload.ok === "true" || payload.ok === 1));
+  }
+
+  /**
+   * Décide added / removed.
+   * Priorité : action (added|removed|joined|unjoined),
+   * sinon booléen joined (source de vérité RPC).
+   * Ne rejette JAMAIS action="removed".
+   */
+  function resolveToggleKind(payload) {
+    if (!payload) return "";
+    var a = String(payload.action == null ? "" : payload.action).trim().toLowerCase();
     if (a === "added" || a === "joined") return "added";
     if (a === "removed" || a === "unjoined") return "removed";
+    if (payload.joined === true || payload.joined === "true" || payload.joined === 1) return "added";
+    if (payload.joined === false || payload.joined === "false" || payload.joined === 0) return "removed";
     return "";
+  }
+
+  function getJoinButton() {
+    return document.getElementById("pd-join-btn");
+  }
+
+  /** Peint le bouton à partir de joined (unique point d'écriture visuelle). */
+  function paintJoinButton(joined) {
+    var btn = getJoinButton();
+    if (!btn) return null;
+
+    joined = !!joined;
+    _uiJoined = joined;
+
+    btn.disabled = false;
+    btn.setAttribute("data-auth-pending", "0");
+    btn.setAttribute("data-joined", joined ? "1" : "0");
+    btn.setAttribute("aria-pressed", joined ? "true" : "false");
+
+    if (joined) {
+      btn.classList.add("is-registered");
+      btn.textContent = "Inscrit";
+    } else {
+      btn.classList.remove("is-registered");
+      btn.textContent = "Je participe !";
+    }
+
+    console.log("[paintJoinButton]", {
+      joined: joined,
+      text: btn.textContent,
+      dataJoined: btn.getAttribute("data-joined"),
+      className: btn.className
+    });
+    return btn;
   }
 
   function setJoinFeedback(message) {
@@ -146,55 +199,92 @@
     el.textContent = message || "";
   }
 
-  function applyJoinButtonState(btn, isJoined) {
-    if (!btn) return;
-    btn.disabled = false;
-    btn.setAttribute("data-auth-pending", "0");
-    btn.setAttribute("data-joined", isJoined ? "1" : "0");
-    if (isJoined) {
-      btn.classList.add("is-registered");
-      btn.textContent = "Inscrit";
+  /** Bouton + liste d'après la réponse RPC (joined forcé depuis action). */
+  async function applyToggleResponseToUI(res) {
+    var kind = resolveToggleKind(res);
+    var joinedForced;
+
+    if (kind === "added") {
+      console.log("[JOIN] action added");
+      joinedForced = true;
+      setJoinFeedback("Tu es inscrit·e à cette sortie.");
+    } else if (kind === "removed") {
+      console.log("[JOIN] action removed");
+      joinedForced = false;
+      setJoinFeedback("Tu es désinscrit·e de cette sortie.");
     } else {
-      btn.classList.remove("is-registered");
-      btn.textContent = "Je participe !";
+      console.error("[JOIN] réponse ok sans action/joined exploitable:", res);
+      throw new Error("Réponse toggle_signup inattendue");
     }
+
+    /* 1) Forcer l'état UI immédiatement depuis la réponse toggle */
+    paintJoinButton(joinedForced);
+
+    /* 2) Rafraîchir la liste participants */
+    var n = await syncParticipantsUI();
+    if (typeof res.count === "number") {
+      updateJoinCount(res.count);
+    } else if (typeof n === "number") {
+      updateJoinCount(n);
+    }
+
+    if (window.GoeloSignupParticipants && sortie && sortie.id) {
+      window.GoeloSignupParticipants.emitChanged(
+        sortie.id,
+        typeof res.count === "number" ? res.count : (sortie.participants || []).length
+      );
+    }
+
+    /* 3) Reconstruire le bouton via renderJoin(forced) — ignore isJoined stale */
+    await renderJoin(joinedForced);
+
+    /* 4) Sécurité : re-peindre au cas où un listener a écrasé le DOM */
+    paintJoinButton(joinedForced);
+
+    console.log("[JOIN] UI refreshed", {
+      kind: kind,
+      joined: joinedForced,
+      count: typeof res.count === "number" ? res.count : n,
+      buttonState: getJoinButton() && getJoinButton().textContent
+    });
+    return kind;
   }
 
-async function toggleSignup(routeId) {
-  var sb = getSb();
-  if (!sb) {
-    console.error("[toggleSignup] client Supabase indisponible");
-    return null;
-  }
-
-  try {
-    var sessionResult = await sb.auth.getSession();
-    if (!sessionResult.data || !sessionResult.data.session) {
-      console.warn("[toggleSignup] pas de session");
+  async function toggleSignup(routeId) {
+    var sb = getSb();
+    if (!sb) {
+      console.error("[toggleSignup] client Supabase indisponible");
       return null;
     }
 
-    var rpc = await sb.rpc("toggle_signup", { p_route_id: routeId });
+    try {
+      var sessionResult = await sb.auth.getSession();
+      if (!sessionResult.data || !sessionResult.data.session) {
+        console.warn("[toggleSignup] pas de session");
+        return null;
+      }
 
-    if (rpc.error) {
-      console.error("[toggleSignup] RPC error:", rpc.error.message || rpc.error);
+      var rpc = await sb.rpc("toggle_signup", { p_route_id: routeId });
+
+      if (rpc.error) {
+        console.error("[toggleSignup] RPC error:", rpc.error.message || rpc.error);
+        return null;
+      }
+
+      var data = normalizeTogglePayload(rpc.data);
+      console.log("[toggleSignup] data:", data);
+
+      if (!data) {
+        console.warn("[toggleSignup] réponse vide ou invalide:", rpc.data);
+        return null;
+      }
+
+      return data;
+    } catch (e) {
+      console.error("[toggleSignup]", e);
       return null;
     }
-
-    var data = normalizeTogglePayload(rpc.data);
-    console.log("[toggleSignup] data:", data);
-
-    if (!data) {
-      console.warn("[toggleSignup] réponse vide ou invalide:", rpc.data);
-      return null;
-    }
-
-    return data;
-  } catch (e) {
-    console.error("[toggleSignup]", e);
-    return null;
   }
-}
 
   /* =========================================================
      RENDER JOIN BUTTON
@@ -204,29 +294,58 @@ async function toggleSignup(routeId) {
        3. sur goelo:auth-success — connexion depuis la modale
        4. après erreur dans le handler — rollback UI
   ========================================================= */
-  async function renderJoin() {
+  /**
+   * @param {boolean|undefined|null} forcedJoined
+   *   Si booléen : force l'état bouton (réponse toggle).
+   *   Sinon : _uiJoined si déjà connu, sinon isJoined() Supabase.
+   */
+  async function renderJoin(forcedJoined) {
     if (!sortie || !sortie.id) return;
 
-    var btn   = document.getElementById("pd-join-btn");
+    var btn = getJoinButton();
     var count = document.getElementById("pd-join-count");
     if (!btn) return;
 
     var user = await getUser();
 
     if (!user) {
-      /* Visiteur : bouton actif qui ouvre la modale auth */
+      _uiJoined = null;
       btn.classList.remove("is-registered");
       btn.textContent = "Se connecter pour participer";
-      btn.disabled    = false;
-      btn.setAttribute("data-joined",       "0");
+      btn.disabled = false;
+      btn.setAttribute("data-joined", "0");
       btn.setAttribute("data-auth-pending", "1");
+      btn.setAttribute("aria-pressed", "false");
+      console.log("[renderJoin] state", {
+        joined: false,
+        buttonState: btn.textContent,
+        userId: null,
+        source: "anonymous"
+      });
       return;
     }
 
-    btn.setAttribute("data-auth-pending", "0");
-    /* Dernière action seule : si cancelled → "Je participe !", sinon "Inscrit" */
-    var joined = await isJoined(sortie.id, user);
-    applyJoinButtonState(btn, joined);
+    var joined;
+    var source;
+    if (typeof forcedJoined === "boolean") {
+      joined = forcedJoined;
+      source = "forced";
+    } else if (typeof _uiJoined === "boolean") {
+      joined = _uiJoined;
+      source = "ui-state";
+    } else {
+      joined = await isJoined(sortie.id, user);
+      source = "isJoined";
+    }
+
+    paintJoinButton(joined);
+
+    console.log("[renderJoin] state", {
+      joined: joined,
+      buttonState: btn.textContent,
+      userId: user.id,
+      source: source
+    });
 
     if (count) {
       var n = Array.isArray(sortie.participants) ? sortie.participants.length : 0;
@@ -239,13 +358,14 @@ async function toggleSignup(routeId) {
      BIND BUTTON — attaché une seule fois via dataset.bound
   ========================================================= */
   function bindJoin() {
-    var btn = document.getElementById("pd-join-btn");
+    var btn = getJoinButton();
     if (!btn) return;
     if (btn.dataset.bound === "1") return;
     btn.dataset.bound = "1";
 
     btn.addEventListener("click", async function () {
       if (_joinBusy) return;
+      btn = getJoinButton() || btn;
 
       /* Visiteur → ouvrir modale auth */
       if (btn.getAttribute("data-auth-pending") === "1") {
@@ -286,50 +406,21 @@ async function toggleSignup(routeId) {
         }
 
         var res = normalizeTogglePayload(await toggleSignup(sortie.id));
-        console.log("[JOIN] toggle_signup réponse:", res);
+        console.log("[JOIN] RPC response", res);
 
         /* Compat ancienne RPC : already_registered → désinscription réussie */
-        if (res && res.ok === false && res.error === "already_registered") {
+        if (res && isRpcOk(res) === false && res.error === "already_registered") {
           console.warn("[JOIN] already_registered → traité comme removed");
           res = { ok: true, action: "removed", joined: false, count: res.count };
         }
 
-        if (!res || res.ok !== true) {
-          console.error("[JOIN] toggle_signup:", res);
+        if (!isRpcOk(res)) {
+          console.error("[JOIN] toggle_signup échec:", res);
           throw new Error((res && res.error) ? String(res.error) : "Réponse toggle_signup invalide");
         }
 
-        var kind = toggleActionKind(res.action);
-        /* joined:false après suppression = état non inscrit (même si action absente) */
-        if (!kind && res.joined === false) kind = "removed";
-        if (!kind && res.joined === true) kind = "added";
-
-        if (kind === "added") {
-          console.log("[JOIN] added");
-          applyJoinButtonState(btn, true);
-          setJoinFeedback("Tu es inscrit·e à cette sortie.");
-          await syncParticipantsUI();
-          if (typeof res.count === "number") updateJoinCount(res.count);
-          console.log("[JOIN] UI refreshed");
-        } else if (kind === "removed") {
-          console.log("[JOIN] removed");
-          applyJoinButtonState(btn, false);
-          setJoinFeedback("Tu es désinscrit·e de cette sortie.");
-          /* joined: false → rafraîchir la liste sans cet utilisateur */
-          await syncParticipantsUI();
-          if (typeof res.count === "number") updateJoinCount(res.count);
-          console.log("[JOIN] UI refreshed");
-        } else {
-          console.error("[JOIN] action inconnue (ni added ni removed):", res);
-          throw new Error("Réponse toggle_signup action inconnue: " + String(res.action));
-        }
-
-        if (window.GoeloSignupParticipants) {
-          window.GoeloSignupParticipants.emitChanged(
-            sortie.id,
-            typeof res.count === "number" ? res.count : (sortie.participants || []).length
-          );
-        }
+        /* added ET removed sont tous les deux valides — jamais "sans action" pour removed */
+        await applyToggleResponseToUI(res);
 
       } catch (err) {
         console.error("[JOIN]", err);
@@ -863,11 +954,17 @@ async function toggleSignup(routeId) {
 
     /* Re-synchroniser le bouton dès que le rôle / la session est confirmé */
     window.addEventListener("goelo:role-ready", function () {
-      renderJoin();
+      /* Ne pas écraser un état forcé par toggle (_uiJoined déjà booléen) */
+      if (typeof _uiJoined === "boolean") {
+        renderJoin(_uiJoined);
+      } else {
+        renderJoin();
+      }
       syncParticipantsUI();
     });
 
     window.addEventListener("goelo:auth-success", function () {
+      _uiJoined = null; /* nouvelle session → relire Supabase */
       renderJoin();
       syncParticipantsUI();
     });

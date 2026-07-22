@@ -314,11 +314,15 @@ body {
 .pd-join__btn:hover { transform: translateY(-1px); }
 .pd-join__btn:active { transform: none; }
 
-/* État inscrit → bouton rouge « J'annule » */
+/* État inscrit → bouton rouge « Inscrit » */
 .pd-join__btn.is-registered {
   background: var(--danger);
   color: #fff;
   box-shadow: 0 6px 18px rgba(239, 68, 68, 0.25);
+}
+
+.pd-join__btn.is-registered:hover {
+  filter: brightness(1.05);
 }
 
 .pd-join__count {
