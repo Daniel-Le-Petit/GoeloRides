@@ -2,9 +2,10 @@
  * GoëloRides — parcours.js
  *
  * Corrections inscription :
- *  - isJoined() : user_id + status actif, RPC signup_is_joined
+ *  - isJoined() : dernière action user_id+route_id ; actif si
+ *    status='joined' (ou 'waiting') ET canceled_at IS NULL
  *  - renderJoin() : état bouton basé uniquement sur isJoined(), pas sur
- *    sortie.participants
+ *    sortie.participants ni sur l'existence d'une ancienne ligne
  *  - waitForAuthReady() avant le premier renderJoin (session hydratée)
  *  - goelo:role-ready sans { once:true } pour resync après auth tardive
  *  - bindJoin() appelé une seule fois après renderAll(), guard dataset.bound
@@ -62,30 +63,43 @@
   }
 
   /**
-   * État inscrit = signups actifs (canceled_at IS NULL).
-   * 1. SELECT signups si RLS le permet
-   * 2. RPC signup_is_joined (auth.uid() / e-mail)
+   * Inscription active = dernière action pour (user_id, route_id) avec
+   * status='joined' ET canceled_at IS NULL.
+   * Liste d'attente : status='waiting' + canceled_at IS NULL → bouton "J'annule".
+   * Une ancienne ligne joined ne compte plus si la dernière action est cancelled.
    */
+  function isActiveSignupRow(row) {
+    if (!row) return false;
+    if (row.canceled_at != null) return false;
+    return row.status === "joined" || row.status === "waiting";
+  }
+
   async function isJoined(routeId, user) {
     var sb = getSb();
     if (!sb || !routeId || !user || !user.id) return false;
 
     var direct = await sb
       .from("signups")
-      .select("id")
+      .select("id,status,canceled_at,created_at")
       .eq("route_id", routeId)
       .eq("user_id", user.id)
-      .is("canceled_at", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (direct.error) {
       console.warn("[isJoined] direct signups:", direct.error.message, direct.error.code);
     } else if (direct.data) {
-      return true;
+      return isActiveSignupRow(direct.data);
     }
 
     var rpcUser = await sb.rpc("signup_is_joined", { p_route_id: routeId });
     if (!rpcUser.error && rpcUser.data && typeof rpcUser.data === "object") {
+      /* registered = joined|waiting (après migration latest-action) */
+      if (typeof rpcUser.data.registered === "boolean") {
+        return rpcUser.data.registered === true;
+      }
       return rpcUser.data.joined === true;
     }
     if (rpcUser.error && rpcUser.error.code !== "PGRST202") {
@@ -163,6 +177,7 @@ async function toggleSignup(routeId) {
     }
 
     btn.setAttribute("data-auth-pending", "0");
+    /* Dernière action seule : si cancelled → "Je participe !", sinon "J'annule" */
     var joined = await isJoined(sortie.id, user);
     btn.disabled    = false;
     btn.textContent = joined ? "J'annule" : "Je participe !";
@@ -236,8 +251,10 @@ async function toggleSignup(routeId) {
           throw new Error("Réponse toggle_signup sans action");
         }
 
-        btn.textContent = res.action === "joined" ? "J'annule" : "Je participe !";
-        btn.setAttribute("data-joined", res.action === "joined" ? "1" : "0");
+        /* action unjoined → "Je participe !" même si d'anciennes lignes existent */
+        var nowJoined = res.action === "joined";
+        btn.textContent = nowJoined ? "J'annule" : "Je participe !";
+        btn.setAttribute("data-joined", nowJoined ? "1" : "0");
 
         await syncParticipantsUI();
         if (typeof res.count === "number") {
