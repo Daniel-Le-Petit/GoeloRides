@@ -205,18 +205,83 @@ body {
 
 /* ── Sync bar ───────────────────────────────────────────────── */
 .sync-bar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 12px;
   margin-bottom: 1rem;
-  padding: 0.65rem 0.85rem;
+  padding: 0.75rem 0.9rem;
   background: var(--s1);
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.75rem; color: var(--muted);
 }
+.sync-bar__main { flex: 1; min-width: 200px; }
 .sync-bar strong { color: var(--text); font-weight: 600; }
-.sync-bar__stale { color: var(--orange); font-weight: 600; }
-.sync-bar__err { color: var(--red); }
-.sync-bar .btn-sm { margin-left: auto; }
+.sync-bar__stats {
+  display: flex; flex-wrap: wrap; gap: 8px 14px;
+  margin-top: 0.45rem;
+}
+.sync-bar__err { color: var(--red); display: block; margin-top: 0.35rem; }
+.sync-bar .btn-sm { margin-left: auto; flex-shrink: 0; }
+
+.overdue-toggle {
+  width: 100%;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  margin: 1.5rem 0 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.overdue-toggle__chev {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.overdue-panel { margin-bottom: 0.5rem; }
+
+.action-checklist {
+  margin-top: 0.35rem;
+}
+.action-checklist ul {
+  list-style: none;
+  margin-top: 4px;
+}
+.action-checklist li {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.action-checklist li.is-ok { color: var(--green); }
+.action-checklist li.is-ko { color: var(--orange); }
+
+.event-card {
+  background: linear-gradient(135deg, rgba(200, 241, 53, 0.08), var(--s1));
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 12px;
+}
+.event-card__eyebrow {
+  font-family: var(--font-d);
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 0.35rem;
+}
+.event-card__title {
+  font-size: 1rem; font-weight: 700;
+  margin-bottom: 0.4rem; line-height: 1.3;
+}
+.event-card__meta {
+  font-size: 0.8rem; color: var(--muted); line-height: 1.5;
+  margin-bottom: 0.65rem;
+}
+
+.cal-dot--event { background: var(--accent); }
+.cal-day.has-event { border-color: var(--accent-border); }
 
 .stale-banner {
   margin: 0 1rem 0.65rem;

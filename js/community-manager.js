@@ -8,6 +8,14 @@
 
   var STORAGE_KEY = "goelo-cm-overrides-v3";
   var PAST_WINDOW_DAYS = 14;
+  var ARCHIVE_AFTER_DAYS = 7;
+
+  var HASHTAGS_BASE = [
+    "#GoëloRides",
+    "#CyclismeBretagne",
+    "#SaintQuayPortrieux",
+    "#CotesdArmor"
+  ];
 
   var STATUS = {
     planned:   { key: "planned",   label: "Planifié",       emoji: "⚪" },
@@ -24,7 +32,7 @@
       canal: "facebook_page",
       offsetDays: -7,
       time: "10:00",
-      label: "Annonce",
+      label: "Annonce sortie",
       phase: "pre",
       needs: []
     },
@@ -49,9 +57,9 @@
     {
       kind: "feedback_strava",
       canal: "strava",
-      offsetDays: 0,
-      time: "16:00",
-      label: "Feedback",
+      offsetDays: 1,
+      time: "10:00",
+      label: "Feedback sortie",
       phase: "post",
       needs: ["photo", "statistiques"]
     },
@@ -59,17 +67,8 @@
       kind: "recap_facebook",
       canal: "facebook_page",
       offsetDays: 1,
-      time: "10:00",
-      label: "Récap",
-      phase: "post",
-      needs: ["photo"]
-    },
-    {
-      kind: "recap_instagram",
-      canal: "instagram",
-      offsetDays: 1,
       time: "11:00",
-      label: "Récap",
+      label: "Récap sortie",
       phase: "post",
       needs: ["photo"]
     }
@@ -86,6 +85,8 @@
     openId: null,
     previewId: null,
     editId: null,
+    overdueOpen: false,
+    lastSyncAt: null,
     eventsBound: false,
     loadError: null
   };
@@ -369,11 +370,14 @@
   }
 
   function hashtagsFor(canal) {
+    var tags = HASHTAGS_BASE.slice();
     if (canal === "instagram") {
-      return ["#GoëloRides", "#Vélo", "#Bretagne", "#CyclismeBretagne", "#SaintQuayPortrieux"];
+      tags = tags.concat(["#Velo", "#Bretagne"]);
     }
-    if (canal === "strava") return ["#GoëloRides", "#Strava", "#Cycling"];
-    return ["#GoëloRides", "#Cyclisme", "#SaintQuayPortrieux", "#Bretagne", "#CoëGoëlo"];
+    if (canal === "strava") {
+      tags = tags.concat(["#Cycling"]);
+    }
+    return tags;
   }
 
   function generateBody(kind, snap) {
@@ -501,6 +505,10 @@
     return toIsoDate(addDays(ride, tpl.offsetDays || 0));
   }
 
+  function archiveCutoffIso() {
+    return toIsoDate(addDays(parseIso(todayIso()), -ARCHIVE_AFTER_DAYS));
+  }
+
   function buildActionFromTemplate(tpl, snap, ov) {
     ov = ov || {};
     var id = snap.route_id + "__" + tpl.kind;
@@ -513,6 +521,11 @@
     var stale = false;
     var actionDate = actionDateFor(tpl, snap);
     var actionTime = tpl.time || "10:00";
+    var cutoff = archiveCutoffIso();
+
+    if (actionDate < cutoff && status !== "published" && status !== "archived") {
+      status = "archived";
+    }
 
     if (status === "published" || status === "archived") {
       if (typeof ov.body === "string" && ov.body.trim()) {
@@ -523,18 +536,31 @@
       if (ov.actionDate) actionDate = ov.actionDate;
       if (ov.actionTime) actionTime = ov.actionTime;
     } else {
-      /* Brouillons : dates + textes toujours recalculés depuis la sortie */
       if (!ov.bodyOverride) {
         liveBody = generateBody(tpl.kind, snap);
       } else {
-        /* Override manuel : marquer stale si sortie a changé */
         stale = !!(ov.bodyFingerprint && ov.bodyFingerprint !== snap.fingerprint);
       }
       bodyFingerprint = snap.fingerprint;
-      if (!ov.status) status = defaultStatus(missing);
-      else if (missing.length && status === "ready") status = "draft";
-      else if (!missing.length && status === "planned") status = "ready";
+      if (!ov.status) {
+        status = defaultStatus(missing);
+      } else {
+        status = normalizeStatus(ov.status);
+        if (!missing.length && status === "planned") status = "ready";
+      }
     }
+
+    var hasText = !!(liveBody && String(liveBody).trim());
+    var needsPhoto = (tpl.needs || []).indexOf("photo") !== -1;
+    var photoOk = !needsPhoto || !!(snap.imageUrl || (ov && ov.photosAdded));
+    var checklist = [
+      { ok: hasText, label: "Texte généré" },
+      { ok: photoOk, label: needsPhoto ? "Photo disponible" : "Photo non requise" },
+      {
+        ok: status === "published",
+        label: status === "published" ? "Publication effectuée" : "Publication non effectuée"
+      }
+    ];
 
     return {
       id: id,
@@ -553,6 +579,7 @@
       sortieUrl: sortieUrlPath(snap.route_id),
       imageUrl: snap.imageUrl || null,
       missing: missing,
+      checklist: checklist,
       sortie: snap
     };
   }
@@ -560,31 +587,30 @@
   function rebuildActionsFromSorties() {
     var list = [];
     var today = todayIso();
+    var cutoff = archiveCutoffIso();
 
     state.sorties.forEach(function (card) {
       var snap = snapshotFromEnriched(card);
       if (!snap.date) return;
 
       ACTION_TEMPLATES.forEach(function (tpl) {
-        /* Interdiction : feedback / récap avant la fin de sortie */
-        if (tpl.phase === "post" && !sortieHasEnded(snap)) return;
-
-        /* Ne pas générer d'action de publication dans le passé lointain non publiée hors fenêtre */
         var aDate = actionDateFor(tpl, snap);
-        if (tpl.phase === "pre" && aDate < today && snap.date < today) {
-          var ovEarly = state.overrides[snap.route_id + "__" + tpl.kind];
-          if (!ovEarly || (ovEarly.status !== "published" && ovEarly.status !== "archived")) {
-            /* garder les en retard si sortie encore à venir */
-            if (snap.date >= today) {
-              /* ok — overdue pre-ride */
-            } else {
-              return;
-            }
-          }
+        var ov = state.overrides[snap.route_id + "__" + tpl.kind];
+
+        /* Post-sortie uniquement après le jour J */
+        if (tpl.phase === "post" && snap.date >= today) return;
+
+        /* > 7 jours et non publié → hors vues principales */
+        if (aDate < cutoff && (!ov || ov.status !== "published")) return;
+
+        /* Sortie passée : ignorer les pré-ride non publiées */
+        if (tpl.phase === "pre" && snap.date < today) {
+          if (!ov || (ov.status !== "published" && ov.status !== "archived")) return;
         }
 
-        var ov = state.overrides[snap.route_id + "__" + tpl.kind];
-        list.push(buildActionFromTemplate(tpl, snap, ov));
+        var action = buildActionFromTemplate(tpl, snap, ov);
+        if (action.status === "archived") return;
+        list.push(action);
       });
     });
 
@@ -681,18 +707,43 @@
   }
 
   function overdueActions(today) {
+    var cutoff = archiveCutoffIso();
     return state.actions.filter(function (a) {
-      return a.date < today && isOpenStatus(a);
+      return a.date < today && a.date >= cutoff && isOpenStatus(a);
     }).sort(function (a, b) {
       return (a.date + a.time).localeCompare(b.date + b.time);
     });
   }
 
-  /** Urgent = prêt à publier aujourd'hui ou en retard */
-  function urgentActions(today) {
+  function nextSortie() {
+    var today = todayIso();
+    var upcoming = state.sorties
+      .map(function (c) { return snapshotFromEnriched(c); })
+      .filter(function (s) { return s.date && s.date >= today; })
+      .sort(function (a, b) { return a.date.localeCompare(b.date); });
+    return upcoming[0] || null;
+  }
+
+  function sortiesOnIso(iso) {
+    return state.sorties
+      .map(function (c) { return snapshotFromEnriched(c); })
+      .filter(function (s) { return s.date === iso; });
+  }
+
+  function upcomingSortieCount() {
+    var today = todayIso();
+    return state.sorties.filter(function (c) {
+      var iso = window.GoeloSortieDates
+        ? window.GoeloSortieDates.sortieCalendarYmd(c)
+        : toIsoDate(c.date);
+      return iso && iso >= today;
+    }).length;
+  }
+
+  function pendingPublishCount() {
     return state.actions.filter(function (a) {
-      return a.status === "ready" && (a.date === today || a.date < today);
-    });
+      return a.status === "ready" || a.status === "draft";
+    }).length;
   }
 
   function actionsInRange(startIso, endIso) {
@@ -775,6 +826,40 @@
     );
   }
 
+  function renderChecklist(action) {
+    var items = action.checklist || [];
+    if (!items.length) return "";
+    return (
+      '<div class="action-checklist">' +
+        '<div class="action-field__lab">Checklist</div>' +
+        '<ul>' +
+        items.map(function (it) {
+          return "<li class=\"" + (it.ok ? "is-ok" : "is-ko") + "\">" +
+            (it.ok ? "✅" : "❌") + " " + escapeHtml(it.label) +
+            "</li>";
+        }).join("") +
+        "</ul>" +
+      "</div>"
+    );
+  }
+
+  function renderEventCard(snap) {
+    return (
+      '<article class="event-card">' +
+        '<div class="event-card__eyebrow">🚴 Événement GoëloRides</div>' +
+        '<div class="event-card__title">' + escapeHtml(snap.title) + "</div>" +
+        '<div class="event-card__meta">' +
+          escapeHtml(formatDateFrLong(snap.date)) + "<br>" +
+          escapeHtml(formatTimeDisplay(snap.start_time)) + "<br>" +
+          escapeHtml(snap.location || "—") +
+        "</div>" +
+        '<div class="action-btns">' +
+          '<a class="btn-sm" href="' + escapeHtml(sortieUrlPath(snap.route_id)) + '">Voir la sortie</a>' +
+        "</div>" +
+      "</article>"
+    );
+  }
+
   function renderCard(action, opts) {
     opts = opts || {};
     var st = statusMeta(action.status);
@@ -790,11 +875,7 @@
       (hasBody ? "" : " is-empty") +
       (isPreview ? " is-expanded is-full" : "");
 
-    var previewText = hasBody
-      ? action.body
-      : (action.missing.length
-          ? "À préparer : " + action.missing.join(", ")
-          : "Contenu à générer.");
+    var previewText = hasBody ? action.body : "Contenu à générer.";
 
     return (
       '<article class="action-card' +
@@ -827,6 +908,7 @@
                   escapeHtml(snap.location || "—")
                 : "—") +
             "</div></div>" +
+          renderChecklist(action) +
         "</div>" +
 
         renderStaleBanner(action) +
@@ -847,19 +929,17 @@
     var st = action.status;
     var canal = canalMeta(action.canal);
 
-    if (action.body && action.body.trim() && !blocked) {
+    if (action.body && action.body.trim() && !blocked && st !== "published") {
       parts.push('<button type="button" class="btn-sm accent" data-act="copy" data-id="' + escapeHtml(action.id) + '">📋 Copier le post</button>');
+    } else if (st === "published" && action.body && !blocked) {
+      parts.push('<button type="button" class="btn-sm" data-act="copy" data-id="' + escapeHtml(action.id) + '">📋 Copier le post</button>');
     } else {
       parts.push('<button type="button" class="btn-sm" data-act="copy" data-id="' + escapeHtml(action.id) + '" disabled>📋 Copier</button>');
     }
 
     parts.push('<button type="button" class="btn-sm" data-act="preview" data-id="' + escapeHtml(action.id) + '">👁 Voir aperçu</button>');
     parts.push('<button type="button" class="btn-sm" data-act="edit" data-id="' + escapeHtml(action.id) + '">✏ Modifier</button>');
-    parts.push('<a class="btn-sm" href="' + escapeHtml(canal.url || "#") + '" target="_blank" rel="noopener">🔗 Ouvrir ' + escapeHtml(canal.label) + "</a>");
-
-    if (action.sortieUrl) {
-      parts.push('<a class="btn-sm" href="' + escapeHtml(action.sortieUrl) + '">🚴 Sortie</a>');
-    }
+    parts.push('<a class="btn-sm" href="' + escapeHtml(canal.url || "#") + '" target="_blank" rel="noopener">🔗 Ouvrir canal</a>');
 
     if (blocked) {
       parts.push('<button type="button" class="btn-sm accent" data-act="refresh" data-id="' + escapeHtml(action.id) + '">Actualiser le contenu</button>');
@@ -867,13 +947,11 @@
 
     if (st === "ready" && !blocked) {
       parts.push('<button type="button" class="btn-sm accent" data-act="publish" data-id="' + escapeHtml(action.id) + '">✅ Marquer publié</button>');
-    } else if ((st === "draft" || st === "planned") && action.body && !blocked) {
-      parts.push('<button type="button" class="btn-sm" data-act="ready" data-id="' + escapeHtml(action.id) + '">🟡 Prêt à publier</button>');
     } else if (st === "published") {
       parts.push('<button type="button" class="btn-sm" data-act="archive" data-id="' + escapeHtml(action.id) + '">⚫ Archiver</button>');
     }
 
-    if (st === "draft" && action.missing.indexOf("photo") !== -1) {
+    if ((st === "draft" || st === "planned") && action.missing.indexOf("photo") !== -1) {
       parts.push('<button type="button" class="btn-sm" data-act="photos" data-id="' + escapeHtml(action.id) + '">📸 Photos OK</button>');
     }
 
@@ -908,15 +986,28 @@
     );
   }
 
+  function formatSyncStamp(d) {
+    if (!d) return "—";
+    return pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + "/" + d.getFullYear() +
+      " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
+
   function renderSyncBar() {
-    var n = state.sorties.length;
-    var staleN = state.actions.filter(isCopyBlocked).length;
+    var today = todayIso();
+    var todayN = actionsForIso(today).length;
     return (
       '<div class="sync-bar">' +
-        "<span>Source : <strong>" + n + " sortie" + (n !== 1 ? "s" : "") +
-        "</strong> du site</span>" +
-        (staleN ? '<span class="sync-bar__stale">⚠️ ' + staleN + " à actualiser</span>" : "") +
-        (state.loadError ? '<span class="sync-bar__err">⚠️ ' + escapeHtml(state.loadError) + "</span>" : "") +
+        "<div class=\"sync-bar__main\">" +
+          "<span>Données synchronisées : <strong>" +
+          escapeHtml(formatSyncStamp(state.lastSyncAt)) +
+          "</strong></span>" +
+          '<div class="sync-bar__stats">' +
+            "<span>Sorties à venir : <strong>" + upcomingSortieCount() + "</strong></span>" +
+            "<span>Actions aujourd'hui : <strong>" + todayN + "</strong></span>" +
+            "<span>Publications en attente : <strong>" + pendingPublishCount() + "</strong></span>" +
+          "</div>" +
+          (state.loadError ? '<span class="sync-bar__err">⚠️ ' + escapeHtml(state.loadError) + "</span>" : "") +
+        "</div>" +
         '<button type="button" class="btn-sm" id="btn-resync">↻ Synchroniser</button>' +
       "</div>"
     );
@@ -945,35 +1036,57 @@
       return a.time.localeCompare(b.time);
     });
     var overdue = overdueActions(today);
+    var next = nextSortie();
+    var todayEvents = sortiesOnIso(today);
     var counts = countByStatus(todayList);
     document.getElementById("sum-published").textContent = String(counts.published);
     document.getElementById("sum-ready").textContent = String(counts.ready);
     document.getElementById("sum-draft").textContent = String(counts.draft);
     document.getElementById("sum-planned").textContent = String(counts.planned);
 
-    var left = remainingCount(todayList) + overdue.length;
+    var left = remainingCount(todayList);
     var hint = document.getElementById("remaining-hint");
     if (!state.sorties.length) {
       hint.innerHTML = "Aucune sortie active. Publie une sortie dans <a href=\"gestion-sorties.html\" style=\"color:var(--accent)\">Gestion sorties</a>.";
     } else if (left === 0) {
-      hint.innerHTML = "<strong>Rien à publier aujourd'hui.</strong> Consulte la vue Semaine pour la suite.";
+      hint.innerHTML = "<strong>Rien à publier aujourd'hui.</strong>" +
+        (overdue.length ? " " + overdue.length + " retard(s) dans la section repliable." : " Consulte la vue Semaine.");
     } else {
       hint.innerHTML = "<strong>" + left + " action" + (left > 1 ? "s" : "") +
-        "</strong> à traiter (jour + retards).";
+        "</strong> prévue" + (left > 1 ? "s" : "") + " aujourd'hui.";
     }
 
     var html = renderSyncBar();
-    html += '<p class="slabel">Actions prévues aujourd\'hui <em>' + todayList.length + "</em></p>";
 
-    if (!todayList.length && !overdue.length) {
-      html += '<div class="empty-state"><strong>Aucune action aujourd\'hui</strong>Les publications de la semaine sont dans l\'onglet Semaine.</div>';
+    html += '<p class="slabel">Actions prévues aujourd\'hui <em>' + todayList.length + "</em></p>";
+    if (todayEvents.length) {
+      todayEvents.forEach(function (s) { html += renderEventCard(s); });
+    }
+    if (!todayList.length && !todayEvents.length) {
+      html += '<div class="empty-state"><strong>Aucune action aujourd\'hui</strong>Les publications à venir sont dans l\'onglet Semaine.</div>';
     } else {
       todayList.forEach(function (a) { html += renderCard(a); });
     }
 
     if (overdue.length) {
-      html += '<p class="slabel slabel--urgent">En retard <em>' + overdue.length + "</em></p>";
-      overdue.forEach(function (a) { html += renderCard(a, { overdue: true }); });
+      html +=
+        '<button type="button" class="slabel slabel--urgent overdue-toggle" id="overdue-toggle" aria-expanded="' +
+        (state.overdueOpen ? "true" : "false") + '">' +
+        "Actions en retard <em>" + overdue.length + "</em>" +
+        '<span class="overdue-toggle__chev">' + (state.overdueOpen ? "▼" : "▶") + "</span>" +
+        "</button>";
+      if (state.overdueOpen) {
+        html += '<div class="overdue-panel">';
+        overdue.forEach(function (a) { html += renderCard(a, { overdue: true }); });
+        html += "</div>";
+      }
+    }
+
+    html += '<p class="slabel">Prochaine sortie GoëloRides</p>';
+    if (next) {
+      html += renderEventCard(next);
+    } else {
+      html += '<div class="empty-state"><strong>Pas de sortie à venir</strong></div>';
     }
 
     document.getElementById("today-feed").innerHTML = html;
@@ -996,13 +1109,23 @@
     var html = renderSyncBar();
     html += '<p class="slabel">Actions de la semaine</p>';
 
-    if (!list.length) {
-      html += '<div class="empty-state"><strong>Rien cette semaine</strong>Aucune publication planifiée sur les sorties synchronisées.</div>';
-    } else {
-      grouped.order.forEach(function (iso) {
+    var dayCursor = new Date(start);
+    var any = false;
+    for (var i = 0; i < 7; i++) {
+      var iso = toIsoDate(dayCursor);
+      var dayActions = grouped.map[iso] || [];
+      var daySorties = sortiesOnIso(iso);
+      if (dayActions.length || daySorties.length) {
+        any = true;
         html += '<p class="day-heading">📅 ' + formatDateFrLong(iso) + "</p>";
-        grouped.map[iso].forEach(function (a) { html += renderCard(a); });
-      });
+        daySorties.forEach(function (s) { html += renderEventCard(s); });
+        dayActions.forEach(function (a) { html += renderCard(a); });
+      }
+      dayCursor = addDays(dayCursor, 1);
+    }
+
+    if (!any) {
+      html += '<div class="empty-state"><strong>Rien cette semaine</strong>Aucune publication ni sortie planifiée.</div>';
     }
 
     document.getElementById("week-feed").innerHTML = html;
@@ -1025,15 +1148,20 @@
       var d = addDays(start, i);
       var iso = toIsoDate(d);
       var dayActions = actionsForIso(iso);
+      var daySorties = sortiesOnIso(iso);
       var name = d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
-      var dots = dayActions.slice(0, 5).map(function (a) {
+      var dots = dayActions.slice(0, 4).map(function (a) {
         return '<span class="cal-dot cal-dot--' + a.status + '"></span>';
       }).join("");
+      if (daySorties.length) {
+        dots += '<span class="cal-dot cal-dot--event" title="Sortie"></span>';
+      }
 
       weekHtml +=
         '<button type="button" class="cal-day' +
         (iso === tIso ? " is-today" : "") +
         (iso === state.calSelectedIso ? " is-selected" : "") +
+        (daySorties.length ? " has-event" : "") +
         '" data-cal-day="' + iso + '">' +
         '<div class="cal-day__name">' + escapeHtml(capitalize(name)) + "</div>" +
         '<div class="cal-day__n">' + d.getDate() + "</div>" +
@@ -1045,11 +1173,13 @@
     var list = actionsForIso(state.calSelectedIso).sort(function (a, b) {
       return a.time.localeCompare(b.time);
     });
+    var events = sortiesOnIso(state.calSelectedIso);
     var detail = renderSyncBar() +
       '<p class="day-heading">📅 ' + formatDateFrLong(state.calSelectedIso) + "</p>";
-    if (!list.length) {
+    if (!list.length && !events.length) {
       detail += '<div class="empty-state"><strong>Rien ce jour</strong></div>';
     } else {
+      events.forEach(function (s) { detail += renderEventCard(s); });
       list.forEach(function (a) { detail += renderCard(a); });
     }
     document.getElementById("cal-day-detail").innerHTML = detail;
@@ -1192,6 +1322,7 @@
       state.sortiesById[String(c.id)] = c;
     });
     rebuildActionsFromSorties();
+    state.lastSyncAt = new Date();
     if (opts.toast) {
       toast(state.sorties.length
         ? state.sorties.length + " sortie(s) synchronisée(s)"
@@ -1262,6 +1393,11 @@
     document.addEventListener("click", function (e) {
       if (e.target.closest("#btn-resync")) {
         syncFromSorties({ toast: true });
+        return;
+      }
+      if (e.target.closest("#overdue-toggle")) {
+        state.overdueOpen = !state.overdueOpen;
+        refresh();
         return;
       }
       var calDay = e.target.closest("[data-cal-day]");
