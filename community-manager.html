@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0D0D0D">
+  <title>GoëloRides — Planning Communication</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/community-manager.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
+  <div class="topbar-badge">COMMUNITY</div>
+  <nav class="topbar-nav" aria-label="Sections admin">
+    <a href="admin.html">Activité</a>
+    <a href="admin.html#gtr-approvals">Approbations</a>
+    <a href="admin-cyclistes.html">Cyclistes</a>
+    <a href="allrides.html">Itinéraires</a>
+    <a href="gestion-sorties.html">Sorties</a>
+    <a href="community-manager.html" class="is-active">Communication</a>
+  </nav>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <div class="av" id="user-avatar">CM</div>
+    <span id="user-name">—</span>
+  </div>
+</header>
+
+<div id="gate-panel" style="display:none">
+  <div class="gate">
+    <h2>Accès Community Manager</h2>
+    <p>Cette console est réservée aux administrateurs et Ride Leaders GoëloRides.</p>
+    <button class="gate-btn" data-goelo-auth-trigger>🔒 Se connecter</button>
+  </div>
+</div>
+
+<main class="main" id="dashboard" style="display:none">
+
+  <div class="view-tabs" role="tablist" aria-label="Vues planning">
+    <button type="button" class="view-tab active" role="tab" aria-selected="true" data-view="today">Aujourd'hui</button>
+    <button type="button" class="view-tab" role="tab" aria-selected="false" data-view="week">Semaine</button>
+    <button type="button" class="view-tab" role="tab" aria-selected="false" data-view="calendar">Calendrier</button>
+  </div>
+
+  <!-- ═══════ VUE AUJOURD'HUI ═══════ -->
+  <section id="view-today" aria-label="Actions du jour">
+
+    <div class="day-board">
+      <p class="day-board__eyebrow">Actions du jour</p>
+      <h1 class="day-board__date">Date : <span id="today-date">—</span></h1>
+      <div class="summary-grid" aria-label="Résumé du jour">
+        <div class="summary-pill summary-pill--published">
+          <span class="summary-pill__dot">🟢</span>
+          <div class="summary-pill__n" id="sum-published">0</div>
+          <div class="summary-pill__label">Publiés</div>
+        </div>
+        <div class="summary-pill summary-pill--ready">
+          <span class="summary-pill__dot">🟡</span>
+          <div class="summary-pill__n" id="sum-ready">0</div>
+          <div class="summary-pill__label">À valider</div>
+        </div>
+        <div class="summary-pill summary-pill--draft">
+          <span class="summary-pill__dot">🟠</span>
+          <div class="summary-pill__n" id="sum-draft">0</div>
+          <div class="summary-pill__label">À préparer</div>
+        </div>
+        <div class="summary-pill summary-pill--planned">
+          <span class="summary-pill__dot">⚪</span>
+          <div class="summary-pill__n" id="sum-planned">0</div>
+          <div class="summary-pill__label">Planifiés</div>
+        </div>
+      </div>
+      <p class="remaining-hint" id="remaining-hint">Chargement…</p>
+    </div>
+
+    <div id="today-feed"></div>
+  </section>
+
+  <!-- ═══════ VUE SEMAINE ═══════ -->
+  <section id="view-week" hidden aria-label="Actions de la semaine">
+    <div class="day-board day-board--compact">
+      <p class="day-board__eyebrow">Actions de la semaine</p>
+      <h1 class="day-board__date" id="week-title">—</h1>
+      <p class="remaining-hint" id="week-hint"></p>
+    </div>
+    <div id="week-feed"></div>
+  </section>
+
+  <!-- ═══════ VUE CALENDRIER ═══════ -->
+  <section id="view-calendar" hidden aria-label="Calendrier des publications">
+    <div class="cal-nav">
+      <button type="button" class="btn-sm" id="cal-prev" aria-label="Semaine précédente">← Semaine</button>
+      <div class="cal-nav__label" id="cal-label">—</div>
+      <div class="cal-nav__btns">
+        <button type="button" class="btn-sm" id="cal-today-btn">Aujourd'hui</button>
+        <button type="button" class="btn-sm" id="cal-next" aria-label="Semaine suivante">Semaine →</button>
+      </div>
+    </div>
+
+    <div class="cal-legend">
+      <span><i style="background:var(--yellow)"></i> Prêt</span>
+      <span><i style="background:var(--orange)"></i> À préparer</span>
+      <span><i style="background:var(--gray)"></i> Planifié</span>
+      <span><i style="background:var(--green)"></i> Publié</span>
+    </div>
+
+    <div class="cal-week" id="cal-week" role="grid" aria-label="Semaine"></div>
+
+    <p class="slabel" style="margin-top:0.5rem">Jour sélectionné</p>
+    <div class="cal-day-detail" id="cal-day-detail"></div>
+  </section>
+
+</main>
+
+<!-- Modal édition post -->
+<dialog class="cm-dialog" id="edit-dialog">
+  <form method="dialog" class="cm-dialog__form" id="edit-form">
+    <h2 class="cm-dialog__title">Modifier le post</h2>
+    <p class="cm-dialog__sub" id="edit-sub"></p>
+    <textarea id="edit-body" class="cm-dialog__textarea" rows="14"></textarea>
+    <div class="cm-dialog__actions">
+      <button type="submit" class="btn-sm" value="cancel">Annuler</button>
+      <button type="submit" class="btn-sm accent" value="save" id="edit-save">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<nav class="mobile-nav" aria-label="Navigation mobile">
+  <a href="#" data-view-link="today" aria-current="page"><span>📋</span>Aujourd'hui</a>
+  <a href="#" data-view-link="week"><span>🗓</span>Semaine</a>
+  <a href="#" data-view-link="calendar"><span>📅</span>Calendrier</a>
+  <a href="admin.html"><span>⚙️</span>Admin</a>
+</nav>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="js/goelo-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/goelo-auth-state.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/goelo-profile.js"></script>
+<script src="js/goelo-ui.js"></script>
+<script src="js/goelo-sortie-dates.js"></script>
+<script src="js/sortie-cards.js"></script>
+<script src="js/community-manager.js"></script>
+
+</body>
+</html>
