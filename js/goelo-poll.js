@@ -1,6 +1,7 @@
 /**
- * GoëloRides — Sondage Home (vote modifiable · résultats %)
+ * GoëloRides — Sondage Home (1 clic = vote · résultats %)
  * localStorage voter_key · RPC poll_get_active / poll_vote
+ * Un clic remplace le vote existant (1 ligne / identité).
  */
 (function (global) {
   "use strict";
@@ -120,40 +121,43 @@
     return null;
   }
 
-  function renderOptions(root, state) {
-    var poll = state.poll;
-    var options = normalizeOptions(state.options || []);
-    var myId = state.my_option_id ? String(state.my_option_id) : null;
-    var hasVoted = !!state.has_voted;
-    var editing = !!state.editing;
-    var showResults = hasVoted && !editing;
-    var selectedId = state.selected_option_id ? String(state.selected_option_id) : null;
-    var question = defaultQuestion();
-    var myOpt = findOption(options, myId);
+  function applyServerPayload(root, poll, options, myOptionId) {
+    var normalized = normalizeOptions(options || []);
+    var myId = myOptionId ? String(myOptionId) : null;
+    if (myId) rememberLocalVote(poll.id, myId);
 
     root._pollState = {
       poll: poll,
-      options: state.options || [],
+      options: options || [],
       my_option_id: myId,
-      has_voted: hasVoted,
-      editing: editing,
-      selected_option_id: selectedId
+      has_voted: !!myId
     };
+
+    render(root);
+  }
+
+  function render(root) {
+    var state = root._pollState;
+    if (!state || !state.poll) return;
+
+    var poll = state.poll;
+    var options = normalizeOptions(state.options || []);
+    var myId = state.my_option_id ? String(state.my_option_id) : null;
+    var myOpt = findOption(options, myId);
+    var question = defaultQuestion();
 
     var html = "";
     html += '<div class="gr-poll">';
     html += '<h2 class="gr-poll__title">' + escapeHtml(question) + "</h2>";
 
-    if (showResults && myOpt) {
+    if (myOpt) {
       html +=
         '<p class="gr-poll__mine-line">Votre choix : ' +
         '<span class="gr-poll__mine-choice">' +
         escapeHtml((myOpt.emoji ? myOpt.emoji + " " : "") + myOpt.label) +
         "</span></p>";
-    } else if (!showResults) {
-      html += '<p class="gr-poll__cta-line">' +
-        (editing ? "Choisissez un nouveau format." : "👉 Votez pour votre format préféré.") +
-        "</p>";
+    } else {
+      html += '<p class="gr-poll__cta-line">👉 Votez pour votre format préféré.</p>';
     }
 
     html += '<div class="gr-poll__list" role="listbox" aria-label="Formats de sortie">';
@@ -161,109 +165,58 @@
     options.forEach(function (opt) {
       var id = String(opt.id);
       var isMine = myId && id === myId;
-      var isSelected = selectedId && id === selectedId;
-      var pct = showResults ? (opt.percent != null ? Number(opt.percent) : 0) : 0;
+      var pct = myId ? (opt.percent != null ? Number(opt.percent) : 0) : null;
       var cls = "gr-poll__opt " + levelClass(opt.level_key);
       if (isMine) cls += " is-mine";
-      if (isSelected) cls += " is-selected";
-      if (showResults) cls += " is-results";
+      if (myId) cls += " is-results";
 
-      html += '<div class="' + cls + '" role="option" aria-selected="' + (isSelected || isMine ? "true" : "false") + '">';
-      if (showResults) {
-        html +=
-          '<div class="gr-poll__opt-inner" aria-label="' +
-          escapeHtml(opt.label) + " : " + pct + ' %">';
-        html += '<div class="gr-poll__opt-top">';
-        html += '<span class="gr-poll__emoji" aria-hidden="true">' + escapeHtml(opt.emoji || "") + "</span>";
-        html += '<span class="gr-poll__label">' + escapeHtml(opt.label) + "</span>";
-        if (isMine) html += '<span class="gr-poll__badge">Votre choix</span>';
+      html += '<div class="' + cls + '" role="option" aria-selected="' + (isMine ? "true" : "false") + '">';
+      html +=
+        '<button type="button" class="gr-poll__btn' + (isMine ? " is-selected" : "") +
+        '" data-poll-option="' + escapeHtml(id) +
+        '" data-poll-id="' + escapeHtml(poll.id) +
+        '" aria-pressed="' + (isMine ? "true" : "false") + '">';
+      html += '<span class="gr-poll__emoji" aria-hidden="true">' + escapeHtml(opt.emoji || "") + "</span>";
+      html += '<span class="gr-poll__btn-text">';
+      html += '<span class="gr-poll__label">' + escapeHtml(opt.label) + "</span>";
+      if (opt.subtitle) {
+        html += '<span class="gr-poll__sub">' + escapeHtml(opt.subtitle) + "</span>";
+      }
+      if (myId) {
         html += '<span class="gr-poll__pct">' + pct + "&nbsp;%</span>";
-        html += "</div>";
-        if (opt.subtitle) {
-          html += '<p class="gr-poll__sub">' + escapeHtml(opt.subtitle) + "</p>";
-        }
+      }
+      html += "</span>";
+      if (isMine) html += '<span class="gr-poll__badge">Votre choix</span>';
+      html += "</button>";
+      if (myId) {
         html += '<div class="gr-poll__bar" aria-hidden="true"><span style="width:' + pct + '%"></span></div>';
-        html += "</div>";
-      } else {
-        html +=
-          '<button type="button" class="gr-poll__btn' + (isSelected ? " is-selected" : "") +
-          '" data-poll-option="' + escapeHtml(id) +
-          '" data-poll-id="' + escapeHtml(poll.id) +
-          '" aria-pressed="' + (isSelected ? "true" : "false") + '">';
-        html += '<span class="gr-poll__emoji" aria-hidden="true">' + escapeHtml(opt.emoji || "") + "</span>";
-        html += '<span class="gr-poll__btn-text">';
-        html += '<span class="gr-poll__label">' + escapeHtml(opt.label) + "</span>";
-        if (opt.subtitle) {
-          html += '<span class="gr-poll__sub">' + escapeHtml(opt.subtitle) + "</span>";
-        }
-        html += "</span></button>";
       }
       html += "</div>";
     });
 
-    html += "</div>";
-
-    html += '<div class="gr-poll__actions">';
-    if (showResults) {
-      html +=
-        '<button type="button" class="gr-poll__edit" data-poll-edit="' +
-        escapeHtml(poll.id) + '">Modifier mon choix</button>';
-    } else {
-      var canSubmit = !!selectedId && (!editing || selectedId !== myId);
-      var label;
-      if (!selectedId) label = "Choisir une option";
-      else if (editing) label = "Valider mon nouveau choix";
-      else label = "Valider mon choix";
-      html +=
-        '<button type="button" class="gr-poll__submit" data-poll-submit="' +
-        escapeHtml(poll.id) + '"' + (canSubmit ? "" : " disabled") + ">" +
-        label +
-        "</button>";
-      if (editing) {
-        html +=
-          '<button type="button" class="gr-poll__cancel" data-poll-cancel="' +
-          escapeHtml(poll.id) + '">Annuler</button>';
-      }
-    }
-    html += "</div>";
-
-    html += "</div>";
+    html += "</div></div>";
 
     showPollSection(root);
     root.innerHTML = html;
   }
 
-  function selectOption(root, optionId) {
-    var state = root._pollState;
-    if (!state) return;
-    if (state.has_voted && !state.editing) return;
-    console.info("[GoëloPoll] select", optionId);
-    state.selected_option_id = String(optionId);
-    renderOptions(root, state);
-  }
-
-  function startEdit(root) {
-    var state = root._pollState;
-    if (!state || !state.has_voted) return;
-    console.info("[GoëloPoll] edit mode");
-    state.editing = true;
-    state.selected_option_id = state.my_option_id || null;
-    renderOptions(root, state);
-  }
-
-  function cancelEdit(root) {
-    var state = root._pollState;
-    if (!state) return;
-    state.editing = false;
-    state.selected_option_id = null;
-    renderOptions(root, state);
-  }
-
   async function vote(root, pollId, optionId) {
     var sb = getSb();
     if (!sb || !optionId) return;
+
+    var state = root._pollState || {};
+    if (state.my_option_id && String(state.my_option_id) === String(optionId)) {
+      return;
+    }
+
     var voterKey = getVoterKey();
-    console.info("[GoëloPoll] poll_vote", { pollId: pollId, optionId: optionId });
+    var oldChoice = state.my_option_id || null;
+    console.info("[GoëloPoll] click-vote", {
+      poll_id: pollId,
+      old_choice: oldChoice,
+      new_choice: optionId
+    });
+
     root.classList.add("is-busy");
     try {
       var res = await sb.rpc("poll_vote", {
@@ -271,22 +224,40 @@
         p_option_id: optionId,
         p_voter_key: voterKey
       });
+
       if (res.error) {
-        console.warn("[GoëloPoll] vote:", res.error.message);
-        root.classList.remove("is-busy");
+        console.warn("[GoëloPoll] vote RPC error:", res.error.message);
         return;
       }
+
       var data = res.data || {};
+      console.info("[GoëloPoll] poll_vote response", {
+        ok: data.ok,
+        error: data.error || null,
+        updated: data.updated,
+        my_option_id: data.my_option_id,
+        expected: optionId,
+        match: String(data.my_option_id) === String(optionId)
+      });
+
       if (data.ok === false) {
-        console.warn("[GoëloPoll] vote error:", data.error);
-        // Ancienne RPC already_voted : recharger quand même
-        if (data.error === "already_voted") {
-          rememberLocalVote(pollId, data.my_option_id || optionId);
-        }
-      } else if (data.my_option_id || optionId) {
-        rememberLocalVote(pollId, data.my_option_id || optionId);
+        console.error(
+          "[GoëloPoll] Vote non mis à jour:",
+          data.error,
+          "— appliquer supabase/migrations/20260731160000_poll_vote_allow_update.sql"
+        );
+        // Recharge pour rester cohérent avec le serveur
+        await load(root);
+        return;
       }
-      await load(root);
+
+      // Mise à jour immédiate UI depuis la réponse RPC
+      applyServerPayload(
+        root,
+        state.poll,
+        data.options || state.options,
+        data.my_option_id || optionId
+      );
     } catch (err) {
       console.warn("[GoëloPoll] vote exception:", err);
     } finally {
@@ -318,22 +289,22 @@
       }
 
       var localOpt = readLocalVote(data.poll.id);
-      var hasVoted = !!data.has_voted;
       var myOpt = data.my_option_id || null;
 
-      if (!hasVoted && localOpt) {
-        hasVoted = true;
-        myOpt = myOpt || localOpt;
+      // Source de vérité = Supabase ; localStorage seulement en secours
+      if (!data.has_voted && localOpt) {
+        myOpt = localOpt;
+      } else if (data.has_voted && myOpt) {
+        rememberLocalVote(data.poll.id, myOpt);
       }
 
-      renderOptions(root, {
-        poll: data.poll,
-        options: data.options || [],
+      console.info("[GoëloPoll] load", {
+        poll_id: data.poll.id,
         my_option_id: myOpt,
-        has_voted: hasVoted,
-        editing: false,
-        selected_option_id: null
+        from_server: !!data.my_option_id
       });
+
+      applyServerPayload(root, data.poll, data.options || [], myOpt);
     } catch (err) {
       console.warn("[GoëloPoll] load exception:", err);
       hidePoll(root);
@@ -345,42 +316,14 @@
     root.dataset.pollBound = "1";
     root.addEventListener("click", function (e) {
       if (root.classList.contains("is-busy")) return;
-
-      var editBtn = e.target.closest("[data-poll-edit]");
-      if (editBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        startEdit(root);
-        return;
-      }
-
-      var cancelBtn = e.target.closest("[data-poll-cancel]");
-      if (cancelBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        cancelEdit(root);
-        return;
-      }
-
       var optBtn = e.target.closest("[data-poll-option]");
-      if (optBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        selectOption(root, optBtn.getAttribute("data-poll-option"));
-        return;
-      }
-
-      var submitBtn = e.target.closest("[data-poll-submit]");
-      if (submitBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (submitBtn.disabled) return;
-        var state = root._pollState;
-        var pollId = submitBtn.getAttribute("data-poll-submit");
-        var optionId = state && state.selected_option_id;
-        if (!pollId || !optionId) return;
-        vote(root, pollId, optionId);
-      }
+      if (!optBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var pollId = optBtn.getAttribute("data-poll-id");
+      var optionId = optBtn.getAttribute("data-poll-option");
+      if (!pollId || !optionId) return;
+      vote(root, pollId, optionId);
     });
   }
 

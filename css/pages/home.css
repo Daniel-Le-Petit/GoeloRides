@@ -1456,10 +1456,7 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
   opacity: 0.65;
 }
 
-.gr-poll-root.is-busy .gr-poll__btn,
-.gr-poll-root.is-busy .gr-poll__submit,
-.gr-poll-root.is-busy .gr-poll__edit,
-.gr-poll-root.is-busy .gr-poll__cancel {
+.gr-poll-root.is-busy .gr-poll__btn {
   pointer-events: none;
 }
 
@@ -1564,122 +1561,62 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
   line-height: 1.3;
 }
 
-.gr-poll__actions {
-  margin-top: 0.75rem;
-  display: flex;
+.gr-poll__opt.is-results .gr-poll__btn {
   flex-wrap: wrap;
-  gap: 0.55rem;
-  justify-content: flex-end;
+  position: relative;
 }
 
-.gr-poll__submit {
-  appearance: none;
-  border: none;
-  border-radius: 999px;
-  min-height: 2.6rem;
-  padding: 0.55rem 1.35rem;
-  font-family: var(--font-body, 'Inter', sans-serif);
-  font-size: 0.9rem;
+.gr-poll__opt.is-results .gr-poll__pct {
+  margin-left: auto;
   font-weight: 800;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  background: var(--color-accent, #C8F135);
-  color: #0a0a0a;
-  transition: opacity 0.15s, background 0.15s, transform 0.12s;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.gr-poll__submit:hover:not(:disabled) {
-  background: var(--color-accent-hover, #b8e02a);
+.gr-poll__opt.is-results .gr-poll__badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.4rem;
 }
 
-.gr-poll__submit:active:not(:disabled) {
-  transform: scale(0.98);
+.gr-poll__opt.is-results .gr-poll__bar {
+  margin: 0.15rem 0.15rem 0.35rem;
 }
 
-.gr-poll__submit:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.gr-poll__edit,
-.gr-poll__cancel {
-  appearance: none;
-  border-radius: 999px;
-  min-height: 2.45rem;
-  padding: 0.5rem 1.15rem;
-  font-family: var(--font-body, 'Inter', sans-serif);
-  font-size: 0.86rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.gr-poll__edit {
-  border: 1.5px solid rgba(200, 241, 53, 0.55);
-  background: rgba(200, 241, 53, 0.12);
-  color: var(--color-accent, #C8F135);
-}
-
-.gr-poll__edit:hover {
-  background: rgba(200, 241, 53, 0.22);
-  border-color: rgba(200, 241, 53, 0.85);
-}
-
-.gr-poll__cancel {
-  border: 1.5px solid rgba(255, 255, 255, 0.22);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.gr-poll__cancel:hover {
-  border-color: rgba(255, 255, 255, 0.45);
-  color: #fff;
-}
-
-.gr-poll__opt.is-results .gr-poll__opt-inner {
-  padding: 0.6rem 0.65rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.35);
-  height: 100%;
-  color: #fff;
-}
-
-.gr-poll__opt.is-mine .gr-poll__opt-inner {
-  border-color: rgba(200, 241, 53, 0.55);
-  background: rgba(200, 241, 53, 0.12);
+.gr-poll__opt.is-mine .gr-poll__btn {
+  border-color: rgba(200, 241, 53, 0.75) !important;
+  background: rgba(200, 241, 53, 0.16) !important;
 }
 
 .gr-poll__opt-top {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
-  margin-bottom: 0.12rem;
 }
 
 .gr-poll__pct {
   margin-left: auto;
+  font-family: var(--font-body, 'Inter', sans-serif);
   font-weight: 800;
   font-size: 0.82rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-accent, #C8F135);
+  color: #fff;
 }
 
 .gr-poll__badge {
-  font-size: 0.6rem;
-  font-weight: 700;
+  font-size: 0.62rem;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #0a0a0a;
-  background: var(--color-accent, #C8F135);
+  padding: 0.15rem 0.4rem;
   border-radius: 999px;
-  padding: 0.1rem 0.35rem;
+  background: rgba(200, 241, 53, 0.22);
+  color: var(--color-accent, #C8F135);
+  border: 1px solid rgba(200, 241, 53, 0.4);
 }
 
 .gr-poll__bar {
-  margin-top: 0.35rem;
-  height: 0.32rem;
+  height: 4px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
@@ -1706,16 +1643,6 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
 
   .gr-poll__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .gr-poll__actions {
-    justify-content: stretch;
-  }
-
-  .gr-poll__submit,
-  .gr-poll__edit,
-  .gr-poll__cancel {
-    width: 100%;
   }
 }
 

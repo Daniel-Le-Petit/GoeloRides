@@ -273,13 +273,47 @@ BEGIN
   END IF;
 
   v_my := public._poll_find_my_option(p_poll_id, v_key);
+
+  -- Vote déjà présent : UPDATE (1 ligne / identité), pas already_voted
   IF v_my IS NOT NULL THEN
-    v_payload := public._poll_results_payload(p_poll_id, v_my);
+    IF v_my = p_option_id THEN
+      v_payload := public._poll_results_payload(p_poll_id, v_my);
+      RETURN jsonb_build_object(
+        'ok', true,
+        'updated', false,
+        'options', v_payload->'options',
+        'my_option_id', v_payload->'my_option_id',
+        'has_voted', true
+      );
+    END IF;
+
+    IF v_uid IS NOT NULL THEN
+      UPDATE public.poll_votes
+      SET option_id = p_option_id
+      WHERE poll_id = p_poll_id
+        AND user_id = v_uid;
+      IF NOT FOUND AND v_key IS NOT NULL THEN
+        UPDATE public.poll_votes
+        SET option_id = p_option_id
+        WHERE poll_id = p_poll_id
+          AND voter_key = v_key;
+      END IF;
+    ELSE
+      IF v_key IS NULL OR length(v_key) < 16 OR length(v_key) > 80 THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'invalid_voter_key');
+      END IF;
+      UPDATE public.poll_votes
+      SET option_id = p_option_id
+      WHERE poll_id = p_poll_id
+        AND voter_key = v_key;
+    END IF;
+
+    v_payload := public._poll_results_payload(p_poll_id, p_option_id);
     RETURN jsonb_build_object(
-      'ok', false,
-      'error', 'already_voted',
+      'ok', true,
+      'updated', true,
       'options', v_payload->'options',
-      'my_option_id', v_payload->'my_option_id',
+      'my_option_id', p_option_id,
       'has_voted', true
     );
   END IF;
@@ -289,15 +323,10 @@ BEGIN
       INSERT INTO public.poll_votes (poll_id, option_id, user_id, voter_key)
       VALUES (p_poll_id, p_option_id, v_uid, NULL);
     EXCEPTION WHEN unique_violation THEN
-      v_my := public._poll_find_my_option(p_poll_id, v_key);
-      v_payload := public._poll_results_payload(p_poll_id, v_my);
-      RETURN jsonb_build_object(
-        'ok', false,
-        'error', 'already_voted',
-        'options', v_payload->'options',
-        'my_option_id', v_payload->'my_option_id',
-        'has_voted', true
-      );
+      UPDATE public.poll_votes
+      SET option_id = p_option_id
+      WHERE poll_id = p_poll_id
+        AND user_id = v_uid;
     END;
   ELSE
     IF v_key IS NULL OR length(v_key) < 16 OR length(v_key) > 80 THEN
@@ -307,21 +336,17 @@ BEGIN
       INSERT INTO public.poll_votes (poll_id, option_id, user_id, voter_key)
       VALUES (p_poll_id, p_option_id, NULL, v_key);
     EXCEPTION WHEN unique_violation THEN
-      v_my := public._poll_find_my_option(p_poll_id, v_key);
-      v_payload := public._poll_results_payload(p_poll_id, v_my);
-      RETURN jsonb_build_object(
-        'ok', false,
-        'error', 'already_voted',
-        'options', v_payload->'options',
-        'my_option_id', v_payload->'my_option_id',
-        'has_voted', true
-      );
+      UPDATE public.poll_votes
+      SET option_id = p_option_id
+      WHERE poll_id = p_poll_id
+        AND voter_key = v_key;
     END;
   END IF;
 
   v_payload := public._poll_results_payload(p_poll_id, p_option_id);
   RETURN jsonb_build_object(
     'ok', true,
+    'updated', false,
     'options', v_payload->'options',
     'my_option_id', p_option_id,
     'has_voted', true
@@ -333,7 +358,7 @@ REVOKE ALL ON FUNCTION public.poll_vote(uuid, uuid, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.poll_vote(uuid, uuid, text) TO anon, authenticated, service_role;
 
 COMMENT ON FUNCTION public.poll_vote(uuid, uuid, text) IS
-  '1 vote par user_id (connecté) ou par voter_key (anonyme). Retourne pourcentages agrégés.';
+  '1 vote par user_id (connecté) ou voter_key (anonyme). Modifiable : UPDATE si déjà voté.';
 
 -- ---------------------------------------------------------------------------
 -- Admin
