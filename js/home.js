@@ -258,10 +258,12 @@
   }
 
   async function fetchJoinedRouteIds() {
-    var role = window.GoeloSortieCards
-      ? window.GoeloSortieCards.getUserRole()
-      : (window.GOELO_ROLE === "user" ? "user" : "visitor");
-    if (role !== "user" || !window.GOELO_USER || !window.GOELO_USER.id) {
+    var role = window.GOELO_ROLE;
+    if (!window.GOELO_USER || !window.GOELO_USER.id) {
+      upcomingState.joinedRouteIds = new Set();
+      return;
+    }
+    if (role !== "user" && role !== "team_rider" && role !== "admin") {
       upcomingState.joinedRouteIds = new Set();
       return;
     }
@@ -287,7 +289,7 @@
     var sub = document.getElementById("gr-upcoming-sub");
     if (!sub) return;
     if (count === 0) {
-      sub.textContent = "Aucune sortie à venir pour le moment";
+      sub.textContent = "Aucune sortie programmée pour le moment";
       return;
     }
     sub.textContent = count === 1 ? "1 sortie à venir" : count + " sorties à venir";
@@ -360,26 +362,38 @@
     var root = document.getElementById("gr-upcoming-rides");
     if (!root) return;
 
-    if (window.GoeloUI && window.GoeloUI.waitForRole) {
-      try { await window.GoeloUI.waitForRole(); } catch (e) { void e; }
-    }
+    try {
+      upcomingState.sorties = await fetchUpcomingSorties();
+      renderUpcomingSorties();
 
-    upcomingState.sorties = await fetchUpcomingSorties();
-    await fetchJoinedRouteIds();
-
-    if (window.GoeloSignupParticipants && upcomingState.sorties.length) {
-      await window.GoeloSignupParticipants.enrichCardsWithParticipants(upcomingState.sorties, getSb());
-    }
-
-    renderUpcomingSorties();
-
-    if (window.GoeloWeather && upcomingState.sorties.length) {
-      try {
-        await window.GoeloWeather.enrichSorties(upcomingState.sorties);
-        renderUpcomingSorties();
-      } catch (err) {
-        console.warn("[GoëloHome] enrichWeather:", err.message || err);
+      if (window.GoeloUI && window.GoeloUI.waitForRole) {
+        try {
+          await Promise.race([
+            window.GoeloUI.waitForRole(),
+            new Promise(function (resolve) { setTimeout(resolve, 2500); })
+          ]);
+        } catch (e) { void e; }
       }
+
+      await fetchJoinedRouteIds();
+
+      if (window.GoeloSignupParticipants && upcomingState.sorties.length) {
+        await window.GoeloSignupParticipants.enrichCardsWithParticipants(upcomingState.sorties, getSb());
+      }
+      renderUpcomingSorties();
+
+      if (window.GoeloWeather && upcomingState.sorties.length) {
+        try {
+          await window.GoeloWeather.enrichSorties(upcomingState.sorties);
+          renderUpcomingSorties();
+        } catch (err) {
+          console.warn("[GoëloHome] enrichWeather:", err.message || err);
+        }
+      }
+    } catch (err) {
+      console.error("[GoëloHome] initUpcomingSorties:", err);
+      upcomingState.sorties = [];
+      renderUpcomingSorties();
     }
 
     _bindUpcomingNav();
@@ -391,6 +405,10 @@
     initHomePageTracking();
     initUpcomingSorties();
 
+    if (window.GoeloPoll) {
+      window.GoeloPoll.init("#gr-poll-root");
+    }
+
     var heroCta = document.querySelector(".gr-hero-ctas .gr-btn--ghost[data-goelo-auth-trigger]");
     if (heroCta) heroCta.setAttribute("data-goelo-tr-cta", "");
 
@@ -398,6 +416,7 @@
       if (window.GoeloUI) window.GoeloUI.syncRoleUI(detail);
       _bindLogoutButtons();
       fetchJoinedRouteIds().then(renderUpcomingSorties);
+      if (window.GoeloPoll) window.GoeloPoll.load(document.getElementById("gr-poll-root"));
     }
 
     window.addEventListener("goelo:role-ready", function (e) {

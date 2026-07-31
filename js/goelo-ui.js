@@ -158,6 +158,19 @@
     if (heroTr && !heroTr.hasAttribute("data-goelo-tr-cta")) {
       heroTr.setAttribute("data-goelo-tr-cta", "");
     }
+
+    /* Lien admin optionnel (pages qui exposent encore data-goelo-admin-cta). */
+    global.document.querySelectorAll("[data-goelo-admin-cta]").forEach(function (el) {
+      var wrap = el.closest(".gr-hero-admin") || el;
+      var isAdmin = r === "admin";
+      wrap.hidden = !isAdmin;
+      el.hidden = !isAdmin;
+      if (isAdmin) {
+        wrap.removeAttribute("hidden");
+        el.removeAttribute("hidden");
+        if (el.tagName === "A") el.href = "admin.html";
+      }
+    });
   }
 
   function syncLogoutButtons(r) {

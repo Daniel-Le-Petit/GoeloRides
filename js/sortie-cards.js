@@ -43,6 +43,9 @@
   }
 
   function groupKeyFromLabel(label) {
+    if (global.GoeloLevels && global.GoeloLevels.groupKeyFromLabel) {
+      return global.GoeloLevels.groupKeyFromLabel(label);
+    }
     var gl = String(label || "").toLowerCase();
     if (gl.indexOf("blanc") !== -1) return "blanc";
     if (gl.indexOf("rouge") !== -1) return "rouge";

@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="site-retheme.css">
-  <link rel="stylesheet" href="css/pages/home.css">
+  <link rel="stylesheet" href="css/pages/home.css?v=20260731-hero-poll-6">
   <style>
     :root {
       --ocean: #0d1820;
@@ -4416,13 +4416,11 @@
     </div>
     <div class="gr-hero-content">
       <h1 class="gr-hero-headline">
-        Rouler ensemble<br>
-        Profiter du paysage<br>
-        <span class="gr-hero-headline-accent">Partager quelques kilomètres</span>
+        Des sorties vélo de route<br>
+        <span class="gr-hero-headline-accent">conviviales dans le Goëlo</span>
       </h1>
       <p class="gr-hero-subtitle">
-        Que tu reprennes le vélo ou que tu roules chaque semaine,
-        il y a une place pour toi dans le groupe.
+        Plusieurs niveaux de difficulté, du rythme tranquille au parcours exigeant.
       </p>
       <section class="gr-upcoming" aria-labelledby="gr-upcoming-title">
         <div class="gr-upcoming__inner">
@@ -4448,47 +4446,21 @@
           </div>
         </div>
       </section>
+      <aside class="gr-hero-poll" aria-labelledby="gr-poll-heading" data-no-swipe-nav hidden>
+        <h2 id="gr-poll-heading" class="visually-hidden">Sondage</h2>
+        <div id="gr-poll-root" class="gr-poll-root" hidden></div>
+      </aside>
       <div class="gr-hero-ctas">
-        <a href="sorties.html" class="gr-btn gr-btn--accent" onclick="trackEvent('view_race_list', 'homepage_cta');">
+        <a href="sorties.html" class="gr-btn gr-btn--ghost" onclick="trackEvent('view_race_list', 'homepage_cta');">
           Voir les sorties
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
         </a>
         <a class="gr-btn gr-btn--ghost" data-goelo-tr-cta data-goelo-auth-trigger onclick="trackEvent('join_race', 'team_rider_cta');">
-          Membres GoëloRides 
+          Espace membres
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
         </a>
       </div>
       <p class="gr-hero-signature">On part ensemble. On roule ensemble. On rentre ensemble.</p>
-    </div>
-    <!-- Stats strip -->
-    <div class="gr-stats">
-      <div class="gr-stat">
-        <span class="gr-stat-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        </span>
-        <div>
-          <p class="gr-stat-title">Des sorties chaque semaine</p>
-          <p class="gr-stat-desc">Route, gravel, VTT, tous niveaux</p>
-        </div>
-      </div>
-      <div class="gr-stat">
-        <span class="gr-stat-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 1-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </span>
-        <div>
-          <p class="gr-stat-title">Une communauté passionnée</p>
-          <p class="gr-stat-desc">Clubs, riders et bénévoles</p>
-        </div>
-      </div>
-      <div class="gr-stat">
-        <span class="gr-stat-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </span>
-        <div>
-          <p class="gr-stat-title">Espace GoëloRiders</p>
-          <p class="gr-stat-desc">Organisez. Partagez. Inspirez.</p>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -4900,8 +4872,10 @@
   <script src="js/goelo-activity.js"></script>
   <script src="js/goelo-weather.js"></script>
   <script src="js/goelo-sortie-dates.js"></script>
+  <script src="js/goelo-levels.js"></script>
   <script src="js/sortie-cards.js"></script>
-  <script src="js/home.js"></script>
+  <script src="js/goelo-poll.js?v=20260731-hero-poll-6"></script>
+  <script src="js/home.js?v=20260731-hero-poll-6"></script>
   <script src="parcours.js"></script>
 
   <!-- google analytics -->
