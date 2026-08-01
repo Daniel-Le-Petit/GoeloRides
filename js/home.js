@@ -406,8 +406,11 @@
     initUpcomingSorties();
 
     if (window.GoeloPoll) {
-      if (window.GoeloPoll.initAll) window.GoeloPoll.initAll(".gr-poll-root[data-poll-slug]");
+      if (window.GoeloPoll.initAll) window.GoeloPoll.initAll(".gr-poll-root[data-poll-slug]:not([data-poll-multi])");
       else window.GoeloPoll.init("#gr-poll-root");
+    }
+    if (window.GoeloPollMulti) {
+      window.GoeloPollMulti.init("#gr-poll-motivation-root");
     }
 
     var heroCta = document.querySelector(".gr-hero-ctas .gr-btn--ghost[data-goelo-auth-trigger]");
@@ -418,8 +421,11 @@
       _bindLogoutButtons();
       fetchJoinedRouteIds().then(renderUpcomingSorties);
       if (window.GoeloPoll) {
-        if (window.GoeloPoll.reloadAll) window.GoeloPoll.reloadAll(".gr-poll-root[data-poll-slug]");
+        if (window.GoeloPoll.reloadAll) window.GoeloPoll.reloadAll(".gr-poll-root[data-poll-slug]:not([data-poll-multi])");
         else window.GoeloPoll.load(document.getElementById("gr-poll-root"));
+      }
+      if (window.GoeloPollMulti) {
+        window.GoeloPollMulti.load(document.getElementById("gr-poll-motivation-root"));
       }
     }
 

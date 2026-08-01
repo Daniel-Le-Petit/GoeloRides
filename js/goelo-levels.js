@@ -79,10 +79,23 @@
   var SCHEDULE_OPTIONS = [
     { level_key: "sat-09",  label: "Samedi · 9h00",     subtitle: "Week-end · matin",      emoji: "🌅", sort_order: 0 },
     { level_key: "sat-14",  label: "Samedi · 14h00",    subtitle: "Week-end · après-midi", emoji: "☀️", sort_order: 1 },
-    { level_key: "sun-09",  label: "Dimanche · 9h00",   subtitle: "Week-end · matin",      emoji: "🌤️", sort_order: 2 },
-    { level_key: "sun-14",  label: "Dimanche · 14h00",  subtitle: "Week-end · après-midi", emoji: "🌞", sort_order: 3 },
-    { level_key: "week-09", label: "En semaine · 9h00",  subtitle: "Semaine · matin",      emoji: "🚲", sort_order: 4 },
-    { level_key: "week-18", label: "En semaine · 18h00", subtitle: "Semaine · soir",       emoji: "🌇", sort_order: 5 }
+    { level_key: "sun-14",  label: "Dimanche · 14h00",  subtitle: "Week-end · après-midi", emoji: "🌞", sort_order: 2 },
+    { level_key: "week-09", label: "En semaine · 9h00",  subtitle: "Semaine · matin",      emoji: "🚲", sort_order: 3 },
+    { level_key: "week-18", label: "En semaine · 18h00", subtitle: "Semaine · soir",       emoji: "🌇", sort_order: 4 }
+  ];
+
+  /** Sondage multi — motivations (checkboxes). Modifier ici pour changer les options. */
+  var MOTIVATION_POLL_SLUG = "preferences-motivations-v1";
+  var MOTIVATION_POLL_QUESTION = "Qu'est-ce qui vous ferait venir rouler avec nous ?";
+  var MOTIVATION_FREE_PROMPT =
+    "Autre chose ? Dites-nous ce qui vous donnerait envie de venir…";
+  var MOTIVATION_OPTIONS = [
+    { level_key: "access",   label: "Une sortie accessible",      sort_order: 0 },
+    { level_key: "friendly", label: "Un groupe convivial",        sort_order: 1 },
+    { level_key: "route",    label: "Un parcours intéressant",    sort_order: 2 },
+    { level_key: "schedule", label: "Un horaire qui me convient", sort_order: 3 },
+    { level_key: "nearby",   label: "Partir près de chez moi",    sort_order: 4 },
+    { level_key: "other",    label: "Autre",                      sort_order: 5 }
   ];
 
   function getByKey(key) {
@@ -147,6 +160,18 @@
     });
   }
 
+  function motivationPollOptionPresets() {
+    return MOTIVATION_OPTIONS.map(function (o) {
+      return {
+        level_key: o.level_key,
+        label: o.label,
+        subtitle: o.subtitle || "",
+        emoji: o.emoji || "",
+        sort_order: o.sort_order
+      };
+    });
+  }
+
   global.GoeloLevels = {
     LEVELS: LEVELS,
     getByKey: getByKey,
@@ -156,10 +181,15 @@
     shortHint: shortHint,
     pollOptionPresets: pollOptionPresets,
     schedulePollOptionPresets: schedulePollOptionPresets,
+    motivationPollOptionPresets: motivationPollOptionPresets,
     POLL_QUESTION: POLL_QUESTION,
     POLL_SLUG: POLL_SLUG,
     SCHEDULE_POLL_SLUG: SCHEDULE_POLL_SLUG,
     SCHEDULE_POLL_QUESTION: SCHEDULE_POLL_QUESTION,
-    SCHEDULE_OPTIONS: SCHEDULE_OPTIONS
+    SCHEDULE_OPTIONS: SCHEDULE_OPTIONS,
+    MOTIVATION_POLL_SLUG: MOTIVATION_POLL_SLUG,
+    MOTIVATION_POLL_QUESTION: MOTIVATION_POLL_QUESTION,
+    MOTIVATION_FREE_PROMPT: MOTIVATION_FREE_PROMPT,
+    MOTIVATION_OPTIONS: MOTIVATION_OPTIONS
   };
 })(typeof window !== "undefined" ? window : this);

@@ -221,10 +221,9 @@ BEGIN
   INSERT INTO public.poll_options (poll_id, label, subtitle, emoji, level_key, sort_order) VALUES
     (v_id, 'Samedi · 9h00',    'Week-end · matin',       '🌅', 'sat-09',  0),
     (v_id, 'Samedi · 14h00',   'Week-end · après-midi',  '☀️', 'sat-14',  1),
-    (v_id, 'Dimanche · 9h00',  'Week-end · matin',       '🌤️', 'sun-09',  2),
-    (v_id, 'Dimanche · 14h00', 'Week-end · après-midi',  '🌞', 'sun-14',  3),
-    (v_id, 'En semaine · 9h00',  'Semaine · matin',      '🚲', 'week-09', 4),
-    (v_id, 'En semaine · 18h00', 'Semaine · soir',       '🌇', 'week-18', 5);
+    (v_id, 'Dimanche · 14h00', 'Week-end · après-midi',  '🌞', 'sun-14',  2),
+    (v_id, 'En semaine · 9h00',  'Semaine · matin',      '🚲', 'week-09', 3),
+    (v_id, 'En semaine · 18h00', 'Semaine · soir',       '🌇', 'week-18', 4);
 END $$;
 
 -- S’assurer que le sondage sorties reste actif aussi
