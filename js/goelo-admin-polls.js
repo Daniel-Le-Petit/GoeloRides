@@ -77,7 +77,9 @@
       '<div>' +
       '<p class="poll-card__badge">' + (poll.is_active ? "Actif" : "Inactif") + "</p>" +
       '<h2 class="poll-card__title">' + escapeHtml(poll.question) + "</h2>" +
-      '<p class="poll-card__meta">' + total + " vote" + (total === 1 ? "" : "s") +
+      '<p class="poll-card__meta">' +
+      (poll.slug ? '<code>' + escapeHtml(poll.slug) + '</code> · ' : '') +
+      total + " vote" + (total === 1 ? "" : "s") +
       (leader && total ? " · En tête : " + escapeHtml(leader.label) : "") +
       "</p>" +
       "</div>" +

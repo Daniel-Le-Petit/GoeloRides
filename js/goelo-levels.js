@@ -70,6 +70,20 @@
   ];
 
   var POLL_QUESTION = "Quelle sortie vous ferait vraiment venir rouler avec GoëloRides ?";
+  var POLL_SLUG = "preferences-sorties-v1";
+
+  /** Modifier ici les créneaux proposés (slug + options) — Home & seed SQL s’alignent. */
+  var SCHEDULE_POLL_SLUG = "preferences-horaire-v1";
+  var SCHEDULE_POLL_QUESTION =
+    "Quel jour et quelle heure vous conviennent le mieux pour les sorties GoëloRides ?";
+  var SCHEDULE_OPTIONS = [
+    { level_key: "sat-09",  label: "Samedi · 9h00",     subtitle: "Week-end · matin",      emoji: "🌅", sort_order: 0 },
+    { level_key: "sat-14",  label: "Samedi · 14h00",    subtitle: "Week-end · après-midi", emoji: "☀️", sort_order: 1 },
+    { level_key: "sun-09",  label: "Dimanche · 9h00",   subtitle: "Week-end · matin",      emoji: "🌤️", sort_order: 2 },
+    { level_key: "sun-14",  label: "Dimanche · 14h00",  subtitle: "Week-end · après-midi", emoji: "🌞", sort_order: 3 },
+    { level_key: "week-09", label: "En semaine · 9h00",  subtitle: "Semaine · matin",      emoji: "🚲", sort_order: 4 },
+    { level_key: "week-18", label: "En semaine · 18h00", subtitle: "Semaine · soir",       emoji: "🌇", sort_order: 5 }
+  ];
 
   function getByKey(key) {
     var k = String(key || "").toLowerCase().replace(/^level-/, "");
@@ -120,6 +134,19 @@
     });
   }
 
+  /** Options jour/heure — modifier SCHEDULE_OPTIONS pour changer les créneaux. */
+  function schedulePollOptionPresets() {
+    return SCHEDULE_OPTIONS.map(function (o) {
+      return {
+        level_key: o.level_key,
+        label: o.label,
+        subtitle: o.subtitle || "",
+        emoji: o.emoji || "",
+        sort_order: o.sort_order
+      };
+    });
+  }
+
   global.GoeloLevels = {
     LEVELS: LEVELS,
     getByKey: getByKey,
@@ -128,6 +155,11 @@
     fromGroupOrClass: fromGroupOrClass,
     shortHint: shortHint,
     pollOptionPresets: pollOptionPresets,
-    POLL_QUESTION: POLL_QUESTION
+    schedulePollOptionPresets: schedulePollOptionPresets,
+    POLL_QUESTION: POLL_QUESTION,
+    POLL_SLUG: POLL_SLUG,
+    SCHEDULE_POLL_SLUG: SCHEDULE_POLL_SLUG,
+    SCHEDULE_POLL_QUESTION: SCHEDULE_POLL_QUESTION,
+    SCHEDULE_OPTIONS: SCHEDULE_OPTIONS
   };
 })(typeof window !== "undefined" ? window : this);

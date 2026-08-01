@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="site-retheme.css">
-  <link rel="stylesheet" href="css/pages/home.css?v=20260731-oneclick-1">
+  <link rel="stylesheet" href="css/pages/home.css?v=20260801-schedule-1">
   <style>
     :root {
       --ocean: #0d1820;
@@ -4447,8 +4447,19 @@
         </div>
       </section>
       <aside class="gr-hero-poll" aria-labelledby="gr-poll-heading" data-no-swipe-nav hidden>
-        <h2 id="gr-poll-heading" class="visually-hidden">Sondage</h2>
-        <div id="gr-poll-root" class="gr-poll-root" hidden></div>
+        <h2 id="gr-poll-heading" class="visually-hidden">Sondages</h2>
+        <div
+          id="gr-poll-root"
+          class="gr-poll-root"
+          data-poll-slug="preferences-sorties-v1"
+          hidden
+        ></div>
+        <div
+          id="gr-poll-schedule-root"
+          class="gr-poll-root gr-poll-root--schedule"
+          data-poll-slug="preferences-horaire-v1"
+          hidden
+        ></div>
       </aside>
       <div class="gr-hero-ctas">
         <a href="sorties.html" class="gr-btn gr-btn--ghost" onclick="trackEvent('view_race_list', 'homepage_cta');">
@@ -4872,10 +4883,10 @@
   <script src="js/goelo-activity.js"></script>
   <script src="js/goelo-weather.js"></script>
   <script src="js/goelo-sortie-dates.js"></script>
-  <script src="js/goelo-levels.js"></script>
+  <script src="js/goelo-levels.js?v=20260801-schedule-1"></script>
   <script src="js/sortie-cards.js"></script>
-  <script src="js/goelo-poll.js?v=20260731-oneclick-1"></script>
-  <script src="js/home.js?v=20260731-oneclick-1"></script>
+  <script src="js/goelo-poll.js?v=20260801-schedule-1"></script>
+  <script src="js/home.js?v=20260801-schedule-1"></script>
   <script src="parcours.js"></script>
 
   <!-- google analytics -->

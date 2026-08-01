@@ -1433,6 +1433,9 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
   max-width: 40rem;
   pointer-events: auto;
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .gr-hero-poll .gr-poll {
@@ -1445,6 +1448,14 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
   color: #fff;
   pointer-events: auto;
+}
+
+.gr-poll--cols-3 .gr-poll__list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gr-poll__opt--schedule.is-results .gr-poll__bar span {
+  background: var(--color-accent, #C8F135);
 }
 
 .gr-poll-root,
@@ -1641,7 +1652,8 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
     max-width: none;
   }
 
-  .gr-poll__list {
+  .gr-poll__list,
+  .gr-poll--cols-3 .gr-poll__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1649,13 +1661,15 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
 @media (max-width: 480px) {
   .gr-hero-poll {
     margin-top: 0.95rem;
+    gap: 0.55rem;
   }
 
   .gr-hero-poll .gr-poll {
     padding: 0.85rem;
   }
 
-  .gr-poll__list {
+  .gr-poll__list,
+  .gr-poll--cols-3 .gr-poll__list {
     grid-template-columns: 1fr 1fr;
   }
 

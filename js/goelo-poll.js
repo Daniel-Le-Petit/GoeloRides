@@ -1,7 +1,8 @@
 /**
- * GoëloRides — Sondage Home (1 clic = vote · résultats %)
- * localStorage voter_key · RPC poll_get_active / poll_vote
- * Un clic remplace le vote existant (1 ligne / identité).
+ * GoëloRides — Sondages Home (1 clic = vote · résultats %)
+ * localStorage voter_key · RPC poll_get_by_slug / poll_vote
+ * Un clic remplace le vote existant (1 ligne / identité / sondage).
+ * Plusieurs racines : data-poll-slug sur chaque .gr-poll-root
  */
 (function (global) {
   "use strict";
@@ -13,9 +14,36 @@
     return global.goeloGetSb ? global.goeloGetSb() : null;
   }
 
-  function defaultQuestion() {
-    return (global.GoeloLevels && global.GoeloLevels.POLL_QUESTION)
+  function levels() {
+    return global.GoeloLevels || {};
+  }
+
+  function defaultSlug(root) {
+    if (root && root.dataset && root.dataset.pollSlug) {
+      return String(root.dataset.pollSlug).trim();
+    }
+    return levels().POLL_SLUG || "preferences-sorties-v1";
+  }
+
+  function isSchedulePoll(slug) {
+    var sched = levels().SCHEDULE_POLL_SLUG || "preferences-horaire-v1";
+    return String(slug || "") === sched || String(slug || "").indexOf("horaire") !== -1;
+  }
+
+  function defaultQuestion(slug) {
+    var L = levels();
+    if (isSchedulePoll(slug)) {
+      return L.SCHEDULE_POLL_QUESTION
+        || "Quel jour et quelle heure vous conviennent le mieux pour les sorties GoëloRides ?";
+    }
+    return L.POLL_QUESTION
       || "Quelle sortie vous ferait vraiment venir rouler avec GoëloRides ?";
+  }
+
+  function defaultCta(slug) {
+    return isSchedulePoll(slug)
+      ? "👉 Votez pour votre créneau préféré."
+      : "👉 Votez pour votre format préféré.";
   }
 
   function uuidv4() {
@@ -63,6 +91,9 @@
   function levelClass(levelKey) {
     var k = String(levelKey || "").toLowerCase();
     if (k === "blanc" || k === "vert" || k === "bleu" || k === "rouge") return "gr-poll__opt--" + k;
+    if (k.indexOf("sat-") === 0 || k.indexOf("sun-") === 0 || k.indexOf("week-") === 0) {
+      return "gr-poll__opt--schedule";
+    }
     return "";
   }
 
@@ -72,7 +103,17 @@
     root.innerHTML = "";
     delete root._pollState;
     var wrap = root.closest(".gr-hero-poll") || root.closest(".gr-home-section--poll");
-    if (wrap) wrap.hidden = true;
+    if (wrap) {
+      var siblings = wrap.querySelectorAll(".gr-poll-root");
+      var anyVisible = false;
+      for (var i = 0; i < siblings.length; i++) {
+        if (!siblings[i].hidden && siblings[i].innerHTML) {
+          anyVisible = true;
+          break;
+        }
+      }
+      if (!anyVisible) wrap.hidden = true;
+    }
   }
 
   function showPollSection(root) {
@@ -81,10 +122,16 @@
     if (wrap) wrap.hidden = false;
   }
 
-  function normalizeOptions(options) {
-    var presets = (global.GoeloLevels && global.GoeloLevels.pollOptionPresets)
-      ? global.GoeloLevels.pollOptionPresets()
-      : [];
+  function presetsForSlug(slug) {
+    var L = levels();
+    if (isSchedulePoll(slug)) {
+      return L.schedulePollOptionPresets ? L.schedulePollOptionPresets() : [];
+    }
+    return L.pollOptionPresets ? L.pollOptionPresets() : [];
+  }
+
+  function normalizeOptions(options, slug) {
+    var presets = presetsForSlug(slug);
     var byKey = {};
     presets.forEach(function (p) { byKey[p.level_key] = p; });
 
@@ -122,15 +169,17 @@
   }
 
   function applyServerPayload(root, poll, options, myOptionId) {
-    var normalized = normalizeOptions(options || []);
+    var slug = (poll && poll.slug) || defaultSlug(root);
+    var normalized = normalizeOptions(options || [], slug);
     var myId = myOptionId ? String(myOptionId) : null;
-    if (myId) rememberLocalVote(poll.id, myId);
+    if (myId && poll && poll.id) rememberLocalVote(poll.id, myId);
 
     root._pollState = {
       poll: poll,
       options: options || [],
       my_option_id: myId,
-      has_voted: !!myId
+      has_voted: !!myId,
+      slug: slug
     };
 
     render(root);
@@ -141,13 +190,15 @@
     if (!state || !state.poll) return;
 
     var poll = state.poll;
-    var options = normalizeOptions(state.options || []);
+    var slug = state.slug || poll.slug || defaultSlug(root);
+    var options = normalizeOptions(state.options || [], slug);
     var myId = state.my_option_id ? String(state.my_option_id) : null;
     var myOpt = findOption(options, myId);
-    var question = defaultQuestion();
+    var question = (poll.question && String(poll.question).trim()) || defaultQuestion(slug);
+    var colsClass = isSchedulePoll(slug) ? " gr-poll--cols-3" : "";
 
     var html = "";
-    html += '<div class="gr-poll">';
+    html += '<div class="gr-poll' + colsClass + '">';
     html += '<h2 class="gr-poll__title">' + escapeHtml(question) + "</h2>";
 
     if (myOpt) {
@@ -157,10 +208,13 @@
         escapeHtml((myOpt.emoji ? myOpt.emoji + " " : "") + myOpt.label) +
         "</span></p>";
     } else {
-      html += '<p class="gr-poll__cta-line">👉 Votez pour votre format préféré.</p>';
+      html += '<p class="gr-poll__cta-line">' + escapeHtml(defaultCta(slug)) + "</p>";
     }
 
-    html += '<div class="gr-poll__list" role="listbox" aria-label="Formats de sortie">';
+    html +=
+      '<div class="gr-poll__list" role="listbox" aria-label="' +
+      escapeHtml(isSchedulePoll(slug) ? "Créneaux de sortie" : "Formats de sortie") +
+      '">';
 
     options.forEach(function (opt) {
       var id = String(opt.id);
@@ -213,6 +267,7 @@
     var oldChoice = state.my_option_id || null;
     console.info("[GoëloPoll] click-vote", {
       poll_id: pollId,
+      slug: state.slug || defaultSlug(root),
       old_choice: oldChoice,
       new_choice: optionId
     });
@@ -244,14 +299,12 @@
         console.error(
           "[GoëloPoll] Vote non mis à jour:",
           data.error,
-          "— appliquer supabase/migrations/20260731160000_poll_vote_allow_update.sql"
+          "— appliquer supabase/migrations/20260801120000_poll_multi_active_schedule.sql"
         );
-        // Recharge pour rester cohérent avec le serveur
         await load(root);
         return;
       }
 
-      // Mise à jour immédiate UI depuis la réponse RPC
       applyServerPayload(
         root,
         state.poll,
@@ -265,6 +318,26 @@
     }
   }
 
+  async function fetchPoll(slug, voterKey) {
+    var sb = getSb();
+    if (!sb) return null;
+
+    if (slug) {
+      var bySlug = await sb.rpc("poll_get_by_slug", {
+        p_slug: slug,
+        p_voter_key: voterKey
+      });
+      if (!bySlug.error) return bySlug;
+
+      // Fallback si migration pas encore appliquée
+      console.warn("[GoëloPoll] poll_get_by_slug indisponible, fallback poll_get_active:", bySlug.error.message);
+    }
+
+    var res = await sb.rpc("poll_get_active", { p_voter_key: voterKey });
+    if (res.error) throw res.error;
+    return res;
+  }
+
   async function load(root) {
     if (!root) return;
     var sb = getSb();
@@ -273,11 +346,13 @@
       return;
     }
 
+    var slug = defaultSlug(root);
+
     try {
       var voterKey = getVoterKey();
-      var res = await sb.rpc("poll_get_active", { p_voter_key: voterKey });
-      if (res.error) {
-        console.warn("[GoëloPoll] get_active:", res.error.message);
+      var res = await fetchPoll(slug, voterKey);
+      if (!res || res.error) {
+        console.warn("[GoëloPoll] get:", res && res.error && res.error.message);
         hidePoll(root);
         return;
       }
@@ -288,10 +363,19 @@
         return;
       }
 
+      // Si fallback poll_get_active a renvoyé un autre sondage, ignorer
+      if (slug && data.poll.slug && String(data.poll.slug) !== String(slug)) {
+        console.warn("[GoëloPoll] slug mismatch (migration manquante ?)", {
+          expected: slug,
+          got: data.poll.slug
+        });
+        hidePoll(root);
+        return;
+      }
+
       var localOpt = readLocalVote(data.poll.id);
       var myOpt = data.my_option_id || null;
 
-      // Source de vérité = Supabase ; localStorage seulement en secours
       if (!data.has_voted && localOpt) {
         myOpt = localOpt;
       } else if (data.has_voted && myOpt) {
@@ -300,6 +384,7 @@
 
       console.info("[GoëloPoll] load", {
         poll_id: data.poll.id,
+        slug: data.poll.slug || slug,
         my_option_id: myOpt,
         from_server: !!data.my_option_id
       });
@@ -327,22 +412,42 @@
     });
   }
 
-  function init(selector) {
-    var root = typeof selector === "string"
+  function resolveRoot(selector) {
+    return typeof selector === "string"
       ? document.querySelector(selector)
       : selector;
+  }
+
+  function init(selector) {
+    var root = resolveRoot(selector);
     if (!root) {
       console.warn("[GoëloPoll] init: root introuvable", selector);
       return;
     }
-    console.info("[GoëloPoll] init OK", root.id || root.className);
+    console.info("[GoëloPoll] init OK", root.id || root.className, defaultSlug(root));
     bind(root);
     load(root);
   }
 
+  function initAll(selector) {
+    var nodes = document.querySelectorAll(selector || ".gr-poll-root[data-poll-slug]");
+    for (var i = 0; i < nodes.length; i++) {
+      init(nodes[i]);
+    }
+  }
+
+  function reloadAll(selector) {
+    var nodes = document.querySelectorAll(selector || ".gr-poll-root[data-poll-slug]");
+    for (var i = 0; i < nodes.length; i++) {
+      load(nodes[i]);
+    }
+  }
+
   global.GoeloPoll = {
     init: init,
+    initAll: initAll,
     load: load,
+    reloadAll: reloadAll,
     getVoterKey: getVoterKey
   };
 })(typeof window !== "undefined" ? window : this);

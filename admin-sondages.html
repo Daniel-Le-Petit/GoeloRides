@@ -162,12 +162,12 @@
   <div class="page">
     <div class="page-header">
       <h1 class="page-title">Sondages <span>sorties</span></h1>
-      <p class="page-sub">Préférences communauté · résultats détaillés admin · anonymes côté site</p>
+      <p class="page-sub">Préférences communauté · plusieurs sondages peuvent être actifs en même temps · anonymes côté site</p>
     </div>
 
     <section class="create-card" aria-labelledby="poll-create-title">
       <h2 id="poll-create-title">Créer un sondage</h2>
-      <p class="page-sub" style="margin-bottom:12px">Les 4 options niveaux (distances actuelles) sont préremplies depuis la source unique.</p>
+      <p class="page-sub" style="margin-bottom:12px">Les 4 options niveaux (distances actuelles) sont préremplies depuis la source unique. Pour un sondage jour/heure, crée-le via SQL (slug <code>preferences-horaire-v1</code>) ou adapte les options ensuite.</p>
       <form id="poll-create-form">
         <div class="field">
           <label for="poll-question">Question</label>
@@ -176,7 +176,7 @@
         </div>
         <label class="field-check">
           <input type="checkbox" id="poll-activate" checked>
-          Activer immédiatement (désactive l’éventuel sondage actif)
+          Activer immédiatement (les autres sondages actifs restent actifs)
         </label>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
           <button type="submit" class="btn-primary">Créer</button>

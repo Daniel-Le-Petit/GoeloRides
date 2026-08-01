@@ -406,7 +406,8 @@
     initUpcomingSorties();
 
     if (window.GoeloPoll) {
-      window.GoeloPoll.init("#gr-poll-root");
+      if (window.GoeloPoll.initAll) window.GoeloPoll.initAll(".gr-poll-root[data-poll-slug]");
+      else window.GoeloPoll.init("#gr-poll-root");
     }
 
     var heroCta = document.querySelector(".gr-hero-ctas .gr-btn--ghost[data-goelo-auth-trigger]");
@@ -416,7 +417,10 @@
       if (window.GoeloUI) window.GoeloUI.syncRoleUI(detail);
       _bindLogoutButtons();
       fetchJoinedRouteIds().then(renderUpcomingSorties);
-      if (window.GoeloPoll) window.GoeloPoll.load(document.getElementById("gr-poll-root"));
+      if (window.GoeloPoll) {
+        if (window.GoeloPoll.reloadAll) window.GoeloPoll.reloadAll(".gr-poll-root[data-poll-slug]");
+        else window.GoeloPoll.load(document.getElementById("gr-poll-root"));
+      }
     }
 
     window.addEventListener("goelo:role-ready", function (e) {
