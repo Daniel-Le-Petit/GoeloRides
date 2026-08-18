@@ -165,22 +165,22 @@
 
       html += '<div class="' + cls + '">';
       if (hasSubmitted) {
-        html += '<div class="gr-poll__btn gr-poll__btn--static' + (isMine ? " is-selected" : "") + '">';
-        html += '<span class="gr-poll__check" aria-hidden="true">' + (isMine ? "☑" : "☐") + "</span>";
-        html += '<span class="gr-poll__btn-text">';
+        html += '<div class="gr-poll__btn--check gr-poll__btn--static' + (isMine ? " is-selected" : "") + '">';
+        html += '<span class="gr-poll__check" aria-hidden="true">' + (isMine ? "✓" : "") + "</span>";
+        html += '<span class="gr-poll__opt-text">';
         html += '<span class="gr-poll__label">' + escapeHtml(opt.label) + "</span>";
-        html += '<span class="gr-poll__pct">' + pct + "&nbsp;%</span>";
         html += "</span>";
+        html += '<span class="gr-poll__pct">' + pct + "&nbsp;%</span>";
         if (isMine) html += '<span class="gr-poll__badge">Votre choix</span>';
         html += "</div>";
         html += '<div class="gr-poll__bar" aria-hidden="true"><span style="width:' + pct + '%"></span></div>';
       } else {
         html +=
-          '<label class="gr-poll__btn gr-poll__btn--check' + (isMine ? " is-selected" : "") + '">' +
+          '<label class="gr-poll__btn--check' + (isMine ? " is-selected" : "") + '">' +
           '<input type="checkbox" class="gr-poll__checkbox" data-multi-option="' + escapeHtml(id) + '"' +
           (isMine ? " checked" : "") + ">" +
-          '<span class="gr-poll__check" aria-hidden="true">' + (isMine ? "☑" : "☐") + "</span>" +
-          '<span class="gr-poll__btn-text">' +
+          '<span class="gr-poll__check" aria-hidden="true">' + (isMine ? "✓" : "") + "</span>" +
+          '<span class="gr-poll__opt-text">' +
           '<span class="gr-poll__label">' + escapeHtml(opt.label) + "</span>" +
           "</span></label>";
       }
@@ -352,7 +352,7 @@
       if (label) {
         label.classList.toggle("is-selected", cb.checked);
         var mark = label.querySelector(".gr-poll__check");
-        if (mark) mark.textContent = cb.checked ? "☑" : "☐";
+        if (mark) mark.textContent = cb.checked ? "✓" : "";
       }
       setHint(root, "", false);
     });
