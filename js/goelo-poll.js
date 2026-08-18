@@ -195,10 +195,9 @@
     var myId = state.my_option_id ? String(state.my_option_id) : null;
     var myOpt = findOption(options, myId);
     var question = (poll.question && String(poll.question).trim()) || defaultQuestion(slug);
-    var colsClass = isSchedulePoll(slug) ? " gr-poll--cols-3" : "";
 
     var html = "";
-    html += '<div class="gr-poll' + colsClass + '">';
+    html += '<div class="gr-poll">';
     html += '<h2 class="gr-poll__title">' + escapeHtml(question) + "</h2>";
 
     if (myOpt) {
@@ -225,26 +224,42 @@
       if (myId) cls += " is-results";
 
       html += '<div class="' + cls + '" role="option" aria-selected="' + (isMine ? "true" : "false") + '">';
+      
+      // Ligne unique : cercle + texte + %
       html +=
-        '<button type="button" class="gr-poll__btn' + (isMine ? " is-selected" : "") +
+        '<button type="button" class="gr-poll__opt-line' + (isMine ? " is-selected" : "") +
         '" data-poll-option="' + escapeHtml(id) +
         '" data-poll-id="' + escapeHtml(poll.id) +
         '" aria-pressed="' + (isMine ? "true" : "false") + '">';
-      html += '<span class="gr-poll__emoji" aria-hidden="true">' + escapeHtml(opt.emoji || "") + "</span>";
-      html += '<span class="gr-poll__btn-text">';
+      
+      // Cercle contour
+      html += '<span class="gr-poll__circle" aria-hidden="true"></span>';
+      
+      // Texte : titre · subtitle sur une seule ligne
+      html += '<span class="gr-poll__opt-text">';
       html += '<span class="gr-poll__label">' + escapeHtml(opt.label) + "</span>";
       if (opt.subtitle) {
-        html += '<span class="gr-poll__sub">' + escapeHtml(opt.subtitle) + "</span>";
+        html += '<span class="gr-poll__sub"> · ' + escapeHtml(opt.subtitle) + "</span>";
       }
+      html += "</span>";
+      
+      // Pourcentage aligné à droite (si résultats)
       if (myId) {
         html += '<span class="gr-poll__pct">' + pct + "&nbsp;%</span>";
       }
-      html += "</span>";
-      if (isMine) html += '<span class="gr-poll__badge">Votre choix</span>';
+      
+      // Badge "Votre choix" (si sélectionné)
+      if (isMine) {
+        html += '<span class="gr-poll__badge">Votre choix</span>';
+      }
+      
       html += "</button>";
+      
+      // Barre de progression (discrète, sous la ligne)
       if (myId) {
         html += '<div class="gr-poll__bar" aria-hidden="true"><span style="width:' + pct + '%"></span></div>';
       }
+      
       html += "</div>";
     });
 
