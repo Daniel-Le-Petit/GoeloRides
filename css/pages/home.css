@@ -819,6 +819,52 @@ html.site-retheme {
   opacity: 0.7;
 }
 
+/* Brand-specific colors for social media icons */
+.gr-footer-link--facebook {
+  color: #1877f2;
+}
+.gr-footer-link--facebook svg {
+  opacity: 1;
+}
+.gr-footer-link--facebook:hover,
+.gr-footer-link--facebook:focus-visible {
+  color: #3b9aff;
+}
+
+.gr-footer-link--instagram {
+  color: #e4405f;
+}
+.gr-footer-link--instagram svg {
+  opacity: 1;
+}
+.gr-footer-link--instagram:hover,
+.gr-footer-link--instagram:focus-visible {
+  color: #f77737;
+}
+
+.gr-footer-link--strava {
+  color: #fc5200;
+}
+.gr-footer-link--strava svg {
+  opacity: 1;
+}
+.gr-footer-link--strava:hover,
+.gr-footer-link--strava:focus-visible {
+  color: #ff7829;
+}
+
+.gr-footer-link--gmail {
+  color: #ea4335;
+}
+.gr-footer-link--gmail svg {
+  opacity: 1;
+}
+.gr-footer-link--gmail:hover,
+.gr-footer-link--gmail:focus-visible {
+  color: #ff6347;
+}
+
+
 /* Colonne légal */
 .gr-footer-legal-title {
   font-size: 0.68rem;
