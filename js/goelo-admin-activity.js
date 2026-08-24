@@ -317,6 +317,73 @@
         if (!_tickerPaused) loadActivity();
       });
     }
+
+    var cleanupBtn = _$("act-cleanup-btn");
+    if (cleanupBtn) {
+      cleanupBtn.addEventListener("click", function () {
+        handleCleanup();
+      });
+    }
+  }
+
+  async function handleCleanup() {
+    var confirmed = confirm(
+      "Supprimer les activités de plus de 7 jours ainsi que toutes les activités de l'utilisateur Daniel ?\n\n" +
+      "Cette action est irréversible."
+    );
+    if (!confirmed) return;
+
+    var btn = _$("act-cleanup-btn");
+    if (btn) btn.disabled = true;
+
+    try {
+      var sb = window.goeloGetSb ? window.goeloGetSb() : null;
+      if (!sb) {
+        showToast("Erreur : Supabase non disponible", true);
+        return;
+      }
+
+      var res = await sb.rpc("activity_admin_cleanup");
+      if (res.error) {
+        console.error("[ActivityCleanup] RPC error:", res.error);
+        showToast("Erreur : " + (res.error.message || "Échec du nettoyage"), true);
+        return;
+      }
+
+      var data = res.data || {};
+      if (data.ok === false) {
+        showToast("Erreur : " + (data.error || "Échec du nettoyage"), true);
+        return;
+      }
+
+      var msg = "Nettoyage terminé :\n" +
+        "• " + (data.deleted_old || 0) + " activités de plus de 7 jours supprimées\n" +
+        "• " + (data.deleted_daniel || 0) + " activités de Daniel supprimées\n" +
+        "• Total : " + (data.deleted_total || 0) + " éléments supprimés";
+
+      showToast(msg.replace(/\n/g, " · "), false);
+      console.log("[ActivityCleanup] Success:", data);
+
+      // Rafraîchir la liste
+      setTimeout(function () {
+        loadActivity();
+      }, 800);
+    } catch (err) {
+      console.error("[ActivityCleanup] Exception:", err);
+      showToast("Erreur réseau : " + (err.message || "Échec du nettoyage"), true);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function showToast(message, isError) {
+    var wrap = document.getElementById("gtr-toast-wrap");
+    if (!wrap) return;
+    var el = document.createElement("div");
+    el.className = "gtr-toast" + (isError ? " gtr-toast--error" : "");
+    el.textContent = message;
+    wrap.appendChild(el);
+    setTimeout(function () { el.remove(); }, isError ? 5000 : 4000);
   }
 
   function startTicker() {

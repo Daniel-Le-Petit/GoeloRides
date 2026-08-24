@@ -1,0 +1,117 @@
+═══════════════════════════════════════════════════════════════════════
+  LIVRAISON : Bouton de nettoyage des activités
+  Date : 24 août 2026
+═══════════════════════════════════════════════════════════════════════
+
+📁 FICHIERS MODIFIÉS (3)
+─────────────────────────────────────────────────────────────────────
+
+1. supabase/migrations/20260824120000_activity_cleanup.sql ✨ NOUVEAU
+   • Type : Migration SQL
+   • Taille : 68 lignes
+   • Fonction créée : public.activity_admin_cleanup()
+   • Rôle : Suppression des activités selon les critères
+
+2. admin.html 📝 MODIFIÉ
+   • Lignes modifiées : ~714-726
+   • Ajout du bouton "🗑️ Nettoyer les activités"
+   • Style : Rouge (action destructive)
+
+3. js/goelo-admin-activity.js 🔧 MODIFIÉ
+   • Taille : 405 lignes (était ~340)
+   • Fonctions ajoutées : handleCleanup(), showToast()
+   • Gestion du clic, appel RPC, erreurs, toast
+
+═══════════════════════════════════════════════════════════════════════
+
+📚 DOCUMENTATION CRÉÉE (5)
+─────────────────────────────────────────────────────────────────────
+
+1. LIVRAISON.md
+   • Vue d'ensemble complète de la livraison
+   • Workflow détaillé
+   • Checklist finale
+   • Guide pour commit
+
+2. ACTIVITY_CLEANUP_DOC.md
+   • Documentation technique complète
+   • Guide de test pas à pas
+   • Commandes SQL utiles
+   • Section dépannage complète
+
+3. ACTIVITY_CLEANUP_TESTS.sql
+   • Script de test SQL complet
+   • 6 tests couvrant tous les cas
+   • Données de test
+   • Vérifications avant/après
+
+4. ACTIVITY_CLEANUP_SUMMARY.md
+   • Récapitulatif technique détaillé
+   • Workflow avec schémas
+   • Points d'attention
+   • Risques identifiés
+
+5. IMPLEMENTATION_COMPLETE.md
+   • Vue d'ensemble de l'implémentation
+   • Résumé des tests
+   • Checklist complète
+   • Guide pour review
+
+6. README_NETTOYAGE_ACTIVITES.md
+   • Guide utilisateur rapide
+   • FAQ complète
+   • Exemples d'utilisation
+   • Dépannage simple
+
+7. FICHIERS_LIVRAISON.txt (ce fichier)
+   • Liste complète des fichiers
+   • Organisation de la livraison
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 RÉSUMÉ FONCTIONNEL
+─────────────────────────────────────────────────────────────────────
+
+✅ Bouton ajouté dans Admin > Activités
+✅ Suppression des activités > 7 jours
+✅ Suppression de toutes les activités de Daniel
+✅ Confirmation avant suppression
+✅ Affichage du nombre d'éléments supprimés
+✅ Rafraîchissement automatique de la liste
+✅ Gestion des erreurs complète
+✅ Sécurité : admin uniquement
+✅ RPC unique pour la performance
+✅ Documentation complète
+✅ Tests fournis
+✅ Pas de commit automatique (comme demandé)
+
+═══════════════════════════════════════════════════════════════════════
+
+🚀 POUR COMMIT
+─────────────────────────────────────────────────────────────────────
+
+git add supabase/migrations/20260824120000_activity_cleanup.sql
+git add admin.html
+git add js/goelo-admin-activity.js
+git add LIVRAISON.md
+git add ACTIVITY_CLEANUP_DOC.md
+git add ACTIVITY_CLEANUP_TESTS.sql
+git add ACTIVITY_CLEANUP_SUMMARY.md
+git add IMPLEMENTATION_COMPLETE.md
+git add README_NETTOYAGE_ACTIVITES.md
+git add FICHIERS_LIVRAISON.txt
+
+git commit -m "feat(admin): Add activity cleanup button
+
+- Add RPC activity_admin_cleanup() to delete old activities (>7 days) and all Daniel's activities
+- Add cleanup button in Admin > Activities with confirmation dialog
+- Display deletion count and auto-refresh after cleanup
+- Security: admin-only, SECURITY DEFINER, no service_role exposed
+- Tests: 6 complete test cases covering all scenarios
+- Documentation: complete guide, SQL tests, and troubleshooting"
+
+═══════════════════════════════════════════════════════════════════════
+
+✅ STATUT : PRÊT POUR REVIEW ET COMMIT
+
+═══════════════════════════════════════════════════════════════════════
