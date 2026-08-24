@@ -200,33 +200,54 @@
       return [];
     }
 
-    var res = await sb
-      .from("routes")
-      .select("id, track_name, group_label, pace_label, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+    var res = await sb.rpc("routes_upcoming_homepage", { p_limit: 3 });
 
     if (res.error) {
-      console.error("[GoëloHome] fetch sorties:", res.error);
+      console.error("[GoëloHome] routes_upcoming_homepage:", res.error);
       return [];
     }
 
-    var now = Date.now();
-    return (res.data || [])
-      .map(dbRowToSortie)
-      .filter(function (s) {
-        if (s.status === "cancelled") return false;
-        if (s.visibility && s.visibility !== "public") return false;
-        if (window.GoeloSortieDates) {
-          return window.GoeloSortieDates.isActiveListSortie(s);
-        }
-        if (!s.date || s.date.getTime() < now) return false;
-        return true;
-      })
-      .sort(function (a, b) {
-        return a.date.getTime() - b.date.getTime();
-      })
-      .slice(0, 3);
+    var data = res.data;
+    if (!Array.isArray(data)) data = [];
+
+    return data.map(function(row) {
+      var km = row.totalKm != null ? row.totalKm : (row.km != null ? row.km : null);
+      var dplus = row.elevGainM != null ? row.elevGainM : (row.dplus != null ? row.dplus : null);
+      
+      var dateIso = row.rideDateIso || "";
+      var time = row.rideTime || "08:30";
+      var date = null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) {
+        var hhmm = time.match(/^\d{2}:\d{2}$/) ? time.split(":") : ["8", "30"];
+        var p = dateIso.split("-");
+        date = new Date(+p[0], +p[1] - 1, +p[2], +hhmm[0], +hhmm[1]);
+      }
+
+      return {
+        id: String(row.id),
+        title: String(row.track_name || "Sortie"),
+        group: String(row.group_label || ""),
+        levelClass: String(row.levelClass || "level-bleu"),
+        type: typeFromRaceType(row.raceType),
+        place: String(row.meetPlace || row.meet_place || "Devant le Kasino"),
+        status: String(row.sortieStatus || "open"),
+        visibility: String(row.visibility || "public"),
+        date: date,
+        meetTime: String(row.meetTime || row.rideTime || ""),
+        km: km,
+        dplus: dplus,
+        duration: row.estimatedDurationHm || row.estimated_duration_hm || null,
+        paceKmh: parsePaceKmh(row.pace_label),
+        assigned_team_rider_id: row.assigned_team_rider_id || null,
+        teamRiderPseudo: teamRiderDisplayName({ pseudo: row.team_rider_pseudo }),
+        imageUrl: String(row.thumbSrc || row.coverImageUrl || row.coverImageDataUrl || ""),
+        participants: [],
+        embeddedPoints: Array.isArray(row.embeddedPoints) ? row.embeddedPoints : null,
+        meetLat: row.meetLat != null ? Number(row.meetLat) : null,
+        meetLon: row.meetLon != null ? Number(row.meetLon) : null,
+        weather: null
+      };
+    });
   }
 
   function sortieToCard(s) {
@@ -366,30 +387,47 @@
       upcomingState.sorties = await fetchUpcomingSorties();
       renderUpcomingSorties();
 
-      if (window.GoeloUI && window.GoeloUI.waitForRole) {
-        try {
-          await Promise.race([
-            window.GoeloUI.waitForRole(),
-            new Promise(function (resolve) { setTimeout(resolve, 2500); })
-          ]);
-        } catch (e) { void e; }
-      }
+      Promise.all([
+        (async function() {
+          try {
+            if (window.GoeloUI && window.GoeloUI.waitForRole) {
+              await Promise.race([
+                window.GoeloUI.waitForRole(),
+                new Promise(function (resolve) { setTimeout(resolve, 2500); })
+              ]);
+            }
+            await fetchJoinedRouteIds();
+            renderUpcomingSorties();
+          } catch (e) {
+            console.warn("[GoëloHome] enrichissement inscriptions:", e);
+          }
+        })(),
+        
+        (async function() {
+          try {
+            if (window.GoeloSignupParticipants && upcomingState.sorties.length) {
+              await window.GoeloSignupParticipants.enrichCardsWithParticipants(upcomingState.sorties, getSb());
+              renderUpcomingSorties();
+            }
+          } catch (e) {
+            console.warn("[GoëloHome] enrichissement participants:", e);
+          }
+        })(),
+        
+        (async function() {
+          try {
+            if (window.GoeloWeather && upcomingState.sorties.length) {
+              await window.GoeloWeather.enrichSorties(upcomingState.sorties);
+              renderUpcomingSorties();
+            }
+          } catch (e) {
+            console.warn("[GoëloHome] enrichissement météo:", e);
+          }
+        })()
+      ]).catch(function(err) {
+        console.warn("[GoëloHome] enrichissement global:", err);
+      });
 
-      await fetchJoinedRouteIds();
-
-      if (window.GoeloSignupParticipants && upcomingState.sorties.length) {
-        await window.GoeloSignupParticipants.enrichCardsWithParticipants(upcomingState.sorties, getSb());
-      }
-      renderUpcomingSorties();
-
-      if (window.GoeloWeather && upcomingState.sorties.length) {
-        try {
-          await window.GoeloWeather.enrichSorties(upcomingState.sorties);
-          renderUpcomingSorties();
-        } catch (err) {
-          console.warn("[GoëloHome] enrichWeather:", err.message || err);
-        }
-      }
     } catch (err) {
       console.error("[GoëloHome] initUpcomingSorties:", err);
       upcomingState.sorties = [];
