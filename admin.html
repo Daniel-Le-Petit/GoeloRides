@@ -716,9 +716,14 @@
           <h2 class="admin-section__title">Analyse <span>visiteurs</span></h2>
           <p class="admin-section__sub">Parcours, scénarios et funnel — données activity_events (200 derniers événements)</p>
         </div>
-        <button class="btn-refresh" id="act-refresh-btn" type="button">
-          <span class="btn-refresh__icon">↻</span> Actualiser
-        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-refresh" id="act-refresh-btn" type="button">
+            <span class="btn-refresh__icon">↻</span> Actualiser
+          </button>
+          <button class="btn-refresh" id="act-cleanup-btn" type="button" style="border-color: var(--red); color: var(--red);">
+            <span>🗑️</span> Nettoyer les activités
+          </button>
+        </div>
       </div>
 
       <div class="act-stats">
