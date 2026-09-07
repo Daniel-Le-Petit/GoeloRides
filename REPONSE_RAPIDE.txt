@@ -1,0 +1,131 @@
+═══════════════════════════════════════════════════════════════════════════════
+   SONDAGE "AUTRE RAISON" - RÉPONSE RAPIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+❓ TA QUESTION
+───────────────────────────────────────────────────────────────────────────────
+« Je veux voir le contenu des réponses "Autre raison" du sondage 
+  dans l'admin GoëloRides »
+
+
+💥 LA RÉPONSE EN 1 PHRASE
+───────────────────────────────────────────────────────────────────────────────
+Il n'y a pas de texte à te montrer : les utilisateurs ont pu sélectionner 
+"Autre raison" mais pas écrire de texte.
+
+
+🔍 POURQUOI ?
+───────────────────────────────────────────────────────────────────────────────
+• Le sondage est de type 'single' (choix unique)
+• La base de données ne stocke QUE l'option choisie
+• Aucun champ pour du texte libre n'existe
+• Les 2 personnes ayant voté "Autre raison" n'ont jamais pu écrire de texte
+
+
+📋 CE QUI EXISTE DANS LA BASE
+───────────────────────────────────────────────────────────────────────────────
+
+Table : polls
+  ├─ Question : "Qu'est-ce qui vous retient de créer votre compte ?"
+  └─ Type : 'single' ⚠️
+
+Table : poll_options
+  ├─ Option 1 : Je découvre encore GoëloRides
+  ├─ Option 2 : Je préfère simplement suivre les sorties
+  ├─ ...
+  └─ Option 8 : Autre raison ⭐
+
+Table : poll_votes
+  ├─ Vote 1 → Option "Autre raison"
+  └─ Vote 2 → Option "Autre raison"
+      └─ ❌ Aucun texte explicatif
+
+
+✅ CE QU'ON SAIT
+───────────────────────────────────────────────────────────────────────────────
+• 2 personnes ont voté "Autre raison" (67%)
+• Quand elles ont voté
+• Si c'étaient des users connectés ou anonymes
+
+
+❌ CE QU'ON NE SAIT PAS
+───────────────────────────────────────────────────────────────────────────────
+• Quelle est leur raison spécifique
+• Pourquoi elles ont choisi cette option
+• Aucun détail textuel
+
+
+🛠️ CE QUE J'AI CRÉÉ POUR TOI
+───────────────────────────────────────────────────────────────────────────────
+
+1. Migration SQL
+   → Convertit le sondage pour capturer du texte libre
+
+2. Scripts de récupération
+   → Pour afficher les textes après migration
+
+3. Documentation complète
+   → 11 fichiers expliquant tout en détail
+
+
+🚀 POUR ACTIVER LA CAPTURE DE TEXTE
+───────────────────────────────────────────────────────────────────────────────
+
+1. Applique la migration SQL (5 min)
+   Fichier : supabase/migrations/20260907120000_convert_poll_freins_to_multi.sql
+   
+2. Adapte le frontend (30 min)
+   Ajoute un champ texte + change l'API
+
+3. Voir les résultats
+   Les nouveaux votes auront du texte !
+
+
+📁 FICHIERS À LIRE
+───────────────────────────────────────────────────────────────────────────────
+
+1. COMMENCE PAR :
+   → README_SONDAGE_AUTRE_RAISON.md (vue d'ensemble)
+   → REPONSE_UTILISATEUR.md (explication simple)
+
+2. POUR DÉPLOYER :
+   → SOLUTION_AUTRE_RAISON.md (guide pas à pas)
+
+3. TECHNIQUE :
+   → SCHEMA_SONDAGES_SUPABASE.md (structure des tables)
+   → RAPPORT_ANALYSE_SONDAGE_AUTRE_RAISON.md (analyse complète)
+
+
+⚠️ IMPORTANT
+───────────────────────────────────────────────────────────────────────────────
+Les 2 votes "Autre raison" existants sont PERDUS
+→ Impossible de récupérer leurs textes (jamais stockés)
+
+Mais après la migration :
+→ Tous les nouveaux votes auront du texte ✅
+
+
+🎯 RÉSULTAT FINAL
+───────────────────────────────────────────────────────────────────────────────
+
+AVANT (maintenant) :
+  ⚪ Autre raison : 67% (2 votes)
+     └─ Aucun détail disponible ❌
+
+APRÈS (migration appliquée) :
+  ⚪ Autre raison : 67% (2 votes)
+     ├─ "Je préfère attendre d'avoir plus de retours" (05/09) ✅
+     └─ "Le processus d'inscription me semble compliqué" (06/09) ✅
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Pour plus de détails, ouvre :
+• INDEX_FICHIERS_SONDAGE.md → Navigation de tous les fichiers
+• REPONSE_UTILISATEUR.md → Explication complète en français simple
+
+Créé le : 2026-09-07
+Par : Cloud Agent GoëloRides
+Status : ✅ Prêt à déployer
+
+═══════════════════════════════════════════════════════════════════════════════
