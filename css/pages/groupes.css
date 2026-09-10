@@ -16,11 +16,11 @@
   --text:         #F0F0F0;
   --muted:        #888888;
 
-  --c-blanc-bg:   #F5F5F5;
+  --c-blanc:      #F5F5F5;
   --c-blanc-text: #111111;
   --c-vert:       #3A7D44;
-  --c-bleu:       #1E3A8A;
-  --c-rouge:      #8B1A1A;
+  --c-bleu:       #2563EB;
+  --c-rouge:      #DC2626;
 
   --font-display: 'Barlow Condensed', sans-serif;
   --font-body:    'Inter', sans-serif;
@@ -142,21 +142,26 @@ body {
 .gr-page-header {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2.25rem 2rem 0.5rem;
+  padding: 2.5rem 2rem 1rem;
+  text-align: center;
 }
 
 .gr-page-header h1 {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--text);
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.15;
 }
 
 .gr-page-header p {
-  font-size: 0.98rem;
+  font-size: clamp(0.94rem, 1.8vw, 1.05rem);
   color: var(--muted);
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 /* ─── Layout principal ──────────────────────────────────────── */
@@ -176,87 +181,68 @@ body {
 
 .gr-card {
   border-radius: var(--radius);
-  padding: 1.25rem 1.1rem 1.1rem;
+  padding: 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
   position: relative;
+  border: 2px solid transparent;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.gr-card--blanc { background: var(--c-blanc-bg); color: var(--c-blanc-text); }
+.gr-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.gr-card--blanc { background: var(--c-blanc); color: var(--c-blanc-text); }
 .gr-card--vert  { background: var(--c-vert);  color: #fff; }
 .gr-card--bleu  { background: var(--c-bleu);  color: #fff; }
 .gr-card--rouge { background: var(--c-rouge); color: #fff; }
 
-.gr-card__eyebrow {
-  font-family: var(--font-display);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0.65;
-}
-
 .gr-card__header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+
+.gr-card__emoji {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .gr-card__title {
   font-family: var(--font-display);
-  font-size: 1.65rem;
+  font-size: 1.35rem;
   font-weight: 800;
-  letter-spacing: 0.01em;
-  line-height: 1;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  margin-bottom: 0.25rem;
 }
 
 .gr-card__subtitle {
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  opacity: 0.85;
-  margin-top: 0.2rem;
+  opacity: 0.88;
+  line-height: 1.2;
 }
 
-.gr-card__subtitle em {
-  font-style: italic;
-  font-weight: 400;
-  opacity: 0.8;
-  display: block;
+.gr-card__metrics {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  opacity: 0.95;
+  line-height: 1.4;
 }
 
-.gr-card__icon {
-  flex-shrink: 0;
-  opacity: 0.5;
-}
-
-.gr-card__icon svg {
-  width: 34px;
-  height: 34px;
-}
-
-/* Stats (3 lignes : km / D+ / niveau) */
-.gr-card__stats {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.82rem;
+.gr-card__description {
+  font-size: 0.88rem;
+  line-height: 1.5;
   opacity: 0.92;
-}
-
-.gr-card__stat {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.gr-card__stat-icon {
-  width: 16px;
-  text-align: center;
-  opacity: 0.75;
-  flex-shrink: 0;
+  flex: 1;
 }
 
 /* Bouton « Voir les sorties » */
@@ -269,7 +255,7 @@ body {
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  padding: 0.58rem 1rem;
+  padding: 0.65rem 1rem;
   border-radius: 6px;
   border: none;
   transition: filter 0.15s, transform 0.12s;
@@ -284,6 +270,33 @@ body {
 .gr-card--vert  .gr-card__btn { background: #fff; color: var(--c-vert); }
 .gr-card--bleu  .gr-card__btn { background: #fff; color: var(--c-bleu); }
 .gr-card--rouge .gr-card__btn { background: #fff; color: var(--c-rouge); }
+
+/* ─── Section rassurante ────────────────────────────────────── */
+.gr-reassurance {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.75rem 2rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.gr-reassurance__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.gr-reassurance__text {
+  font-size: 0.94rem;
+  color: var(--muted);
+  line-height: 1.65;
+  max-width: 680px;
+  margin: 0 auto;
+}
 
 /* ─── Bloc bas : avantages + CTA Team Riders ────────────────── */
 .gr-bottom {
@@ -460,27 +473,96 @@ body {
 @media (max-width: 900px) {
   .gr-nav__links { display: none; }
   .gr-nav { justify-content: space-between; }
+  
   .gr-cards {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
+  
   .gr-bottom {
     grid-template-columns: 1fr;
   }
+  
   .footer { padding: 2rem 1rem 1.5rem; }
   .footer-inner { grid-template-columns: 1fr; gap: 1.75rem; }
   .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
 
-@media (max-width: 560px) {
-  .gr-topstrip { font-size: 0.68rem; }
-  .gr-nav { padding: 0 1rem; }
-  .gr-page-header { padding: 1.5rem 1rem 0.25rem; }
-  .gr-main { padding: 1.25rem 1rem 5.5rem; }
-
-  /* Cartes empilées pleine largeur (maquette mobile) */
+@media (max-width: 768px) {
   .gr-cards {
     grid-template-columns: 1fr;
-    gap: 0.85rem;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .gr-topstrip { 
+    font-size: 0.68rem; 
+    padding: 0.35rem 0.75rem;
+  }
+  
+  .gr-nav { 
+    padding: 0 1rem; 
+    height: 52px;
+  }
+  
+  .gr-page-header { 
+    padding: 1.75rem 1rem 0.75rem; 
+    text-align: left;
+  }
+  
+  .gr-page-header h1 {
+    font-size: 1.65rem;
+  }
+  
+  .gr-page-header p {
+    font-size: 0.92rem;
+  }
+  
+  .gr-main { 
+    padding: 1.25rem 1rem 5.5rem; 
+  }
+
+  .gr-cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .gr-card {
+    padding: 1.35rem 1.15rem;
+  }
+  
+  .gr-card__emoji {
+    font-size: 1.75rem;
+  }
+  
+  .gr-card__title {
+    font-size: 1.2rem;
+  }
+  
+  .gr-card__subtitle {
+    font-size: 0.85rem;
+  }
+  
+  .gr-card__metrics {
+    font-size: 0.95rem;
+  }
+  
+  .gr-card__description {
+    font-size: 0.86rem;
+  }
+  
+  .gr-reassurance {
+    padding: 1.5rem 1.25rem;
+    margin-bottom: 2rem;
+  }
+  
+  .gr-reassurance__title {
+    font-size: 1.1rem;
+  }
+  
+  .gr-reassurance__text {
+    font-size: 0.9rem;
   }
 
   .goelo-mobile-tabbar {
@@ -508,5 +590,56 @@ body {
   .goelo-mobile-tabbar a[aria-current],
   .goelo-mobile-tabbar a:hover {
     color: var(--accent);
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 375px) {
+  .gr-page-header {
+    padding: 1.5rem 0.85rem 0.65rem;
+  }
+  
+  .gr-main {
+    padding: 1rem 0.85rem 5.5rem;
+  }
+  
+  .gr-card {
+    padding: 1.25rem 1rem;
+  }
+  
+  .gr-card__header {
+    gap: 0.65rem;
+  }
+  
+  .gr-reassurance {
+    padding: 1.35rem 1rem;
+  }
+}
+
+/* Ensure no horizontal overflow at any screen size */
+@media (max-width: 320px) {
+  .gr-page-header {
+    padding: 1.35rem 0.75rem 0.5rem;
+  }
+  
+  .gr-main {
+    padding: 0.85rem 0.75rem 5.5rem;
+  }
+  
+  .gr-card {
+    padding: 1.15rem 0.9rem;
+  }
+  
+  .gr-card__title {
+    font-size: 1.1rem;
+    word-break: break-word;
+  }
+  
+  .gr-card__metrics {
+    font-size: 0.9rem;
+  }
+  
+  .gr-reassurance {
+    padding: 1.25rem 0.9rem;
   }
 }
