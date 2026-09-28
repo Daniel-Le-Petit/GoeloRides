@@ -197,11 +197,15 @@ async function fetchSorties() {
     return [];
   }
 
-  var res = await sb
+  var query = sb
     .from("routes")
-    .select("id, track_name, group_label, pace_label, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+    .select("id, track_name, group_label, pace_label, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)");
+
+  if (!isAdmin()) {
+    query = query.eq("is_active", true);
+  }
+
+  var res = await query.order("created_at", { ascending: false });
 
   if (res.error) {
     console.error("[sorties] erreur:", res.error);
@@ -784,16 +788,20 @@ async function fetchSorties() {
     bindLockTriggers();
     bindCardActions();
 
-    window.addEventListener("goelo:role-ready", function () {
+    window.addEventListener("goelo:role-ready", async function () {
       initFiltersForRole();
       applyTeamRiderState();
-      fetchJoinedRouteIds().then(render);
+      state.sorties = await fetchSorties();
+      await fetchJoinedRouteIds();
+      render();
     });
 
-    window.addEventListener("goelo:auth-success", function () {
+    window.addEventListener("goelo:auth-success", async function () {
       initFiltersForRole();
       applyTeamRiderState();
-      fetchJoinedRouteIds().then(render);
+      state.sorties = await fetchSorties();
+      await fetchJoinedRouteIds();
+      render();
     });
 
     window.addEventListener("goelo:signup-changed", function () {
