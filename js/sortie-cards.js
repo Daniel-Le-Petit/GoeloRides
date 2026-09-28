@@ -175,6 +175,12 @@
     return "gestion-sorties.html?mode=" + (mode || "edit") + "&id=" + encodeURIComponent(id);
   }
 
+  function isSortiePassed(card) {
+    if (!card.date) return false;
+    var now = new Date();
+    return card.date < now;
+  }
+
   /** Boutons principaux en haut à droite (Voir · Rejoindre). */
   function buildTopActions(card, opts) {
     opts = opts || {};
@@ -188,11 +194,15 @@
       '<a class="go-sc-btn go-sc-btn--voir" href="' + escapeAttr(voirHref) + '">Voir</a>'
     ];
 
+    if (isSortiePassed(card)) {
+      parts.push('<span class="go-sc-badge go-sc-badge--passed">Sortie passée</span>');
+    }
+
     if (viewMode === "team-rider") return parts.join("");
 
-    if (role === "user" && !joined) {
+    if (role === "user" && !joined && !isSortiePassed(card)) {
       parts.push('<a class="go-sc-btn go-sc-btn--join" href="' + escapeAttr(parcoursHref(card.id)) + '">Rejoindre</a>');
-    } else if (role === "visitor") {
+    } else if (role === "visitor" && !isSortiePassed(card)) {
       parts.push('<button type="button" class="go-sc-btn go-sc-btn--join" data-goelo-auth-trigger>Rejoindre</button>');
     }
 

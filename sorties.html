@@ -59,11 +59,12 @@
 
     <!-- Filtres horizontaux + recherche -->
     <div class="so-filters" role="toolbar" aria-label="Filtres des sorties">
-      <button type="button" class="so-chip is-active" data-filter="tous">Tous</button>
+      <button type="button" class="so-chip" data-filter="toutes" data-admin-only hidden>Toutes</button>
+      <button type="button" class="so-chip is-active" data-filter="a-venir">À venir</button>
+      <button type="button" class="so-chip" data-filter="passees">Passées</button>
       <button type="button" class="so-chip" data-filter="route">Route</button>
       <button type="button" class="so-chip" data-filter="gravel">Gravel</button>
       <button type="button" class="so-chip" data-filter="vtt">VTT</button>
-      <button type="button" class="so-chip" data-filter="a-venir">À venir</button>
       <button type="button" class="so-chip" data-filter="aujourdhui">Aujourd'hui</button>
       <button type="button" class="so-chip" data-filter="meteo-ideale">Météo idéale</button>
       <label class="so-search">

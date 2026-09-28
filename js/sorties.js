@@ -197,22 +197,22 @@ async function fetchSorties() {
     return [];
   }
 
-  var res = await sb
+  var query = sb
     .from("routes")
-    .select("id, track_name, group_label, pace_label, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+    .select("id, track_name, group_label, pace_label, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)");
+
+  if (!isAdmin()) {
+    query = query.eq("is_active", true);
+  }
+
+  var res = await query.order("created_at", { ascending: false });
 
   if (res.error) {
     console.error("[sorties] erreur:", res.error);
     return [];
   }
 
-  return (res.data || [])
-    .map(dbRowToSortie)
-    .filter(function (s) {
-      return !window.GoeloSortieDates || window.GoeloSortieDates.isActiveListSortie(s);
-    });
+  return (res.data || []).map(dbRowToSortie);
 }
 
   /* ── Participants : signups actifs via Supabase (même flux que parcours.js) ── */
@@ -325,7 +325,7 @@ async function fetchSorties() {
      ════════════════════════════════════════════════════════════ */
   var state = {
     sorties:         [],
-    filter:          "tous",
+    filter:          "a-venir",
     search:          "",
     joinedRouteIds:  new Set(),
     sortBy:          "date",
@@ -374,6 +374,16 @@ async function fetchSorties() {
   function isTeamRiderOrAdmin() {
     var r = getUserRole();
     return r === "team_rider" || r === "admin";
+  }
+
+  function isAdmin() {
+    return getUserRole() === "admin";
+  }
+
+  function isSortiePassed(sortie) {
+    if (!sortie.date) return false;
+    var now = new Date();
+    return sortie.date < now;
   }
 
   function sortieToCard(s) {
@@ -431,6 +441,28 @@ async function fetchSorties() {
       });
       return copy;
     }
+    
+    if (state.filter === "toutes") {
+      copy.sort(function (a, b) {
+        var aPassed = isSortiePassed(a);
+        var bPassed = isSortiePassed(b);
+        if (aPassed !== bPassed) return aPassed ? 1 : -1;
+        var ta = a.date ? a.date.getTime() : (aPassed ? -Infinity : Infinity);
+        var tb = b.date ? b.date.getTime() : (bPassed ? -Infinity : Infinity);
+        return aPassed ? tb - ta : ta - tb;
+      });
+      return copy;
+    }
+    
+    if (state.filter === "passees") {
+      copy.sort(function (a, b) {
+        var ta = a.date ? a.date.getTime() : -Infinity;
+        var tb = b.date ? b.date.getTime() : -Infinity;
+        return tb - ta;
+      });
+      return copy;
+    }
+    
     copy.sort(function (a, b) {
       var ta = a.date ? a.date.getTime() : Infinity;
       var tb = b.date ? b.date.getTime() : Infinity;
@@ -507,18 +539,25 @@ async function fetchSorties() {
 
   function matchesFilter(s) {
     var SD = window.GoeloSortieDates;
-    if (SD && !SD.isActiveListSortie(s)) return false;
+    var isPassed = isSortiePassed(s);
 
-    if (state.filter === "route" || state.filter === "gravel" || state.filter === "vtt") {
-      if (s.type !== state.filter) return false;
+    if (state.filter === "toutes") {
     } else if (state.filter === "a-venir") {
-      if (!s.date) return false;
+      if (isPassed) return false;
+    } else if (state.filter === "passees") {
+      if (!isPassed) return false;
+    } else if (state.filter === "route" || state.filter === "gravel" || state.filter === "vtt") {
+      if (s.type !== state.filter) return false;
+      if (isPassed) return false;
     } else if (state.filter === "aujourdhui") {
       if (!s.date) return false;
       if (SD && !SD.isTodayParisSortie(s)) return false;
+      if (isPassed) return false;
     } else if (state.filter === "meteo-ideale") {
       if (!window.GoeloWeather || !window.GoeloWeather.isIdealWeather(s.weather)) return false;
+      if (isPassed) return false;
     }
+    
     if (state.search) {
       var hay = (s.title + " " + s.group + " " + s.place).toLowerCase();
       if (hay.indexOf(state.search) === -1) return false;
@@ -671,6 +710,21 @@ async function fetchSorties() {
   /* ════════════════════════════════════════════════════════════
      Filtres + recherche
      ════════════════════════════════════════════════════════════ */
+  function initFiltersForRole() {
+    var adminOnly = document.querySelector(".so-chip[data-admin-only]");
+    if (adminOnly) {
+      if (isAdmin()) {
+        adminOnly.hidden = false;
+        state.filter = "toutes";
+        adminOnly.classList.add("is-active");
+        document.querySelector(".so-chip[data-filter='a-venir']").classList.remove("is-active");
+      } else {
+        adminOnly.hidden = true;
+        state.filter = "a-venir";
+      }
+    }
+  }
+
   function bindFilters() {
     document.querySelectorAll(".so-chip[data-filter]").forEach(function (chip) {
       chip.addEventListener("click", function () {
@@ -728,19 +782,26 @@ async function fetchSorties() {
 
     if (window.GoeloUI) await window.GoeloUI.waitForRole();
 
+    initFiltersForRole();
     applyTeamRiderState();
     bindFilters();
     bindLockTriggers();
     bindCardActions();
 
-    window.addEventListener("goelo:role-ready", function () {
+    window.addEventListener("goelo:role-ready", async function () {
+      initFiltersForRole();
       applyTeamRiderState();
-      fetchJoinedRouteIds().then(render);
+      state.sorties = await fetchSorties();
+      await fetchJoinedRouteIds();
+      render();
     });
 
-    window.addEventListener("goelo:auth-success", function () {
+    window.addEventListener("goelo:auth-success", async function () {
+      initFiltersForRole();
       applyTeamRiderState();
-      fetchJoinedRouteIds().then(render);
+      state.sorties = await fetchSorties();
+      await fetchJoinedRouteIds();
+      render();
     });
 
     window.addEventListener("goelo:signup-changed", function () {
