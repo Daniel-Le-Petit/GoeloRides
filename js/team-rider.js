@@ -118,12 +118,17 @@
 
     var query = sb
       .from("routes")
-      .select("id, track_name, group_label, pace_label, sort_order, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)")
-      .order("sort_order", { ascending: true })
-      .order("created_at",  { ascending: false });
+      .select("id, track_name, group_label, pace_label, sort_order, is_active, front_config, created_at, assigned_team_rider_id, team_rider:profiles!assigned_team_rider_id(pseudo)");
 
-    if (_currentRole !== "admin") {
-      query = query.eq("is_active", true);
+    // Tri différent selon le contexte :
+    // - Administration : tri décroissant par date de sortie (plus récentes en premier, y compris passées)
+    // - Public : tri croissant (prochaines sorties en premier)
+    if (_currentRole === "admin") {
+      query = query.order("created_at", { ascending: false });
+    } else {
+      query = query.eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
     }
 
     var result = await query;
@@ -136,10 +141,32 @@
     var cards = (result.data || [])
       .map(function (row) {
         return window.GoeloSortieCards.fromRouteRow(row);
-      })
-      .filter(function (c) {
+      });
+
+    // Filtrer les sorties passées UNIQUEMENT pour les non-admins
+    // Les admins voient TOUTES les sorties (passées et futures)
+    if (_currentRole !== "admin") {
+      cards = cards.filter(function (c) {
         return !window.GoeloSortieDates || window.GoeloSortieDates.isActiveListSortie(c);
       });
+    }
+
+    // Tri par date de sortie réelle (rideDateIso)
+    // - Administration : tri décroissant (plus récentes en premier)
+    // - Public : tri croissant (prochaines sorties en premier)
+    if (window.GoeloSortieDates) {
+      cards.sort(function (a, b) {
+        var dateA = window.GoeloSortieDates.sortieCalendarYmd(a);
+        var dateB = window.GoeloSortieDates.sortieCalendarYmd(b);
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        // Admin : décroissant (plus récent = plus grand = premier)
+        // Non-admin : croissant (plus proche = plus petit = premier)
+        return _currentRole === "admin" ? (dateB > dateA ? 1 : dateB < dateA ? -1 : 0)
+                                         : (dateA > dateB ? 1 : dateA < dateB ? -1 : 0);
+      });
+    }
 
     if (_currentFilter === "publiee") {
       cards = cards.filter(function (c) { return c.statut === "publiee"; });
