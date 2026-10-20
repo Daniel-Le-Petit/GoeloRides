@@ -135,7 +135,11 @@
       client_key_required: "Impossible d'inscrire (navigateur restreint).",
       invalid_token: "Lien d'annulation invalide.",
       not_found: "Inscription introuvable ou déjà annulée.",
-      missing_client: "Connexion au serveur indisponible."
+      missing_client: "Connexion au serveur indisponible.",
+      edge_unavailable: "Inscription momentanément indisponible. Réessaie dans un instant.",
+      ticket_required: "Inscription momentanément indisponible. Réessaie dans un instant.",
+      invalid_ticket: "Session d'inscription expirée. Réessaie.",
+      forbidden: "Inscription refusée."
     };
     return map[code] || "Impossible d'enregistrer la participation.";
   }

@@ -1,17 +1,15 @@
 /**
- * GoëloRides — Inscription invité sans compte (Edge Function)
+ * GoëloRides — Inscription invité (Edge Function — seule entrée publique)
  *
- * Pourquoi une Edge Function ?
- * - L'IP lue via `current_setting('request.headers')` en RPC PostgREST
- *   dépend de X-Forwarded-For / proxies : un client peut tenter de spoof
- *   le premier hop. On ne fait donc JAMAIS confiance à une IP fournie
- *   dans le body JSON du navigateur.
- * - Ici l'IP est lue côté serveur (headers d'entrée de la plateforme),
- *   hashée (SHA-256), puis transmise à la RPC via service_role uniquement.
- * - Le parcours visiteur reste transparent (même formulaire, un POST).
+ * Fiabilité IP (Supabase managed Edge) :
+ * - Aucun header (CF-Connecting-IP, X-Real-IP, X-Forwarded-For) n'est
+ *   documenté comme « sanitizé / non spoofable » par Supabase pour les
+ *   Edge Functions. On ne les traite donc PAS comme preuve d'identité.
+ * - Protection principale : tickets one-shot en base (client_key + route),
+ *   émis et consommés uniquement via service_role.
+ * - IP éventuelle : télémétrie soft uniquement (ip_trusted=false).
  *
- * Auth navigateur : clé anon (pas de compte). Service role uniquement
- * dans l'environnement Edge (jamais exposé au client).
+ * Le navigateur n'appelle JAMAIS guest_self_register directement.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -29,16 +27,16 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
-/** IP d'entrée plateforme — jamais lue depuis le body client. */
-function extractRequestIp(req: Request): string | null {
+/**
+ * Lit une IP candidate pour télémétrie uniquement.
+ * Ne jamais marquer ip_trusted=true tant que Supabase ne documente pas
+ * un header d'ingress garanti.
+ */
+function extractSoftIp(req: Request): string | null {
   const cf = (req.headers.get("cf-connecting-ip") || "").trim();
   if (cf) return cf.slice(0, 64);
-
   const real = (req.headers.get("x-real-ip") || "").trim();
   if (real) return real.slice(0, 64);
-
-  // Dernier hop non vide de XFF (souvent ajouté par le proxy de confiance).
-  // On ne prend PAS le premier hop (spoofable par le client).
   const xff = (req.headers.get("x-forwarded-for") || "").trim();
   if (xff) {
     const parts = xff.split(",").map((p) => p.trim()).filter(Boolean);
@@ -86,7 +84,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, error: "invalid_json" }, 400);
   }
 
-  // Ignorer toute tentative d'IP / hash fourni par le navigateur
+  // Ignorer IP / hash / ticket fournis par le navigateur
   const routeId = String(body.route_id ?? body.p_route_id ?? "").trim();
   const pseudo = normalizePseudo(body.pseudo ?? body.p_pseudo);
   const clientKey = String(body.client_key ?? body.p_client_key ?? "").trim();
@@ -100,19 +98,45 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, error: "client_key_required" }, 400);
   }
 
-  const ip = extractRequestIp(req);
-  const edgeIpHash = ip ? await sha256Hex(ip) : null;
+  // Soft IP only — jamais trusted (pas de garantie infra documentée)
+  const softIp = extractSoftIp(req);
+  const softIpHash = softIp ? await sha256Hex(softIp) : null;
 
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  // 1) Ticket one-shot (anti-abus sans IP fiable)
+  const ticketRes = await admin.rpc("guest_signup_ticket_issue", {
+    p_client_key: clientKey,
+    p_route_id: routeId,
+    p_ip_hash: softIpHash,
+    p_ip_trusted: false,
+  });
+
+  if (ticketRes.error) {
+    console.warn("[guest-signup] ticket:", ticketRes.error.message);
+    return jsonResponse({ ok: false, error: ticketRes.error.message || "ticket_failed" }, 400);
+  }
+
+  const ticket = (ticketRes.data || {}) as Record<string, unknown>;
+  if (ticket.ok === false) {
+    return jsonResponse({ ok: false, error: ticket.error || "rate_limited" }, 200);
+  }
+
+  const ticketId = ticket.ticket_id;
+  if (!ticketId) {
+    return jsonResponse({ ok: false, error: "ticket_failed" }, 500);
+  }
+
+  // 2) Inscription via service_role + ticket (RPC inaccessible à anon)
   const { data, error } = await admin.rpc("guest_self_register", {
     p_route_id: routeId,
     p_pseudo: pseudo,
     p_client_key: clientKey,
     p_hp: hp || null,
-    p_edge_ip_hash: edgeIpHash,
+    p_edge_ip_hash: null,
+    p_ticket_id: ticketId,
   });
 
   if (error) {
@@ -129,7 +153,6 @@ Deno.serve(async (req) => {
     return jsonResponse(payload, 200);
   }
 
-  // Ne jamais renvoyer d'IP / hash / téléphone
   return jsonResponse({
     ok: true,
     waitlist: !!payload.waitlist,

@@ -164,23 +164,19 @@ assert.ok(signupPart.includes("guest_participant_add"));
 assert.ok(signupPart.includes("selfRegisterGuest"));
 assert.ok(signupPart.includes("/functions/v1/guest-signup"));
 ok("Edge Function guest-signup prioritaire + admin add conservé");
-assert.ok(!signupPart.includes("p_edge_ip_hash"));
-ok("navigateur n'envoie pas p_edge_ip_hash");
+assert.ok(!signupPart.includes('rpc("guest_self_register"'));
+ok("plus aucun appel RPC guest_self_register depuis le navigateur");
+assert.ok(signupPart.includes("edge_unavailable"));
+ok("erreur claire si Edge indisponible (pas d'inscription)");
 
 const migration = fs.readFileSync(
   path.join(__dirname, "../../supabase/migrations/20261020140000_guest_self_signup.sql"),
   "utf8"
 );
-assert.ok(migration.includes("pg_advisory_xact_lock"));
+assert.ok(migration.includes("pg_advisory_xact_lock") || migration.includes("_goelo_lock_route_capacity"));
 ok("verrou transactionnel capacité présent");
 assert.ok(migration.includes("FOR UPDATE"));
 ok("verrou ligne routes présent");
-assert.ok(migration.includes("_guest_request_ip"));
-ok("lecture IP headers (soft) présente");
-assert.ok(migration.includes("p_edge_ip_hash"));
-ok("hash IP Edge (service_role) présent");
-assert.ok(migration.includes("v_is_service"));
-ok("p_edge_ip_hash ignoré hors service_role");
 assert.ok(migration.includes("_goelo_promote_one_waitlist_seat"));
 ok("promotion unifiée une place présente");
 assert.ok(migration.includes("GRANT EXECUTE ON FUNCTION public.guest_participant_add") &&
@@ -188,10 +184,25 @@ assert.ok(migration.includes("GRANT EXECUTE ON FUNCTION public.guest_participant
 ok("guest_participant_add non ouvert à anon");
 assert.ok(migration.includes("confirmed_count"));
 ok("réponse RPC distingue confirmed_count");
-assert.ok(!migration.includes("phone") || migration.includes("Pas de téléphone") || true);
-ok("migration revue (téléphone non exposé dans listes publiques)");
 
-console.log("\n=== 9. Confiance IP (Edge vs spoof navigateur) ===");
+const lockdown = fs.readFileSync(
+  path.join(__dirname, "../../supabase/migrations/20261020153000_guest_signup_lockdown.sql"),
+  "utf8"
+);
+assert.ok(lockdown.includes("goelo_capacity:"));
+ok("verrou partagé goelo_capacity (membres + invités)");
+assert.ok(lockdown.includes("guest_signup_ticket_issue"));
+ok("tickets Edge anti-abus sans IP fiable");
+assert.ok(lockdown.includes("auth.role(), '') <> 'service_role'"));
+ok("guest_self_register refuse hors service_role");
+assert.ok(lockdown.includes("GRANT EXECUTE ON FUNCTION public.guest_self_register") &&
+  lockdown.includes("TO service_role") &&
+  !/GRANT EXECUTE ON FUNCTION public\.guest_self_register[\s\S]*TO anon/.test(lockdown));
+ok("GRANT guest_self_register : service_role only (pas anon)");
+assert.ok(lockdown.includes("_goelo_lock_route_capacity(v_rid)") && lockdown.includes("toggle_signup"));
+ok("toggle_signup utilise le même verrou capacité");
+
+console.log("\n=== 9. Confiance IP (jamais trusted sans garantie infra) ===");
 var fakeHash = "a".repeat(64);
 assert.deepStrictEqual(
   rules.resolveIpHash({ authRole: "anon", edgeIpHash: fakeHash, headerIpHash: null }),
@@ -200,14 +211,14 @@ assert.deepStrictEqual(
 ok("anon + hash body spoofé → ignoré");
 assert.strictEqual(
   rules.resolveIpHash({ authRole: "service_role", edgeIpHash: fakeHash }).trusted,
-  true
-);
-ok("service_role + hash Edge → trusted");
-assert.strictEqual(
-  rules.resolveIpHash({ authRole: "anon", headerIpHash: fakeHash }).trusted,
   false
 );
-ok("headers seuls → non trusted (plafonds stricts)");
+ok("Edge soft IP → non trusted (pas de garantie Supabase documentée)");
+assert.strictEqual(
+  rules.resolveIpHash({ authRole: "service_role", edgeIpHash: fakeHash, markTrusted: true }).trusted,
+  true
+);
+ok("trusted uniquement si markTrusted explicite (futur header garanti)");
 
 console.log("\n=== 10. Course sur la dernière place (2 inscriptions) ===");
 var race = rules.simulateConcurrentLastSeat({
@@ -259,11 +270,11 @@ console.log("\n=== 12. Edge Function présente ===");
 const edgePath = path.join(__dirname, "../../supabase/functions/guest-signup/index.ts");
 assert.ok(fs.existsSync(edgePath));
 const edgeSrc = fs.readFileSync(edgePath, "utf8");
-assert.ok(edgeSrc.includes("extractRequestIp"));
+assert.ok(edgeSrc.includes("guest_signup_ticket_issue"));
+assert.ok(edgeSrc.includes("p_ticket_id"));
 assert.ok(edgeSrc.includes("SUPABASE_SERVICE_ROLE_KEY"));
-assert.ok(edgeSrc.includes("p_edge_ip_hash"));
-assert.ok(edgeSrc.includes("Jamais") || edgeSrc.includes("jamais") || edgeSrc.includes("Ignorer"));
-ok("Edge Function guest-signup : IP serveur + service_role");
+assert.ok(edgeSrc.includes("ip_trusted: false") || edgeSrc.includes("p_ip_trusted: false"));
+ok("Edge : ticket one-shot + IP non trusted + service_role");
 
 console.log("\n=== 13. Compteurs UI cohérents ===");
 assert.ok(signupPart.includes("waitlist_count"));

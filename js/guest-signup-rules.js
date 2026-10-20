@@ -136,21 +136,33 @@
   }
 
   /**
-   * Confiance IP : seul un hash fourni par service_role (Edge) est « trusted ».
-   * Un hash envoyé par le navigateur (anon) doit être ignoré.
+   * Confiance IP (Supabase Edge managed) :
+   * Aucun header n'est documenté comme garanti non spoofable → jamais trusted.
+   * Protection principale = tickets Edge + client_key (pas l'IP).
+   * Un hash envoyé par le navigateur (anon) est toujours ignoré.
    */
   function resolveIpHash(opts) {
     opts = opts || {};
     var role = String(opts.authRole || "anon");
     var edgeHash = String(opts.edgeIpHash || "").trim().toLowerCase();
     var headerIpHash = opts.headerIpHash ? String(opts.headerIpHash).trim().toLowerCase() : null;
+    var markTrusted = opts.markTrusted === true;
 
-    if (role === "service_role" && /^[0-9a-f]{64}$/.test(edgeHash)) {
-      return { ipHash: edgeHash, trusted: true, source: "edge" };
+    // Navigateur : ignorer tout hash fourni
+    if (role !== "service_role") {
+      return { ipHash: null, trusted: false, source: "none" };
     }
-    // Ignorer edgeHash spoofé par anon
+
+    // Edge / service_role : IP soft seulement si markTrusted explicitement
+    // (réservé au jour où Supabase documentera un header d'ingress garanti)
+    if (markTrusted && /^[0-9a-f]{64}$/.test(edgeHash)) {
+      return { ipHash: edgeHash, trusted: true, source: "edge_guaranteed" };
+    }
     if (headerIpHash && /^[0-9a-f]{64}$/.test(headerIpHash)) {
-      return { ipHash: headerIpHash, trusted: false, source: "headers" };
+      return { ipHash: headerIpHash, trusted: false, source: "headers_soft" };
+    }
+    if (/^[0-9a-f]{64}$/.test(edgeHash)) {
+      return { ipHash: edgeHash, trusted: false, source: "edge_soft" };
     }
     return { ipHash: null, trusted: false, source: "none" };
   }

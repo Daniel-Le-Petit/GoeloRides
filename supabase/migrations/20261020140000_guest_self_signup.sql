@@ -4,8 +4,11 @@
 -- RPC distinctes de guest_participant_add (réservée admin / Ride Leader).
 -- Jeton d'annulation personnel (hash stocké) — jamais d'annulation par pseudo seul.
 -- Capacité : membres (signups) + invités actifs hors liste d'attente.
--- Anti-abus : IP (headers PostgREST) + client_key + plafonds route (client_key seul insuffisant).
--- Concurrence : verrou transactionnel par sortie avant décision capacité.
+-- Anti-abus :
+--   * Chemin recommandé : Edge Function guest-signup → service_role + p_edge_ip_hash
+--   * Jamais d'IP / hash fourni par le body navigateur (ignoré hors service_role)
+--   * Headers PostgREST = signal soft uniquement (XFF partiellement spoofable)
+-- Concurrence : advisory lock + FOR UPDATE routes avant décision capacité.
 -- Waitlist : file FIFO unifiée membres+invités, une promotion par place libérée.
 -- ============================================================================
 
@@ -810,12 +813,12 @@ $$;
 REVOKE ALL ON FUNCTION public.guest_self_register(text, text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.guest_self_register(text, text, text, text, text) FROM PUBLIC;
 
--- Navigateur : peut appeler la RPC en secours, mais p_edge_ip_hash est ignoré hors service_role.
--- Chemin recommandé : Edge Function guest-signup (service_role + IP hashée).
+-- Accès navigateur révoqué : voir migration 20261020153000 (service_role + tickets Edge).
+-- Les GRANT ci-dessous sont remplacés/restreints par la migration de verrouillage.
 GRANT EXECUTE ON FUNCTION public.guest_self_register(text, text, text, text)
-  TO anon, authenticated, service_role;
+  TO service_role;
 GRANT EXECUTE ON FUNCTION public.guest_self_register(text, text, text, text, text)
-  TO anon, authenticated, service_role;
+  TO service_role;
 
 COMMENT ON FUNCTION public.guest_self_register(text, text, text, text, text) IS
   'Inscription publique. IP hash Edge (service_role) prioritaire ; jamais d''IP body client. Capacité atomique.';
