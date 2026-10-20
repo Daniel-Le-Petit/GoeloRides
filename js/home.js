@@ -313,6 +313,13 @@
       sub.textContent = "Aucune sortie programmée pour le moment";
       return;
     }
+    var first = upcomingState.sorties[0];
+    if (first && first.title) {
+      sub.textContent = count === 1
+        ? "Prochaine sortie : " + first.title + " — participe en un clic"
+        : "Prochaine : " + first.title + " · " + count + " sorties à venir";
+      return;
+    }
     sub.textContent = count === 1 ? "1 sortie à venir" : count + " sorties à venir";
   }
 
@@ -336,6 +343,9 @@
       emptyHtml: "",
       trackSource: "home"
     });
+
+    var firstCard = root.querySelector(".go-sc-card");
+    if (firstCard) firstCard.classList.add("is-next-ride");
 
     requestAnimationFrame(function () {
       _syncUpcomingNav();
@@ -477,6 +487,12 @@
       onAuthUi(e.detail);
     });
     window.addEventListener("goelo:signup-changed", function () {
+      reloadParticipants();
+    });
+    window.addEventListener("goelo:guest-signup", function () {
+      reloadParticipants();
+    });
+    window.addEventListener("goelo:guest-cancel", function () {
       reloadParticipants();
     });
 

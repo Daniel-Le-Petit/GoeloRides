@@ -345,6 +345,14 @@ body {
   color: var(--muted);
 }
 
+.pd-join__guest-hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 /* ─── Message important ─────────────────────────────────────── */
 .pd-notice {
   display: flex;

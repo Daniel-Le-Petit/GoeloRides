@@ -48,7 +48,8 @@
         cyclist_level: x.cyclist_level || null,
         city: x.city || null,
         is_guest: !!(x.is_guest || x.source === "guest"),
-        source: x.source || (x.is_guest ? "guest" : "signup")
+        source: x.source || (x.is_guest ? "guest" : "signup"),
+        waitlist: !!(x.waitlist || x.on_waitlist)
       };
     }
     return null;
@@ -80,25 +81,47 @@
   async function fetchGuestsForRoute(routeId, sb) {
     sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
     var key = routeKey(routeId);
-    if (!sb || !key) return [];
+    var empty = { participants: [], waitlist: [], count: 0, waitlist_count: 0 };
+    if (!sb || !key) return empty;
 
     var rpc = await sb.rpc("guest_participants_list_for_route", { p_route_id: key });
     if (rpc.error) {
       if (rpc.error.code !== "PGRST202") {
         console.warn("[signup-participants] guest_participants_list_for_route:", rpc.error.message);
       }
-      return [];
+      return empty;
     }
     var payload = rpc.data || {};
-    return normalizeList(payload.participants || []);
+    var participants = normalizeList(payload.participants || []).filter(function (p) {
+      return !p.waitlist;
+    });
+    var waitlist = normalizeList(payload.waitlist || []).map(function (p) {
+      p.waitlist = true;
+      return p;
+    });
+    // Compat ancienne RPC (tous dans participants avec flag waitlist)
+    if (!payload.waitlist && Array.isArray(payload.participants)) {
+      var mixed = normalizeList(payload.participants);
+      participants = mixed.filter(function (p) { return !p.waitlist; });
+      waitlist = mixed.filter(function (p) { return p.waitlist; });
+    }
+    return {
+      participants: participants,
+      waitlist: waitlist,
+      count: participants.length,
+      waitlist_count: waitlist.length
+    };
   }
 
   async function fetchForRoute(routeId, sb) {
     sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
     var key = routeKey(routeId);
-    if (!sb || !key) return { participants: [], count: 0 };
+    if (!sb || !key) {
+      return { participants: [], waitlist: [], count: 0, waitlist_count: 0 };
+    }
 
     var signups = [];
+    var signupWaitlist = [];
     var routeRpc = await sb.rpc("signup_list_for_route", { p_route_id: key });
     if (!routeRpc.error && routeRpc.data) {
       var payload = routeRpc.data;
@@ -117,15 +140,24 @@
       var allRpc = await sb.rpc("signup_list_all_names", {});
       if (!allRpc.error && allRpc.data != null) {
         var bucket = bucketFromAllNames(allRpc.data, key);
-        if (bucket) signups = normalizeList(bucket.participants);
+        if (bucket) {
+          signups = normalizeList(bucket.participants);
+          signupWaitlist = normalizeList(bucket.waitlist);
+        }
       } else if (allRpc.error) {
         console.warn("[signup-participants] signup_list_all_names:", allRpc.error.message);
       }
     }
 
     var guests = await fetchGuestsForRoute(key, sb);
-    var participants = mergeParticipants(signups, guests);
-    return { participants: participants, count: participants.length };
+    var participants = mergeParticipants(signups, guests.participants || []);
+    var waitlist = mergeParticipants(signupWaitlist, guests.waitlist || []);
+    return {
+      participants: participants,
+      waitlist: waitlist,
+      count: participants.length,
+      waitlist_count: waitlist.length
+    };
   }
 
   async function fetchAllByRoute(sb) {
@@ -149,7 +181,8 @@
       var arr = Array.isArray(bucket) ? bucket : (bucket && bucket.participants) || [];
       var key = routeKey(id);
       return fetchGuestsForRoute(key, sb).then(function (guests) {
-        out[key] = mergeParticipants(arr, guests);
+        // Cartes / listes : uniquement les participants confirmés
+        out[key] = mergeParticipants(arr, guests.participants || []);
       });
     }));
     return out;
@@ -185,6 +218,117 @@
     return {
       ok: true,
       participant: normalizeParticipant(payload.participant || null)
+    };
+  }
+
+  function normalizeRegisterPayload(payload) {
+    payload = payload || {};
+    if (payload.ok === false) {
+      return { ok: false, error: payload.error || "add_failed" };
+    }
+    var confirmed = typeof payload.confirmed_count === "number"
+      ? payload.confirmed_count
+      : (typeof payload.count === "number" ? payload.count : null);
+    return {
+      ok: true,
+      waitlist: !!payload.waitlist,
+      manage_token: payload.manage_token || null,
+      confirmed_count: confirmed,
+      waitlist_count: typeof payload.waitlist_count === "number" ? payload.waitlist_count : null,
+      count: confirmed,
+      participant: normalizeParticipant(payload.participant || null),
+      honeypot: !!payload.honeypot,
+      via: payload.via || null
+    };
+  }
+
+  /**
+   * Inscription publique sans compte.
+   * Uniquement via Edge Function `guest-signup` (service_role + ticket).
+   * Aucun contournement RPC `guest_self_register` depuis le navigateur.
+   */
+  async function selfRegisterGuest(routeId, fields) {
+    var key = routeKey(routeId);
+    fields = fields || {};
+    if (!key) return { ok: false, error: "missing_client" };
+
+    var pseudo = String(fields.pseudo || fields.first_name || fields.firstName || "").trim();
+    var clientKey = String(fields.clientKey || fields.client_key || "").trim();
+    var hp = String(fields.hp || fields.honeypot || "");
+    if (!pseudo) return { ok: false, error: "pseudo_too_short" };
+    if (!clientKey) return { ok: false, error: "client_key_required" };
+
+    var cfg = global.GOELO_CONFIG || {};
+    var base = String(cfg.SUPABASE_URL || "").replace(/\/$/, "");
+    var anonKey = cfg.SUPABASE_ANON_KEY || "";
+
+    if (!base || !anonKey) {
+      return { ok: false, error: "edge_unavailable" };
+    }
+
+    var edgeRes;
+    var edgeText;
+    try {
+      edgeRes = await fetch(base + "/functions/v1/guest-signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + anonKey,
+          "apikey": anonKey
+        },
+        body: JSON.stringify({
+          route_id: key,
+          pseudo: pseudo,
+          client_key: clientKey,
+          hp: hp || ""
+        })
+      });
+      edgeText = await edgeRes.text();
+    } catch (edgeErr) {
+      console.warn("[signup-participants] guest-signup unreachable:", edgeErr && edgeErr.message);
+      return { ok: false, error: "edge_unavailable" };
+    }
+
+    var edgePayload = null;
+    try { edgePayload = JSON.parse(edgeText); } catch (e) { edgePayload = null; }
+
+    if (edgeRes.ok && edgePayload) {
+      return normalizeRegisterPayload(edgePayload);
+    }
+
+    if (edgePayload && edgePayload.ok === false) {
+      return { ok: false, error: edgePayload.error || "add_failed" };
+    }
+
+    console.warn("[signup-participants] guest-signup HTTP", edgeRes.status);
+    return { ok: false, error: "edge_unavailable" };
+  }
+
+  /** Annulation publique par jeton personnel (jamais par pseudo). */
+  async function selfCancelGuest(manageToken, sb) {
+    sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
+    var token = String(manageToken || "").trim();
+    if (!sb) return { ok: false, error: "missing_client" };
+    if (token.length < 16) return { ok: false, error: "invalid_token" };
+
+    var rpc = await sb.rpc("guest_self_cancel", { p_manage_token: token });
+    if (rpc.error) {
+      console.warn("[signup-participants] guest_self_cancel:", rpc.error.message);
+      return { ok: false, error: rpc.error.message };
+    }
+    var payload = rpc.data || {};
+    if (payload.ok === false) {
+      return { ok: false, error: payload.error || "cancel_failed" };
+    }
+    var confirmed = typeof payload.confirmed_count === "number"
+      ? payload.confirmed_count
+      : (typeof payload.count === "number" ? payload.count : null);
+    return {
+      ok: true,
+      route_id: payload.route_id || null,
+      confirmed_count: confirmed,
+      waitlist_count: typeof payload.waitlist_count === "number" ? payload.waitlist_count : null,
+      count: confirmed
     };
   }
 
@@ -351,6 +495,8 @@
     fetchForRoute: fetchForRoute,
     fetchAllByRoute: fetchAllByRoute,
     addGuestParticipant: addGuestParticipant,
+    selfRegisterGuest: selfRegisterGuest,
+    selfCancelGuest: selfCancelGuest,
     enrichCardsWithParticipants: enrichCardsWithParticipants,
     renderParticipantRow: renderParticipantRow,
     renderParticipantsListHtml: renderParticipantsListHtml,

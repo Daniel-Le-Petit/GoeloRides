@@ -200,10 +200,27 @@
 
     if (viewMode === "team-rider") return parts.join("");
 
-    if (role === "user" && !joined && !isSortiePassed(card)) {
-      parts.push('<a class="go-sc-btn go-sc-btn--join" href="' + escapeAttr(parcoursHref(card.id)) + '">Rejoindre</a>');
-    } else if (role === "visitor" && !isSortiePassed(card)) {
-      parts.push('<button type="button" class="go-sc-btn go-sc-btn--join" data-goelo-auth-trigger>Rejoindre</button>');
+    if (isSortiePassed(card) || card.status === "cancelled" || card.statut === "annulee") {
+      /* pas de bouton rejoindre */
+    } else if (role === "user" && !joined) {
+      parts.push('<a class="go-sc-btn go-sc-btn--join" href="' + escapeAttr(parcoursHref(card.id)) + '">Je participe</a>');
+    } else if (role === "visitor") {
+      var guestJoined = global.GoeloGuestSignup && global.GoeloGuestSignup.isRegistered
+        ? global.GoeloGuestSignup.isRegistered(card.id)
+        : false;
+      if (guestJoined) {
+        parts.push(
+          '<button type="button" class="go-sc-btn go-sc-btn--join is-guest-joined" data-guest-join="' +
+          escapeAttr(card.id) + '" data-guest-title="' + escapeAttr(card.title || "") +
+          '">Inscrit</button>'
+        );
+      } else {
+        parts.push(
+          '<button type="button" class="go-sc-btn go-sc-btn--join" data-guest-join="' +
+          escapeAttr(card.id) + '" data-guest-title="' + escapeAttr(card.title || "") +
+          '">Je participe</button>'
+        );
+      }
     }
 
     return parts.join("");
