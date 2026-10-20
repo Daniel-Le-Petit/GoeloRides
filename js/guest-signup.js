@@ -441,13 +441,18 @@
         pseudo: check.pseudo
       });
 
+      var confirmed = typeof result.confirmed_count === "number"
+        ? result.confirmed_count
+        : result.count;
       if (global.GoeloSignupParticipants && global.GoeloSignupParticipants.emitChanged) {
-        global.GoeloSignupParticipants.emitChanged(_ctx.routeId, result.count);
+        global.GoeloSignupParticipants.emitChanged(_ctx.routeId, confirmed);
       }
       global.dispatchEvent(new CustomEvent("goelo:guest-signup", {
         detail: {
           routeId: _ctx.routeId,
-          count: result.count,
+          count: confirmed,
+          confirmed_count: confirmed,
+          waitlist_count: result.waitlist_count,
           waitlist: !!result.waitlist,
           participant: result.participant || null
         }
@@ -482,11 +487,19 @@
         return;
       }
       setManageToken(_ctx.routeId, null);
+      var confirmedCancel = typeof result.confirmed_count === "number"
+        ? result.confirmed_count
+        : result.count;
       if (global.GoeloSignupParticipants && global.GoeloSignupParticipants.emitChanged) {
-        global.GoeloSignupParticipants.emitChanged(_ctx.routeId, result.count);
+        global.GoeloSignupParticipants.emitChanged(_ctx.routeId, confirmedCancel);
       }
       global.dispatchEvent(new CustomEvent("goelo:guest-cancel", {
-        detail: { routeId: _ctx.routeId, count: result.count }
+        detail: {
+          routeId: _ctx.routeId,
+          count: confirmedCancel,
+          confirmed_count: confirmedCancel,
+          waitlist_count: result.waitlist_count
+        }
       }));
       close();
     } catch (err) {
@@ -503,11 +516,19 @@
     var result = await selfCancel(token);
     if (result && result.ok) {
       setManageToken(routeId, null);
+      var confirmed = typeof result.confirmed_count === "number"
+        ? result.confirmed_count
+        : result.count;
       if (global.GoeloSignupParticipants && global.GoeloSignupParticipants.emitChanged) {
-        global.GoeloSignupParticipants.emitChanged(routeId, result.count);
+        global.GoeloSignupParticipants.emitChanged(routeId, confirmed);
       }
       global.dispatchEvent(new CustomEvent("goelo:guest-cancel", {
-        detail: { routeId: String(routeId), count: result.count }
+        detail: {
+          routeId: String(routeId),
+          count: confirmed,
+          confirmed_count: confirmed,
+          waitlist_count: result.waitlist_count
+        }
       }));
     }
     return result;

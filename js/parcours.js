@@ -508,15 +508,28 @@
     }
     var result = await SP.fetchForRoute(sortie.id, getSb());
     sortie.participants = result.participants || [];
+    sortie.waitlist = result.waitlist || [];
     return typeof result.count === "number" ? result.count : sortie.participants.length;
   }
 
-  function updateJoinCount(n) {
+  function updateJoinCount(n, waitlistCount) {
     var count = document.getElementById("pd-join-count");
     if (!count) return;
-    count.textContent = n > 0
-      ? n + " participant" + (n > 1 ? "s" : "")
-      : "";
+    var confirmed = typeof n === "number" ? n : 0;
+    var waiting = typeof waitlistCount === "number"
+      ? waitlistCount
+      : (sortie && Array.isArray(sortie.waitlist) ? sortie.waitlist.length : 0);
+    if (confirmed <= 0 && waiting <= 0) {
+      count.textContent = "";
+      return;
+    }
+    var label = confirmed > 0
+      ? confirmed + " participant" + (confirmed > 1 ? "s" : "")
+      : "Aucun participant confirmé";
+    if (waiting > 0) {
+      label += " · " + waiting + " en attente";
+    }
+    count.textContent = label;
   }
 
   function renderParticipants() {
@@ -530,7 +543,10 @@
     if (badge) badge.textContent = list.length > 0 ? "(" + list.length + ")" : "";
 
     renderHeroPeople(list);
-    updateJoinCount(list.length);
+    updateJoinCount(
+      list.length,
+      Array.isArray(sortie.waitlist) ? sortie.waitlist.length : 0
+    );
 
     if (!host) return;
     if (SP) {
@@ -1026,7 +1042,12 @@
       if (detail.routeId && String(detail.routeId) !== String(sortie.id)) return;
       _uiJoined = e.type === "goelo:guest-cancel" ? false : true;
       await syncParticipantsUI();
-      if (typeof detail.count === "number") updateJoinCount(detail.count);
+      if (typeof detail.count === "number" || typeof detail.confirmed_count === "number") {
+        updateJoinCount(
+          typeof detail.confirmed_count === "number" ? detail.confirmed_count : detail.count,
+          detail.waitlist_count
+        );
+      }
       await renderJoin(_uiJoined);
       paintJoinButton(_uiJoined);
       if (e.type === "goelo:guest-signup") {

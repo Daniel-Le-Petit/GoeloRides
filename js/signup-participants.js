@@ -81,25 +81,47 @@
   async function fetchGuestsForRoute(routeId, sb) {
     sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
     var key = routeKey(routeId);
-    if (!sb || !key) return [];
+    var empty = { participants: [], waitlist: [], count: 0, waitlist_count: 0 };
+    if (!sb || !key) return empty;
 
     var rpc = await sb.rpc("guest_participants_list_for_route", { p_route_id: key });
     if (rpc.error) {
       if (rpc.error.code !== "PGRST202") {
         console.warn("[signup-participants] guest_participants_list_for_route:", rpc.error.message);
       }
-      return [];
+      return empty;
     }
     var payload = rpc.data || {};
-    return normalizeList(payload.participants || []);
+    var participants = normalizeList(payload.participants || []).filter(function (p) {
+      return !p.waitlist;
+    });
+    var waitlist = normalizeList(payload.waitlist || []).map(function (p) {
+      p.waitlist = true;
+      return p;
+    });
+    // Compat ancienne RPC (tous dans participants avec flag waitlist)
+    if (!payload.waitlist && Array.isArray(payload.participants)) {
+      var mixed = normalizeList(payload.participants);
+      participants = mixed.filter(function (p) { return !p.waitlist; });
+      waitlist = mixed.filter(function (p) { return p.waitlist; });
+    }
+    return {
+      participants: participants,
+      waitlist: waitlist,
+      count: participants.length,
+      waitlist_count: waitlist.length
+    };
   }
 
   async function fetchForRoute(routeId, sb) {
     sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
     var key = routeKey(routeId);
-    if (!sb || !key) return { participants: [], count: 0 };
+    if (!sb || !key) {
+      return { participants: [], waitlist: [], count: 0, waitlist_count: 0 };
+    }
 
     var signups = [];
+    var signupWaitlist = [];
     var routeRpc = await sb.rpc("signup_list_for_route", { p_route_id: key });
     if (!routeRpc.error && routeRpc.data) {
       var payload = routeRpc.data;
@@ -118,15 +140,24 @@
       var allRpc = await sb.rpc("signup_list_all_names", {});
       if (!allRpc.error && allRpc.data != null) {
         var bucket = bucketFromAllNames(allRpc.data, key);
-        if (bucket) signups = normalizeList(bucket.participants);
+        if (bucket) {
+          signups = normalizeList(bucket.participants);
+          signupWaitlist = normalizeList(bucket.waitlist);
+        }
       } else if (allRpc.error) {
         console.warn("[signup-participants] signup_list_all_names:", allRpc.error.message);
       }
     }
 
     var guests = await fetchGuestsForRoute(key, sb);
-    var participants = mergeParticipants(signups, guests);
-    return { participants: participants, count: participants.length };
+    var participants = mergeParticipants(signups, guests.participants || []);
+    var waitlist = mergeParticipants(signupWaitlist, guests.waitlist || []);
+    return {
+      participants: participants,
+      waitlist: waitlist,
+      count: participants.length,
+      waitlist_count: waitlist.length
+    };
   }
 
   async function fetchAllByRoute(sb) {
@@ -150,7 +181,8 @@
       var arr = Array.isArray(bucket) ? bucket : (bucket && bucket.participants) || [];
       var key = routeKey(id);
       return fetchGuestsForRoute(key, sb).then(function (guests) {
-        out[key] = mergeParticipants(arr, guests);
+        // Cartes / listes : uniquement les participants confirmés
+        out[key] = mergeParticipants(arr, guests.participants || []);
       });
     }));
     return out;
@@ -218,11 +250,16 @@
     if (payload.ok === false) {
       return { ok: false, error: payload.error || "add_failed" };
     }
+    var confirmed = typeof payload.confirmed_count === "number"
+      ? payload.confirmed_count
+      : (typeof payload.count === "number" ? payload.count : null);
     return {
       ok: true,
       waitlist: !!payload.waitlist,
       manage_token: payload.manage_token || null,
-      count: typeof payload.count === "number" ? payload.count : null,
+      confirmed_count: confirmed,
+      waitlist_count: typeof payload.waitlist_count === "number" ? payload.waitlist_count : null,
+      count: confirmed,
       participant: normalizeParticipant(payload.participant || null),
       honeypot: !!payload.honeypot
     };
@@ -244,10 +281,15 @@
     if (payload.ok === false) {
       return { ok: false, error: payload.error || "cancel_failed" };
     }
+    var confirmed = typeof payload.confirmed_count === "number"
+      ? payload.confirmed_count
+      : (typeof payload.count === "number" ? payload.count : null);
     return {
       ok: true,
       route_id: payload.route_id || null,
-      count: typeof payload.count === "number" ? payload.count : null
+      confirmed_count: confirmed,
+      waitlist_count: typeof payload.waitlist_count === "number" ? payload.waitlist_count : null,
+      count: confirmed
     };
   }
 
