@@ -48,7 +48,8 @@
         cyclist_level: x.cyclist_level || null,
         city: x.city || null,
         is_guest: !!(x.is_guest || x.source === "guest"),
-        source: x.source || (x.is_guest ? "guest" : "signup")
+        source: x.source || (x.is_guest ? "guest" : "signup"),
+        waitlist: !!(x.waitlist || x.on_waitlist)
       };
     }
     return null;
@@ -185,6 +186,68 @@
     return {
       ok: true,
       participant: normalizeParticipant(payload.participant || null)
+    };
+  }
+
+  /** Inscription publique sans compte (RPC guest_self_register). */
+  async function selfRegisterGuest(routeId, fields, sb) {
+    sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
+    var key = routeKey(routeId);
+    fields = fields || {};
+    if (!sb || !key) return { ok: false, error: "missing_client" };
+
+    var pseudo = String(fields.pseudo || fields.first_name || fields.firstName || "").trim();
+    var clientKey = String(fields.clientKey || fields.client_key || "").trim();
+    var hp = String(fields.hp || fields.honeypot || "");
+    if (!pseudo) return { ok: false, error: "pseudo_too_short" };
+    if (!clientKey) return { ok: false, error: "client_key_required" };
+
+    var rpc = await sb.rpc("guest_self_register", {
+      p_route_id: key,
+      p_pseudo: pseudo,
+      p_client_key: clientKey,
+      p_hp: hp || null
+    });
+
+    if (rpc.error) {
+      console.warn("[signup-participants] guest_self_register:", rpc.error.message);
+      return { ok: false, error: rpc.error.message };
+    }
+
+    var payload = rpc.data || {};
+    if (payload.ok === false) {
+      return { ok: false, error: payload.error || "add_failed" };
+    }
+    return {
+      ok: true,
+      waitlist: !!payload.waitlist,
+      manage_token: payload.manage_token || null,
+      count: typeof payload.count === "number" ? payload.count : null,
+      participant: normalizeParticipant(payload.participant || null),
+      honeypot: !!payload.honeypot
+    };
+  }
+
+  /** Annulation publique par jeton personnel (jamais par pseudo). */
+  async function selfCancelGuest(manageToken, sb) {
+    sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
+    var token = String(manageToken || "").trim();
+    if (!sb) return { ok: false, error: "missing_client" };
+    if (token.length < 16) return { ok: false, error: "invalid_token" };
+
+    var rpc = await sb.rpc("guest_self_cancel", { p_manage_token: token });
+    if (rpc.error) {
+      console.warn("[signup-participants] guest_self_cancel:", rpc.error.message);
+      return { ok: false, error: rpc.error.message };
+    }
+    var payload = rpc.data || {};
+    if (payload.ok === false) {
+      return { ok: false, error: payload.error || "cancel_failed" };
+    }
+    return {
+      ok: true,
+      route_id: payload.route_id || null,
+      count: typeof payload.count === "number" ? payload.count : null
     };
   }
 
@@ -351,6 +414,8 @@
     fetchForRoute: fetchForRoute,
     fetchAllByRoute: fetchAllByRoute,
     addGuestParticipant: addGuestParticipant,
+    selfRegisterGuest: selfRegisterGuest,
+    selfCancelGuest: selfCancelGuest,
     enrichCardsWithParticipants: enrichCardsWithParticipants,
     renderParticipantRow: renderParticipantRow,
     renderParticipantsListHtml: renderParticipantsListHtml,

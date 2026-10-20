@@ -620,6 +620,19 @@ html.site-retheme {
   color: #fff;
 }
 
+.gr-upcoming .go-sc-card.is-next-ride .go-sc-btn--join {
+  background: var(--gr-acid, #c8f135);
+  border-color: transparent;
+  color: #0a0a0a;
+  font-weight: 800;
+}
+
+.gr-upcoming .go-sc-card.is-next-ride .go-sc-btn--join:hover {
+  background: #d4f75a;
+  color: #0a0a0a;
+  border-color: transparent;
+}
+
 .gr-upcoming .go-sc-stat__num {
   color: var(--gr-acid);
 }

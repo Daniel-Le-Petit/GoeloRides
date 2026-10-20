@@ -1075,3 +1075,200 @@ select.ml-input,
 
   .go-messenger-modal__title { font-size: 1.1rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Inscription invité (sans compte) — modale mobile
+   ═══════════════════════════════════════════════════════════════ */
+.go-guest-modal__panel {
+  text-align: left;
+  width: min(400px, 94vw);
+  padding: 1.35rem 1.2rem 1.2rem;
+}
+
+.go-guest-modal__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--modal-text, #f5f5f5);
+}
+
+.go-guest-modal__route {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--modal-text, #eee);
+  line-height: 1.35;
+}
+
+.go-guest-modal__hint {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent, #c8f135);
+}
+
+.go-guest-modal__label {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--modal-muted, #aaa);
+}
+
+.go-guest-modal__input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--modal-border, #333);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--modal-text, #fff);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.65rem;
+}
+
+.go-guest-modal__input:focus {
+  outline: 2px solid var(--accent, #c8f135);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.go-guest-modal__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.go-guest-modal__error {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f87171;
+}
+
+.go-guest-modal__submit,
+.go-guest-modal__close-done {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  background: var(--accent, #c8f135);
+  color: #000;
+}
+
+.go-guest-modal__submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.go-guest-modal__alt {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--modal-muted, #999);
+}
+
+.go-guest-modal__link {
+  border: none;
+  background: none;
+  color: var(--accent, #c8f135);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.go-guest-modal__check {
+  margin: 0.2rem 0 0.5rem;
+  text-align: center;
+  font-size: 2rem;
+  color: var(--accent, #c8f135);
+  line-height: 1;
+}
+
+.go-guest-modal__done-view .go-guest-modal__title {
+  text-align: center;
+}
+
+.go-guest-modal__done-text {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--modal-muted, #bbb);
+}
+
+.go-guest-modal__share {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.go-guest-modal__share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid var(--modal-border, #333);
+  color: var(--modal-text, #fff);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.go-guest-modal__share-btn--wa {
+  background: #128c7e;
+  border-color: #0e7a6e;
+  color: #fff;
+}
+
+.go-guest-modal__cancel {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.55rem;
+  padding: 0.55rem;
+  border: none;
+  background: none;
+  color: #f87171;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.go-guest-modal__close-done {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--modal-text, #fff);
+  border: 1px solid var(--modal-border, #333);
+}
+
+.go-sc-btn--join.is-guest-joined {
+  background: rgba(239, 68, 68, 0.9);
+  border-color: transparent;
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .go-guest-modal__panel {
+    padding: 1.15rem 1rem 1rem;
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+  }
+}

@@ -18,8 +18,8 @@
       text: "Modifier ou annuler une sortie est réservé aux Ride Leaders organisateurs."
     },
     join: {
-      title: "Connexion requise",
-      text: "Connecte-toi pour rejoindre cette sortie et apparaître parmi les participants."
+      title: "Participer sans compte",
+      text: "Indique juste ton prénom ou pseudo — sans e-mail ni mot de passe."
     }
   };
 
@@ -806,6 +806,12 @@ async function fetchSorties() {
 
     window.addEventListener("goelo:signup-changed", function () {
       reloadParticipants();
+    });
+    window.addEventListener("goelo:guest-signup", function () {
+      reloadParticipants().then(render);
+    });
+    window.addEventListener("goelo:guest-cancel", function () {
+      reloadParticipants().then(render);
     });
 
     document.addEventListener("visibilitychange", function () {

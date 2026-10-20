@@ -308,22 +308,44 @@
 
     var user = await getUser();
 
+    var guestHint = document.querySelector(".pd-join__guest-hint");
+
     if (!user) {
-      _uiJoined = null;
-      btn.classList.remove("is-registered");
-      btn.textContent = "Se connecter pour participer";
+      var guestJoined = window.GoeloGuestSignup && window.GoeloGuestSignup.isRegistered
+        ? window.GoeloGuestSignup.isRegistered(sortie.id)
+        : false;
+      _uiJoined = guestJoined ? true : null;
       btn.disabled = false;
-      btn.setAttribute("data-joined", "0");
-      btn.setAttribute("data-auth-pending", "1");
-      btn.setAttribute("aria-pressed", "false");
+      btn.setAttribute("data-auth-pending", "0");
+      btn.setAttribute("data-guest-pending", "1");
+      if (guestHint) guestHint.hidden = false;
+      if (guestJoined) {
+        btn.classList.add("is-registered");
+        btn.textContent = "Inscrit";
+        btn.setAttribute("data-joined", "1");
+        btn.setAttribute("aria-pressed", "true");
+      } else {
+        btn.classList.remove("is-registered");
+        btn.textContent = "Je participe !";
+        btn.setAttribute("data-joined", "0");
+        btn.setAttribute("aria-pressed", "false");
+      }
       console.log("[renderJoin] state", {
-        joined: false,
+        joined: guestJoined,
         buttonState: btn.textContent,
         userId: null,
-        source: "anonymous"
+        source: "guest"
       });
+      if (count) {
+        var nGuest = Array.isArray(sortie.participants) ? sortie.participants.length : 0;
+        if (!nGuest) nGuest = await refreshParticipants();
+        updateJoinCount(nGuest);
+      }
       return;
     }
+
+    btn.removeAttribute("data-guest-pending");
+    if (guestHint) guestHint.hidden = true;
 
     var joined;
     var source;
@@ -367,17 +389,39 @@
       if (_joinBusy) return;
       btn = getJoinButton() || btn;
 
-      /* Visiteur → ouvrir modale auth */
-      if (btn.getAttribute("data-auth-pending") === "1") {
+      /* Visiteur → inscription invité (pseudo seul), pas de connexion */
+      if (btn.getAttribute("data-guest-pending") === "1") {
         if (window.GoeloActivity && sortie) {
           window.GoeloActivity.logEvent(
             null,
             window.GoeloActivity.EVENT_TYPES.RIDE_PARTICIPATE_CLICKED,
-            { route_id: sortie.id, route_title: sortie.title },
+            { route_id: sortie.id, route_title: sortie.title, guest: true },
             { route_id: sortie.id, route_title: sortie.title }
           );
         }
-        if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
+        if (window.GoeloGuestSignup && window.GoeloGuestSignup.open) {
+          window.GoeloGuestSignup.open({
+            routeId: sortie.id,
+            title: sortie.title || "",
+            shareUrl: window.location.href
+          });
+        } else if (typeof window.openGoeloAuth === "function") {
+          window.openGoeloAuth();
+        }
+        return;
+      }
+
+      /* Ancien attribut auth-pending (compat) → même parcours invité */
+      if (btn.getAttribute("data-auth-pending") === "1") {
+        if (window.GoeloGuestSignup && window.GoeloGuestSignup.open && sortie) {
+          window.GoeloGuestSignup.open({
+            routeId: sortie.id,
+            title: sortie.title || "",
+            shareUrl: window.location.href
+          });
+        } else if (typeof window.openGoeloAuth === "function") {
+          window.openGoeloAuth();
+        }
         return;
       }
 
@@ -387,8 +431,15 @@
       try {
         var user = await getUser();
         if (!user) {
-          /* Session expirée entre le render et le clic */
-          if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
+          if (window.GoeloGuestSignup && window.GoeloGuestSignup.open && sortie) {
+            window.GoeloGuestSignup.open({
+              routeId: sortie.id,
+              title: sortie.title || "",
+              shareUrl: window.location.href
+            });
+          } else if (typeof window.openGoeloAuth === "function") {
+            window.openGoeloAuth();
+          }
           return;
         }
 
@@ -967,6 +1018,34 @@
       _uiJoined = null; /* nouvelle session → relire Supabase */
       renderJoin();
       syncParticipantsUI();
+    });
+
+    async function onGuestSignupChange(e) {
+      var detail = e && e.detail ? e.detail : {};
+      if (!sortie || !sortie.id) return;
+      if (detail.routeId && String(detail.routeId) !== String(sortie.id)) return;
+      _uiJoined = e.type === "goelo:guest-cancel" ? false : true;
+      await syncParticipantsUI();
+      if (typeof detail.count === "number") updateJoinCount(detail.count);
+      await renderJoin(_uiJoined);
+      paintJoinButton(_uiJoined);
+      if (e.type === "goelo:guest-signup") {
+        setJoinFeedback(
+          detail.waitlist
+            ? "Tu es en liste d'attente pour cette sortie."
+            : "Tu es inscrit·e à cette sortie."
+        );
+      } else {
+        setJoinFeedback("Tu es désinscrit·e de cette sortie.");
+      }
+    }
+
+    window.addEventListener("goelo:guest-signup", onGuestSignupChange);
+    window.addEventListener("goelo:guest-cancel", onGuestSignupChange);
+    window.addEventListener("goelo:signup-changed", function () {
+      syncParticipantsUI().then(function (n) {
+        if (typeof n === "number") updateJoinCount(n);
+      });
     });
   });
 
