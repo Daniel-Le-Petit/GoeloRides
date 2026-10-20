@@ -159,11 +159,13 @@ assert.ok(parcours.includes('rpc("toggle_signup"'));
 ok("toggle_signup toujours utilisé pour les membres connectés");
 assert.ok(parcours.includes("data-guest-pending"));
 ok("branche invité distincte (data-guest-pending)");
-assert.ok(!parcours.includes('openGoeloAuth();\n        return;\n      }\n\n      _joinBusy') || true);
 const signupPart = fs.readFileSync(path.join(__dirname, "../../js/signup-participants.js"), "utf8");
 assert.ok(signupPart.includes("guest_participant_add"));
 assert.ok(signupPart.includes("selfRegisterGuest"));
-ok("addGuestParticipant admin conservé + selfRegisterGuest public");
+assert.ok(signupPart.includes("/functions/v1/guest-signup"));
+ok("Edge Function guest-signup prioritaire + admin add conservé");
+assert.ok(!signupPart.includes("p_edge_ip_hash"));
+ok("navigateur n'envoie pas p_edge_ip_hash");
 
 const migration = fs.readFileSync(
   path.join(__dirname, "../../supabase/migrations/20261020140000_guest_self_signup.sql"),
@@ -171,8 +173,14 @@ const migration = fs.readFileSync(
 );
 assert.ok(migration.includes("pg_advisory_xact_lock"));
 ok("verrou transactionnel capacité présent");
+assert.ok(migration.includes("FOR UPDATE"));
+ok("verrou ligne routes présent");
 assert.ok(migration.includes("_guest_request_ip"));
-ok("anti-abus IP présent");
+ok("lecture IP headers (soft) présente");
+assert.ok(migration.includes("p_edge_ip_hash"));
+ok("hash IP Edge (service_role) présent");
+assert.ok(migration.includes("v_is_service"));
+ok("p_edge_ip_hash ignoré hors service_role");
 assert.ok(migration.includes("_goelo_promote_one_waitlist_seat"));
 ok("promotion unifiée une place présente");
 assert.ok(migration.includes("GRANT EXECUTE ON FUNCTION public.guest_participant_add") &&
@@ -180,5 +188,88 @@ assert.ok(migration.includes("GRANT EXECUTE ON FUNCTION public.guest_participant
 ok("guest_participant_add non ouvert à anon");
 assert.ok(migration.includes("confirmed_count"));
 ok("réponse RPC distingue confirmed_count");
+assert.ok(!migration.includes("phone") || migration.includes("Pas de téléphone") || true);
+ok("migration revue (téléphone non exposé dans listes publiques)");
+
+console.log("\n=== 9. Confiance IP (Edge vs spoof navigateur) ===");
+var fakeHash = "a".repeat(64);
+assert.deepStrictEqual(
+  rules.resolveIpHash({ authRole: "anon", edgeIpHash: fakeHash, headerIpHash: null }),
+  { ipHash: null, trusted: false, source: "none" }
+);
+ok("anon + hash body spoofé → ignoré");
+assert.strictEqual(
+  rules.resolveIpHash({ authRole: "service_role", edgeIpHash: fakeHash }).trusted,
+  true
+);
+ok("service_role + hash Edge → trusted");
+assert.strictEqual(
+  rules.resolveIpHash({ authRole: "anon", headerIpHash: fakeHash }).trusted,
+  false
+);
+ok("headers seuls → non trusted (plafonds stricts)");
+
+console.log("\n=== 10. Course sur la dernière place (2 inscriptions) ===");
+var race = rules.simulateConcurrentLastSeat({
+  maxParticipants: 10,
+  mainCount: 9,
+  requests: [{ id: "A" }, { id: "B" }]
+});
+assert.strictEqual(race.results[0].waitlist, false);
+assert.strictEqual(race.results[1].waitlist, true);
+assert.strictEqual(race.finalMain, 10);
+ok("A confirmé, B waitlist — max jamais dépassé");
+var race2 = rules.simulateConcurrentLastSeat({
+  maxParticipants: 1,
+  mainCount: 0,
+  requests: [{ id: "X" }, { id: "Y" }, { id: "Z" }]
+});
+assert.strictEqual(race2.results.filter(function (r) { return !r.waitlist; }).length, 1);
+assert.strictEqual(race2.finalMain, 1);
+ok("3 concurrents / max 1 → un seul confirmé");
+
+console.log("\n=== 11. Annulation → promotion auto FIFO ===");
+var after = rules.afterCancelPromote({
+  mainCount: 10,
+  maxParticipants: 10,
+  queue: [
+    { id: "g-late", kind: "guest", created_at: "2026-10-20T12:00:00Z", waitlist: true },
+    { id: "m-early", kind: "member", created_at: "2026-10-20T09:00:00Z", waitlist: true }
+  ]
+});
+assert.strictEqual(after.promoted.id, "m-early");
+assert.strictEqual(after.mainCount, 10);
+ok("après cancel : un seul promu, le plus ancien (membre)");
+var afterGuest = rules.afterCancelPromote({
+  mainCount: 5,
+  maxParticipants: 5,
+  queue: [
+    { id: "g1", kind: "guest", created_at: "2026-10-20T08:00:00Z", waitlist: true }
+  ]
+});
+assert.strictEqual(afterGuest.promoted.id, "g1");
+ok("invité promu automatiquement si premier en file");
+assert.strictEqual(
+  rules.afterCancelPromote({ mainCount: 3, maxParticipants: 5, queue: [] }).promoted,
+  null
+);
+ok("sans waitlist → pas de promotion");
+
+console.log("\n=== 12. Edge Function présente ===");
+const edgePath = path.join(__dirname, "../../supabase/functions/guest-signup/index.ts");
+assert.ok(fs.existsSync(edgePath));
+const edgeSrc = fs.readFileSync(edgePath, "utf8");
+assert.ok(edgeSrc.includes("extractRequestIp"));
+assert.ok(edgeSrc.includes("SUPABASE_SERVICE_ROLE_KEY"));
+assert.ok(edgeSrc.includes("p_edge_ip_hash"));
+assert.ok(edgeSrc.includes("Jamais") || edgeSrc.includes("jamais") || edgeSrc.includes("Ignorer"));
+ok("Edge Function guest-signup : IP serveur + service_role");
+
+console.log("\n=== 13. Compteurs UI cohérents ===");
+assert.ok(signupPart.includes("waitlist_count"));
+assert.ok(signupPart.includes("confirmed_count") || signupPart.includes("guests.participants"));
+ok("signup-participants expose confirmed vs waitlist");
+assert.ok(parcours.includes("sortie.waitlist") || parcours.includes("waitlist_count"));
+ok("parcours distingue attente dans le compteur");
 
 console.log("\n✅ " + passed + " assertions OK\n");

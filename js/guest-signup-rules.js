@@ -135,6 +135,83 @@
     return { ok: true, pseudo: p };
   }
 
+  /**
+   * Confiance IP : seul un hash fourni par service_role (Edge) est « trusted ».
+   * Un hash envoyé par le navigateur (anon) doit être ignoré.
+   */
+  function resolveIpHash(opts) {
+    opts = opts || {};
+    var role = String(opts.authRole || "anon");
+    var edgeHash = String(opts.edgeIpHash || "").trim().toLowerCase();
+    var headerIpHash = opts.headerIpHash ? String(opts.headerIpHash).trim().toLowerCase() : null;
+
+    if (role === "service_role" && /^[0-9a-f]{64}$/.test(edgeHash)) {
+      return { ipHash: edgeHash, trusted: true, source: "edge" };
+    }
+    // Ignorer edgeHash spoofé par anon
+    if (headerIpHash && /^[0-9a-f]{64}$/.test(headerIpHash)) {
+      return { ipHash: headerIpHash, trusted: false, source: "headers" };
+    }
+    return { ipHash: null, trusted: false, source: "none" };
+  }
+
+  /**
+   * Simulation sérialisée de 2 inscriptions concurrentes sur la dernière place.
+   * Miroir du advisory lock SQL : les décisions sont séquentielles.
+   */
+  function simulateConcurrentLastSeat(opts) {
+    opts = opts || {};
+    var max = opts.maxParticipants;
+    var main = Number(opts.mainCount || 0);
+    var requests = opts.requests || [];
+    var results = [];
+    var lockQueue = requests.slice();
+
+    while (lockQueue.length) {
+      var req = lockQueue.shift();
+      var waitlist = shouldGoToWaitlist(main, max);
+      if (!waitlist) main += 1;
+      var clamp = clampOverbook(main, max, waitlist);
+      if (clamp.overbook) {
+        waitlist = true;
+        main -= 1; // bascule : ne compte plus en principal
+      }
+      results.push({
+        id: req.id,
+        waitlist: waitlist,
+        mainAfter: main
+      });
+    }
+
+    return { results: results, finalMain: main, max: max };
+  }
+
+  /**
+   * Après annulation d'un confirmé : promouvoir exactement une place FIFO.
+   */
+  function afterCancelPromote(state) {
+    state = state || {};
+    var main = Number(state.mainCount || 0);
+    var max = state.maxParticipants;
+    var queue = state.queue || [];
+    if (main > 0) main -= 1; // désinscription confirmée
+    var pick = pickOneWaitlistPromotion(queue, main, max);
+    if (!pick) {
+      return { mainCount: main, promoted: null, queue: queue };
+    }
+    var nextQueue = queue.map(function (e) {
+      if (e.id === pick.id) {
+        return Object.assign({}, e, { waitlist: false });
+      }
+      return e;
+    });
+    return {
+      mainCount: main + 1,
+      promoted: pick,
+      queue: nextQueue
+    };
+  }
+
   var api = {
     isRouteOpenForPublic: isRouteOpenForPublic,
     parseMaxParticipants: parseMaxParticipants,
@@ -142,7 +219,10 @@
     clampOverbook: clampOverbook,
     pickOneWaitlistPromotion: pickOneWaitlistPromotion,
     checkRateLimits: checkRateLimits,
-    validatePseudo: validatePseudo
+    validatePseudo: validatePseudo,
+    resolveIpHash: resolveIpHash,
+    simulateConcurrentLastSeat: simulateConcurrentLastSeat,
+    afterCancelPromote: afterCancelPromote
   };
 
   if (typeof module !== "undefined" && module.exports) {

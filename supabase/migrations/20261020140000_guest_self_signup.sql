@@ -555,13 +555,16 @@ $$;
 REVOKE ALL ON FUNCTION public._guest_promote_waitlist(text) FROM PUBLIC;
 
 -- ---------------------------------------------------------------------------
--- Inscription publique (anon)
+-- Inscription publique
+-- IP : jamais lue depuis un argument client. Seul service_role (Edge Function)
+-- peut fournir p_edge_ip_hash (SHA-256 hex). Sinon headers PostgREST (soft).
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.guest_self_register(
-  p_route_id   text,
-  p_pseudo     text,
-  p_client_key text DEFAULT NULL,
-  p_hp         text DEFAULT NULL
+  p_route_id     text,
+  p_pseudo       text,
+  p_client_key   text DEFAULT NULL,
+  p_hp           text DEFAULT NULL,
+  p_edge_ip_hash text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -575,6 +578,8 @@ DECLARE
   v_ck_hash text;
   v_ip      text;
   v_ip_hash text;
+  v_ip_trusted boolean := false;
+  v_is_service boolean := (coalesce(auth.role(), '') = 'service_role');
   v_gate    record;
   v_waitlist boolean := false;
   v_token   text;
@@ -587,6 +592,7 @@ DECLARE
   v_attempts_ip int;
   v_attempts_ip_route int;
   v_last_ip_at timestamptz;
+  v_edge_hash text := lower(nullif(trim(coalesce(p_edge_ip_hash, '')), ''));
 BEGIN
   -- Honeypot : bots → faux succès silencieux (aucune écriture)
   IF nullif(trim(coalesce(p_hp, '')), '') IS NOT NULL THEN
@@ -623,11 +629,32 @@ BEGIN
   END IF;
 
   v_ck_hash := public._guest_hash_token(v_client);
-  v_ip := public._guest_request_ip();
-  v_ip_hash := CASE WHEN v_ip IS NULL THEN NULL ELSE public._guest_hash_token(v_ip) END;
+
+  -- IP : Edge (service_role) prioritaire ; sinon headers infra (jamais body client)
+  IF v_is_service
+     AND v_edge_hash IS NOT NULL
+     AND v_edge_hash ~ '^[0-9a-f]{64}$' THEN
+    v_ip_hash := v_edge_hash;
+    v_ip_trusted := true;
+  ELSE
+    -- Ignorer toute valeur p_edge_ip_hash provenant d'un appel anon/authenticated
+    v_ip := public._guest_request_ip();
+    v_ip_hash := CASE WHEN v_ip IS NULL THEN NULL ELSE public._guest_hash_token(v_ip) END;
+    v_ip_trusted := false;
+  END IF;
 
   -- Sérialise inscriptions + lecture capacité pour cette sortie (anti-course)
   PERFORM pg_advisory_xact_lock(hashtext('goelo_guest_reg:' || coalesce(v_rid, '')));
+
+  -- Verrouille aussi la ligne route (transaction-safe avec le advisory lock)
+  PERFORM 1
+  FROM public.routes r
+  WHERE r.id = v_rid AND r.is_active
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'route_not_found');
+  END IF;
 
   SELECT * INTO v_gate FROM public._guest_route_is_open_for_public(v_rid);
   IF NOT v_gate.ok THEN
@@ -692,9 +719,16 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'rate_limited');
   END IF;
 
-  -- Sans IP (headers absents) : plafond route plus strict pour limiter le renouvellement de client_key
-  IF v_ip_hash IS NULL AND v_attempts_route >= 15 THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'rate_limited');
+  -- Sans IP de confiance (pas d'Edge / headers absents) : plafonds plus stricts
+  -- (le client_key navigateur peut être renouvelé — ne doit pas être la seule barrière)
+  IF NOT v_ip_trusted THEN
+    IF v_ip_hash IS NULL AND v_attempts_route >= 12 THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'rate_limited');
+    END IF;
+    IF v_ip_hash IS NOT NULL AND NOT v_is_service AND v_attempts_route >= 20 THEN
+      -- Headers PostgREST seuls : XFF peut être partiellement spoofable → plafond route resserré
+      RETURN jsonb_build_object('ok', false, 'error', 'rate_limited');
+    END IF;
   END IF;
 
   INSERT INTO public.guest_signup_attempts (client_key_hash, ip_hash, route_id)
@@ -758,12 +792,33 @@ BEGIN
 END;
 $$;
 
+-- Compat 4 args → délègue sans hash Edge
+CREATE OR REPLACE FUNCTION public.guest_self_register(
+  p_route_id   text,
+  p_pseudo     text,
+  p_client_key text DEFAULT NULL,
+  p_hp         text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.guest_self_register(p_route_id, p_pseudo, p_client_key, p_hp, NULL::text);
+$$;
+
 REVOKE ALL ON FUNCTION public.guest_self_register(text, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.guest_self_register(text, text, text, text, text) FROM PUBLIC;
+
+-- Navigateur : peut appeler la RPC en secours, mais p_edge_ip_hash est ignoré hors service_role.
+-- Chemin recommandé : Edge Function guest-signup (service_role + IP hashée).
 GRANT EXECUTE ON FUNCTION public.guest_self_register(text, text, text, text)
   TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.guest_self_register(text, text, text, text, text)
+  TO anon, authenticated, service_role;
 
-COMMENT ON FUNCTION public.guest_self_register(text, text, text, text) IS
-  'Inscription publique sans compte. Anti-abus IP+client+route, capacité atomique, manage_token une fois.';
+COMMENT ON FUNCTION public.guest_self_register(text, text, text, text, text) IS
+  'Inscription publique. IP hash Edge (service_role) prioritaire ; jamais d''IP body client. Capacité atomique.';
 
 -- ---------------------------------------------------------------------------
 -- Annulation publique par jeton personnel uniquement

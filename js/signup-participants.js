@@ -221,32 +221,8 @@
     };
   }
 
-  /** Inscription publique sans compte (RPC guest_self_register). */
-  async function selfRegisterGuest(routeId, fields, sb) {
-    sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
-    var key = routeKey(routeId);
-    fields = fields || {};
-    if (!sb || !key) return { ok: false, error: "missing_client" };
-
-    var pseudo = String(fields.pseudo || fields.first_name || fields.firstName || "").trim();
-    var clientKey = String(fields.clientKey || fields.client_key || "").trim();
-    var hp = String(fields.hp || fields.honeypot || "");
-    if (!pseudo) return { ok: false, error: "pseudo_too_short" };
-    if (!clientKey) return { ok: false, error: "client_key_required" };
-
-    var rpc = await sb.rpc("guest_self_register", {
-      p_route_id: key,
-      p_pseudo: pseudo,
-      p_client_key: clientKey,
-      p_hp: hp || null
-    });
-
-    if (rpc.error) {
-      console.warn("[signup-participants] guest_self_register:", rpc.error.message);
-      return { ok: false, error: rpc.error.message };
-    }
-
-    var payload = rpc.data || {};
+  function normalizeRegisterPayload(payload) {
+    payload = payload || {};
     if (payload.ok === false) {
       return { ok: false, error: payload.error || "add_failed" };
     }
@@ -261,8 +237,91 @@
       waitlist_count: typeof payload.waitlist_count === "number" ? payload.waitlist_count : null,
       count: confirmed,
       participant: normalizeParticipant(payload.participant || null),
-      honeypot: !!payload.honeypot
+      honeypot: !!payload.honeypot,
+      via: payload.via || null
     };
+  }
+
+  /**
+   * Inscription publique sans compte.
+   * Chemin préféré : Edge Function `guest-signup` (IP hashée côté serveur, jamais body).
+   * Secours : RPC directe (headers PostgREST uniquement — plafonds plus stricts).
+   */
+  async function selfRegisterGuest(routeId, fields, sb) {
+    sb = sb || (global.goeloGetSb ? global.goeloGetSb() : null);
+    var key = routeKey(routeId);
+    fields = fields || {};
+    if (!key) return { ok: false, error: "missing_client" };
+
+    var pseudo = String(fields.pseudo || fields.first_name || fields.firstName || "").trim();
+    var clientKey = String(fields.clientKey || fields.client_key || "").trim();
+    var hp = String(fields.hp || fields.honeypot || "");
+    if (!pseudo) return { ok: false, error: "pseudo_too_short" };
+    if (!clientKey) return { ok: false, error: "client_key_required" };
+
+    var cfg = global.GOELO_CONFIG || {};
+    var base = String(cfg.SUPABASE_URL || "").replace(/\/$/, "");
+    var anonKey = cfg.SUPABASE_ANON_KEY || "";
+
+    if (base && anonKey) {
+      try {
+        var edgeRes = await fetch(base + "/functions/v1/guest-signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + anonKey,
+            "apikey": anonKey
+          },
+          body: JSON.stringify({
+            route_id: key,
+            pseudo: pseudo,
+            client_key: clientKey,
+            hp: hp || ""
+            // Jamais d'IP / hash depuis le navigateur
+          })
+        });
+
+        var edgeText = await edgeRes.text();
+        var edgePayload = null;
+        try { edgePayload = JSON.parse(edgeText); } catch (e) { edgePayload = null; }
+
+        if (edgeRes.ok && edgePayload) {
+          return normalizeRegisterPayload(edgePayload);
+        }
+
+        // Edge déployée mais erreur métier
+        if (edgeRes.status < 500 && edgePayload && edgePayload.ok === false) {
+          return { ok: false, error: edgePayload.error || "add_failed" };
+        }
+
+        // 404 / réseau : bascule RPC (secours)
+        if (edgeRes.status !== 404 && edgeRes.status !== 502 && edgeRes.status !== 503) {
+          console.warn(
+            "[signup-participants] guest-signup edge:",
+            edgeRes.status,
+            edgePayload && edgePayload.error
+          );
+        }
+      } catch (edgeErr) {
+        console.warn("[signup-participants] guest-signup edge fallback:", edgeErr && edgeErr.message);
+      }
+    }
+
+    if (!sb) return { ok: false, error: "missing_client" };
+
+    var rpc = await sb.rpc("guest_self_register", {
+      p_route_id: key,
+      p_pseudo: pseudo,
+      p_client_key: clientKey,
+      p_hp: hp || null
+    });
+
+    if (rpc.error) {
+      console.warn("[signup-participants] guest_self_register:", rpc.error.message);
+      return { ok: false, error: rpc.error.message };
+    }
+
+    return normalizeRegisterPayload(rpc.data || {});
   }
 
   /** Annulation publique par jeton personnel (jamais par pseudo). */
