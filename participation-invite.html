@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Ma participation — GoëloRides</title>
+  <link rel="stylesheet" href="css/pages/guest-participation.css?v=20261028-guest">
+  <style>
+    body { margin: 0; padding: 24px 12px; font: 16px system-ui,sans-serif; background: #101010; color: #f4f4f4; }
+    main.pd-guest-dialog { margin: 24px auto; max-height: none; width: min(520px,100%); }
+    a { color: #c8f135; display: inline-block; padding: 12px 0; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="pd-guest-dialog">
+    <a href="index.html">← Accueil</a>
+    <h1>Ma participation</h1>
+    <h2 id="guest-manage-title"></h2>
+    <p id="guest-manage-status" role="status" aria-live="polite">Vérification du lien…</p>
+    <button type="button" id="guest-confirm" hidden>Confirmer ma participation</button>
+    <button type="button" id="guest-cancel" hidden>Annuler ma participation</button>
+    <a id="guest-route" hidden>Voir la sortie</a>
+    <p>Garde cet e-mail pour retrouver ta participation. Aucun compte ni mot de passe n’est créé. Ne partage pas ton lien privé.</p>
+  </main>
+  <script src="js/goelo-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/goelo-guest-participation.js?v=20261028-guest"></script>
+  <script src="js/guest-participation-manage.js?v=20261028-guest"></script>
+</body>
+</html>

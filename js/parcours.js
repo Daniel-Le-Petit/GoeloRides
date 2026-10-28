@@ -312,6 +312,7 @@
       _uiJoined = null;
       btn.classList.remove("is-registered");
       btn.textContent = "Se connecter pour participer";
+      if (window.GoeloGuestParticipation) window.GoeloGuestParticipation.decorate(sortie);
       btn.disabled = false;
       btn.setAttribute("data-joined", "0");
       btn.setAttribute("data-auth-pending", "1");
@@ -325,6 +326,10 @@
       return;
     }
 
+    var hint = document.getElementById('pd-guest-hint');
+    if (hint) hint.remove();
+    var hesitation = document.getElementById('pd-hesitation');
+    if (hesitation) hesitation.remove();
     var joined;
     var source;
     if (typeof forcedJoined === "boolean") {
@@ -383,6 +388,10 @@
 
       /* Visiteur → ouvrir modale auth */
       if (btn.getAttribute("data-auth-pending") === "1") {
+        if (window.GoeloGuestParticipation && window.GoeloGuestParticipation.open(sortie)) {
+          finishParticipationAttempt(attempt, 'unknown');
+          return;
+        }
         finishParticipationAttempt(attempt, 'auth_required');
         if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
         return;
@@ -395,6 +404,10 @@
         var user = await getUser();
         if (!user) {
           /* Session expirée entre le render et le clic */
+          if (window.GoeloGuestParticipation && window.GoeloGuestParticipation.open(sortie)) {
+            finishParticipationAttempt(attempt, 'unknown');
+            return;
+          }
           finishParticipationAttempt(attempt, 'auth_required');
           if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
           return;
