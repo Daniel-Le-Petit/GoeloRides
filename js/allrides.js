@@ -282,6 +282,18 @@
     return payload;
   }
 
+  function importErrorMessage(err, stage) {
+    var code = String(err && (err.code || err.statusCode || err.status) || '');
+    var message = String(err && err.message || '').replace(/https?:\/\/\S+/gi, '[lien]').replace(/eyJ[A-Za-z0-9_.-]+/g, '[jeton]').slice(0, 300);
+    var detail = code + ' ' + message;
+    var prefix = stage === 'upload' ? 'Envoi du fichier GPX impossible. ' : stage === 'lookup' ? 'Vérification du parcours impossible. ' : 'Enregistrement du parcours impossible. ';
+    if (/bucket.*not found|nosuchbucket/i.test(detail)) return prefix + 'Le stockage des GPX n’est pas configuré sur le serveur.';
+    if (/row.level security|permission denied|unauthorized|403|42501/i.test(detail)) return prefix + 'Le serveur refuse cet accès à ton compte. Les droits d’import doivent être vérifiés.';
+    if (/jwt|token.*expired|401/i.test(detail)) return prefix + 'Ta session a expiré. Reconnecte-toi puis réessaie.';
+    if (/fetch|network|load failed|offline/i.test(detail)) return prefix + 'La connexion au serveur a été interrompue. Tu peux réessayer avec le même fichier.';
+    return prefix + (message || 'Le serveur n’a pas répondu. Réessaie avec le même fichier.') + (code ? ' (code ' + code.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) + ')' : '');
+  }
+
   async function submitCreateRide() {
     if (state.creating) return;
     hideCreateError();
@@ -313,6 +325,7 @@
 
     state.creating = true;
     var creatorId = window.GOELO_USER.id;
+    var saveStage = 'upload';
     updateImportControls();
     try {
       if (!state.uploadedGpx) state.uploadedGpx = await uploadGpxFile(sb, state.gpxFile, creatorId);
@@ -320,10 +333,12 @@
       if (!canImportRide() || window.GOELO_USER.id !== creatorId) throw new Error('Session modifiée pendant l’enregistrement.');
 
       // Une réponse perdue ne doit pas faire recréer un parcours déjà enregistré avec ce fichier.
+      saveStage = 'lookup';
       var existing = await sb.from('rides').select('*')
         .eq('gpx_url', payload.gpx_url).eq('created_by', creatorId).maybeSingle();
       if (existing.error) throw existing.error;
       var recovered = !!existing.data;
+      saveStage = 'insert';
       var result = recovered ? existing : await sb
         .from("rides")
         .insert(payload)
@@ -352,7 +367,7 @@
       toast('Parcours « ' + (result.data.title || 'sans titre') + (recovered ? ' » retrouvé dans la bibliothèque' : ' » enregistré'));
     } catch (err) {
       console.error("[allrides] create:", err);
-      showCreateError('Impossible d’enregistrer le parcours pour le moment. Vérifie ta connexion puis réessaie.');
+      showCreateError(importErrorMessage(err, saveStage));
     } finally {
       state.creating = false;
       if (!canImportRide()) closeCreateModal();
