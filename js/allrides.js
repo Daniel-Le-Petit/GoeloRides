@@ -14,7 +14,14 @@
       gpxOnly: false
     },
     selectedId: null,
-    gpxFile: null
+    gpxFile: null,
+    gpxAnalysis: null,
+    gpxGeneration: 0,
+    gpxBusy: false,
+    creating: false,
+    previewMap: null,
+    autoTitle: null,
+    uploadedGpx: null
   };
 
   var GPX_BUCKET = "rides-gpx";
@@ -48,10 +55,36 @@
     return role === "admin" || role === "team_rider";
   }
 
+  function canImportRide() {
+    var auth = window.GoeloAuthState ? window.GoeloAuthState.getState() : {
+      role: window.GOELO_ROLE, user: window.GOELO_USER, pending: !!window.GOELO_AUTH_PENDING
+    };
+    return !auth.pending && auth.role === 'admin' && !!(auth.user && auth.user.id);
+  }
+
+  function updateImportControls() {
+    var submit = document.getElementById('ar-create-submit');
+    if (submit) {
+      submit.disabled = state.creating || state.gpxBusy || !state.gpxAnalysis || !canImportRide();
+      submit.textContent = state.creating ? 'Enregistrement…' : 'Enregistrer le parcours';
+    }
+    ['ar-gpx-pick', 'ar-gpx-remove'].forEach(function (id) {
+      var button = document.getElementById(id);
+      if (button) button.disabled = state.creating;
+    });
+    var form = document.getElementById('ar-create-form');
+    if (form) {
+      form.setAttribute('aria-busy', state.gpxBusy || state.creating ? 'true' : 'false');
+      form.querySelectorAll('input:not([type="file"]), textarea').forEach(function (input) { input.disabled = state.creating; });
+    }
+    document.querySelectorAll('#modal-ar-create button[data-ar-close-modal]').forEach(function (button) { button.disabled = state.creating; });
+  }
+
   function syncCreateButton() {
     var btn = document.getElementById("ar-create-btn");
     if (!btn) return;
-    btn.hidden = !canCreateRide();
+    btn.hidden = !canImportRide();
+    if (btn.hidden && !state.creating) closeCreateModal();
   }
 
   function showCreateError(msg) {
@@ -68,7 +101,7 @@
 
   function openCreateModal() {
     var modal = document.getElementById("modal-ar-create");
-    if (!modal) return;
+    if (!modal || !canImportRide()) return;
     hideCreateError();
     var form = document.getElementById("ar-create-form");
     if (form) form.reset();
@@ -76,18 +109,90 @@
     modal.hidden = false;
     modal.classList.add("is-open");
     document.documentElement.classList.add("goelo-modal-open");
-    var titleEl = document.getElementById("ar-f-title");
-    if (titleEl) titleEl.focus();
+    document.getElementById('ar-create-title').focus();
   }
 
   function clearGpxSelection() {
+    state.gpxGeneration++;
     state.gpxFile = null;
-    var input = document.getElementById("ar-f-gpx-file");
-    if (input) input.value = "";
-    var selected = document.getElementById("ar-gpx-selected");
-    var filename = document.getElementById("ar-gpx-filename");
+    state.gpxAnalysis = null;
+    state.gpxBusy = false;
+    state.uploadedGpx = null;
+    if (state.previewMap) {
+      try { state.previewMap.remove(); } catch (error) { /* Carte déjà fermée. */ }
+      state.previewMap = null;
+    }
+    var title = document.getElementById('ar-f-title');
+    if (title && title.value === state.autoTitle) title.value = '';
+    state.autoTitle = null;
+    ['ar-f-distance', 'ar-f-elevation', 'ar-f-duration'].forEach(function (id) {
+      var input = document.getElementById(id);
+      if (input) input.value = '';
+    });
+    var input = document.getElementById('ar-f-gpx-file');
+    if (input) input.value = '';
+    var selected = document.getElementById('ar-gpx-selected');
     if (selected) selected.hidden = true;
-    if (filename) filename.textContent = "";
+    document.getElementById('ar-gpx-filename').textContent = '';
+    document.getElementById('ar-gpx-status').textContent = '';
+    document.getElementById('ar-gpx-preview-wrap').hidden = true;
+    document.getElementById('ar-gpx-preview').innerHTML = '';
+    updateImportControls();
+  }
+
+  function renderGpxPreview(analysis) {
+    var host = document.getElementById('ar-gpx-preview');
+    var note = document.getElementById('ar-gpx-map-note');
+    document.getElementById('ar-gpx-preview-wrap').hidden = false;
+    try {
+      if (!window.L) throw new Error('Fond de carte indisponible');
+      state.previewMap = window.L.map(host, { scrollWheelZoom: false });
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap', maxZoom: 19
+      }).on('tileerror', function () { note.textContent = 'Le fond de carte est indisponible ; le tracé reste affiché.'; }).addTo(state.previewMap);
+      var layer = window.L.geoJSON(analysis.geometry, { style: { color: '#92bb13', weight: 4 } }).addTo(state.previewMap);
+      state.previewMap.fitBounds(layer.getBounds(), { padding: [12, 12], maxZoom: 15 });
+      state.previewMap.invalidateSize();
+      note.textContent = 'Vérifie le tracé avant de l’enregistrer.';
+    } catch (error) {
+      if (state.previewMap) { try { state.previewMap.remove(); } catch (ignored) {} state.previewMap = null; }
+      host.innerHTML = window.GoeloGpxImport.svgPreview(analysis.geometry);
+      note.textContent = 'Aperçu du tracé sans fond de carte.';
+    }
+  }
+
+  async function selectGpxFile(file) {
+    if (state.creating || !file) return;
+    clearGpxSelection();
+    hideCreateError();
+    var generation = state.gpxGeneration;
+    state.gpxBusy = true;
+    showGpxSelection(file);
+    document.getElementById('ar-gpx-status').textContent = 'Analyse du GPX…';
+    updateImportControls();
+    try {
+      if (!window.GoeloGpxImport) throw new Error('L’analyse GPX est indisponible. Recharge la page puis réessaie.');
+      var analysis = await window.GoeloGpxImport.readFile(file);
+      if (generation !== state.gpxGeneration) return;
+      state.gpxFile = file;
+      state.gpxAnalysis = analysis;
+      var title = document.getElementById('ar-f-title');
+      if (!title.value.trim()) { title.value = analysis.suggestedTitle; state.autoTitle = analysis.suggestedTitle; }
+      document.getElementById('ar-f-distance').value = analysis.distanceKm;
+      document.getElementById('ar-f-elevation').value = analysis.elevationGain == null ? '' : analysis.elevationGain;
+      renderGpxPreview(analysis);
+      document.getElementById('ar-gpx-status').textContent = analysis.elevationGain == null
+        ? 'Distance calculée. Altitudes absentes ou incomplètes : complète le dénivelé si tu le connais.'
+        : 'Distance calculée · Dénivelé estimé à partir des altitudes du fichier.';
+      if (analysis.segmentCount > 1) document.getElementById('ar-gpx-status').textContent += ' Le fichier contient ' + analysis.segmentCount + ' tracés séparés.';
+    } catch (error) {
+      if (generation !== state.gpxGeneration) return;
+      clearGpxSelection();
+      showCreateError(error.message || 'Impossible de lire ce GPX.');
+    } finally {
+      if (generation === state.gpxGeneration) state.gpxBusy = false;
+      updateImportControls();
+    }
   }
 
   function showGpxSelection(file) {
@@ -103,20 +208,23 @@
   }
 
   async function uploadGpxFile(sb, file, userId) {
-    var path = userId + "/" + Date.now() + "_" + sanitizeGpxFilename(file.name);
+    var unique = window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).slice(2);
+    var path = userId + '/' + unique + '_' + sanitizeGpxFilename(file.name);
     var upload = await sb.storage.from(GPX_BUCKET).upload(path, file, {
-      contentType: file.type || "application/gpx+xml",
+      contentType: 'application/gpx+xml',
       upsert: false
     });
     if (upload.error) throw upload.error;
 
     var pub = sb.storage.from(GPX_BUCKET).getPublicUrl(path);
-    return pub.data.publicUrl;
+    if (!pub.data || !/^https?:\/\//i.test(pub.data.publicUrl || '')) throw new Error('Lien GPX indisponible.');
+    return { path: path, url: pub.data.publicUrl };
   }
 
   function closeCreateModal() {
+    if (state.creating) return;
     var modal = document.getElementById("modal-ar-create");
-    if (!modal) return;
+    if (!modal || modal.hidden) return;
     modal.classList.remove("is-open");
     modal.hidden = true;
     hideCreateError();
@@ -124,12 +232,17 @@
     if (!document.querySelector(".goelo-modal.is-open")) {
       document.documentElement.classList.remove("goelo-modal-open");
     }
+    var opener = document.getElementById('ar-create-btn');
+    if (opener && !opener.hidden) opener.focus();
   }
 
   function parseOptionalNumber(el) {
-    if (!el || el.value === "" || el.value == null) return null;
+    if (!el) return null;
+    if (el.validity.badInput) throw new Error('Vérifie les valeurs de dénivelé et de durée.');
+    if (el.value === '' || el.value == null) return null;
     var n = parseFloat(el.value);
-    return isNaN(n) ? null : n;
+    if (!Number.isFinite(n) || n < 0 || !el.checkValidity()) throw new Error('Vérifie les valeurs de distance, de dénivelé et de durée.');
+    return n;
   }
 
   function clearFiltersForNewRide() {
@@ -146,7 +259,8 @@
   function buildRidePayload() {
     var titleEl = document.getElementById("ar-f-title");
     var title = titleEl ? String(titleEl.value || "").trim() : "";
-    if (!title) throw new Error("Le titre est obligatoire.");
+    if (!title || title.length > 200) throw new Error('Indique un nom de parcours de 1 à 200 caractères.');
+    if (!state.gpxFile || !state.gpxAnalysis || state.gpxBusy) throw new Error('Choisis un GPX valide et attends la fin de son analyse.');
 
     var descEl = document.getElementById("ar-f-description");
     var description = descEl ? String(descEl.value || "").trim() : "";
@@ -155,6 +269,7 @@
       title: title,
       description: description || null,
       gpx_url: null,
+      geometry: state.gpxAnalysis.geometry,
       distance_km: parseOptionalNumber(document.getElementById("ar-f-distance")),
       elevation_gain: parseOptionalNumber(document.getElementById("ar-f-elevation")),
       estimated_time_min: parseOptionalNumber(document.getElementById("ar-f-duration"))
@@ -168,10 +283,11 @@
   }
 
   async function submitCreateRide() {
+    if (state.creating) return;
     hideCreateError();
 
-    if (!canCreateRide()) {
-      showCreateError("Accès réservé aux Ride Leaders et aux Admins.");
+    if (!canImportRide()) {
+      showCreateError('L’import GPX est réservé aux administrateurs connectés.');
       return;
     }
 
@@ -195,15 +311,20 @@
       return;
     }
 
-    var submitBtn = document.getElementById("ar-create-submit");
-    if (submitBtn) submitBtn.disabled = true;
-
+    state.creating = true;
+    var creatorId = window.GOELO_USER.id;
+    updateImportControls();
     try {
-      if (state.gpxFile) {
-        payload.gpx_url = await uploadGpxFile(sb, state.gpxFile, window.GOELO_USER.id);
-      }
+      if (!state.uploadedGpx) state.uploadedGpx = await uploadGpxFile(sb, state.gpxFile, creatorId);
+      payload.gpx_url = state.uploadedGpx.url;
+      if (!canImportRide() || window.GOELO_USER.id !== creatorId) throw new Error('Session modifiée pendant l’enregistrement.');
 
-      var result = await sb
+      // Une réponse perdue ne doit pas faire recréer un parcours déjà enregistré avec ce fichier.
+      var existing = await sb.from('rides').select('*')
+        .eq('gpx_url', payload.gpx_url).eq('created_by', creatorId).maybeSingle();
+      if (existing.error) throw existing.error;
+      var recovered = !!existing.data;
+      var result = recovered ? existing : await sb
         .from("rides")
         .insert(payload)
         .select("*")
@@ -212,8 +333,10 @@
       if (result.error) throw result.error;
       if (!result.data) throw new Error("Création sans réponse.");
 
+      state.creating = false;
       closeCreateModal();
       clearFiltersForNewRide();
+      state.rides = state.rides.filter(function (ride) { return String(ride.id) !== String(result.data.id); });
       state.rides.unshift(result.data);
       render();
 
@@ -226,12 +349,14 @@
         }
       }, 80);
 
-      toast('Itinéraire « ' + (result.data.title || "sans titre") + ' » créé');
+      toast('Parcours « ' + (result.data.title || 'sans titre') + (recovered ? ' » retrouvé dans la bibliothèque' : ' » enregistré'));
     } catch (err) {
       console.error("[allrides] create:", err);
-      showCreateError(err.message || "Erreur lors de la création.");
+      showCreateError('Impossible d’enregistrer le parcours pour le moment. Vérifie ta connexion puis réessaie.');
     } finally {
-      if (submitBtn) submitBtn.disabled = false;
+      state.creating = false;
+      if (!canImportRide()) closeCreateModal();
+      updateImportControls();
     }
   }
 
@@ -239,8 +364,9 @@
     var createBtn = document.getElementById("ar-create-btn");
     if (createBtn) {
       createBtn.addEventListener("click", function () {
-        if (!canCreateRide()) return;
+        if (!canImportRide()) return;
         openCreateModal();
+        document.getElementById('ar-f-gpx-file').click();
       });
     }
 
@@ -265,30 +391,35 @@
 
     if (pickBtn && fileInput) {
       pickBtn.addEventListener("click", function () {
+        if (state.creating) return;
         fileInput.click();
       });
-      fileInput.addEventListener("change", function () {
-        hideCreateError();
+      fileInput.addEventListener('change', function () {
         var file = fileInput.files && fileInput.files[0];
-        if (!file) {
-          clearGpxSelection();
-          return;
-        }
-        if (!/\.gpx$/i.test(file.name)) {
-          showCreateError("Le fichier doit être au format .gpx.");
-          clearGpxSelection();
-          return;
-        }
-        state.gpxFile = file;
-        showGpxSelection(file);
+        if (file) selectGpxFile(file);
       });
     }
 
     if (removeBtn) {
       removeBtn.addEventListener("click", function () {
+        if (state.creating) return;
         clearGpxSelection();
+        hideCreateError();
       });
     }
+
+    document.addEventListener('keydown', function (event) {
+      var modal = document.getElementById('modal-ar-create');
+      if (!modal || modal.hidden) return;
+      if (event.key === 'Escape') { event.preventDefault(); closeCreateModal(); }
+      if (event.key !== 'Tab') return;
+      var focusable = Array.from(modal.querySelectorAll('button, input, textarea, summary, a[href]')).filter(function (element) {
+        return !element.disabled && element.offsetParent !== null;
+      });
+      var first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !focusable.includes(document.activeElement))) { event.preventDefault(); if (last) last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !focusable.includes(document.activeElement))) { event.preventDefault(); if (first) first.focus(); }
+    });
 
     window.addEventListener("goelo:role-ready", syncCreateButton);
     window.addEventListener("goelo:auth-success", syncCreateButton);
@@ -365,61 +496,13 @@
   }
 
   function geometryPreviewSvg(ride) {
-    var coords = null;
-    var g = ride.geometry;
-
-    if (g && typeof g === "object") {
-      if (g.type === "LineString" && Array.isArray(g.coordinates)) {
-        coords = g.coordinates;
-      } else if (g.type === "MultiLineString" && Array.isArray(g.coordinates) && g.coordinates[0]) {
-        coords = g.coordinates[0];
-      }
+    var geometry = ride.geometry;
+    if (geometry && window.GoeloGpxImport && ['LineString', 'MultiLineString'].includes(geometry.type)) {
+      try {
+        return '<div class="ar-map-preview" aria-hidden="true">' + window.GoeloGpxImport.svgPreview(geometry) + '</div>';
+      } catch (error) { /* Une ancienne géométrie invalide ne doit pas bloquer le catalogue. */ }
     }
-
-    if (!coords || coords.length < 2) {
-      return (
-        '<div class="ar-map-preview" aria-hidden="true">' +
-        '<span class="ar-map-placeholder__label">Tracé</span></div>'
-      );
-    }
-
-    var lats = [];
-    var lons = [];
-    coords.forEach(function (pt) {
-      if (!Array.isArray(pt) || pt.length < 2) return;
-      lons.push(pt[0]);
-      lats.push(pt[1]);
-    });
-    if (lats.length < 2) {
-      return '<div class="ar-map-preview" aria-hidden="true"><span class="ar-map-placeholder__label">Tracé</span></div>';
-    }
-
-    var minLat = Math.min.apply(null, lats);
-    var maxLat = Math.max.apply(null, lats);
-    var minLon = Math.min.apply(null, lons);
-    var maxLon = Math.max.apply(null, lons);
-    var pad = 0.08;
-    var w = maxLon - minLon || 0.01;
-    var h = maxLat - minLat || 0.01;
-    minLon -= w * pad;
-    maxLon += w * pad;
-    minLat -= h * pad;
-    maxLat += h * pad;
-    w = maxLon - minLon;
-    h = maxLat - minLat;
-
-    var points = coords.map(function (pt) {
-      var x = ((pt[0] - minLon) / w) * 100;
-      var y = 100 - ((pt[1] - minLat) / h) * 100;
-      return x.toFixed(1) + "," + y.toFixed(1);
-    }).join(" ");
-
-    return (
-      '<div class="ar-map-preview" aria-hidden="true">' +
-      '<svg viewBox="0 0 100 100" preserveAspectRatio="none">' +
-      '<polyline fill="none" stroke="#C8F135" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' +
-      points + '"/></svg></div>'
-    );
+    return '<div class="ar-map-preview" aria-hidden="true"><span class="ar-map-placeholder__label">Tracé</span></div>';
   }
 
   function mapPlaceholderHtml(ride) {

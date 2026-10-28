@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages/sorties.css">
   <style>
@@ -306,6 +307,7 @@
     .ar-filters .ar-filter--toggle, .ar-filters .ar-count { grid-column: 1 / -1; }
   }
 </style>
+<link rel="stylesheet" href="css/pages/gpx-import.css?v=20261028-import">
 </head>
 <body>
 
@@ -327,7 +329,7 @@
         <h1>Itinéraires</h1>
         <p>Parcourir les itinéraires vélo réutilisables</p>
       </div>
-      <button type="button" class="go-sc-btn go-sc-btn--primary" id="ar-create-btn" hidden>+ Créer un itinéraire</button>
+      <button type="button" class="go-sc-btn go-sc-btn--primary" id="ar-create-btn" hidden>＋ Importer un GPX</button>
     </div>
   </header>
 
@@ -381,37 +383,46 @@
     <div class="goelo-modal__backdrop" data-ar-close-modal></div>
     <div class="goelo-modal__box goelo-modal__box--login">
       <button type="button" class="goelo-modal__close" data-ar-close-modal aria-label="Fermer">✕</button>
-      <h2 id="ar-create-title" class="ml-title">Créer un itinéraire</h2>
-      <p class="ml-sub">Ajoute un parcours réutilisable au catalogue.</p>
+      <h2 id="ar-create-title" class="ml-title" tabindex="-1">Importer un GPX</h2>
+      <p class="ml-sub">Le nom et les caractéristiques du parcours seront préremplis.</p>
       <div id="ar-create-error" class="ml-error" role="alert" hidden></div>
       <form id="ar-create-form" novalidate>
-        <label class="ml-label" for="ar-f-title">Titre *</label>
-        <input id="ar-f-title" class="ml-input" type="text" required maxlength="200" autocomplete="off" data-autofocus>
-
-        <label class="ml-label" for="ar-f-description">Description</label>
-        <textarea id="ar-f-description" class="ml-input ar-textarea" rows="3" maxlength="2000"></textarea>
-
-        <label class="ml-label">Uploader fichier GPX</label>
         <div class="ar-gpx-upload">
-          <input type="file" id="ar-f-gpx-file" accept=".gpx,application/gpx+xml" hidden>
-          <button type="button" class="go-sc-btn go-sc-btn--ghost" id="ar-gpx-pick">Choisir un fichier GPX</button>
+          <input type="file" id="ar-f-gpx-file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
+          <button type="button" class="go-sc-btn go-sc-btn--primary" id="ar-gpx-pick">Choisir un fichier GPX</button>
+          <p class="ar-import-hint">GPX · 10 Mo maximum · Envoi uniquement à l’enregistrement.</p>
           <div id="ar-gpx-selected" class="ar-gpx-selected" hidden>
             <span id="ar-gpx-filename" class="ar-gpx-filename"></span>
             <button type="button" class="go-sc-btn go-sc-btn--danger ar-gpx-remove" id="ar-gpx-remove">Retirer</button>
           </div>
         </div>
-
-        <label class="ml-label" for="ar-f-distance">Distance (km)</label>
-        <input id="ar-f-distance" class="ml-input" type="number" min="0" step="0.1">
-
-        <label class="ml-label" for="ar-f-elevation">Dénivelé (m)</label>
-        <input id="ar-f-elevation" class="ml-input" type="number" min="0" step="1">
-
-        <label class="ml-label" for="ar-f-duration">Durée estimée (min)</label>
-        <input id="ar-f-duration" class="ml-input" type="number" min="0" step="1">
+        <p id="ar-gpx-status" class="ar-import-hint" role="status" aria-live="polite"></p>
+        <div id="ar-gpx-preview-wrap" hidden>
+          <div id="ar-gpx-preview" role="region" aria-label="Aperçu du parcours importé"></div>
+          <p id="ar-gpx-map-note" class="ar-import-hint"></p>
+        </div>
+        <label class="ml-label" for="ar-f-title">Nom du parcours *</label>
+        <input id="ar-f-title" class="ml-input" type="text" required maxlength="200" autocomplete="off">
+        <div class="ar-import-stats">
+          <div>
+            <label class="ml-label" for="ar-f-distance">Distance calculée (km)</label>
+            <input id="ar-f-distance" class="ml-input" type="number" min="0" step="0.1" readonly>
+          </div>
+          <div>
+            <label class="ml-label" for="ar-f-elevation">Dénivelé estimé (m D+)</label>
+            <input id="ar-f-elevation" class="ml-input" type="number" min="0" step="1" placeholder="Si connu">
+          </div>
+        </div>
+        <details class="ar-import-extra">
+          <summary>Informations complémentaires (facultatif)</summary>
+          <label class="ml-label" for="ar-f-description">Description</label>
+          <textarea id="ar-f-description" class="ml-input ar-textarea" rows="3" maxlength="2000"></textarea>
+          <label class="ml-label" for="ar-f-duration">Durée indicative (min)</label>
+          <input id="ar-f-duration" class="ml-input" type="number" min="0" step="1">
+        </details>
 
         <div class="ar-form-actions">
-          <button type="submit" class="go-sc-btn go-sc-btn--primary" id="ar-create-submit">Créer l'itinéraire</button>
+          <button type="submit" class="go-sc-btn go-sc-btn--primary" id="ar-create-submit" disabled>Enregistrer le parcours</button>
           <button type="button" class="go-sc-btn go-sc-btn--ghost" data-ar-close-modal>Annuler</button>
         </div>
       </form>
@@ -422,7 +433,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/goelo-auth-state.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/allrides.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="js/goelo-gpx-import.js?v=20261028-import"></script>
+  <script src="js/allrides.js?v=20261028-import"></script>
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>
 </html>
