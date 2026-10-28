@@ -215,6 +215,7 @@
     var role = getUserRole();
     var user = global.GOELO_USER;
     var viewMode = opts.viewMode || "sorties";
+    if (viewMode === "sorties" && (role === "admin" || role === "team_rider")) return "";
     var joined = opts.joinedRouteIds && opts.joinedRouteIds.has(String(card.id));
     var canEdit = canEditRoute(card, role, user);
     var parts = [];

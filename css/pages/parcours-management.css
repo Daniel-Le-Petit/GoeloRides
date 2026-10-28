@@ -1,0 +1,14 @@
+#pd-management[hidden] { display: none !important; }
+#pd-management { margin: 24px 0; padding: 20px; border: 1px solid #52645c; border-radius: 14px; background: #17221f; color: #f5f7f3; }
+#pd-management h2 { font-size: 1.15rem; margin: 0 0 16px; }
+.pd-management-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+#pd-management .pd-manage-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 44px; max-width: 100%; padding: .65rem .95rem; border: 1px solid #58666b; border-radius: 12px; background: #242d31; color: #f6faf8 !important; font: 700 .875rem/1.3 'Inter',system-ui,sans-serif; text-decoration: none; text-align: center; cursor: pointer; }
+#pd-management .pd-manage-btn:hover { background: #334045; }
+#pd-management .pd-manage-btn--edit { background: #245b5d; border-color: #4d8d86; }
+#pd-management .pd-manage-btn--edit:hover { background: #2c6a69; }
+#pd-management .pd-manage-btn--cancel { background: #3b2a26; border-color: #9d6b5b; }
+#pd-management .pd-manage-btn--cancel:hover { background: #53382f; }
+#pd-management .pd-manage-btn:focus-visible { outline: 2px solid #9acbb7; outline-offset: 3px; }
+#pd-management .pd-manage-btn:disabled { opacity: .55; cursor: not-allowed; }
+.pd-management-status { margin: 14px 0 0; color: #c3cac5; line-height: 1.5; }
+.pd-management-status[role=alert] { color: #ffc3ae; }
