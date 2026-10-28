@@ -26,6 +26,8 @@
 
   var GPX_BUCKET = "rides-gpx";
   var loadingRides = false;
+  var catalogueMaps = [];
+  var catalogueObserver = null;
 
   function getSb() {
     return window.goeloGetSb ? window.goeloGetSb() : null;
@@ -553,7 +555,7 @@
     return (
       '<li>' +
       '<article class="go-sc-card ar-ride-card' + (selected ? " is-selected" : "") + '" id="ride-' + escapeAttr(id) + '" style="animation-delay:' + (index * 45) + 'ms">' +
-        '<div class="ar-ride-card__map">' + mapPlaceholderHtml(ride) + "</div>" +
+        '<div class="ar-ride-card__map" data-ar-map="' + index + '" role="region" aria-label="' + escapeAttr('Carte du parcours ' + title) + '">' + mapPlaceholderHtml(ride) + "</div>" +
         '<div class="go-sc-card__body ar-ride-card__body">' +
           '<div class="go-sc-card__title-row">' +
             '<h2 class="go-sc-card__title">' + escapeHtml(title) + "</h2>" +
@@ -588,10 +590,60 @@
       : shown + " / " + total + " itinéraires";
   }
 
+  function clearCatalogueMaps() {
+    if (catalogueObserver) catalogueObserver.disconnect();
+    catalogueObserver = null;
+    catalogueMaps.forEach(function (map) { map.remove(); });
+    catalogueMaps = [];
+  }
+
+  function mountCatalogueMaps(host, rides) {
+    function mount(element) {
+      var ride = rides[Number(element.getAttribute('data-ar-map'))];
+      if (!window.L || !ride || !ride.geometry) return;
+      var map;
+      try {
+        // Préparer et valider le tracé avant de remplacer la miniature de secours.
+        var layer = window.L.geoJSON(ride.geometry, { style: { color: '#568000', weight: 4 } });
+        var bounds = layer.getBounds();
+        if (!bounds.isValid()) return;
+        element.innerHTML = '';
+        map = window.L.map(element, { scrollWheelZoom: false });
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).on('tileerror', function () {
+          if (element.querySelector('.ar-map-note')) return;
+          var note = document.createElement('span');
+          note.className = 'ar-map-note';
+          note.textContent = 'Fond de carte indisponible';
+          element.appendChild(note);
+        }).addTo(map);
+        layer.addTo(map);
+        map.fitBounds(bounds, { padding: [18, 18], maxZoom: 15 });
+        map.invalidateSize();
+        catalogueMaps.push(map);
+      } catch (error) {
+        if (map) map.remove();
+        element.innerHTML = mapPlaceholderHtml(ride);
+      }
+    }
+    var elements = host.querySelectorAll('[data-ar-map]');
+    if (!window.IntersectionObserver) { elements.forEach(mount); return; }
+    catalogueObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        catalogueObserver.unobserve(entry.target);
+        mount(entry.target);
+      });
+    }, { rootMargin: '200px' });
+    elements.forEach(function (element) { catalogueObserver.observe(element); });
+  }
+
   function render() {
     var host = document.getElementById("ar-rides-list");
     if (!host) return;
 
+    clearCatalogueMaps();
     var filtered = applyFilters(state.rides);
     updateCount(filtered.length, state.rides.length);
 
@@ -609,6 +661,7 @@
       '<ul class="go-sc-list">' +
       filtered.map(buildCardHtml).join("") +
       "</ul>";
+    mountCatalogueMaps(host, filtered);
   }
 
   function scrollToRideFromUrl() {
@@ -629,6 +682,7 @@
     loadingRides = true;
     try {
       if (!sb) throw new Error('Connexion au catalogue indisponible.');
+      clearCatalogueMaps();
       if (host) host.innerHTML = '<p class="go-sc-empty">Chargement des itinéraires…</p>';
       var result = await sb
       .from("rides")

@@ -163,10 +163,19 @@
 
     .ar-ride-card__map {
       flex-shrink: 0;
-      width: 108px;
+      width: 240px;
+      height: 210px;
+      min-width: 0;
+      position: relative;
+      z-index: 0;
+      border-radius: 10px;
+      overflow: hidden;
       display: flex;
       align-items: stretch;
     }
+
+    .ar-ride-card__map.leaflet-container .leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; }
+    .ar-map-note { position: absolute; bottom: 22px; left: 8px; z-index: 800; padding: 4px 8px; background: #fff; color: #333; font-size: 12px; pointer-events: none; }
 
     .ar-map-placeholder {
       flex: 1;
@@ -272,7 +281,8 @@
       }
 
       .ar-ride-card__map {
-        width: 76px;
+        width: 100%;
+        height: 220px;
       }
 
       .ar-map-placeholder {
@@ -435,7 +445,7 @@
   <script src="js/auth.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="js/goelo-gpx-import.js?v=20261028-import"></script>
-  <script src="js/allrides.js?v=20261028-gpx-mime"></script>
+  <script src="js/allrides.js?v=20261028-route-maps"></script>
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>
 </html>
