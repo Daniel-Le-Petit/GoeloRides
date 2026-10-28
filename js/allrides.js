@@ -28,6 +28,7 @@
   var loadingRides = false;
   var catalogueMaps = [];
   var catalogueObserver = null;
+  var deletingRideId = null;
 
   function getSb() {
     return window.goeloGetSb ? window.goeloGetSb() : null;
@@ -552,6 +553,10 @@
         '<a class="go-sc-btn go-sc-btn--accent" href="' + escapeAttr(ride.gpx_url) + '" download target="_blank" rel="noopener noreferrer">Télécharger le GPX</a>';
     }
 
+    if (canImportRide()) {
+      actions += '<button type="button" class="go-sc-btn ar-delete-btn" data-ar-delete="' + escapeHtml(id) + '"' + (deletingRideId !== null ? ' disabled' : '') + '>Supprimer</button>';
+    }
+
     return (
       '<li>' +
       '<article class="go-sc-card ar-ride-card' + (selected ? " is-selected" : "") + '" id="ride-' + escapeAttr(id) + '" style="animation-delay:' + (index * 45) + 'ms">' +
@@ -727,9 +732,54 @@
     }
   }
 
+  async function deleteRide(id) {
+    if (!canImportRide() || deletingRideId !== null) return;
+    var ride = state.rides.find(function (item) { return String(item.id) === id; });
+    if (!ride) return;
+    if (!window.confirm('Supprimer définitivement l’itinéraire « ' + (ride.title || 'sans titre') + ' » de la bibliothèque ?\n\nLe fichier GPX sera conservé pour les sorties qui l’utilisent déjà.')) return;
+    if (!canImportRide()) return;
+    var sb = getSb();
+    if (!sb) { toast('Connexion au serveur indisponible.'); return; }
+    deletingRideId = id;
+    document.querySelectorAll('[data-ar-delete]').forEach(function (button) { button.disabled = true; });
+    var card = document.getElementById('ride-' + id);
+    var previousError = card && card.querySelector('.ar-delete-error');
+    if (previousError) previousError.remove();
+    try {
+      var result = await sb.from('rides').delete().eq('id', id).select('id');
+      if (result.error) throw result.error;
+      if (!result.data || !result.data.some(function (row) { return String(row.id) === id; })) {
+        throw new Error('Le serveur n’a pas confirmé la suppression. Vérifie les droits de ton compte puis recharge la page.');
+      }
+      state.rides = state.rides.filter(function (item) { return String(item.id) !== id; });
+      deletingRideId = null;
+      render();
+      var focusTarget = document.querySelector('[data-ar-delete]') || document.getElementById('ar-min-km');
+      if (focusTarget) focusTarget.focus();
+      toast('Itinéraire supprimé de la bibliothèque.');
+    } catch (error) {
+      var message = String(error && error.code) === '23503'
+        ? 'Cet itinéraire est lié à une sortie et ne peut pas être supprimé.'
+        : 'Suppression impossible. ' + importErrorMessage(error, 'insert').replace('Enregistrement du parcours impossible. ', '');
+      card = document.getElementById('ride-' + id);
+      if (card) {
+        var alert = document.createElement('p');
+        alert.className = 'ar-delete-error';
+        alert.setAttribute('role', 'alert');
+        alert.textContent = message;
+        card.querySelector('.ar-ride-card__actions').appendChild(alert);
+      } else toast(message);
+    } finally {
+      deletingRideId = null;
+      document.querySelectorAll('[data-ar-delete]').forEach(function (button) { button.disabled = !canImportRide(); });
+    }
+  }
+
   function bindActions() {
     document.addEventListener('click', function (event) {
       if (event.target.closest('[data-ar-retry]')) fetchRides();
+      var removeButton = event.target.closest('[data-ar-delete]');
+      if (removeButton) deleteRide(removeButton.getAttribute('data-ar-delete'));
     });
   }
 
