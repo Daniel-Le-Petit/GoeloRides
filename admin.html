@@ -368,6 +368,8 @@
     }
     .act-feed__filter input { accent-color: var(--accent); }
 
+    #act-export-download[hidden] { display: none !important; }
+
     .act-analytics {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 240px;
@@ -754,6 +756,11 @@
       </div>
 
       <p class="act-feed-error" id="act-feed-error" hidden></p>
+      <div class="admin-activity-tools" aria-label="Export des activités">
+        <button class="btn-refresh" id="act-export-btn" type="button" style="min-height:44px">Exporter les activités en CSV</button>
+        <p id="act-export-status" class="admin-section__sub" role="status" aria-live="polite">Export pour analyser les visites et les inscriptions, y compris tes propres essais.</p>
+        <a class="btn-refresh" id="act-export-download" hidden style="min-height:44px;white-space:normal" download>Télécharger le CSV</a>
+      </div>
 
       <details class="admin-activity-details" id="admin-activity-details">
         <summary>Comprendre les inscriptions et les parcours visiteurs</summary>
@@ -832,7 +839,8 @@
 <script src="js/auth.js"></script>
 <script src="js/goelo-profile.js"></script>
 <script src="js/goelo-activity.js?v=20261028-participation-results"></script>
-<script src="js/goelo-admin-activity.js?v=20261028-participation-results"></script>
+<script src="js/goelo-activity-export.js?v=20261028-export"></script>
+<script src="js/goelo-admin-activity.js?v=20261028-export"></script>
 <script src="js/gestion-team-rider-admin.js"></script>
 <script src="goelo-swipe-nav.js" defer></script>
 

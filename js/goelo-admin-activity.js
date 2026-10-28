@@ -351,7 +351,78 @@
     }
   }
 
+  var _exportBusy = false;
+  var _exportUrl = null;
+
+  function canExportActivity() {
+    var auth = window.GoeloAuthState ? window.GoeloAuthState.getState() : {
+      role: window.GOELO_ROLE, user: window.GOELO_USER, pending: window.GOELO_AUTH_PENDING
+    };
+    return !auth.pending && auth.role === 'admin' && !!(auth.user && auth.user.id);
+  }
+
+  async function exportActivity() {
+    if (_exportBusy || !canExportActivity()) return;
+    var button = _$('act-export-btn');
+    var status = _$('act-export-status');
+    var link = _$('act-export-download');
+    var sb = window.goeloGetSb ? window.goeloGetSb() : null;
+    if (!sb || !window.GoeloActivityExport) {
+      status.textContent = 'Export indisponible. Recharge la page puis réessaie.';
+      return;
+    }
+    _exportBusy = true;
+    button.disabled = true;
+    link.hidden = true;
+    if (_exportUrl) URL.revokeObjectURL(_exportUrl);
+    _exportUrl = null;
+    status.textContent = 'Préparation du fichier…';
+    try {
+      var result;
+      var recentOnly = false;
+      try {
+        result = await window.GoeloActivityExport.collect(sb, function (count) {
+          status.textContent = count + ' activités récupérées…';
+        });
+        if (!result.rows.length && _allEvents.length) throw new Error('Historique inaccessible.');
+      } catch (error) {
+        // Certaines installations autorisent seulement la RPC du Dashboard.
+        // Ne jamais présenter ses 200 événements comme un historique complet.
+        var fallback = await window.GoeloActivity.fetchDashboard(sb, 200);
+        if (fallback.error) throw new Error('Lecture des activités refusée ou interrompue. Reconnecte-toi puis réessaie.');
+        result = { rows: fallback.events || [], partial: true };
+        recentOnly = true;
+      }
+      if (!canExportActivity()) throw new Error('Session modifiée. Reconnecte-toi pour exporter.');
+      if (!result.rows.length) {
+        status.textContent = 'Aucune activité disponible à exporter.';
+        return;
+      }
+      _exportUrl = URL.createObjectURL(new Blob([window.GoeloActivityExport.toCsv(result.rows)], { type: 'text/csv;charset=utf-8' }));
+      link.href = _exportUrl;
+      link.download = 'goelorides-activites-' + (result.partial ? 'partiel-' : '') + new Date().toISOString().slice(0, 10) + '.csv';
+      link.textContent = 'Télécharger le CSV (' + result.rows.length + ' activités)';
+      link.hidden = false;
+      var dates = result.rows.map(function (row) { return row.created_at; }).filter(Boolean).sort();
+      status.textContent = (recentOnly ? 'Export limité au flux récent du Dashboard (200 événements au maximum). ' : result.partial ? 'Export partiel : limite de 100 000 activités atteinte. ' : 'Toutes les activités accessibles ont été récupérées. ') +
+        (dates.length ? 'Du ' + fmtDateTime(dates[0]) + ' au ' + fmtDateTime(dates[dates.length - 1]) + '. ' : '') +
+        'Tes propres activités sont incluses, même si elles sont masquées à l’écran. Appuie sur le lien pour enregistrer le fichier dans Fichiers.';
+      link.focus();
+    } catch (error) {
+      status.textContent = error.message || 'Impossible de préparer le CSV. Réessaie.';
+    } finally {
+      _exportBusy = false;
+      button.disabled = !canExportActivity();
+    }
+  }
+
   function bindControls() {
+    var exportButton = _$('act-export-btn');
+    if (exportButton) exportButton.addEventListener('click', exportActivity);
+    var exportLink = _$('act-export-download');
+    if (exportLink) exportLink.addEventListener('click', function (event) {
+      if (!canExportActivity()) { event.preventDefault(); exportLink.hidden = true; }
+    });
     var hideOwn = _$('act-hide-own');
     if (hideOwn) hideOwn.addEventListener('change', function () {
       _hideOwn = hideOwn.checked;
