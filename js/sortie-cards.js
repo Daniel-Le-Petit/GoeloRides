@@ -254,6 +254,18 @@
     return buildTopActions(card, opts) + buildSecondaryActions(card, opts);
   }
 
+  function homeGroupDots(card, fallback) {
+    var label = String(card.group || '').toLowerCase();
+    var keys = ['blanc', 'vert', 'bleu', 'rouge'].filter(function (key) {
+      return new RegExp('\\b' + key + '(?:s|e|es)?\\b').test(label);
+    });
+    if (!keys.length && ['blanc', 'vert', 'bleu', 'rouge'].indexOf(card.groupKey) !== -1) keys.push(card.groupKey);
+    if (!keys.length) return escapeHtml(fallback);
+    var names = keys.map(function (key) { return key.charAt(0).toUpperCase() + key.slice(1); });
+    return '<span class="go-sc-group-dots" role="img" aria-label="' + escapeHtml('Groupe' + (keys.length > 1 ? 's ' : ' ') + names.join(', ')) + '" title="' + escapeHtml(names.join(' · ')) + '">' +
+      keys.map(function (key) { return '<span class="go-sc-group-dot go-sc-group-dot--' + key + '" aria-hidden="true"></span>'; }).join('') + '</span>';
+  }
+
   function buildCardHtml(card, opts) {
     opts = opts || {};
     var d = card.date;
@@ -306,7 +318,7 @@
                 (metaTime ? metaSep : "") +
                 weatherInlineHtml(card.weather) +
                 metaSep +
-                '<span class="go-sc-card__meta-group go-sc-card__meta-group--' + gk + '">' + escapeHtml(groupFull) + "</span>" +
+                '<span class="go-sc-card__meta-group go-sc-card__meta-group--' + gk + '">' + (opts.groupDots ? homeGroupDots(card, groupFull) : escapeHtml(groupFull)) + "</span>" +
                 statutBadge +
                 cancelBadge +
               "</div>" +

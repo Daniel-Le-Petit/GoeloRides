@@ -564,8 +564,8 @@ html.site-retheme {
 }
 
 .gr-upcoming .go-cal__head {
-  background: var(--gr-acid);
-  color: #0d1200;
+  background: #26371f;
+  color: #fff;
 }
 
 .gr-upcoming .go-cal__body {
@@ -594,13 +594,13 @@ html.site-retheme {
   color: var(--gr-acid);
 }
 
-/* Bouton Voir : texte blanc obligatoire */
+/* Bouton Voir : texte blanc sur fond sombre pour conserver le contraste. */
 .gr-upcoming .go-sc-btn--voir,
 .gr-upcoming .go-sc-btn--voir:link,
 .gr-upcoming .go-sc-btn--voir:visited {
-  color: #0d1200 !important;
+  color: #fff !important;
   border-color: var(--gr-acid, #C8F135);
-  background: var(--gr-acid, #C8F135);
+  background: #172113;
   min-width: 5.5rem;
   min-height: 2.35rem;
   padding: 0.55rem 1.35rem;
@@ -613,9 +613,9 @@ html.site-retheme {
 
 .gr-upcoming .go-sc-btn--voir:hover,
 .gr-upcoming .go-sc-btn--voir:focus-visible {
-  color: #0d1200 !important;
+  color: #fff !important;
   border-color: var(--gr-acid-hover, #b8e02a);
-  background: var(--gr-acid-hover, #b8e02a);
+  background: #26371f;
   box-shadow: 0 0 16px var(--gr-acid-glow, rgba(200, 241, 53, 0.35));
 }
 
@@ -2004,3 +2004,28 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
   }
 }
 
+
+/* Cartes d’accueil : texte blanc, groupes indiqués par des boules colorées. */
+.gr-upcoming .go-sc-card,
+.gr-upcoming .go-sc-card__title,
+.gr-upcoming .go-sc-card__meta-time,
+.gr-upcoming .go-sc-card__meta-group,
+.gr-upcoming .go-sc-wx,
+.gr-upcoming .go-sc-stat__label,
+.gr-upcoming .go-sc-stat__val,
+.gr-upcoming .go-sc-stat__num,
+.gr-upcoming .go-sc-stat__muted,
+.gr-upcoming .go-sc-stat__sport-icon,
+.gr-upcoming .go-sc-card__place,
+.gr-upcoming .go-sc-card__meet,
+.gr-upcoming .go-sc-card__rider,
+.gr-upcoming .go-sc-card__participants,
+.gr-upcoming .go-cal__wd,
+.gr-upcoming .go-sc-badge,
+.gr-upcoming .go-sc-btn { color: #fff !important; }
+.gr-upcoming .go-sc-group-dots { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+.gr-upcoming .go-sc-group-dot { display: inline-block; width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; border: 1px solid rgba(255,255,255,.4); box-shadow: inset 0 2px 2px rgba(255,255,255,.65), inset 0 -3px 5px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.45); }
+.gr-upcoming .go-sc-group-dot--blanc { background: radial-gradient(circle at 35% 25%, #fff, #f4f4f4 40%, #b9bdc5 100%); }
+.gr-upcoming .go-sc-group-dot--vert { background: radial-gradient(circle at 35% 25%, #7dff62, #10c900 45%, #087300 100%); }
+.gr-upcoming .go-sc-group-dot--bleu { background: radial-gradient(circle at 35% 25%, #6fc0ff, #0877eb 45%, #003c98 100%); }
+.gr-upcoming .go-sc-group-dot--rouge { background: radial-gradient(circle at 35% 25%, #ff9b91, #ef3022 45%, #9c120b 100%); }

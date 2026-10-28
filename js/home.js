@@ -331,6 +331,7 @@
 
     window.GoeloSortieCards.renderList(cards, root, {
       viewMode: "sorties",
+      groupDots: true,
       joinedRouteIds: upcomingState.joinedRouteIds,
       asList: true,
       emptyHtml: "",
