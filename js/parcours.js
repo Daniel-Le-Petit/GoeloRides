@@ -552,6 +552,19 @@
     return suffix ? String(val) + suffix : String(val);
   }
 
+  function displayDistance(val) {
+    if (val == null || String(val).trim() === '') return 'Non renseigné';
+    var km = Number(String(val).replace(',', '.'));
+    if (!Number.isFinite(km) || km < 0) return 'Non renseigné';
+    return km.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' km';
+  }
+
+  function displayTime(val) {
+    var time = String(val == null ? '' : val).trim();
+    var match = /^(\d{1,2})[:h](\d{2})(?::\d{2})?$/.exec(time);
+    return match ? match[1].padStart(2, '0') + 'h' + match[2] : displayMetric(val);
+  }
+
   function groupKeyFromLabel(group) {
     var g = String(group || "").toLowerCase();
     if (g.indexOf("blanc") >= 0) return "blanc";
@@ -683,10 +696,10 @@
     var sport = typeLabelFromSortie(sortie);
     setText("pd-metric-sport", "\uD83D\uDEB4 " + sport);
     setText("pd-metric-group", sortie.group || "Non renseigné");
-    setText("pd-km",           displayMetric(sortie.kmRaw, " km"));
+    setText("pd-km",           displayDistance(sortie.kmRaw));
     setText("pd-dplus",        displayMetric(sortie.dplusRaw, " m D+"));
-    setText("pd-meet",         displayMetric(sortie.meetTime));
-    setText("pd-start",        displayMetric(sortie.startTime));
+    setText("pd-meet",         displayTime(sortie.meetTime));
+    setText("pd-start",        displayTime(sortie.startTime));
     setText("pd-duration",     displayMetric(sortie.duration));
     setText("pd-place",        displayMetric(sortie.place));
 
