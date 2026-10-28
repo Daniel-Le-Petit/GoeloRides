@@ -1192,6 +1192,40 @@ function copyText(id) {
   navigator.clipboard.writeText(txt).then(() => showToast('Texte copié'));
 }
 
+async function loadReusableRide(rideId) {
+  const sb = await getSb();
+  const { data: ride, error } = await sb.from('rides').select('*').eq('id', rideId).single();
+  if (error || !ride) throw new Error('Itinéraire introuvable.');
+  let geometry = ride.geometry;
+  if (typeof geometry === 'string') {
+    try { geometry = JSON.parse(geometry); } catch (e) { geometry = null; }
+  }
+  const coordinates = geometry?.type === 'LineString' ? geometry.coordinates :
+    geometry?.type === 'MultiLineString' && Array.isArray(geometry.coordinates) ? geometry.coordinates.flat() : [];
+  const points = (Array.isArray(coordinates) ? coordinates : []).filter(point =>
+    Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]) &&
+    Math.abs(point[0]) <= 180 && Math.abs(point[1]) <= 90
+  ).map(point => [point[1], point[0], ...(Number.isFinite(point[2]) ? [point[2]] : [])]);
+  const description = document.createElement('div');
+  description.textContent = ride.description || '';
+  const minutes = Math.round(Number(ride.estimated_time_min));
+  const file = /^https?:\/\//i.test(ride.gpx_url || '') ? ride.gpx_url : '';
+  populateForm({ track_name: ride.title || '', front_config: {
+    rideDateIso: '', meetTime: '08:30', rideTime: '09:00',
+    description: description.innerHTML, visibility: 'draft', sortieStatus: 'brouillon',
+    stats: { totalKm: ride.distance_km, elevGainM: ride.elevation_gain },
+    estimatedDurationHm: minutes > 0 ? Math.floor(minutes / 60) + 'h' + String(Math.round(minutes % 60)).padStart(2, '0') : '',
+    embeddedPoints: points, file: file
+  }});
+  document.getElementById('gpx-msg').textContent = file ? '✓ Itinéraire et GPX repris' : '✓ Itinéraire repris';
+  const notice = document.getElementById('duplicate-notice');
+  if (notice) {
+    notice.textContent = 'Itinéraire repris : choisis une date, complète le lieu et le capitaine, puis enregistre ta nouvelle sortie.';
+    notice.hidden = false;
+  }
+  document.getElementById('date').focus();
+}
+
 async function loadRoute(routeId, duplicate = false) {
   const sb = await getSb();
 
@@ -1456,6 +1490,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
       const summary = document.getElementById('publication-errors');
       summary.textContent = 'Impossible de préparer la copie. Reviens à la liste des sorties pour réessayer.';
+      summary.hidden = false;
+      showToast(error.message || 'Chargement impossible', 'error');
+    }
+  }
+  if (window.mode === 'create' && params.get('ride')) {
+    const buttons = document.querySelectorAll('.action-bar button');
+    buttons.forEach(button => { button.disabled = true; });
+    try {
+      await loadReusableRide(params.get('ride'));
+      buttons.forEach(button => { button.disabled = false; });
+    } catch (error) {
+      const summary = document.getElementById('publication-errors');
+      summary.textContent = 'Impossible de charger cet itinéraire. Reviens à la bibliothèque pour réessayer.';
       summary.hidden = false;
       showToast(error.message || 'Chargement impossible', 'error');
     }

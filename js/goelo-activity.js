@@ -446,6 +446,7 @@
     var meta = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
     return {
       id: row.id,
+      actor_id: row.actor_id || row.user_id || meta.actor_id || null,
       event_type: type,
       icon: ICONS[type] || "•",
       label: label,
