@@ -2023,3 +2023,41 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
 .gr-upcoming .go-sc-group-dot--vert { background: radial-gradient(circle at 35% 25%, #7dff62, #10c900 45%, #087300 100%); }
 .gr-upcoming .go-sc-group-dot--bleu { background: radial-gradient(circle at 35% 25%, #6fc0ff, #0877eb 45%, #003c98 100%); }
 .gr-upcoming .go-sc-group-dot--rouge { background: radial-gradient(circle at 35% 25%, #ff9b91, #ef3022 45%, #9c120b 100%); }
+
+/* Actions de gestion : même format, accents sobres et intention distincte. */
+.gr-upcoming .go-sc-card__actions--secondary .go-sc-btn {
+  min-height: 44px;
+  padding: .55rem .9rem;
+  background: #1b211e;
+  border: 1px solid #68756c;
+  color: #edf2ee !important;
+  box-shadow: none;
+  font-weight: 600;
+  text-decoration: none;
+}
+.gr-upcoming .go-sc-card__actions--secondary .go-sc-btn:hover {
+  background: #303b33;
+  border-color: #a0b1a5;
+}
+.gr-upcoming .go-sc-card__actions--secondary a[href*="mode=edit"] {
+  color: #d5ed91 !important;
+  background: #242d1b;
+  border-color: #829c4d;
+}
+.gr-upcoming .go-sc-card__actions--secondary a[href*="mode=edit"]:hover {
+  background: #354426;
+  border-color: #c8f135;
+}
+.gr-upcoming .go-sc-card__actions--secondary .go-sc-btn--danger {
+  color: #ffc0b8 !important;
+  background: #302021;
+  border-color: #ac6663;
+}
+.gr-upcoming .go-sc-card__actions--secondary .go-sc-btn--danger:hover {
+  background: #48282a;
+  border-color: #ed9a92;
+}
+.gr-upcoming .go-sc-card__actions--secondary .go-sc-btn:focus-visible {
+  outline: 2px solid #f0f5ed;
+  outline-offset: 3px;
+}
