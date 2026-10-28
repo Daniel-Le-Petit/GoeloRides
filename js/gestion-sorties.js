@@ -1358,7 +1358,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('nav-username').textContent = label;
 
       var capEl = document.getElementById('capitaine');
-      if (capEl && window.mode !== 'edit' && !capEl.value.trim()) {
+      if (capEl && window.mode !== 'edit' && !capEl.value.trim() && label && label !== '?' && label !== 'Utilisateur') {
         capEl.value = label;
       }
     }

@@ -165,7 +165,8 @@ body {
 .gpx-zone__btn:hover { background: var(--border); }
 .gpx-file-input { display: none; }
 
-/* ── GPX IMPORT ── */ display: none; margin-top: 1rem; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r); overflow: hidden; }
+/* ── GPX IMPORT ── */
+.gpx-status { display: none; margin-top: 1rem; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r); overflow: hidden; }
 .gpx-status.visible { display: block; }
 .gpx-status__bar { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
 .gpx-status__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
