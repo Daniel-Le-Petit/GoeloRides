@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="site-retheme.css">
-  <link rel="stylesheet" href="css/pages/home.css?v=20260801-multi-1">
+  <link rel="stylesheet" href="css/pages/home.css?v=20261028-admin-create">
   <style>
     :root {
       --ocean: #0d1820;
@@ -4415,6 +4415,10 @@
       <img src="assets/goeloRidesHomePage.jpg" alt="Cyclistes sur une route de la côte du Goëlo" width="1920" height="1080" loading="eager" fetchpriority="high" decoding="async">
     </div>
     <div class="gr-hero-content">
+      <nav class="gr-home-admin-actions" data-home-admin-actions aria-label="Actions administrateur" hidden>
+        <span class="gr-home-admin-actions__label">Admin</span>
+        <a href="gestion-sorties.html?mode=create" class="gr-home-admin-actions__create"><span aria-hidden="true">＋</span> Créer une sortie</a>
+      </nav>
       <h1 class="gr-hero-headline">
         Des sorties vélo de route<br>
         <span class="gr-hero-headline-accent">conviviales dans le Goëlo</span>
@@ -4895,6 +4899,7 @@
   <script src="js/auth.js"></script>
   <script src="js/goelo-profile.js"></script>
   <script src="js/goelo-ui.js"></script>
+  <script src="js/home-admin-actions.js"></script>
   <script src="js/goelo-navbar.js"></script>
   <script src="js/signup-participants.js"></script>
   <script src="js/goelo-activity.js"></script>
