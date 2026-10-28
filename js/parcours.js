@@ -357,6 +357,17 @@
   /* =========================================================
      BIND BUTTON — attaché une seule fois via dataset.bound
   ========================================================= */
+  function startParticipationAttempt() {
+    try {
+      return window.GoeloActivity && window.GoeloActivity.beginParticipationAttempt
+        ? window.GoeloActivity.beginParticipationAttempt(sortie) : null;
+    } catch (error) { return null; }
+  }
+
+  function finishParticipationAttempt(attempt, result) {
+    try { if (attempt) attempt.finish(result); } catch (error) { /* Suivi indépendant de l’inscription. */ }
+  }
+
   function bindJoin() {
     var btn = getJoinButton();
     if (!btn) return;
@@ -367,16 +378,12 @@
       if (_joinBusy) return;
       btn = getJoinButton() || btn;
 
+      var attempt = btn.getAttribute('data-auth-pending') === '1' || btn.getAttribute('data-joined') === '0'
+        ? startParticipationAttempt() : null;
+
       /* Visiteur → ouvrir modale auth */
       if (btn.getAttribute("data-auth-pending") === "1") {
-        if (window.GoeloActivity && sortie) {
-          window.GoeloActivity.logEvent(
-            null,
-            window.GoeloActivity.EVENT_TYPES.RIDE_PARTICIPATE_CLICKED,
-            { route_id: sortie.id, route_title: sortie.title },
-            { route_id: sortie.id, route_title: sortie.title }
-          );
-        }
+        finishParticipationAttempt(attempt, 'auth_required');
         if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
         return;
       }
@@ -388,22 +395,12 @@
         var user = await getUser();
         if (!user) {
           /* Session expirée entre le render et le clic */
+          finishParticipationAttempt(attempt, 'auth_required');
           if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
           return;
         }
 
         if (!sortie || !sortie.id) throw new Error("Identifiant sortie manquant");
-
-        if (btn.getAttribute("data-joined") === "0") {
-          if (window.GoeloActivity) {
-            window.GoeloActivity.logEvent(
-              null,
-              window.GoeloActivity.EVENT_TYPES.RIDE_PARTICIPATE_CLICKED,
-              { route_id: sortie.id, route_title: sortie.title },
-              { route_id: sortie.id, route_title: sortie.title }
-            );
-          }
-        }
 
         var res = normalizeTogglePayload(await toggleSignup(sortie.id));
         console.log("[JOIN] RPC response", res);
@@ -419,10 +416,13 @@
           throw new Error((res && res.error) ? String(res.error) : "Réponse toggle_signup invalide");
         }
 
+        // Le résultat serveur est observé avant les rafraîchissements visuels.
+        finishParticipationAttempt(attempt, res);
         /* added ET removed sont tous les deux valides — jamais "sans action" pour removed */
         await applyToggleResponseToUI(res);
 
       } catch (err) {
+        finishParticipationAttempt(attempt, 'error');
         console.error("[JOIN]", err);
         await renderJoin(); /* rollback UI sur l'état réel DB */
       } finally {

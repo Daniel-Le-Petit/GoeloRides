@@ -118,7 +118,7 @@
       return '<div><strong>' + step.count + '</strong><span>' + step.label + '</span></div>';
     }).join('') + '</div>' +
       '<p class="act-observation-note">' + _sessions.length + ' parcours observés · derniers 200 événements chargés.</p><details class="act-measurement-note"><summary>Comment lire ces chiffres ?</summary><p>Chaque compteur indique les parcours où une étape a été observée. Un parcours n’est pas un visiteur unique : les passages d’un même navigateur sont séparés après 30 minutes d’inactivité. Les données peuvent être partielles. Un clic ne prouve pas une inscription, et une absence de confirmation ne prouve pas un abandon.</p></details>' +
-      (unlinked ? '<p class="act-observation-note act-observation-note--warning">' + unlinked + ' confirmation' + (unlinked > 1 ? 's d’inscription ne sont pas reliées' : ' d’inscription n’est pas reliée') + ' à un parcours. ' + (unlinked > 1 ? 'Leur origine reste inconnue.' : 'Son origine reste inconnue.') + '</p><button type="button" class="act-visit-detail-btn" data-act-show-signups>Voir les inscriptions des membres</button>' : '');
+      (unlinked ? '<p class="act-observation-note act-observation-note--warning">' + unlinked + ' confirmation' + (unlinked > 1 ? 's d’inscription ne sont pas reliées' : ' d’inscription n’est pas reliée') + ' à un parcours. ' + (unlinked > 1 ? 'Leur origine reste inconnue.' : 'Son origine reste inconnue.') + ' Ces traces peuvent concerner des inscriptions déjà visibles dans les compteurs ; ne les additionne pas.</p><button type="button" class="act-visit-detail-btn" data-act-show-signups>Voir les inscriptions des membres</button>' : '');
   }
 
   function renderSessionDetail(session) {
@@ -152,12 +152,13 @@
       var progress = GA.registrationProgress(session);
       return _journeyFilter === 'all' || (_journeyFilter === 'confirmed' && progress.confirmed) ||
         (_journeyFilter === 'clicked' && progress.clicked && !progress.confirmed) ||
+        (_journeyFilter === 'error' && progress.hasError) || (_journeyFilter === 'auth' && progress.authRequested) ||
         (_journeyFilter === 'viewed' && progress.viewed && !progress.clicked && !progress.confirmed);
     });
     var pageCount = Math.max(1, Math.ceil(filtered.length / JOURNEYS_PER_PAGE));
     _journeyPage = Math.min(_journeyPage, pageCount - 1);
     var shown = filtered.slice(_journeyPage * JOURNEYS_PER_PAGE, (_journeyPage + 1) * JOURNEYS_PER_PAGE);
-    var options = [ ['all', 'Tous les parcours'], ['confirmed', 'Avec une inscription confirmée'], ['clicked', 'Clic sans confirmation observée'], ['viewed', 'Consultation sans clic observé'] ];
+    var options = [ ['all', 'Tous les parcours'], ['confirmed', 'Avec une inscription confirmée'], ['clicked', 'Clic sans confirmation observée'], ['viewed', 'Consultation sans clic observé'], ['error', 'Erreur de réponse après le clic'], ['auth', 'Connexion demandée après le clic'] ];
     panel.innerHTML = registrationOverviewHtml() +
       '<label class="act-journey-filter" for="act-journey-filter">Parcours à afficher<select id="act-journey-filter">' + options.map(function (option) {
         return '<option value="' + option[0] + '"' + (_journeyFilter === option[0] ? ' selected' : '') + '>' + option[1] + '</option>';
@@ -220,7 +221,7 @@
     ];
     var types = (categories.filter(function (category) { return category[0] === _memberCategory; })[0] || categories[0])[2];
     var filtered = events.filter(function (event) {
-      return (!_memberId || memberKey(event) === _memberId) && (_memberCategory === 'all' || types.indexOf(event.event_type) !== -1);
+      return (!_memberId || memberKey(event) === _memberId) && (_memberCategory === 'all' || types.indexOf(event.event_type) !== -1 || (_memberCategory === 'alerts' && GA.participationOutcome(event) === 'error'));
     });
     var pages = Math.max(1, Math.ceil(filtered.length / 8));
     _memberPage = Math.min(_memberPage, pages - 1);
