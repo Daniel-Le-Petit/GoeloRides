@@ -99,6 +99,8 @@
 
   <!-- FORM -->
   <main class="form-main" id="form-main">
+    <p class="publication-hint">Le titre et la date sont obligatoires pour publier. Tu peux enregistrer un brouillon incomplet.</p>
+    <p class="publication-errors" id="publication-errors" role="alert" hidden></p>
 
     <!-- S1 — INFOS GÉNÉRALES -->
     <section class="section" id="s1">
@@ -134,8 +136,9 @@
       </div>
 
       <div class="field">
-        <label class="field__label" for="titre">Titre de la sortie</label>
-        <input class="field__input" type="text" id="titre" placeholder="Ex : Route des Falaises" maxlength="80">
+        <label class="field__label" for="titre">Titre de la sortie <span class="publication-required">(obligatoire)</span></label>
+        <input class="field__input" type="text" id="titre" placeholder="Ex : Route des Falaises" maxlength="80" required aria-describedby="titre-error">
+        <p class="publication-field-error" id="titre-error" hidden></p>
       </div>
 
       <div class="field">
@@ -160,8 +163,9 @@
 
       <div class="field-row">
         <div class="field">
-          <label class="field__label" for="date">Date</label>
-          <input class="field__input" type="date" id="date">
+          <label class="field__label" for="date">Date <span class="publication-required">(obligatoire)</span></label>
+          <input class="field__input" type="date" id="date" required aria-describedby="date-error">
+          <p class="publication-field-error" id="date-error" hidden></p>
         </div>
         <div class="field">
           <label class="field__label" for="heure-rdv">Heure de rendez-vous</label>
