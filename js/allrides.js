@@ -210,7 +210,10 @@
   async function uploadGpxFile(sb, file, userId) {
     var unique = window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).slice(2);
     var path = userId + '/' + unique + '_' + sanitizeGpxFilename(file.name);
-    var upload = await sb.storage.from(GPX_BUCKET).upload(path, file, {
+    // Supabase envoie les Blob/File en multipart : le type de la pièce jointe
+    // vient du Blob lui-même, même si contentType est renseigné dans les options.
+    var gpxBody = new Blob([file], { type: 'application/gpx+xml' });
+    var upload = await sb.storage.from(GPX_BUCKET).upload(path, gpxBody, {
       contentType: 'application/gpx+xml',
       upsert: false
     });
