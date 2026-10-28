@@ -111,3 +111,143 @@ test('l’identité des anciens événements est conservée quand le serveur la 
   assert.equal(formatted.actor_id, 'member-id');
   assert.equal(GA.sessionUserLabel({ items: [formatted] }), 'Camille');
 });
+
+function signupFlow(options = {}) {
+  const GA = activity();
+  const records = [];
+  const calls = { rpc: 0, applied: 0, rollback: 0, login: 0 };
+  GA.logEvent = (_, type, metadata) => {
+    if (options.logThrows) throw new Error('suivi indisponible');
+    if (options.logRejects) return Promise.reject(new Error('suivi indisponible'));
+    records.push({ event_type: type, metadata: JSON.parse(JSON.stringify(metadata)) });
+  };
+  const button = {
+    dataset: {}, disabled: false,
+    getAttribute: name => name === 'data-auth-pending' ? (options.anonymous ? '1' : '0') : (options.cancel ? '1' : '0'),
+    addEventListener: (_, handler) => { button.click = handler; }
+  };
+  const context = {
+    window: { GoeloActivity: GA, openGoeloAuth: () => { calls.login++; } },
+    console: { log() {}, warn() {}, error() {} },
+    sortie: { id: 'route-demo', title: 'Boucle des falaises' },
+    _joinBusy: false,
+    getJoinButton: () => button,
+    getUser: async () => options.expired ? null : { id: 'user-demo' },
+    toggleSignup: async () => {
+      calls.rpc++;
+      if (options.networkError) throw new Error('connexion interrompue');
+      return options.payload || { ok: true, action: 'added', joined: true, waitlist: false };
+    },
+    normalizeTogglePayload: value => value,
+    isRpcOk: value => !!(value && [true, 'true', 1].includes(value.ok)),
+    applyToggleResponseToUI: async () => { calls.applied++; if (options.uiError) throw new Error('rafraîchissement interrompu'); },
+    renderJoin: async () => { calls.rollback++; }
+  };
+  const source = fs.readFileSync(path.resolve(__dirname, '../../../js/parcours.js'), 'utf8');
+  const start = source.indexOf('  function startParticipationAttempt()');
+  const end = source.indexOf('\n  /* =========================================================\n     PARTICIPANTS', start);
+  assert(start !== -1 && end !== -1);
+  vm.runInNewContext(source.slice(start, end), context);
+  context.bindJoin();
+  return { GA, button, records, calls, context };
+}
+
+test('le clic et son succès serveur sont reliés, sans ajouter une seconde inscription métier', async () => {
+  const flow = signupFlow();
+  await flow.button.click();
+  assert.equal(flow.calls.rpc, 1);
+  assert.equal(flow.calls.applied, 1);
+  assert.equal(flow.records.length, 2);
+  assert.equal(flow.records[0].metadata.participation_attempt_id, flow.records[1].metadata.participation_attempt_id);
+  assert.equal(flow.records.every(record => record.event_type === 'RIDE_PARTICIPATE_CLICKED'), true);
+  assert.equal(flow.GA.registrationProgress({ items: flow.records }).confirmed, true);
+  assert.equal(flow.GA.sessionActionCount(flow.records), 1);
+  assert.equal(flow.GA.sessionActionCount(flow.records.slice(1)), 1);
+});
+
+test('la réponse serveur de liste d’attente ne confirme pas une place', async () => {
+  const flow = signupFlow({ payload: { ok: true, action: 'added', joined: false, waitlist: true } });
+  await flow.button.click();
+  const progress = flow.GA.registrationProgress({ items: flow.records });
+  assert.equal(progress.status, 'waiting');
+  assert.equal(progress.confirmed, false);
+  assert.equal(flow.calls.applied, 1);
+});
+
+test('une connexion demandée reste distincte d’une inscription, même si la session expire', async () => {
+  for (const options of [{ anonymous: true }, { expired: true }]) {
+    const flow = signupFlow(options);
+    await flow.button.click();
+    assert.equal(flow.calls.rpc, 0);
+    assert.equal(flow.calls.login, 1);
+    assert.equal(flow.GA.registrationProgress({ items: flow.records }).status, 'auth');
+    assert.equal(flow.context._joinBusy, false);
+  }
+});
+
+test('une réponse refusée ou interrompue est indiquée sans conclure à un abandon', async () => {
+  for (const options of [{ payload: { ok: false, error: 'forbidden' } }, { networkError: true }]) {
+    const flow = signupFlow(options);
+    await flow.button.click();
+    const progress = flow.GA.registrationProgress({ items: flow.records });
+    assert.equal(progress.status, 'error');
+    assert.equal(progress.confirmed, false);
+    assert.equal(flow.calls.applied, 0);
+    assert.equal(flow.calls.rollback, 1);
+    assert.equal(flow.button.disabled, false);
+  }
+});
+
+test('une désinscription et la réponse legacy already_registered ne deviennent pas des inscriptions', async () => {
+  const cancel = signupFlow({ cancel: true, payload: { ok: true, action: 'removed', joined: false } });
+  await cancel.button.click();
+  assert.equal(cancel.records.length, 0);
+  assert.equal(cancel.calls.applied, 1);
+  const legacy = signupFlow({ payload: { ok: false, error: 'already_registered' } });
+  await legacy.button.click();
+  assert.equal(legacy.records[1].metadata.participation_result, 'removed');
+  assert.equal(legacy.GA.registrationProgress({ items: legacy.records }).confirmed, false);
+});
+
+test('un échec de suivi ou de rafraîchissement visuel ne change pas le résultat serveur', async () => {
+  for (const options of [{ logThrows: true }, { logRejects: true }]) {
+    const flow = signupFlow(options);
+    await flow.button.click();
+    assert.equal(flow.calls.rpc, 1);
+    assert.equal(flow.calls.applied, 1);
+    assert.equal(flow.calls.rollback, 0);
+  }
+  const flow = signupFlow({ uiError: true });
+  await flow.button.click();
+  assert.equal(flow.records.length, 2);
+  assert.equal(flow.records[1].metadata.participation_result, 'joined');
+  assert.equal(flow.GA.registrationProgress({ items: flow.records }).confirmed, true);
+});
+
+test('un double appui ne déclenche qu’une tentative et un appel d’inscription', async () => {
+  const flow = signupFlow();
+  await Promise.all([flow.button.click(), flow.button.click()]);
+  assert.equal(flow.calls.rpc, 1);
+  assert.equal(flow.records.length, 2);
+  assert.equal(flow.context._joinBusy, false);
+});
+
+test('les réponses incomplètes et les métadonnées non corrélées ne deviennent pas des confirmations', () => {
+  const GA = activity();
+  assert.equal(GA.classifyParticipationResult({ ok: true, action: 'added' }), 'unknown');
+  assert.equal(GA.classifyParticipationResult({ ok: false, joined: true }), 'error');
+  const uncorrelated = event('RIDE_PARTICIPATE_CLICKED', 0, 'browser-a', { metadata: { participation_phase: 'result', participation_result: 'joined' } });
+  assert.equal(GA.registrationProgress({ items: [uncorrelated] }).confirmed, false);
+});
+
+test('un parcours réussi conserve la trace d’une connexion ou d’une erreur précédente', () => {
+  const GA = activity();
+  const outcomes = ['auth_required', 'error', 'joined'].map((result, minute) => event('RIDE_PARTICIPATE_CLICKED', minute, 'browser-a', {
+    metadata: { participation_attempt_id: 'attempt-' + minute, participation_phase: 'result', participation_result: result }
+  }));
+  const progress = GA.registrationProgress({ items: outcomes });
+  assert.equal(progress.confirmed, true);
+  assert.equal(progress.status, 'confirmed');
+  assert.equal(progress.hasError, true);
+  assert.equal(progress.authRequested, true);
+});

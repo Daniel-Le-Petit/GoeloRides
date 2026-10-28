@@ -54,6 +54,8 @@ body.admin-dashboard { padding-top: 0; }
 .act-visit-status { display: inline-flex; padding: 0.35rem 0.55rem; border-radius: 7px; color: var(--text); border: 1px solid var(--border); font-size: 0.72rem; line-height: 1.4; }
 .act-visit-status--confirmed { color: #bbf7d0; border-color: #43694b; background: rgba(134,239,172,0.08); }
 .act-visit-status--clicked { color: #fde68a; border-color: #756339; background: rgba(252,211,77,0.06); }
+.act-visit-status--error { color: #fecaca; border-color: #854b4b; background: rgba(248,113,113,0.06); }
+.act-visit-status--auth { color: #bfdbfe; border-color: #48678d; background: rgba(96,165,250,0.06); }
 .act-visit-card__summary { font-size: 0.85rem; line-height: 1.6; margin-bottom: 0.8rem; }
 .act-visit-card__routes { color: var(--muted); font-size: 0.78rem; line-height: 1.5; margin-bottom: 0.8rem; overflow-wrap: anywhere; }
 .act-visit-steps { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.8rem; }

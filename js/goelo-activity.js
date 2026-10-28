@@ -212,6 +212,12 @@
 
   function journeyStepLabel(ev) {
     if (!ev) return null;
+    var outcome = participationOutcome(ev);
+    if (outcome) return {
+      joined: 'Inscription à une sortie confirmée', waiting: 'Demande en liste d’attente',
+      auth_required: 'Connexion demandée', error: 'Erreur de réponse après le clic',
+      removed: 'Désinscription prise en compte', unknown: 'Résultat non détaillé'
+    }[outcome];
     var type = ev.event_type || "";
     if (isScrollDepthEvent(type)) return null;
     if (JOURNEY_STEP_LABELS[type]) return JOURNEY_STEP_LABELS[type];
@@ -245,7 +251,11 @@
   }
 
   function sessionActionCount(items) {
+    var requests = new Set((items || []).filter(function (event) {
+      return event.event_type === 'RIDE_PARTICIPATE_CLICKED' && (event.metadata || {}).participation_phase === 'request';
+    }).map(function (event) { return event.metadata.participation_attempt_id; }).filter(Boolean));
     return (items || []).filter(function (ev) {
+      if (participationOutcome(ev) && requests.has((ev.metadata || {}).participation_attempt_id)) return false;
       return !isScrollDepthEvent(ev.event_type) && !/_FOOTER_VIEWED$/.test(ev.event_type);
     }).length;
   }
@@ -281,12 +291,14 @@
       return ['UPCOMING_RIDE_CARD_CLICKED', 'UPCOMING_RIDE_VIEW_CLICKED', 'RIDE_VIEWED', 'PAGE_PARCOURS_VIEWED', 'RIDE_INFO_OPENED'].indexOf(type) !== -1;
     });
     var clicked = types.indexOf('RIDE_PARTICIPATE_CLICKED') !== -1 || types.indexOf('UPCOMING_RIDE_JOIN_CLICKED') !== -1;
+    var outcomes = items.map(participationOutcome).filter(Boolean);
+    var lastOutcome = outcomes[outcomes.length - 1];
     var waiting = items.some(function (event) {
       return event.event_type === 'RIDE_JOINED' && ['waiting', 'waitlist'].indexOf((event.metadata || {}).status) !== -1;
-    });
+    }) || outcomes.indexOf('waiting') !== -1;
     var confirmed = items.some(function (event) {
       return event.event_type === 'RIDE_JOINED' && ['waiting', 'waitlist'].indexOf((event.metadata || {}).status) === -1;
-    });
+    }) || outcomes.indexOf('joined') !== -1;
     var accountCreated = types.indexOf('USER_REGISTERED') !== -1;
     var routes = [];
     var steps = [];
@@ -297,18 +309,20 @@
       var label = journeyStepLabel(event);
       if (label && steps[steps.length - 1] !== label) steps.push(label);
     });
-    var status = confirmed ? 'confirmed' : waiting ? 'waiting' : clicked ? 'clicked' : viewed ? 'viewed' : accountCreated ? 'account' : 'browsing';
-    var labels = { confirmed: 'Inscription observée', waiting: 'Liste d’attente observée', clicked: 'Clic sans confirmation', viewed: 'Sortie consultée', account: 'Compte créé', browsing: 'Navigation' };
+    var status = confirmed ? 'confirmed' : waiting ? 'waiting' : lastOutcome === 'error' ? 'error' : lastOutcome === 'auth_required' ? 'auth' : clicked ? 'clicked' : viewed ? 'viewed' : accountCreated ? 'account' : 'browsing';
+    var labels = { confirmed: 'Inscription observée', waiting: 'Liste d’attente observée', error: 'Erreur de réponse', auth: 'Connexion demandée', clicked: 'Clic sans confirmation', viewed: 'Sortie consultée', account: 'Compte créé', browsing: 'Navigation' };
     var descriptions = {
       confirmed: 'Une inscription à une sortie est confirmée dans ce parcours.',
       waiting: 'Une demande en liste d’attente est observée. Cela ne confirme pas une place dans la sortie.',
+      error: 'Une erreur de réponse est observée après le clic. Le résultat de cette tentative n’est pas confirmé dans les données chargées.',
+      auth: 'Le clic a ouvert la connexion. Aucune inscription à une sortie n’est encore confirmée dans ce parcours.',
       clicked: 'Un clic de participation est enregistré, sans confirmation d’inscription reliée à ce parcours.',
       viewed: 'Une sortie a été consultée, sans clic de participation observé.',
       account: 'Un compte a été créé. Aucune inscription à une sortie n’est observée dans ce parcours.',
       browsing: 'Des actions sur le site sont enregistrées, sans consultation de sortie observée.'
     };
     if (confirmed && types.indexOf('RIDE_LEFT') !== -1) descriptions.confirmed = 'Une inscription et une désinscription sont observées dans ce parcours. Consulte le détail pour voir les sorties concernées.';
-    return { viewed: viewed, clicked: clicked, confirmed: confirmed, status: status, label: labels[status], description: descriptions[status], steps: steps, routes: routes };
+    return { viewed: viewed, clicked: clicked, confirmed: confirmed, hasError: outcomes.indexOf('error') !== -1, authRequested: outcomes.indexOf('auth_required') !== -1, status: status, label: labels[status], description: descriptions[status], steps: steps, routes: routes };
   }
 
   function analyzeScenarios(sessions) {
@@ -400,6 +414,7 @@
   function detailTimelineLabel(ev) {
     if (ev.synthetic) return ev.label;
     if (isScrollDepthEvent(ev.event_type)) return null;
+    if (participationOutcome(ev)) return 'Résultat du clic : ' + journeyStepLabel(ev);
     if (ev.event_type === 'RIDE_JOINED' && ['waiting', 'waitlist'].indexOf((ev.metadata || {}).status) !== -1) return 'Demande en liste d’attente';
     var step = journeyStepLabel(ev);
     if (step) {
@@ -642,6 +657,42 @@
     return { refresh: refresh };
   }
 
+  function participationOutcome(event) {
+    var meta = event.metadata || {};
+    if (event.event_type !== 'RIDE_PARTICIPATE_CLICKED' || meta.participation_phase !== 'result' || !meta.participation_attempt_id) return '';
+    return ['joined', 'waiting', 'auth_required', 'error', 'removed', 'unknown'].indexOf(meta.participation_result) !== -1 ? meta.participation_result : '';
+  }
+
+  function classifyParticipationResult(payload) {
+    if (!payload || [true, 'true', 1].indexOf(payload.ok) === -1) return 'error';
+    var action = String(payload.action || '').toLowerCase();
+    if (action === 'removed' || action === 'unjoined') return 'removed';
+    if ([true, 'true', 1].indexOf(payload.waitlist) !== -1 || ['waiting', 'waitlist'].indexOf(payload.status) !== -1) return 'waiting';
+    if ([true, 'true', 1].indexOf(payload.joined) !== -1 || ['joined', 'active'].indexOf(payload.status) !== -1) return 'joined';
+    return 'unknown';
+  }
+
+  function beginParticipationAttempt(route) {
+    if (!route || !route.id) return null;
+    var id = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    var metadata = { route_id: route.id, route_title: route.title, participation_attempt_id: id };
+    var finished = false;
+    function emit(phase, outcome) {
+      try {
+        var result = global.GoeloActivity.logEvent(null, EVENT_TYPES.RIDE_PARTICIPATE_CLICKED,
+          Object.assign({}, metadata, { participation_phase: phase }, outcome ? { participation_result: outcome } : {}),
+          { route_id: route.id, route_title: route.title });
+        Promise.resolve(result).catch(function () {});
+      } catch (error) { /* Le suivi ne doit jamais bloquer la participation. */ }
+    }
+    emit('request');
+    return { finish: function (result) {
+      if (finished) return;
+      finished = true;
+      emit('result', typeof result === 'string' ? result : classifyParticipationResult(result));
+    } };
+  }
+
   async function logEvent(sb, eventType, metadata, extras) {
     sb = sb || resolveSb();
     if (!eventType) return null;
@@ -749,6 +800,9 @@
     detailTimelineLabel: detailTimelineLabel,
     sessionUserLabel: sessionUserLabel,
     registrationProgress: registrationProgress,
+    participationOutcome: participationOutcome,
+    classifyParticipationResult: classifyParticipationResult,
+    beginParticipationAttempt: beginParticipationAttempt,
     sessionActionCount: sessionActionCount,
     isScrollDepthEvent: isScrollDepthEvent,
     FUNNEL_STEPS: FUNNEL_STEPS,
