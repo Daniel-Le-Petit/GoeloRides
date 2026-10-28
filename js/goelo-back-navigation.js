@@ -14,6 +14,7 @@
       'new-gestion-sorties.html': 'team-rider.html',
       'team-rider-info.html': 'team-rider.html',
       'admin-cyclistes.html': 'admin.html',
+      'admin-approbations.html': 'admin.html',
       'admin-sondages.html': 'admin.html',
       'community-manager.html': 'admin.html',
       'cyclistes.html': 'admin.html',

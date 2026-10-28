@@ -668,7 +668,10 @@
     }
   </style>
 <link rel="stylesheet" href="css/components/back-navigation.css">
-<link rel="stylesheet" href="css/pages/admin-dashboard.css">
+<link rel="stylesheet" href="css/pages/admin-dashboard.css?v=20261028-registration">
+<script>
+  if (window.location.hash === '#gtr-approvals') window.location.replace('admin-approbations.html');
+</script>
 </head>
 <body class="admin-dashboard">
 
@@ -678,7 +681,7 @@
   <span class="topbar-crown">👑 ADMIN</span>
   <nav class="topbar-nav" aria-label="Sections admin">
     <a href="#act-dashboard" class="is-active">Activité</a>
-    <a href="#gtr-approvals">Approbations</a>
+    <a href="admin-approbations.html">Approbations</a>
     <a href="admin-cyclistes.html">Cyclistes</a>
     <a href="admin-sondages.html">Sondages</a>
     <a href="allrides.html">Itinéraires</a>
@@ -708,13 +711,12 @@
     <!-- En-tête page -->
     <div class="page-header">
       <h1 class="page-title">Administration <span>GoëloRides</span></h1>
-      <p class="page-sub">Tes raccourcis, les demandes à traiter et l’essentiel du site.</p>
+      <p class="page-sub">Tes raccourcis et le suivi de l’activité du site.</p>
     </div>
 
     <nav class="admin-quicklinks" aria-label="Actions rapides">
       <a href="gestion-sorties.html?mode=create"><strong>＋ Créer une sortie</strong><span>Préparer le prochain rendez-vous</span></a>
       <a href="allrides.html"><strong>Itinéraires</strong><span>Retrouver les parcours réutilisables</span></a>
-      <a href="#gtr-approvals"><strong>Demandes Ride Leaders</strong><span>Voir les demandes à traiter</span></a>
       <a href="admin-sondages.html"><strong>Sondages</strong><span>Consulter les réponses</span></a>
     </nav>
 
@@ -754,7 +756,7 @@
       <p class="act-feed-error" id="act-feed-error" hidden></p>
 
       <details class="admin-activity-details" id="admin-activity-details">
-        <summary>Consulter l’activité des visiteurs</summary>
+        <summary>Comprendre les inscriptions et les parcours visiteurs</summary>
         <div class="admin-activity-tools">
           <label class="admin-own-filter"><input type="checkbox" id="act-hide-own" checked> Masquer mes activités</label>
           <p id="act-visible-count" aria-live="polite"></p>
@@ -771,17 +773,20 @@
       <div class="act-analytics">
         <div class="act-analytics__main">
           <nav class="act-tabs" role="tablist" aria-label="Analyses visiteurs">
-            <button type="button" class="act-tab is-active" data-act-tab="journeys" aria-selected="true">
-              Parcours visiteurs
+            <button type="button" class="act-tab is-active" id="act-tab-journeys" role="tab" aria-controls="act-analytics-panel" tabindex="0" data-act-tab="journeys" aria-selected="true">
+              Vers l’inscription
             </button>
-            <button type="button" class="act-tab" data-act-tab="scenarios" aria-selected="false">
-              Scénarios utilisateurs
+            <button type="button" class="act-tab" id="act-tab-members" role="tab" aria-controls="act-analytics-panel" tabindex="-1" data-act-tab="members" aria-selected="false">
+              Activité des membres
             </button>
-            <button type="button" class="act-tab" data-act-tab="funnel" aria-selected="false">
-              Funnel global
+            <button type="button" class="act-tab" id="act-tab-scenarios" role="tab" aria-controls="act-analytics-panel" tabindex="-1" data-act-tab="scenarios" aria-selected="false">
+              Parcours fréquents
+            </button>
+            <button type="button" class="act-tab" id="act-tab-funnel" role="tab" aria-controls="act-analytics-panel" tabindex="-1" data-act-tab="funnel" aria-selected="false">
+              Étapes observées
             </button>
           </nav>
-          <div id="act-analytics-panel">
+          <div id="act-analytics-panel" role="tabpanel" aria-labelledby="act-tab-journeys">
             <div class="gtr-loading">
               <div class="gtr-loading__dot"></div>
               <div class="gtr-loading__dot"></div>
@@ -807,60 +812,7 @@
       </details>
     </section>
 
-    <hr class="admin-divider">
 
-    <!-- Team Rider approvals -->
-    <section class="admin-section" id="gtr-approvals">
-      <div class="admin-section__head">
-        <div>
-          <h2 class="admin-section__title">Demandes <span>Ride Leaders</span></h2>
-          <p class="admin-section__sub">Approbations et refus</p>
-        </div>
-      </div>
-
-    <!-- Stats -->
-    <div class="stats-bar">
-      <div class="stat-card">
-        <div class="stat-card__label">Total</div>
-        <div class="stat-card__value" id="stat-total">—</div>
-      </div>
-      <div class="stat-card stat-card--pending">
-        <div class="stat-card__label">En attente</div>
-        <div class="stat-card__value" id="stat-pending">—</div>
-      </div>
-      <div class="stat-card stat-card--approved">
-        <div class="stat-card__label">Approuvées</div>
-        <div class="stat-card__value" id="stat-approved">—</div>
-      </div>
-      <div class="stat-card stat-card--refused">
-        <div class="stat-card__label">Refusées</div>
-        <div class="stat-card__value" id="stat-refused">—</div>
-      </div>
-    </div>
-
-    <!-- Toolbar : tabs + refresh -->
-    <div class="toolbar">
-      <div class="tabs">
-        <button class="gtr-tab is-active" data-filter="all">Toutes</button>
-        <button class="gtr-tab" data-filter="pending">En attente</button>
-        <button class="gtr-tab" data-filter="approved">Approuvées</button>
-        <button class="gtr-tab" data-filter="refused">Refusées</button>
-      </div>
-      <button class="btn-refresh" id="btn-refresh">
-        <span class="btn-refresh__icon">↻</span> Actualiser
-      </button>
-    </div>
-
-    <!-- Liste -->
-    <div id="gtr-demands-list">
-      <div class="gtr-loading">
-        <div class="gtr-loading__dot"></div>
-        <div class="gtr-loading__dot"></div>
-        <div class="gtr-loading__dot"></div>
-      </div>
-    </div>
-
-    </section><!-- /#gtr-approvals -->
 
   </div><!-- /.page -->
 </div><!-- /#gtr-admin-panel -->
@@ -879,7 +831,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/goelo-profile.js"></script>
-<script src="js/goelo-approve-demande.js"></script>
 <script src="js/goelo-activity.js"></script>
 <script src="js/goelo-admin-activity.js"></script>
 <script src="js/gestion-team-rider-admin.js"></script>

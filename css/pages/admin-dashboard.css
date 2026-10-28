@@ -6,7 +6,7 @@ body.admin-dashboard { padding-top: 0; }
 .admin-dashboard .topbar-nav a { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
 .admin-dashboard .page { padding-top: 1.25rem; }
 .admin-dashboard .page-header { margin-bottom: 1.25rem; }
-.admin-quicklinks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+.admin-quicklinks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
 .admin-quicklinks a { display: flex; flex-direction: column; justify-content: center; gap: 0.4rem; min-height: 88px; padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); text-decoration: none; }
 .admin-quicklinks strong { color: var(--accent); font-size: 0.9rem; }
 .admin-quicklinks span { color: var(--muted); font-size: 0.75rem; line-height: 1.4; }
@@ -26,6 +26,7 @@ body.admin-dashboard { padding-top: 0; }
 .admin-dashboard #gtr-approvals { scroll-margin-top: 160px; }
 @media (max-width: 800px) {
   .admin-quicklinks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-quicklinks a:last-child { grid-column: 1 / -1; }
   .admin-dashboard .act-stats, .admin-dashboard .stats-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-activity-details .act-analytics { grid-template-columns: minmax(0, 1fr); }
   .admin-dashboard .page-title { font-size: 1.8rem; }
@@ -33,4 +34,53 @@ body.admin-dashboard { padding-top: 0; }
 @media (max-width: 400px) {
   .admin-dashboard .topbar-crown { display: none; }
   .admin-quicklinks a { padding: 0.75rem; }
+}
+
+/* Parcours lisibles, orientés vers la participation à une sortie. */
+.act-registration-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin-bottom: 0.75rem; }
+.act-registration-overview > div { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.85rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; }
+.act-registration-overview strong { color: var(--accent); font-size: 1.5rem; }
+.act-registration-overview span { color: var(--text); font-size: 0.78rem; line-height: 1.4; }
+.act-observation-note { color: var(--muted); font-size: 0.78rem; line-height: 1.6; margin-bottom: 1rem; }
+.act-observation-note--warning { padding: 0.75rem; border-left: 3px solid var(--yellow); background: rgba(252,211,77,0.05); }
+.act-journey-filter { display: flex; flex-direction: column; gap: 0.4rem; margin: 1rem 0; color: var(--muted); font-size: 0.78rem; }
+.act-journey-filter select { width: 100%; min-width: 0; min-height: 44px; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface2); font: inherit; }
+.act-visit-list { display: grid; gap: 0.8rem; }
+.act-visit-card { min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 1rem; background: var(--surface2); }
+.act-visit-card.is-selected { border-color: var(--accent); }
+.act-visit-card__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.85rem; }
+.act-visit-card__head h3 { font-size: 0.95rem; margin-bottom: 0.35rem; overflow-wrap: anywhere; }
+.act-visit-card__head p { color: var(--muted); font-size: 0.74rem; line-height: 1.5; }
+.act-visit-status { display: inline-flex; padding: 0.35rem 0.55rem; border-radius: 7px; color: var(--text); border: 1px solid var(--border); font-size: 0.72rem; line-height: 1.4; }
+.act-visit-status--confirmed { color: #bbf7d0; border-color: #43694b; background: rgba(134,239,172,0.08); }
+.act-visit-status--clicked { color: #fde68a; border-color: #756339; background: rgba(252,211,77,0.06); }
+.act-visit-card__summary { font-size: 0.85rem; line-height: 1.6; margin-bottom: 0.8rem; }
+.act-visit-card__routes { color: var(--muted); font-size: 0.78rem; line-height: 1.5; margin-bottom: 0.8rem; overflow-wrap: anywhere; }
+.act-visit-steps { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.8rem; }
+.act-visit-steps li { max-width: 100%; padding: 0.35rem 0.5rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 0.73rem; line-height: 1.5; overflow-wrap: anywhere; }
+.act-visit-steps li + li::before { content: '→ '; color: var(--accent); }
+.act-visit-detail-btn, .act-visit-pagination button { min-height: 44px; padding: 0.6rem 0.7rem; color: var(--accent); background: transparent; border: 1px solid var(--border); border-radius: 8px; font: 600 0.78rem/1.4 var(--font-body); cursor: pointer; }
+.act-visit-detail-btn:focus-visible, .act-visit-pagination button:focus-visible, .act-journey-filter select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.act-visit-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.act-visit-pagination span { color: var(--muted); font-size: 0.72rem; }
+.act-visit-pagination button:disabled { cursor: default; opacity: 0.4; }
+.admin-activity-details .act-analytics--no-alerts { grid-template-columns: minmax(0, 1fr); }
+.act-ticker[hidden] { display: none; }
+.act-session-detail { scroll-margin-top: 160px; }
+.act-session-detail__event small { display: block; margin-top: 0.25rem; color: var(--muted); }
+.act-technical { margin-top: 1rem; color: var(--muted); overflow-wrap: anywhere; font-size: 0.75rem; line-height: 1.6; }
+.act-technical summary { padding: 0.6rem; font-size: 0.75rem; }
+.act-technical ul { list-style: none; padding: 0.5rem; }
+.act-registration-title { font-size: 1rem; margin-bottom: 1rem; }
+.act-measurement-note { color: var(--muted); font-size: 0.75rem; line-height: 1.6; margin-bottom: 0.8rem; }
+.admin-activity-details .act-measurement-note summary { min-height: 44px; padding: 0.5rem 0; border: 0; font-size: 0.75rem; }
+.act-member-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+@media (max-width: 600px) {
+  .admin-activity-details .act-analytics { padding: 0 0.6rem 0.6rem; }
+  .admin-activity-details .act-analytics__main { background: transparent; border: 0; padding: 0.4rem; }
+  .act-registration-overview { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
+  .act-registration-overview > div { flex-direction: row; align-items: center; gap: 0.75rem; padding: 0.6rem 0.8rem; }
+  .act-registration-overview strong { min-width: 1.5rem; text-align: center; }
+  .act-visit-card { padding: 0.8rem; }
+  .act-member-filters { grid-template-columns: minmax(0, 1fr); }
 }

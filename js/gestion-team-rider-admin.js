@@ -143,6 +143,7 @@
   /* ── Fetch all demands ───────────────────────────────────── */
   async function loadDemands() {
     var list = document.getElementById("gtr-demands-list");
+    if (!list) return;
     if (list) {
       list.innerHTML =
         "<div class=\"gtr-loading\">" +
