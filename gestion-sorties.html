@@ -470,8 +470,8 @@
   <div class="action-bar__spacer"></div>
   <button class="btn btn--ghost btn--sm" onclick="duplicateSortie()">⧉ Dupliquer</button>
   <button class="btn btn--danger btn--sm" onclick="document.getElementById('confirm-cancel').classList.add('open')">✕ Annuler</button>
-  <button class="btn btn--ghost" onclick="saveDraft()">Enregistrer brouillon</button>
-  <button class="btn btn--accent" onclick="publishSortie()">🚀 Publier la sortie</button>
+  <button class="btn btn--ghost action-bar__primary" onclick="saveDraft()" aria-label="Enregistrer le brouillon"><span class="action-bar__full-label">Enregistrer brouillon</span><span class="action-bar__short-label">Brouillon</span></button>
+  <button class="btn btn--accent action-bar__primary" onclick="publishSortie()" aria-label="Publier la sortie"><span class="action-bar__full-label">🚀 Publier la sortie</span><span class="action-bar__short-label">🚀 Publier</span></button>
 </div>
 
 <!-- CONFIRM ANNULATION -->
