@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -141,8 +141,19 @@
     }
 
     .ar-ride-card {
-      align-items: stretch;
+      display: flex; flex-direction: row; flex-wrap: wrap;
+      align-items: stretch; gap: 1rem; padding: 1rem;
+      min-height: 0; background: var(--surface, #1a1a1a);
     }
+    .ar-ride-card .go-sc-card__title { color: var(--text); font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .ar-description { color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 0.75rem; overflow-wrap: anywhere; }
+    .go-sc-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+    .go-sc-metrics__label, .go-sc-metrics__val { display: block; }
+    .go-sc-metrics__label { font-size: 0.7rem; color: var(--muted); margin-bottom: 0.2rem; }
+    .go-sc-metrics__val { font-size: 0.9rem; }
+    .ar-ride-card .go-sc-btn, .ar-filters input { min-height: 44px; }
+    #ar-create-btn[hidden], #ar-gpx-selected[hidden] { display: none; }
+
 
     .ar-ride-card.is-selected {
       border-color: rgba(200, 241, 53, 0.55);
@@ -287,6 +298,14 @@
       }
     }
   </style>
+<link rel="stylesheet" href="css/components/back-navigation.css">
+<style>
+  @media (max-width: 600px) {
+    .ar-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
+    .ar-filters .ar-filter { min-width: 0; width: auto; }
+    .ar-filters .ar-filter--toggle, .ar-filters .ar-count { grid-column: 1 / -1; }
+  }
+</style>
 </head>
 <body>
 
@@ -316,20 +335,20 @@
 
     <div class="ar-filters" role="toolbar" aria-label="Filtres itinéraires">
       <div class="ar-filter">
-        <label for="ar-min-km">Min distance (km)</label>
-        <input type="number" id="ar-min-km" min="0" step="0.1" placeholder="Any">
+        <label for="ar-min-km">Distance min. (km)</label>
+        <input type="number" id="ar-min-km" min="0" step="0.1" placeholder="Tous">
       </div>
       <div class="ar-filter">
-        <label for="ar-max-km">Max distance (km)</label>
-        <input type="number" id="ar-max-km" min="0" step="0.1" placeholder="Any">
+        <label for="ar-max-km">Distance max. (km)</label>
+        <input type="number" id="ar-max-km" min="0" step="0.1" placeholder="Tous">
       </div>
       <div class="ar-filter">
-        <label for="ar-min-elev">Min elevation (m)</label>
-        <input type="number" id="ar-min-elev" min="0" step="1" placeholder="Any">
+        <label for="ar-min-elev">Dénivelé min. (m)</label>
+        <input type="number" id="ar-min-elev" min="0" step="1" placeholder="Tous">
       </div>
       <div class="ar-filter ar-filter--toggle">
         <input type="checkbox" id="ar-gpx-only">
-        <label for="ar-gpx-only">GPX available only</label>
+        <label for="ar-gpx-only">Avec un fichier GPX</label>
       </div>
       <p class="ar-count" id="ar-count" aria-live="polite"></p>
     </div>
@@ -401,7 +420,9 @@
 
   <script src="js/goelo-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/goelo-auth-state.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/allrides.js"></script>
+<script src="js/goelo-back-navigation.js" defer></script>
 </body>
 </html>

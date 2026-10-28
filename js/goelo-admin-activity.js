@@ -10,6 +10,7 @@
   var _allEvents = [];
   var _activeTab = "journeys";
   var _selectedSessionId = null;
+  var _hideOwn = true;
 
   function _$(id) { return document.getElementById(id); }
 
@@ -222,6 +223,37 @@
     else renderJourneys();
   }
 
+  function renderFilteredActivity() {
+    var user = window.GOELO_USER;
+    var ownId = user && user.id;
+    var ownName = String(window.GOELO_DISPLAY_NAME || '').trim().toLowerCase();
+    function isOwn(event) {
+      var meta = event.metadata || {};
+      var actor = event.actor_id || meta.actor_id || meta.user_id;
+      if (actor) return !!ownId && String(actor) === String(ownId);
+      var name = String(event.actor_pseudo || meta.actor_pseudo || '').trim().toLowerCase();
+      return !!ownName && ownName !== '?' && name === ownName;
+    }
+    function sessionId(event) {
+      return event.visitor_session_id || (event.metadata || {}).visitor_session_id;
+    }
+    var ownSessions = new Set(_allEvents.filter(isOwn).map(sessionId).filter(Boolean));
+    var events = _hideOwn ? _allEvents.filter(function (event) {
+      return !isOwn(event) && !ownSessions.has(sessionId(event));
+    }) : _allEvents;
+    _sessions = window.GoeloActivity.buildVisitorSessions(events);
+    if (_selectedSessionId && !sessionById(_selectedSessionId)) {
+      _selectedSessionId = null;
+      var detail = _$('act-session-detail');
+      if (detail) detail.hidden = true;
+    }
+    var count = _$('act-visible-count');
+    if (count) count.textContent = events.length + ' activités affichées' +
+      (_hideOwn ? ' · ' + (_allEvents.length - events.length) + ' masquées' : '');
+    renderTicker(events);
+    renderActiveTab();
+  }
+
   function setActiveTab(tab) {
     _activeTab = tab || "journeys";
     document.querySelectorAll("[data-act-tab]").forEach(function (btn) {
@@ -242,9 +274,7 @@
 
     renderStats(data.stats);
     _allEvents = data.events || [];
-    _sessions = GA.buildVisitorSessions(_allEvents);
-    renderTicker(_allEvents);
-    renderActiveTab();
+    renderFilteredActivity();
 
     if (data.error) {
       var errEl = _$("act-feed-error");
@@ -259,6 +289,11 @@
   }
 
   function bindControls() {
+    var hideOwn = _$('act-hide-own');
+    if (hideOwn) hideOwn.addEventListener('change', function () {
+      _hideOwn = hideOwn.checked;
+      renderFilteredActivity();
+    });
     var refreshBtn = _$("act-refresh-btn");
     if (refreshBtn) {
       refreshBtn.addEventListener("click", function () { loadActivity(); });

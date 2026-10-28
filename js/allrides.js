@@ -18,6 +18,7 @@
   };
 
   var GPX_BUCKET = "rides-gpx";
+  var loadingRides = false;
 
   function getSb() {
     return window.goeloGetSb ? window.goeloGetSb() : null;
@@ -291,6 +292,11 @@
 
     window.addEventListener("goelo:role-ready", syncCreateButton);
     window.addEventListener("goelo:auth-success", syncCreateButton);
+    window.addEventListener("goelo:auth-state", function () {
+      syncCreateButton();
+      if (state.rides.length) render();
+      else fetchRides();
+    });
     syncCreateButton();
   }
 
@@ -373,7 +379,7 @@
     if (!coords || coords.length < 2) {
       return (
         '<div class="ar-map-preview" aria-hidden="true">' +
-        '<span class="ar-map-placeholder__label">Track</span></div>'
+        '<span class="ar-map-placeholder__label">Tracé</span></div>'
       );
     }
 
@@ -385,7 +391,7 @@
       lats.push(pt[1]);
     });
     if (lats.length < 2) {
-      return '<div class="ar-map-preview" aria-hidden="true"><span class="ar-map-placeholder__label">Track</span></div>';
+      return '<div class="ar-map-preview" aria-hidden="true"><span class="ar-map-placeholder__label">Tracé</span></div>';
     }
 
     var minLat = Math.min.apply(null, lats);
@@ -423,7 +429,7 @@
         (withGeometry ? geometryPreviewSvg(ride) : "") +
         '<span class="ar-map-placeholder__icon" aria-hidden="true">🗺</span>' +
         '<span class="ar-map-placeholder__label">' +
-          (withGeometry ? "Preview" : "Map") +
+          (withGeometry ? "Aperçu" : "Parcours") +
         "</span>" +
       "</div>"
     );
@@ -434,13 +440,13 @@
     var title = ride.title || "Itinéraire sans titre";
     var selected = state.selectedId && String(state.selectedId) === id;
 
-    var actions =
-      '<button type="button" class="go-sc-btn go-sc-btn--primary" data-ar-use="' + escapeAttr(id) + '">Utiliser cet itinéraire</button>' +
-      '<a class="go-sc-btn go-sc-btn--ghost" href="allrides.html?id=' + encodeURIComponent(id) + '#ride-' + escapeAttr(id) + '">View</a>';
+    var actions = canCreateRide()
+      ? '<a class="go-sc-btn go-sc-btn--primary" href="gestion-sorties.html?mode=create&amp;ride=' + encodeURIComponent(id) + '">Créer une sortie</a>'
+      : '';
 
     if (hasGpx(ride)) {
       actions +=
-        '<a class="go-sc-btn go-sc-btn--accent" href="' + escapeAttr(ride.gpx_url) + '" download target="_blank" rel="noopener noreferrer">Download GPX</a>';
+        '<a class="go-sc-btn go-sc-btn--accent" href="' + escapeAttr(ride.gpx_url) + '" download target="_blank" rel="noopener noreferrer">Télécharger le GPX</a>';
     }
 
     return (
@@ -451,15 +457,16 @@
           '<div class="go-sc-card__title-row">' +
             '<h2 class="go-sc-card__title">' + escapeHtml(title) + "</h2>" +
           "</div>" +
+          (ride.description ? '<p class="ar-description">' + escapeHtml(ride.description) + '</p>' : '') +
           '<div class="go-sc-metrics">' +
             '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Distance</span>' +
             '<span class="go-sc-metrics__val">' + escapeHtml(fmtKm(ride.distance_km)) + "</span></div>" +
-            '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Elevation</span>' +
+            '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Dénivelé</span>' +
             '<span class="go-sc-metrics__val">' + escapeHtml(fmtElevation(ride.elevation_gain)) + "</span></div>" +
-            '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Duration</span>' +
+            '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">Durée</span>' +
             '<span class="go-sc-metrics__val">' + escapeHtml(fmtDuration(ride.estimated_time_min)) + "</span></div>" +
             '<div class="go-sc-metrics__cell"><span class="go-sc-metrics__label">GPX</span>' +
-            '<span class="go-sc-metrics__val">' + (hasGpx(ride) ? "Yes" : "—") + "</span></div>" +
+            '<span class="go-sc-metrics__val">' + (hasGpx(ride) ? "Disponible" : "—") + "</span></div>" +
           "</div>" +
         "</div>" +
         '<div class="ar-ride-card__actions">' + actions + "</div>" +
@@ -503,29 +510,6 @@
       "</ul>";
   }
 
-  function storeSelectedRide(ride) {
-    try {
-      sessionStorage.setItem("selectedRide", JSON.stringify(ride));
-      state.selectedId = ride.id;
-      render();
-      toast('« ' + (ride.title || "Itinéraire") + ' » enregistré pour ta prochaine sortie');
-    } catch (err) {
-      console.error("[allrides] sessionStorage:", err);
-      toast("Impossible d'enregistrer la sélection");
-    }
-  }
-
-  function restoreSelectedFromStorage() {
-    try {
-      var raw = sessionStorage.getItem("selectedRide");
-      if (!raw) return;
-      var ride = JSON.parse(raw);
-      if (ride && ride.id != null) state.selectedId = ride.id;
-    } catch (e) {
-      void e;
-    }
-  }
-
   function scrollToRideFromUrl() {
     var id = new URLSearchParams(location.search).get("id");
     if (!id) return;
@@ -538,34 +522,34 @@
   }
 
   async function fetchRides() {
+    if (loadingRides) return;
     var host = document.getElementById("ar-rides-list");
     var sb = getSb();
-
-    if (!sb) {
-      if (host) {
-        host.innerHTML = '<p class="go-sc-empty" style="color:var(--red,#f87171)">Supabase client unavailable.</p>';
-      }
-      return;
-    }
-
-    var result = await sb
+    loadingRides = true;
+    try {
+      if (!sb) throw new Error('Connexion au catalogue indisponible.');
+      if (host) host.innerHTML = '<p class="go-sc-empty">Chargement des itinéraires…</p>';
+      var result = await sb
       .from("rides")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (result.error) {
-      console.error("[allrides] fetch:", result.error.message);
-      if (host) {
-        host.innerHTML =
-          '<p class="go-sc-empty" style="color:var(--red,#f87171)">Error: ' +
-          escapeHtml(result.error.message) + "</p>";
-      }
-      return;
-    }
+      if (result.error) throw result.error;
 
-    state.rides = result.data || [];
+    state.rides = (result.data || []).map(function (ride) {
+      if (typeof ride.geometry === 'string') {
+        try { ride.geometry = JSON.parse(ride.geometry); } catch (e) { ride.geometry = null; }
+      }
+      if (ride.gpx_url && !/^https?:\/\//i.test(ride.gpx_url)) ride.gpx_url = null;
+      return ride;
+    });
     render();
     scrollToRideFromUrl();
+    } catch (error) {
+      if (host) host.innerHTML = '<p class="go-sc-empty" role="alert">Impossible de charger les itinéraires. Réessaie dans un instant.</p><button type="button" class="go-sc-btn go-sc-btn--ghost" data-ar-retry>Réessayer</button>';
+    } finally {
+      loadingRides = false;
+    }
   }
 
   function bindFilters() {
@@ -589,19 +573,12 @@
   }
 
   function bindActions() {
-    document.addEventListener("click", function (e) {
-      var btn = e.target.closest("[data-ar-use]");
-      if (!btn) return;
-      e.preventDefault();
-      var id = btn.getAttribute("data-ar-use");
-      var ride = state.rides.find(function (r) { return String(r.id) === String(id); });
-      if (!ride) return;
-      storeSelectedRide(ride);
+    document.addEventListener('click', function (event) {
+      if (event.target.closest('[data-ar-retry]')) fetchRides();
     });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    restoreSelectedFromStorage();
     bindFilters();
     bindActions();
     bindCreateRide();

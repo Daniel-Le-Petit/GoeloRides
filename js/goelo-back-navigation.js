@@ -12,7 +12,12 @@
       'parcours.html': 'sorties.html',
       'gestion-sorties.html': 'team-rider.html',
       'new-gestion-sorties.html': 'team-rider.html',
-      'team-rider-info.html': 'team-rider.html'
+      'team-rider-info.html': 'team-rider.html',
+      'admin-cyclistes.html': 'admin.html',
+      'admin-sondages.html': 'admin.html',
+      'community-manager.html': 'admin.html',
+      'cyclistes.html': 'admin.html',
+      'allrides.html': 'sorties.html'
     };
     var fallback = fallbacks[page] || 'index.html';
     var canGoBack = false;

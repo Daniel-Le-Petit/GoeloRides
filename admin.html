@@ -667,8 +667,10 @@
       }
     }
   </style>
+<link rel="stylesheet" href="css/components/back-navigation.css">
+<link rel="stylesheet" href="css/pages/admin-dashboard.css">
 </head>
-<body>
+<body class="admin-dashboard">
 
 <!-- TOPBAR -->
 <header class="topbar">
@@ -705,25 +707,25 @@
 
     <!-- En-tête page -->
     <div class="page-header">
-      <h1 class="page-title">Dashboard <span>Admin</span></h1>
-      <p class="page-sub">Activité plateforme · demandes Ride Leaders · accès itinéraires</p>
+      <h1 class="page-title">Administration <span>GoëloRides</span></h1>
+      <p class="page-sub">Tes raccourcis, les demandes à traiter et l’essentiel du site.</p>
     </div>
+
+    <nav class="admin-quicklinks" aria-label="Actions rapides">
+      <a href="gestion-sorties.html?mode=create"><strong>＋ Créer une sortie</strong><span>Préparer le prochain rendez-vous</span></a>
+      <a href="allrides.html"><strong>Itinéraires</strong><span>Retrouver les parcours réutilisables</span></a>
+      <a href="#gtr-approvals"><strong>Demandes Ride Leaders</strong><span>Voir les demandes à traiter</span></a>
+      <a href="admin-sondages.html"><strong>Sondages</strong><span>Consulter les réponses</span></a>
+    </nav>
 
     <!-- Activity dashboard -->
     <section class="admin-section" id="act-dashboard">
       <div class="admin-section__head">
         <div>
-          <h2 class="admin-section__title">Analyse <span>visiteurs</span></h2>
-          <p class="admin-section__sub">Parcours, scénarios et funnel — données activity_events (200 derniers événements)</p>
+          <h2 class="admin-section__title">Vue <span>d’ensemble</span></h2>
+          <p class="admin-section__sub">Les chiffres clés du site. Les analyses détaillées sont disponibles ci-dessous.</p>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn-refresh" id="act-refresh-btn" type="button">
-            <span class="btn-refresh__icon">↻</span> Actualiser
-          </button>
-          <button class="btn-refresh" id="act-cleanup-btn" type="button" style="border-color: var(--red); color: var(--red);">
-            <span>🗑️</span> Nettoyer les activités
-          </button>
-        </div>
+
       </div>
 
       <div class="act-stats">
@@ -751,6 +753,21 @@
 
       <p class="act-feed-error" id="act-feed-error" hidden></p>
 
+      <details class="admin-activity-details" id="admin-activity-details">
+        <summary>Consulter l’activité des visiteurs</summary>
+        <div class="admin-activity-tools">
+          <label class="admin-own-filter"><input type="checkbox" id="act-hide-own" checked> Masquer mes activités</label>
+          <p id="act-visible-count" aria-live="polite"></p>
+          <p class="admin-section__sub">Ce filtre masque tes sessions dans les analyses ci-dessous. Les chiffres clés restent les totaux du site.</p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-refresh" id="act-refresh-btn" type="button">
+            <span class="btn-refresh__icon">↻</span> Actualiser
+          </button>
+          <button class="btn-refresh" id="act-cleanup-btn" type="button" style="border-color: var(--red); color: var(--red);">
+            <span>🗑️</span> Nettoyer les activités
+          </button>
+        </div>
+        </div>
       <div class="act-analytics">
         <div class="act-analytics__main">
           <nav class="act-tabs" role="tablist" aria-label="Analyses visiteurs">
@@ -787,6 +804,7 @@
           </div>
         </aside>
       </div>
+      </details>
     </section>
 
     <hr class="admin-divider">
@@ -867,5 +885,6 @@
 <script src="js/gestion-team-rider-admin.js"></script>
 <script src="goelo-swipe-nav.js" defer></script>
 
+<script src="js/goelo-back-navigation.js" defer></script>
 </body>
 </html>
