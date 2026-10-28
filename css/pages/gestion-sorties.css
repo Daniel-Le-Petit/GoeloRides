@@ -274,6 +274,14 @@ body {
 .action-bar__dot.saved { background: var(--success); }
 .action-bar__short-label { display: none; }
 
+/* Aide à la publication : messages persistants près des champs. */
+.publication-hint { color: var(--muted); font-size: 0.82rem; line-height: 1.5; margin-bottom: 1rem; }
+.publication-errors { color: var(--text); background: rgba(239,68,68,0.08); border: 1px solid var(--danger); border-radius: var(--r-sm); padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.5; }
+.field__label .publication-required { color: var(--muted); font-size: 0.72rem; text-transform: none; letter-spacing: 0; }
+.field__input[aria-invalid="true"] { border-color: var(--danger); }
+.field__input { scroll-margin-top: calc(var(--nav-h) + 1rem); }
+.publication-field-error { color: #ff9292; font-size: 0.8rem; line-height: 1.4; margin-top: 0.4rem; }
+
 /* ── STATUS BADGE ── */
 .status-pill { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 99px; }
 .status-pill--draft  { background: rgba(88,88,88,0.2); color: var(--muted); border: 1px solid var(--border-2); }

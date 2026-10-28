@@ -178,10 +178,58 @@ function readGpxStats() {
   return { km, dplus, duree };
 }
 
+/* Les brouillons restent libres ; ces champs sont requis pour publier. */
+const PUBLICATION_FIELDS = [
+  { id: 'titre', label: 'le titre', message: 'Indique un titre pour cette sortie.' },
+  { id: 'date', label: 'la date', message: 'Choisis une date valide pour cette sortie.' }
+];
+
+function checkPublicationField(field) {
+  const input = document.getElementById(field.id);
+  const error = document.getElementById(field.id + '-error');
+  const valid = !!input.value.trim() && input.validity.valid;
+  if (valid) input.removeAttribute('aria-invalid');
+  else input.setAttribute('aria-invalid', 'true');
+  if (error) {
+    error.textContent = valid ? '' : field.message;
+    error.hidden = valid;
+  }
+  return valid;
+}
+
+function updatePublicationSummary() {
+  const summary = document.getElementById('publication-errors');
+  if (!summary) return;
+  const missing = PUBLICATION_FIELDS.filter(field =>
+    document.getElementById(field.id).getAttribute('aria-invalid') === 'true'
+  );
+  summary.hidden = missing.length === 0;
+  summary.textContent = missing.length
+    ? 'Avant de publier, complète ou corrige ' + missing.map(field => field.label).join(' et ') + '.'
+    : '';
+}
+
+PUBLICATION_FIELDS.forEach(field => {
+  const input = document.getElementById(field.id);
+  input.addEventListener('input', () => {
+    if (input.getAttribute('aria-invalid') !== 'true') return;
+    checkPublicationField(field);
+    updatePublicationSummary();
+  });
+});
+
+function validatePublication() {
+  const missing = PUBLICATION_FIELDS.filter(field => !checkPublicationField(field));
+  updatePublicationSummary();
+  if (missing.length) {
+    document.getElementById(missing[0].id).focus();
+    return false;
+  }
+  return true;
+}
+
 async function publishSortie() {
-  const titre = document.getElementById('titre').value.trim();
-  const date  = document.getElementById('date').value;
-  if (!titre || !date) { showToast('Titre et date requis pour publier', 'error'); return; }
+  if (!validatePublication()) return;
   try {
     const sb = await getSb();
     const payload = buildPayload('publiee');
