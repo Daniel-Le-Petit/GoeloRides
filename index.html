@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="app-chrome.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="site-retheme.css">
-  <link rel="stylesheet" href="css/pages/home.css?v=20261028-admin-create">
+  <link rel="stylesheet" href="css/pages/home.css?v=20261028-home-actions">
   <style>
     :root {
       --ocean: #0d1820;
@@ -4415,10 +4415,6 @@
       <img src="assets/goeloRidesHomePage.jpg" alt="Cyclistes sur une route de la côte du Goëlo" width="1920" height="1080" loading="eager" fetchpriority="high" decoding="async">
     </div>
     <div class="gr-hero-content">
-      <nav class="gr-home-admin-actions" data-home-admin-actions aria-label="Actions administrateur" hidden>
-        <span class="gr-home-admin-actions__label">Admin</span>
-        <a href="gestion-sorties.html?mode=create" class="gr-home-admin-actions__create"><span aria-hidden="true">＋</span> Créer une sortie</a>
-      </nav>
       <h1 class="gr-hero-headline">
         Des sorties vélo de route<br>
         <span class="gr-hero-headline-accent">conviviales dans le Goëlo</span>
@@ -4478,12 +4474,13 @@
           hidden
         ></div>
       </aside>
-      <div class="gr-hero-ctas">
+      <div class="gr-hero-ctas" data-home-actions>
         <a href="sorties.html" class="gr-btn gr-btn--ghost" onclick="trackEvent('view_race_list', 'homepage_cta');">
           Voir les sorties
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
         </a>
-        <a class="gr-btn gr-btn--ghost" data-goelo-tr-cta data-goelo-auth-trigger onclick="trackEvent('join_race', 'team_rider_cta');">
+        <a href="gestion-sorties.html?mode=create" class="gr-btn gr-btn--ghost gr-home-create" data-home-admin-actions hidden><span aria-hidden="true">＋</span> Créer une sortie</a>
+        <a class="gr-btn gr-btn--ghost gr-home-member" data-goelo-tr-cta data-goelo-auth-trigger onclick="trackEvent('join_race', 'team_rider_cta');">
           Espace membres
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
         </a>

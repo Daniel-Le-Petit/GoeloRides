@@ -4,11 +4,13 @@
 
   function init() {
     var actions = document.querySelector('[data-home-admin-actions]');
+    var group = document.querySelector('[data-home-actions]');
     var auth = window.GoeloAuthState;
     if (!actions || !auth) return;
 
     function sync(state) {
       actions.hidden = !state || state.pending || !state.user || state.role !== 'admin';
+      if (group) group.classList.toggle('gr-hero-ctas--admin', !actions.hidden);
     }
 
     auth.subscribe(sync);
