@@ -149,42 +149,49 @@
 
   var JOURNEY_STEP_LABELS = {
     PAGE_HOME_VIEWED: "Accueil",
-    UPCOMING_RIDE_CARD_CLICKED: "Carte sortie",
-    UPCOMING_RIDE_VIEW_CLICKED: "Voir sortie",
-    UPCOMING_RIDE_JOIN_CLICKED: "Rejoindre",
-    TEAM_RIDER_JOIN_CLICKED: "Ride Leader",
-    PAGE_SORTIES_VIEWED: "Sorties",
-    PAGE_PARCOURS_VIEWED: "Parcours",
-    NAVIGATE_TO_SORTIES_CLICKED: "Vers sorties",
-    RIDE_INFO_OPENED: "Infos",
-    RIDE_PARTICIPATE_CLICKED: "Participation",
-    RIDE_JOINED: "Join",
-    USER_REGISTERED: "Inscription",
+    UPCOMING_RIDE_CARD_CLICKED: "Fiche d’une sortie",
+    UPCOMING_RIDE_VIEW_CLICKED: "Fiche d’une sortie",
+    UPCOMING_RIDE_JOIN_CLICKED: "Clic sur « Rejoindre »",
+    TEAM_RIDER_JOIN_CLICKED: "Devenir Ride Leader",
+    PAGE_SORTIES_VIEWED: "Liste des sorties",
+    PAGE_PARCOURS_VIEWED: "Fiche d’une sortie",
+    NAVIGATE_TO_SORTIES_CLICKED: "Liste des sorties",
+    RIDE_INFO_OPENED: "Informations d’une sortie",
+    RIDE_PARTICIPATE_CLICKED: "Clic sur « Je participe »",
+    RIDE_JOINED: "Inscription à une sortie confirmée",
+    RIDE_LEFT: "Désinscription d’une sortie",
+    RIDE_CREATED: "Sortie créée",
+    COMMENT_CREATED: "Commentaire publié",
+    LIKE_ADDED: "Intérêt pour une sortie",
+    LIKE_REMOVED: "Intérêt retiré",
+    ERROR_API: "Erreur technique observée",
+    SUSPICIOUS_LOGIN: "Alerte de connexion",
+    USER_REGISTERED: "Compte créé",
     USER_LOGIN: "Connexion",
-    RIDE_VIEWED: "Consultation sortie",
-    HOME_FOOTER_VIEWED: "Footer accueil",
-    SORTIES_FOOTER_VIEWED: "Footer sorties"
+    RIDE_VIEWED: "Fiche d’une sortie",
+    HOME_FOOTER_VIEWED: "Bas de la page Accueil atteint",
+    SORTIES_FOOTER_VIEWED: "Bas de la page Sorties atteint"
   };
 
   var FUNNEL_STEPS = [
     {
       key: "home",
-      title: "PAGE_HOME_VIEWED",
+      title: "Accueil consulté",
       types: ["PAGE_HOME_VIEWED"]
     },
     {
       key: "view",
-      title: "UPCOMING_RIDE_VIEW_CLICKED / RIDE_VIEWED",
+      title: "Sortie consultée",
       types: ["UPCOMING_RIDE_VIEW_CLICKED", "RIDE_VIEWED", "UPCOMING_RIDE_CARD_CLICKED"]
     },
     {
       key: "participate",
-      title: "RIDE_PARTICIPATE_CLICKED",
+      title: "Clic de participation",
       types: ["RIDE_PARTICIPATE_CLICKED"]
     },
     {
       key: "joined",
-      title: "RIDE_JOINED",
+      title: "Inscription confirmée",
       types: ["RIDE_JOINED"]
     }
   ];
@@ -220,44 +227,17 @@
       var pseudo = (ev.actor_pseudo && String(ev.actor_pseudo).trim())
         || (meta.actor_pseudo && String(meta.actor_pseudo).trim())
         || "";
-      if (pseudo && pseudo !== "Quelqu'un" && pseudo !== "Utilisateur") return pseudo;
+      if (pseudo && ["?", "—", "quelqu'un", "utilisateur", "visiteur", "anonymous", "anonyme"].indexOf(pseudo.toLowerCase().replace(/’/g, "'")) === -1) return pseudo;
     }
-    return "Visiteur";
+    return items.some(function (event) { return !!event.actor_id; }) ? 'Membre (nom indisponible)' : 'Visiteur anonyme';
   }
 
   function buildJourneySummary(events) {
     var sorted = (events || []).slice().sort(function (a, b) {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return new Date(a.created_at) - new Date(b.created_at);
     });
-    var parts = [];
-    var homeScroll = maxScrollDepth(sorted, "HOME_SCROLL_DEPTH");
-    var sortiesScroll = maxScrollDepth(sorted, "SORTIES_SCROLL_DEPTH");
-    var homeScrollAdded = false;
-    var sortiesScrollAdded = false;
-
-    sorted.forEach(function (ev) {
-      if (isScrollDepthEvent(ev.event_type)) return;
-      var label = journeyStepLabel(ev);
-      if (!label) return;
-
-      if (label === "Accueil" && homeScroll > 0 && !homeScrollAdded) {
-        if (parts.length && parts[parts.length - 1] === "Accueil") {
-          parts.push("Scroll");
-          homeScrollAdded = true;
-        }
-      }
-      if (label === "Sorties" && sortiesScroll > 0 && !sortiesScrollAdded) {
-        if (parts.length && parts[parts.length - 1] === "Sorties") {
-          parts.push("Scroll");
-          sortiesScrollAdded = true;
-        }
-      }
-
-      if (parts[parts.length - 1] !== label) parts.push(label);
-    });
-
-    if (!parts.length) return "—";
-    return parts.join(" → ");
+    var steps = registrationProgress({ items: sorted }).steps;
+    return steps.length ? steps.join(' → ') : '—';
   }
 
   function buildScenarioKey(events) {
@@ -266,14 +246,69 @@
 
   function sessionActionCount(items) {
     return (items || []).filter(function (ev) {
-      return !isScrollDepthEvent(ev.event_type);
+      return !isScrollDepthEvent(ev.event_type) && !/_FOOTER_VIEWED$/.test(ev.event_type);
     }).length;
   }
 
   function buildVisitorSessions(events) {
-    return groupByVisitorSession(events).filter(function (g) {
-      return !!g.visitor_session_id;
+    var visits = [];
+    groupByVisitorSession(events).filter(function (group) { return !!group.visitor_session_id; }).forEach(function (group) {
+      var current = null;
+      group.items.forEach(function (event) {
+        var previous = current && current.items[current.items.length - 1];
+        var gap = previous ? new Date(event.created_at) - new Date(previous.created_at) : Infinity;
+        if (!current || gap >= 30 * 60 * 1000) {
+          current = {
+            visitor_id: group.visitor_session_id,
+            visitor_session_id: group.visitor_session_id + '@' + String(event.created_at),
+            shortId: group.shortId,
+            items: []
+          };
+          visits.push(current);
+        }
+        current.items.push(event);
+      });
     });
+    return visits.sort(function (a, b) {
+      return new Date(b.items[b.items.length - 1].created_at) - new Date(a.items[a.items.length - 1].created_at);
+    });
+  }
+
+  function registrationProgress(session) {
+    var items = (session && session.items) || [];
+    var types = items.map(function (event) { return event.event_type; });
+    var viewed = types.some(function (type) {
+      return ['UPCOMING_RIDE_CARD_CLICKED', 'UPCOMING_RIDE_VIEW_CLICKED', 'RIDE_VIEWED', 'PAGE_PARCOURS_VIEWED', 'RIDE_INFO_OPENED'].indexOf(type) !== -1;
+    });
+    var clicked = types.indexOf('RIDE_PARTICIPATE_CLICKED') !== -1 || types.indexOf('UPCOMING_RIDE_JOIN_CLICKED') !== -1;
+    var waiting = items.some(function (event) {
+      return event.event_type === 'RIDE_JOINED' && ['waiting', 'waitlist'].indexOf((event.metadata || {}).status) !== -1;
+    });
+    var confirmed = items.some(function (event) {
+      return event.event_type === 'RIDE_JOINED' && ['waiting', 'waitlist'].indexOf((event.metadata || {}).status) === -1;
+    });
+    var accountCreated = types.indexOf('USER_REGISTERED') !== -1;
+    var routes = [];
+    var steps = [];
+    items.forEach(function (event) {
+      var title = String(event.route_title || (event.metadata || {}).route_title || '').trim();
+      if (title && !containsTechnicalRouteId(title) && routes.indexOf(title) === -1) routes.push(title);
+      if (isScrollDepthEvent(event.event_type) || /_FOOTER_VIEWED$/.test(event.event_type)) return;
+      var label = journeyStepLabel(event);
+      if (label && steps[steps.length - 1] !== label) steps.push(label);
+    });
+    var status = confirmed ? 'confirmed' : waiting ? 'waiting' : clicked ? 'clicked' : viewed ? 'viewed' : accountCreated ? 'account' : 'browsing';
+    var labels = { confirmed: 'Inscription observée', waiting: 'Liste d’attente observée', clicked: 'Clic sans confirmation', viewed: 'Sortie consultée', account: 'Compte créé', browsing: 'Navigation' };
+    var descriptions = {
+      confirmed: 'Une inscription à une sortie est confirmée dans ce parcours.',
+      waiting: 'Une demande en liste d’attente est observée. Cela ne confirme pas une place dans la sortie.',
+      clicked: 'Un clic de participation est enregistré, sans confirmation d’inscription reliée à ce parcours.',
+      viewed: 'Une sortie a été consultée, sans clic de participation observé.',
+      account: 'Un compte a été créé. Aucune inscription à une sortie n’est observée dans ce parcours.',
+      browsing: 'Des actions sur le site sont enregistrées, sans consultation de sortie observée.'
+    };
+    if (confirmed && types.indexOf('RIDE_LEFT') !== -1) descriptions.confirmed = 'Une inscription et une désinscription sont observées dans ce parcours. Consulte le détail pour voir les sorties concernées.';
+    return { viewed: viewed, clicked: clicked, confirmed: confirmed, status: status, label: labels[status], description: descriptions[status], steps: steps, routes: routes };
   }
 
   function analyzeScenarios(sessions) {
@@ -298,29 +333,16 @@
   }
 
   function analyzeFunnel(sessions) {
-    var steps = FUNNEL_STEPS.map(function (step) {
+    return FUNNEL_STEPS.map(function (step) {
       var count = (sessions || []).filter(function (session) {
+        var progress = registrationProgress(session);
+        if (step.key === 'view') return progress.viewed;
+        if (step.key === 'participate') return progress.clicked;
+        if (step.key === 'joined') return progress.confirmed;
         return sessionHasEventType(session, step.types);
       }).length;
-      return {
-        key: step.key,
-        title: step.title,
-        count: count
-      };
-    });
-
-    return steps.map(function (step, i) {
-      var prev = i > 0 ? steps[i - 1].count : null;
-      var rate = null;
-      if (i > 0 && prev > 0) {
-        rate = Math.round((step.count / prev) * 1000) / 10;
-      }
-      return {
-        key: step.key,
-        title: step.title,
-        count: step.count,
-        conversionRate: rate
-      };
+      // Étapes indépendantes sur des traces partielles : aucun taux de conversion déduit.
+      return { key: step.key, title: step.title, count: count, conversionRate: null };
     });
   }
 
@@ -352,7 +374,7 @@
           homeAt = sorted[i].created_at;
           i++;
         }
-        if (homeMax > 0) pushSynthetic("Lecture page : " + homeMax + "%", homeAt);
+        if (homeMax > 0) pushSynthetic("Défilement sur l’accueil : " + homeMax + "%", homeAt);
         continue;
       }
 
@@ -364,7 +386,7 @@
           sortiesAt = sorted[i].created_at;
           i++;
         }
-        if (sortiesMax > 0) pushSynthetic("Lecture sorties : " + sortiesMax + "%", sortiesAt);
+        if (sortiesMax > 0) pushSynthetic("Défilement sur la liste des sorties : " + sortiesMax + "%", sortiesAt);
         continue;
       }
 
@@ -378,15 +400,12 @@
   function detailTimelineLabel(ev) {
     if (ev.synthetic) return ev.label;
     if (isScrollDepthEvent(ev.event_type)) return null;
+    if (ev.event_type === 'RIDE_JOINED' && ['waiting', 'waitlist'].indexOf((ev.metadata || {}).status) !== -1) return 'Demande en liste d’attente';
     var step = journeyStepLabel(ev);
     if (step) {
-      var meta = ev.metadata || {};
-      if (ev.event_type === "RIDE_INFO_OPENED" && meta.section) {
-        return step + " (" + meta.section + ")";
-      }
       return step;
     }
-    return visitorJourneyLine(ev);
+    return 'Autre action enregistrée';
   }
 
   function _esc(s) {
@@ -446,7 +465,7 @@
     var meta = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
     return {
       id: row.id,
-      actor_id: row.actor_id || row.user_id || meta.actor_id || null,
+      actor_id: row.actor_id || row.actor_user_id || row.user_id || meta.actor_id || null,
       event_type: type,
       icon: ICONS[type] || "•",
       label: label,
@@ -729,6 +748,7 @@
     collapseScrollDepthTimeline: collapseScrollDepthTimeline,
     detailTimelineLabel: detailTimelineLabel,
     sessionUserLabel: sessionUserLabel,
+    registrationProgress: registrationProgress,
     sessionActionCount: sessionActionCount,
     isScrollDepthEvent: isScrollDepthEvent,
     FUNNEL_STEPS: FUNNEL_STEPS,
