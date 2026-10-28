@@ -125,7 +125,11 @@ function updateStatusBadge(val) {
 }
 
 
+let routeSavePending = false;
+
 async function saveDraft() {
+  if (routeSavePending) return;
+  routeSavePending = true;
   const dot   = document.getElementById('save-dot');
   const label = document.getElementById('save-status');
   dot.classList.remove('saved');
@@ -147,14 +151,9 @@ async function saveDraft() {
       });
     } else {
       result = await sb.rpc('route_create', payload);
-      if (result?.data?.route_id) {
-        window.routeId = result.data.route_id;
-        window.mode = 'edit';
-        console.log("NEW ROUTE ID:", window.routeId);
-      }
     }
 
-    if (result.error) throw result.error;
+    finishRouteSave(result);
     dot.classList.add('saved');
     label.textContent =
       'Sauvegardé ' +
@@ -165,6 +164,8 @@ async function saveDraft() {
     console.error(e);
     label.textContent = 'Erreur';
     showToast('Erreur : ' + e.message, 'error');
+  } finally {
+    routeSavePending = false;
   }
 }
 
@@ -229,7 +230,9 @@ function validatePublication() {
 }
 
 async function publishSortie() {
+  if (routeSavePending) return;
   if (!validatePublication()) return;
+  routeSavePending = true;
   try {
     const sb = await getSb();
     const payload = buildPayload('publiee');
@@ -246,7 +249,7 @@ async function publishSortie() {
     } else {
       result = await sb.rpc('route_create', payload);
     }
-    if (result.error) throw result.error;
+    finishRouteSave(result);
     document.getElementById('statut').value = 'publiee';
     updateStatusBadge('publiee');
     document.getElementById('save-dot').classList.add('saved');
@@ -254,6 +257,8 @@ async function publishSortie() {
     showToast('🚀 Sortie publiée avec succès !');
   } catch (e) {
     showToast('Erreur : ' + e.message, 'error');
+  } finally {
+    routeSavePending = false;
   }
 }
 
@@ -325,11 +330,54 @@ function buildPayload(statut) {
   };
 }
 
+function finishRouteSave(result) {
+  if (result.error) throw result.error;
+  if (result.data?.ok === false) throw new Error(result.data.error || 'Enregistrement refusé');
+  if (result.data?.route_id) {
+    window.routeId = result.data.route_id;
+    window.mode = 'edit';
+    const url = new URL(window.location.href);
+    url.searchParams.set('mode', 'edit');
+    url.searchParams.set('id', window.routeId);
+    window.history.replaceState(null, '', url);
+  }
+  const notice = document.getElementById('duplicate-notice');
+  if (notice) notice.hidden = true;
+}
+
 function duplicateSortie() {
-  showToast('Sortie dupliquée — brouillon créé');
-  document.getElementById('titre').value += ' (copie)';
+  window.routeId = null;
+  window.mode = 'create';
+  const url = new URL(window.location.href);
+  url.searchParams.set('mode', 'create');
+  url.searchParams.delete('id');
+  window.history.replaceState(null, '', url);
+  const title = document.getElementById('titre');
+  title.value = title.value.replace(/ \(copie\)$/, '').slice(0, 72) + ' (copie)';
+  document.getElementById('date').value = '';
   document.getElementById('statut').value = 'brouillon';
   updateStatusBadge('brouillon');
+  document.getElementById('save-dot').classList.remove('saved');
+  document.getElementById('save-status').textContent = 'Copie non enregistrée';
+  ['gs-route-participants', 'gs-participants-preview'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = true;
+  });
+  const list = document.getElementById('gs-participants-list');
+  if (list) list.textContent = '';
+  resetGuestForm();
+  setGuestFormOpen(false);
+  PUBLICATION_FIELDS.forEach(field => {
+    document.getElementById(field.id).removeAttribute('aria-invalid');
+    const error = document.getElementById(field.id + '-error');
+    if (error) error.hidden = true;
+  });
+  updatePublicationSummary();
+  const notice = document.getElementById('duplicate-notice');
+  if (notice) notice.hidden = false;
+  updateProgress();
+  document.getElementById('date').focus();
+  showToast('Copie préparée : choisis une nouvelle date, puis enregistre ou publie.');
 }
 
 function confirmCancel() {
@@ -1144,7 +1192,7 @@ function copyText(id) {
   navigator.clipboard.writeText(txt).then(() => showToast('Texte copié'));
 }
 
-async function loadRoute(routeId) {
+async function loadRoute(routeId, duplicate = false) {
   const sb = await getSb();
 
   const { data, error } = await sb
@@ -1155,11 +1203,13 @@ async function loadRoute(routeId) {
 
   if (error) {
     showToast(error.message, 'error');
-    return;
+    return false;
   }
 
   populateForm(data);
-  await loadRouteParticipants(routeId);
+  if (duplicate) duplicateSortie();
+  else await loadRouteParticipants(routeId);
+  return true;
 }
 
 async function loadRouteParticipants(routeId) {
@@ -1310,6 +1360,12 @@ function populateForm(route) {
   document.getElementById('cp').value = fc.cp || '';
   document.getElementById('capitaine').value = fc.captain || fc.rideLeader || '';
   if (fc.niveau) document.getElementById('niveau').value = fc.niveau;
+  if (Object.prototype.hasOwnProperty.call(fc, 'maxParticipants')) {
+    const unlimited = document.getElementById('illimite');
+    unlimited.checked = fc.maxParticipants == null;
+    toggleIllimite(unlimited);
+    if (!unlimited.checked) document.getElementById('num-participants').value = fc.maxParticipants;
+  }
 
   const groupe = (fc.levelClass || '').replace('level-', '') ||
     (route.group_label || '').toLowerCase().match(/blanc|vert|bleu|rouge/)?.[0] || 'vert';
@@ -1380,8 +1436,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ── PARAMS URL (UNE SEULE FOIS) ──
   const params = new URLSearchParams(window.location.search);
 
-  window.routeId = params.get('id');
+  const sourceId = params.get('id');
   window.mode = params.get('mode') || 'create';
+  window.routeId = window.mode === 'edit' ? sourceId : null;
 
   console.log("MODE =", window.mode);
   console.log("ROUTE ID =", window.routeId);
@@ -1389,6 +1446,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ── LOAD MODE EDIT ──
   if (window.mode === 'edit' && window.routeId) {
     await loadRoute(window.routeId);
+  }
+  if (window.mode === 'duplicate') {
+    const buttons = document.querySelectorAll('.action-bar button');
+    buttons.forEach(button => { button.disabled = true; });
+    try {
+      if (!sourceId || !await loadRoute(sourceId, true)) throw new Error('Sortie source introuvable.');
+      buttons.forEach(button => { button.disabled = false; });
+    } catch (error) {
+      const summary = document.getElementById('publication-errors');
+      summary.textContent = 'Impossible de préparer la copie. Reviens à la liste des sorties pour réessayer.';
+      summary.hidden = false;
+      showToast(error.message || 'Chargement impossible', 'error');
+    }
   }
 
   // Récupération utilisateur connecté
