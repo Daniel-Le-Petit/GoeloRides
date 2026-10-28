@@ -221,6 +221,7 @@
 
     if (viewMode === "team-rider") {
       if (role === "admin") {
+        parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "duplicate")) + '">Dupliquer</a>');
         parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "edit")) + '">Modifier</a>');
         parts.push(
           '<button type="button" class="go-sc-btn go-sc-btn--danger" data-go-sc-cancel="' +
@@ -233,6 +234,7 @@
     }
 
     if (role === "admin") {
+      parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "duplicate")) + '">Dupliquer</a>');
       parts.push('<a class="go-sc-btn go-sc-btn--ghost" href="' + escapeAttr(gestionHref(card.id, "edit")) + '">Modifier</a>');
       parts.push(
         '<button type="button" class="go-sc-btn go-sc-btn--danger" data-go-sc-cancel="' +
