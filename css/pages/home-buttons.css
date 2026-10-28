@@ -1,4 +1,4 @@
-/* Boutons d’accueil : style commun chargé après les styles historiques. */
+/* Boutons d’accueil : pétrole, ardoise et terre cuite, police et formes communes. */
 #gr-upcoming-rides .go-sc-btn,
 .app-main--home .gr-hero-ctas .gr-btn,
 .app-main--home .gr-hero-poll .gr-poll__submit,
@@ -11,10 +11,10 @@
   min-height: 44px;
   max-width: 100%;
   padding: .65rem .95rem;
-  border: 1px solid #69776d !important;
+  border: 1px solid #58666b !important;
   border-radius: 12px !important;
-  background: #202923 !important;
-  color: #f5f7f3 !important;
+  background: #242d31 !important;
+  color: #e9efec !important;
   -webkit-text-fill-color: currentColor;
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
   font-size: .875rem !important;
@@ -34,41 +34,41 @@
 .app-main--home .gr-hero-ctas .gr-btn:hover,
 .app-main--home .gr-hero-poll .gr-poll__submit:hover,
 .app-main--home .gr-hero-poll .gr-poll__edit:hover {
-  background: #303d33 !important;
-  border-color: #a0b2a4 !important;
+  background: #334045 !important;
+  border-color: #83948e !important;
   color: #fff !important;
 }
 #gr-upcoming-rides .go-sc-btn--voir,
 .app-main--home .gr-hero-ctas .gr-home-create,
 .app-main--home .gr-hero-ctas .gr-btn--accent,
 .app-main--home .gr-hero-poll .gr-poll__submit {
-  background: #c8f135 !important;
-  border-color: #c8f135 !important;
-  color: #142006 !important;
+  background: #245b5d !important;
+  border-color: #4d8d86 !important;
+  color: #f6faf8 !important;
 }
 #gr-upcoming-rides .go-sc-btn--voir:hover,
 .app-main--home .gr-hero-ctas .gr-home-create:hover,
 .app-main--home .gr-hero-ctas .gr-btn--accent:hover,
 .app-main--home .gr-hero-poll .gr-poll__submit:hover {
-  background: #b8df2b !important;
-  border-color: #b8df2b !important;
-  color: #142006 !important;
+  background: #2c6a69 !important;
+  border-color: #6aa79b !important;
+  color: #f6faf8 !important;
 }
 #gr-upcoming-rides .go-sc-btn--danger {
-  background: #34201e !important;
-  border-color: #c65347 !important;
+  background: #3b2a26 !important;
+  border-color: #9d6b5b !important;
   color: #fff !important;
 }
 #gr-upcoming-rides .go-sc-btn--danger:hover {
-  background: #592a24 !important;
-  border-color: #eb7665 !important;
+  background: #53382f !important;
+  border-color: #bb8a72 !important;
   color: #fff !important;
 }
 #gr-upcoming-rides .go-sc-btn:focus-visible,
 .app-main--home .gr-hero-ctas .gr-btn:focus-visible,
 .app-main--home .gr-hero-poll .gr-poll__submit:focus-visible,
 .app-main--home .gr-hero-poll .gr-poll__edit:focus-visible {
-  outline: 2px solid #c8f135;
+  outline: 2px solid #9acbb7;
   outline-offset: 3px;
 }
 #gr-upcoming-rides .go-sc-btn:disabled,
