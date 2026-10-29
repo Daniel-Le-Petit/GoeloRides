@@ -23,16 +23,16 @@ function setup() {
   for(const file of ['js/goelo-profile.js','js/signup-participants.js','js/goelo-pseudo-participation.js','js/sortie-cards.js','js/home.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context);
   return {context,track,calls,async ready(){await settle()},writeGuest(active){joined=active;storage.set('goelo-guest-pseudo:r1',JSON.stringify({token:'a'.repeat(64),joined:active,pseudo:'Camille'}))},setServer(active){joined=active},block(){block=true},release(){release()},async emit(name,event={}){for(const fn of listeners[name]||[])fn(event);await settle()},async visible(){for(const fn of docListeners.visibilitychange||[])fn();await settle()}};
 }
-test('retour Safari après inscription sur le détail : Ma participation, compteur et initiales sur l’accueil',async()=>{
+test('retour Safari après inscription sur le détail : Inscrit ✓, compteur et initiales sur l’accueil',async()=>{
  const app=setup();await app.ready();assert(app.track.innerHTML.includes('>Rejoindre</button>'));
  app.writeGuest(true);await app.emit('pageshow',{persisted:true});
- assert(app.track.innerHTML.includes('>Ma participation</button>'));
+ assert(app.track.innerHTML.includes('>Inscrit ✓</button>'));
  assert(app.track.innerHTML.includes('1 participant'));assert(app.track.innerHTML.includes('class="go-sc-avatar"'));assert(app.track.innerHTML.includes('title="Camille">CA</span>'));
 });
 test('une session membre existante ne masque pas la participation par pseudo',async()=>{
  const app=setup();await app.ready();app.writeGuest(true);app.context.GOELO_ROLE='user';app.context.GOELO_USER={id:'member'};
  await app.emit('goelo:role-ready',{detail:{role:'user'}});
- assert(app.track.innerHTML.includes('>Ma participation</button>'));assert(!app.track.innerHTML.includes('>Rejoindre</a>'));assert(app.track.innerHTML.includes('1 participant'));
+ assert(app.track.innerHTML.includes('>Inscrit ✓</button>'));assert(!app.track.innerHTML.includes('>Rejoindre</a>'));assert(app.track.innerHTML.includes('1 participant'));
 });
 test('annulation sur une autre page : retour et changement d’onglet retirent compteur et initiales',async()=>{
  const app=setup();await app.ready();app.writeGuest(true);await app.visible();assert(app.track.innerHTML.includes('1 participant'));
