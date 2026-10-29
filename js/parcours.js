@@ -169,7 +169,7 @@
 
     if (joined) {
       btn.classList.add("is-registered");
-      btn.textContent = "Inscrit";
+      btn.textContent = "Me désinscrire";
     } else {
       btn.classList.remove("is-registered");
       btn.textContent = "Je participe !";
@@ -309,15 +309,12 @@
     var user = await getUser();
 
     if (!user || (window.GoeloPseudoParticipation && window.GoeloPseudoParticipation.hasLocal(sortie.id))) {
+      var guestJoined = !!(window.GoeloPseudoParticipation && window.GoeloPseudoParticipation.hasLocal(sortie.id));
+      paintJoinButton(guestJoined);
       _uiJoined = null;
-      btn.classList.remove("is-registered");
-      btn.textContent = window.GoeloPseudoParticipation && window.GoeloPseudoParticipation.hasLocal(sortie.id) ? "Ma participation" : "Je participe !";
-      btn.disabled = false;
-      btn.setAttribute("data-joined", "0");
       btn.setAttribute("data-auth-pending", "1");
-      btn.setAttribute("aria-pressed", "false");
       console.log("[renderJoin] state", {
-        joined: false,
+        joined: guestJoined,
         buttonState: btn.textContent,
         userId: null,
         source: "anonymous"
