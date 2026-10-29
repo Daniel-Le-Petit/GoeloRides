@@ -34,6 +34,20 @@
     try { localStorage.setItem(key(id), JSON.stringify(record)); return true; } catch (_) { return false; }
   }
   function hasLocal(id) { var record = saved(id); return !!(record && record.joined); }
+  async function refreshLocal(id) {
+    var record = saved(id);
+    var sb = global.goeloGetSb && global.goeloGetSb();
+    if (!record || !sb) return hasLocal(id);
+    try {
+      var response = await sb.rpc('guest_pseudo_participation', {
+        p_action: 'status', p_route_id: String(id), p_token: record.token, p_pseudo: null, p_visitor_session_id: null
+      });
+      if (response.error || !response.data || response.data.ok !== true || typeof response.data.joined !== 'boolean') return hasLocal(id);
+      remember(id, { token: record.token, joined: response.data.joined, pseudo: response.data.pseudo || '' });
+    } catch (_) { /* Conserver l’état local si la connexion est interrompue. */ }
+    return hasLocal(id);
+  }
+
   function errorText(error) {
     if (error && (error.code === 'PGRST202' || /guest_pseudo_participation.*(not find|schema|exist)/i.test(error.message || ''))) return 'La participation par pseudo n’est pas encore activée sur le serveur. Réessaie plus tard.';
     return errors[error && error.message] || 'La demande n’a pas pu être confirmée. Vérifie ta connexion puis réessaie.';
@@ -150,6 +164,6 @@
       open({ id: button.getAttribute('data-guest-join'), title: button.getAttribute('data-guest-title'), summary: button.getAttribute('data-guest-summary') }, button);
     }, true);
   }
-  global.GoeloPseudoParticipation = { open: open, hasLocal: hasLocal };
+  global.GoeloPseudoParticipation = { open: open, hasLocal: hasLocal, refreshLocal: refreshLocal };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })(window);

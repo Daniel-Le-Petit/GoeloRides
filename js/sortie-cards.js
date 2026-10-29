@@ -200,10 +200,11 @@
 
     if (viewMode === "team-rider") return parts.join("");
 
-    if (role === "user" && !joined && !isSortiePassed(card)) {
-      parts.push('<a class="go-sc-btn go-sc-btn--join" href="' + escapeAttr(parcoursHref(card.id)) + '">Rejoindre</a>');
-    } else if (role === "visitor" && !isSortiePassed(card)) {
+    var guestJoined = global.GoeloPseudoParticipation && global.GoeloPseudoParticipation.hasLocal(card.id);
+    if ((role === "visitor" || guestJoined) && !isSortiePassed(card)) {
       parts.push('<button type="button" class="go-sc-btn go-sc-btn--join" data-guest-join="' + escapeHtml(card.id) + '" data-guest-title="' + escapeHtml(card.title) + '" data-guest-summary="' + escapeHtml(frDateFull(card.date, card.meetTime)) + '">' + (global.GoeloPseudoParticipation && global.GoeloPseudoParticipation.hasLocal(card.id) ? 'Ma participation' : 'Rejoindre') + '</button>');
+    } else if (role === "user" && !joined && !isSortiePassed(card)) {
+      parts.push('<a class="go-sc-btn go-sc-btn--join" href="' + escapeAttr(parcoursHref(card.id)) + '">Rejoindre</a>');
     }
 
     return parts.join("");
