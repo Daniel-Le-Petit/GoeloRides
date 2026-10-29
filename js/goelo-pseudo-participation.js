@@ -3,6 +3,11 @@
   'use strict';
   var dialog, current, opener, busy = false, own = null;
   var memory = {};
+  var currentAttempt = null;
+  function beginAttempt() {
+    try { return global.GoeloActivity && global.GoeloActivity.beginParticipationAttempt ? global.GoeloActivity.beginParticipationAttempt(current) : null; } catch (_) { return null; }
+  }
+  function finishAttempt(attempt, result) { try { if (attempt) attempt.finish(result); } catch (_) {} }
   var errors = {
     invalid_pseudo: 'Choisis un pseudo de 2 à 60 caractères.',
     pseudo_taken: 'Ce pseudo est déjà utilisé sur cette sortie. Choisis-en un autre.',
@@ -75,21 +80,24 @@
     dialog.innerHTML = '<form><h2 id="go-pseudo-title" data-pseudo-title>Je participe à cette sortie</h2><p class="go-pseudo-route" data-pseudo-route></p><div data-pseudo-fields><label for="go-pseudo-input">Ton pseudo</label><input id="go-pseudo-input" name="pseudo" autocomplete="nickname" placeholder="Ex. : Camille" minlength="2" maxlength="60" required></div><p data-pseudo-message role="status" aria-live="polite"></p><p class="go-pseudo-note" data-pseudo-storage>Sans compte, sans mot de passe, sans e-mail.</p><button type="submit" data-pseudo-submit>Confirmer ma participation</button><button type="button" data-pseudo-cancel hidden>Annuler ma participation</button><button type="button" class="go-pseudo-close" data-pseudo-close>Fermer</button></form>';
     document.body.appendChild(dialog);
     dialog.addEventListener('cancel', function (event) { if (busy) event.preventDefault(); });
-    dialog.addEventListener('close', function () { if (opener && opener.isConnected) opener.focus(); });
+    dialog.addEventListener('close', function () {
+      finishAttempt(currentAttempt, 'unknown'); currentAttempt = null;
+      if (opener && opener.isConnected) opener.focus();
+    });
     field('[data-pseudo-close]').addEventListener('click', function () { if (!busy) dialog.close(); });
     field('form').addEventListener('submit', async function (event) {
       event.preventDefault();
       if (busy || own && own.joined || !field('form').reportValidity()) return;
       lock(true);
-      var attempt;
-      try { if (global.GoeloActivity && global.GoeloActivity.beginParticipationAttempt) attempt = global.GoeloActivity.beginParticipationAttempt(current); } catch (_) {}
+      var attempt = currentAttempt || beginAttempt();
+      currentAttempt = null;
       try {
         var result = await rpc('join', field('input').value.trim());
         if (!result.joined || !result.pseudo) throw new Error('server_error');
-        try { if (attempt) attempt.finish(result); } catch (_) {}
+        finishAttempt(attempt, result);
         showState(result, true); notify();
       } catch (error) {
-        try { if (attempt) attempt.finish('error'); } catch (_) {}
+        finishAttempt(attempt, 'error');
         field('[data-pseudo-message]').textContent = errorText(error);
       } finally { lock(false); }
     });
@@ -122,8 +130,16 @@
     field('[data-pseudo-message]').textContent = 'Vérification de ta participation…';
     field('[data-pseudo-storage]').textContent = 'Sans compte, sans mot de passe, sans e-mail.';
     dialog.showModal(); lock(true);
-    try { showState(await rpc('status'), false); }
-    catch (error) { field('[data-pseudo-message]').textContent = errorText(error); }
+    currentAttempt = hasLocal(current.id) ? null : beginAttempt();
+    try {
+      var data = await rpc('status');
+      showState(data, false);
+      if (data.joined) { finishAttempt(currentAttempt, 'unknown'); currentAttempt = null; }
+    }
+    catch (error) {
+      finishAttempt(currentAttempt, 'error'); currentAttempt = null;
+      field('[data-pseudo-message]').textContent = errorText(error);
+    }
     finally { lock(false); if (!own || !own.joined) field('input').focus(); }
   }
   function init() {
