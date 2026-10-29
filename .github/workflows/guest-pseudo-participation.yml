@@ -1,0 +1,69 @@
+name: Participation par pseudo
+on:
+  pull_request:
+    paths:
+      - 'js/goelo-pseudo-participation.js'
+      - 'goelorides-tests/tests/**/guest-pseudo*'
+      - 'supabase/migrations/20261029100000_guest_pseudo_participation.sql'
+      - '.github/workflows/guest-pseudo-participation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261029100000_guest_pseudo_participation.sql'
+      - '.github/workflows/guest-pseudo-participation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: guest-pseudo-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local_test_only
+          POSTGRES_DB: goelo_guest_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Tests JavaScript
+        run: |
+          node --check js/goelo-pseudo-participation.js
+          node goelorides-tests/tests/unit/guest-pseudo-client.test.cjs
+          node goelorides-tests/tests/unit/activity-registration.test.cjs
+      - name: Tests PostgreSQL isolés
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGDATABASE: goelo_guest_test
+          PGUSER: postgres
+          PGPASSWORD: local_test_only
+        run: node goelorides-tests/tests/integration/guest-pseudo-postgres.cjs
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Déployer uniquement la fonction de participation par pseudo
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_DATABASE_URL:-}" ]; then
+            echo 'Le secret GitHub SUPABASE_DATABASE_URL doit être configuré pour activer la participation.'
+            exit 1
+          fi
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261029100000_guest_pseudo_participation.sql

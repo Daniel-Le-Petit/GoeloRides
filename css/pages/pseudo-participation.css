@@ -1,0 +1,13 @@
+.go-pseudo-dialog { width: min(440px, calc(100% - 24px)); max-height: calc(100dvh - 32px); box-sizing: border-box; overflow-y: auto; border: 1px solid #58666b; border-radius: 18px; padding: 24px; color: #f6faf8; background: #17221f; font: 16px/1.5 'Inter',system-ui,sans-serif; }
+.go-pseudo-dialog::backdrop { background: rgba(0,0,0,.75); }
+.go-pseudo-dialog [hidden] { display: none !important; }
+.go-pseudo-dialog h2 { margin: 0 0 12px; font: 700 1.4rem/1.25 'Inter',system-ui,sans-serif; }
+.go-pseudo-route { color: #d5e7df; margin-bottom: 20px; }
+.go-pseudo-dialog label { display: block; font-weight: 600; margin-bottom: 8px; }
+.go-pseudo-dialog input { display: block; box-sizing: border-box; width: 100%; min-height: 48px; padding: 12px; font: 16px 'Inter',system-ui,sans-serif; border: 1px solid #82978a; border-radius: 10px; background: #202923; color: #fff; }
+.go-pseudo-note { color: #bbc9c1; font-size: .85rem; }
+.go-pseudo-dialog button { display: block; width: 100%; min-height: 46px; padding: 12px; margin-top: 10px; border: 1px solid #4d8d86; border-radius: 12px; font: 700 .9rem/1.3 'Inter',system-ui,sans-serif; background: #245b5d; color: #fff; cursor: pointer; }
+.go-pseudo-dialog .go-pseudo-close { background: #242d31; border-color: #58666b; }
+.go-pseudo-dialog [data-pseudo-cancel] { background: #3b2a26; border-color: #9d6b5b; }
+.go-pseudo-dialog :focus-visible { outline: 2px solid #9acbb7; outline-offset: 3px; }
+.go-pseudo-dialog button:disabled { opacity: .55; cursor: wait; }
