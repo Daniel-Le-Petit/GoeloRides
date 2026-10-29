@@ -308,7 +308,7 @@
 
     var user = await getUser();
 
-    if (!user) {
+    if (!user || (window.GoeloPseudoParticipation && window.GoeloPseudoParticipation.hasLocal(sortie.id))) {
       _uiJoined = null;
       btn.classList.remove("is-registered");
       btn.textContent = window.GoeloPseudoParticipation && window.GoeloPseudoParticipation.hasLocal(sortie.id) ? "Ma participation" : "Je participe !";

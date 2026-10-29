@@ -300,10 +300,28 @@
     upcomingState.joinedRouteIds = new Set(Array.isArray(routes) ? routes.map(String) : []);
   }
 
+  var participantsRefresh = null;
+  var participantsRefreshAgain = false;
   async function reloadParticipants() {
-    if (!upcomingState.sorties.length || !window.GoeloSignupParticipants) return;
-    await window.GoeloSignupParticipants.enrichCardsWithParticipants(upcomingState.sorties, getSb());
     renderUpcomingSorties();
+    if (participantsRefresh) { participantsRefreshAgain = true; return participantsRefresh; }
+    if (!upcomingState.sorties.length) return;
+    participantsRefresh = (async function () {
+      do {
+        participantsRefreshAgain = false;
+        var jobs = [];
+        var guest = window.GoeloPseudoParticipation;
+        if (guest && guest.refreshLocal) {
+          jobs.push(Promise.all(upcomingState.sorties.map(function (sortie) { return guest.refreshLocal(sortie.id); })));
+        }
+        if (window.GoeloSignupParticipants) {
+          jobs.push(window.GoeloSignupParticipants.enrichCardsWithParticipants(upcomingState.sorties, getSb()));
+        }
+        await Promise.allSettled(jobs);
+        renderUpcomingSorties();
+      } while (participantsRefreshAgain);
+    })();
+    try { await participantsRefresh; } finally { participantsRefresh = null; }
   }
 
   function updateUpcomingSubtitle(count) {
@@ -407,8 +425,7 @@
         (async function() {
           try {
             if (window.GoeloSignupParticipants && upcomingState.sorties.length) {
-              await window.GoeloSignupParticipants.enrichCardsWithParticipants(upcomingState.sorties, getSb());
-              renderUpcomingSorties();
+              await reloadParticipants();
             }
           } catch (e) {
             console.warn("[GoëloHome] enrichissement participants:", e);
@@ -459,6 +476,7 @@
       if (window.GoeloUI) window.GoeloUI.syncRoleUI(detail);
       _bindLogoutButtons();
       fetchJoinedRouteIds().then(renderUpcomingSorties);
+      reloadParticipants();
       if (window.GoeloPoll) {
         if (window.GoeloPoll.reloadAll) window.GoeloPoll.reloadAll(".gr-poll-root[data-poll-slug]:not([data-poll-multi])");
         else window.GoeloPoll.load(document.getElementById("gr-poll-root"));
@@ -479,6 +497,15 @@
     });
     window.addEventListener("goelo:signup-changed", function () {
       reloadParticipants();
+    });
+    window.addEventListener("pageshow", function (event) {
+      if (event.persisted) reloadParticipants();
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") reloadParticipants();
+    });
+    window.addEventListener("storage", function (event) {
+      if (event.key === null || String(event.key).indexOf("goelo-guest-pseudo:") === 0) reloadParticipants();
     });
 
     if (window.GoeloUI) {
