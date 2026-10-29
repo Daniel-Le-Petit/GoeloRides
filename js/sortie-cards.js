@@ -203,7 +203,7 @@
     if (role === "user" && !joined && !isSortiePassed(card)) {
       parts.push('<a class="go-sc-btn go-sc-btn--join" href="' + escapeAttr(parcoursHref(card.id)) + '">Rejoindre</a>');
     } else if (role === "visitor" && !isSortiePassed(card)) {
-      parts.push('<button type="button" class="go-sc-btn go-sc-btn--join" data-goelo-auth-trigger>Rejoindre</button>');
+      parts.push('<button type="button" class="go-sc-btn go-sc-btn--join" data-guest-join="' + escapeHtml(card.id) + '" data-guest-title="' + escapeHtml(card.title) + '" data-guest-summary="' + escapeHtml(frDateFull(card.date, card.meetTime)) + '">' + (global.GoeloPseudoParticipation && global.GoeloPseudoParticipation.hasLocal(card.id) ? 'Ma participation' : 'Rejoindre') + '</button>');
     }
 
     return parts.join("");

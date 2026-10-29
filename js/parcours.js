@@ -311,7 +311,7 @@
     if (!user) {
       _uiJoined = null;
       btn.classList.remove("is-registered");
-      btn.textContent = "Se connecter pour participer";
+      btn.textContent = window.GoeloPseudoParticipation && window.GoeloPseudoParticipation.hasLocal(sortie.id) ? "Ma participation" : "Je participe !";
       btn.disabled = false;
       btn.setAttribute("data-joined", "0");
       btn.setAttribute("data-auth-pending", "1");
@@ -378,6 +378,11 @@
       if (_joinBusy) return;
       btn = getJoinButton() || btn;
 
+      if (btn.getAttribute('data-auth-pending') === '1' && window.GoeloPseudoParticipation) {
+        window.GoeloPseudoParticipation.open(sortie, btn);
+        return;
+      }
+
       var attempt = btn.getAttribute('data-auth-pending') === '1' || btn.getAttribute('data-joined') === '0'
         ? startParticipationAttempt() : null;
 
@@ -395,6 +400,11 @@
         var user = await getUser();
         if (!user) {
           /* Session expirée entre le render et le clic */
+          if (window.GoeloPseudoParticipation) {
+            finishParticipationAttempt(attempt, 'unknown');
+            window.GoeloPseudoParticipation.open(sortie, btn);
+            return;
+          }
           finishParticipationAttempt(attempt, 'auth_required');
           if (typeof window.openGoeloAuth === "function") window.openGoeloAuth();
           return;
@@ -964,6 +974,12 @@
     } finally {
       setLoading(false);
     }
+
+    window.addEventListener("goelo:signup-changed", function (event) {
+      if (event.detail && event.detail.route_id && String(event.detail.route_id) !== String(sortie.id)) return;
+      syncParticipantsUI();
+      renderJoin();
+    });
 
     /* Re-synchroniser le bouton dès que le rôle / la session est confirmé */
     window.addEventListener("goelo:role-ready", function () {
