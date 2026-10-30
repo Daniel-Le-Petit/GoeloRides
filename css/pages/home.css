@@ -342,10 +342,18 @@ html.site-retheme {
 /* Signature */
 .gr-hero-signature {
   font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-style: italic;
-  color: rgba(255,255,255,0.40);
-  letter-spacing: 0.02em;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 700;
+  font-style: normal;
+  color: #ffffff;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  margin: 1.25rem 0 0.85rem;
+  padding: 0.7rem 1rem;
+  background: rgba(13, 13, 13, 0.68);
+  border-left: 3px solid #c8f135;
+  border-radius: 0 8px 8px 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* ── UPCOMING RIDES (hero intégré · Supabase) ─ */
