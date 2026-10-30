@@ -1,0 +1,25 @@
+/* Signature commune : référence = footer de l'accueil. */
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800&display=swap");
+
+html body :is(.gr-nav__logo, .nav__logo, .topbar-logo, .gr-footer-logo, .footer-logo, .gr-mobile-drawer__logo) {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #ffffff;
+  text-shadow: none;
+  text-decoration: none;
+  opacity: 1;
+}
+html body :is(.gr-nav__logo, .nav__logo, .topbar-logo, .gr-footer-logo, .footer-logo, .gr-mobile-drawer__logo) :is(span, em) {
+  font: inherit;
+  letter-spacing: inherit;
+  color: #c8f135;
+  margin-left: 0;
+  vertical-align: baseline;
+  text-shadow: none;
+}
