@@ -1,6 +1,7 @@
 /* Signature commune : référence = footer de l'accueil. */
 @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800&display=swap");
 
+html body .goelo-navbar .gr-nav__logo,
 html body :is(.gr-nav__logo, .nav__logo, .topbar-logo, .gr-footer-logo, .footer-logo, .gr-mobile-drawer__logo) {
   font-family: "Barlow Condensed", sans-serif;
   font-size: 1.5rem;
