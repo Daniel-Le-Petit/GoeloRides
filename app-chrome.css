@@ -880,9 +880,9 @@ html.goelo-auth-modal-open {
 /* Identité typographique GoëloRides : source commune, sans image.
    Variantes responsives pour navigation, accueil et titres. */
 :root {
-  --gr-brand-font: "Outfit", "Arial Black", system-ui, sans-serif;
-  --gr-brand-go: #ffffff;
-  --gr-brand-rides: #b8f233;
+  --gr-brand-font: var(--font-display, "Outfit", system-ui, sans-serif);
+  --gr-brand-go: var(--color-white, #ffffff);
+  --gr-brand-rides: var(--color-accent, #b8f233);
   --gr-brand-go-on-light: #15232d;
 }
 html body .app-logo,
@@ -945,4 +945,25 @@ html body .gr-brand--light .home-brand-go {
 html body .gr-brand--dark .app-logo-part--go,
 html body .gr-brand--dark .home-brand-go {
   color: var(--gr-brand-go);
+}
+
+/* Le footer existant est la référence exacte du mot-symbole.
+   Même police, graisse, espacement et couleurs sur les autres vues. */
+html body .app-logo,
+html body .goelorides-mark,
+html body .home-brand,
+html body .home-brand-wordmark {
+  font-family: var(--font-display, "Outfit", sans-serif);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+html body .app-logo .app-logo-part--rides,
+html body .goelorides-mark .app-logo-part--rides,
+html body .home-brand .home-brand-rides,
+html body .home-brand-wordmark-accent {
+  color: var(--color-accent, #b8f233);
+  letter-spacing: inherit;
+}
+html body .home-brand-wordmark {
+  color: var(--color-white, #ffffff);
 }
