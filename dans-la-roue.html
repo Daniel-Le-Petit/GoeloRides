@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#eef2f6">
+<meta name="description" content="Découvrez l'ambiance des sorties GoëloRides en photos et en affiches.">
+<title>Dans la roue du groupe · GoëloRides</title>
+<link rel="stylesheet" href="css/components/brand.css">
+<style>
+:root{--ink:#15232d;--sea:#1565a8;--paper:#eef2f6;--line:#dce6ee;--yellow:#f9d71c}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 system-ui,-apple-system,sans-serif}a{color:inherit}header{background:#fff;border-bottom:1px solid var(--line)}.bar{max-width:1120px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:18px 24px;gap:18px}.logo{font-size:22px;font-weight:800;letter-spacing:-.06em;text-decoration:none}.logo span{color:var(--sea)}.back{font-size:14px;text-decoration:none;color:var(--sea)}main{max-width:1120px;margin:auto;padding:0 24px 70px}.hero{padding:76px 0 48px;max-width:790px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.17em;color:var(--sea);font-weight:750}.hero h1{font-size:clamp(40px,7vw,76px);line-height:1.04;letter-spacing:-.055em;margin:16px 0 24px}.hero p{font-size:clamp(17px,2vw,21px);color:#526677;max-width:650px;margin:0}.intro{margin-top:18px!important;font-size:16px!important}.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;border-top:1px solid var(--line);padding-top:26px;margin:24px 0}.section-head h2{font-size:26px;letter-spacing:-.03em;margin:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:24px}.card{border-radius:18px;overflow:hidden;background:white;border:1px solid var(--line);box-shadow:0 12px 35px #1733490b}.cover{background:linear-gradient(135deg,#13394c,#1e6884);aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;position:relative;color:white}.cover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}.cover-label{position:relative;z-index:1;text-align:center;font-size:13px;letter-spacing:.09em;text-transform:uppercase}.cover:has(img) .cover-label{display:none}.card-body{padding:24px}.meta{font-size:13px;color:#667987;margin-bottom:8px}.card h3{font-size:24px;line-height:1.2;margin:0 0 12px}.facts{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px}.fact{background:#f1f6fa;border-radius:30px;padding:5px 11px;font-size:12px;font-weight:650}.links{display:flex;flex-wrap:wrap;gap:14px}.links a{font-size:14px;font-weight:650;color:var(--sea)}.empty{padding:54px 30px;border:1px dashed #9cb3c3;border-radius:18px;background:#fff;text-align:center}.empty h3{margin:0 0 10px;font-size:23px}.empty p{margin:0 auto;max-width:560px;color:#526677}.cta{margin-top:56px;border-radius:20px;background:#102f41;color:white;padding:38px;display:flex;justify-content:space-between;align-items:center;gap:24px}.cta h2{margin:0 0 8px;font-size:27px}.cta p{margin:0;color:#c8d9e3}.button{background:var(--yellow);color:#14222d;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:750;white-space:nowrap}footer{padding:32px 24px;text-align:center;color:#637987;font-size:13px}@media(max-width:650px){.hero{padding:48px 0 32px}.cta{display:block;padding:28px}.button{display:inline-block;margin-top:24px}.bar{padding:15px 18px}main{padding:0 18px 50px}}
+</style>
+</head>
+<body>
+<header><nav class="bar" aria-label="Navigation"><a class="logo" href="index.html" aria-label="GoëloRides, accueil">GOËLO<span>RIDES</span></a><a class="back" href="index.html">← Retour</a></nav></header>
+<main>
+<section class="hero"><div class="eyebrow">La vie du groupe · Saint-Quay-Portrieux</div><h1>Dans la roue<br>du groupe.</h1><p>Avant de rouler ensemble, découvrez où nos roues nous ont déjà emmenés.</p><p class="intro">Des paysages, des rencontres et le plaisir de partager la route. Quelques images pour découvrir l'esprit GoëloRides.</p></section>
+<section aria-labelledby="gallery-title"><div class="section-head"><h2 id="gallery-title">Nos sorties en images</h2></div><div class="grid" id="gallery" aria-live="polite"></div><div class="empty" id="empty"><h3>Les souvenirs arrivent bientôt.</h3><p>Les photos et affiches de nos sorties seront rassemblées ici. En attendant, retrouvez l'actualité du groupe sur <a href="https://www.facebook.com/goelo.rides" target="_blank" rel="noopener noreferrer">Facebook</a>.</p></div></section>
+<section class="cta"><div><h2>Et si vous veniez à la prochaine ?</h2><p>Choisissez une sortie à votre rythme et rejoignez le groupe.</p></div><a class="button" href="sorties.html">Voir les prochaines sorties →</a></section>
+</main><footer>GoëloRides · Saint-Quay-Portrieux · On part ensemble. On roule ensemble. On rentre ensemble.</footer>
+<script>
+/* Ajouter ici les sorties passées avec leurs vraies photos et publications.
+Exemple :
+{title:"Sortie de la côte",date:"2026-09-01",group:"Vert",km:38,climb:412,
+ photo:"assets/photos/ma-sortie.jpg",poster:"assets/affiches/mon-affiche.jpg",
+ facebook:"https://www.facebook.com/..." }
+Ne pas publier de photos de participants sans autorisation appropriée.
+*/
+const sorties=[];
+const gallery=document.getElementById("gallery");
+const validUrl=u=>typeof u==="string"&&(u.startsWith("assets/")||u.startsWith("https://"));
+const external=u=>typeof u==="string"&&/^https:\/\/(www\.)?facebook\.com\//.test(u);
+for(const ride of sorties){
+ const card=document.createElement("article");card.className="card";
+ const cover=document.createElement("div");cover.className="cover";
+ if(validUrl(ride.photo)){const img=document.createElement("img");img.src=ride.photo;img.alt="Photo de "+(ride.title||"la sortie");img.loading="lazy";cover.append(img)}
+ const label=document.createElement("span");label.className="cover-label";label.textContent="GoëloRides · Sur la route";cover.append(label);
+ const body=document.createElement("div");body.className="card-body";
+ const meta=document.createElement("div");meta.className="meta";meta.textContent=ride.date?new Date(ride.date+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}):"Sortie GoëloRides";
+ const title=document.createElement("h3");title.textContent=ride.title||"Une sortie ensemble";
+ const facts=document.createElement("div");facts.className="facts";
+ for(const fact of [ride.group&&"Groupe "+ride.group,Number.isFinite(ride.km)&&ride.km+" km",Number.isFinite(ride.climb)&&"D+ "+ride.climb+" m"].filter(Boolean)){const pill=document.createElement("span");pill.className="fact";pill.textContent=fact;facts.append(pill)}
+ const links=document.createElement("div");links.className="links";
+ for(const [url,label] of [[ride.poster,"Voir l’affiche"],[ride.facebook,"Publication Facebook"]]){if((label==="Publication Facebook"&&external(url))||(label!=="Publication Facebook"&&validUrl(url))){const a=document.createElement("a");a.href=url;a.textContent=label;a.target="_blank";a.rel="noopener noreferrer";links.append(a)}}
+ body.append(meta,title,facts,links);card.append(cover,body);gallery.append(card);
+}
+document.getElementById("empty").hidden=sorties.length>0;
+</script>
+</body></html>
