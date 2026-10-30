@@ -875,3 +875,50 @@ html.goelo-auth-modal-open {
     border-color: rgba(249, 215, 28, 0.35);
   }
 }
+
+
+/* Identité typographique GoëloRides : source commune, sans image.
+   Variantes responsives pour navigation, accueil et titres. */
+:root {
+  --gr-brand-font: "Outfit", "Arial Black", system-ui, sans-serif;
+  --gr-brand-go: #ffffff;
+  --gr-brand-rides: #b8f233;
+  --gr-brand-go-on-light: #15232d;
+}
+html body .app-logo,
+html body .goelorides-mark,
+html body .home-brand,
+html body .home-brand-wordmark {
+  font-family: var(--gr-brand-font);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: none;
+}
+html body .app-logo .app-logo-part--go,
+html body .goelorides-mark .app-logo-part--go,
+html body .home-brand .home-brand-go {
+  color: var(--gr-brand-go);
+  text-shadow: none;
+}
+html body .app-logo .app-logo-part--rides,
+html body .goelorides-mark .app-logo-part--rides,
+html body .home-brand .home-brand-rides {
+  color: var(--gr-brand-rides);
+  text-shadow: none;
+  margin-left: 0;
+}
+html body .app-sidebar .app-logo .app-logo-part--go,
+html body .goelorides-mark .app-logo-part--go {
+  color: var(--gr-brand-go-on-light);
+}
+html body .home-brand.home-brand--hero {
+  font-size: clamp(2rem, 8vw, 4.25rem);
+}
+@media (max-width: 640px) {
+  html body .home-brand.home-brand--hero {
+    font-size: clamp(1.7rem, 9vw, 3.2rem);
+  }
+}
