@@ -16,6 +16,7 @@ html body :is(.gr-nav__logo, .nav__logo, .topbar-logo, .gr-footer-logo, .footer-
   text-decoration: none;
   opacity: 1;
 }
+html body .goelo-navbar .gr-nav__logo :is(span, em),
 html body :is(.gr-nav__logo, .nav__logo, .topbar-logo, .gr-footer-logo, .footer-logo, .gr-mobile-drawer__logo) :is(span, em) {
   font: inherit;
   letter-spacing: inherit;
