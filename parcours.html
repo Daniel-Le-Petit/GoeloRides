@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/parcours.css">
+  <link rel="stylesheet" href="css/pages/parcours.css?v=20261030-infos-unifiees">
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/pages/parcours-management.css?v=20261028-management">
   <link rel="stylesheet" href="css/pages/pseudo-participation.css?v=20261029-pseudo">
@@ -69,7 +69,7 @@
       <h1 class="pd-title" id="pd-title">Chargement…</h1>
       <p class="pd-captain" id="pd-captain"></p>
 
-      <!-- Grille métriques (Sport · Groupe · Distance · Surface) -->
+      <!-- Toutes les informations de la sortie dans une même grille -->
       <div class="pd-metrics" id="pd-metrics">
         <div class="pd-metrics__cell">
           <span class="pd-metrics__label">Sport</span>
@@ -87,25 +87,21 @@
           <span class="pd-metrics__label">Dénivelé</span>
           <span class="pd-metrics__value" id="pd-dplus">—</span>
         </div>
-      </div>
-
-      <!-- Infos complémentaires -->
-      <div class="pd-stats pd-stats--secondary" id="pd-stats">
-        <div class="pd-stat">
-          <span class="pd-stat__label">Rendez-vous</span>
-          <span class="pd-stat__value" id="pd-meet">—</span>
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Rendez-vous</span>
+          <span class="pd-metrics__value" id="pd-meet">—</span>
         </div>
-        <div class="pd-stat">
-          <span class="pd-stat__label">Départ à vélo</span>
-          <span class="pd-stat__value" id="pd-start">—</span>
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Départ à vélo</span>
+          <span class="pd-metrics__value" id="pd-start">—</span>
         </div>
-        <div class="pd-stat">
-          <span class="pd-stat__label">Durée estimée</span>
-          <span class="pd-stat__value" id="pd-duration">—</span>
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Durée estimée</span>
+          <span class="pd-metrics__value" id="pd-duration">—</span>
         </div>
-        <div class="pd-stat pd-stat--wide">
-          <span class="pd-stat__label">Point de départ</span>
-          <span class="pd-stat__value" id="pd-place">—</span>
+        <div class="pd-metrics__cell">
+          <span class="pd-metrics__label">Point de départ</span>
+          <span class="pd-metrics__value" id="pd-place">—</span>
         </div>
       </div>
 
