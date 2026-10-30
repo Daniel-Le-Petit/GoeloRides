@@ -922,3 +922,27 @@ html body .home-brand.home-brand--hero {
     font-size: clamp(1.7rem, 9vw, 3.2rem);
   }
 }
+
+/* Pied de page : même signature typographique, sans fichier image. */
+html body .gr-footer-logo {
+  font-family: var(--gr-brand-font);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  color: var(--gr-brand-go);
+  text-shadow: none;
+}
+html body .gr-footer-logo span {
+  color: var(--gr-brand-rides);
+  text-shadow: none;
+}
+/* Le mot-symbole peut être affiché sur fond clair ou sombre. */
+html body .gr-brand--light .app-logo-part--go,
+html body .gr-brand--light .home-brand-go {
+  color: var(--gr-brand-go-on-light);
+}
+html body .gr-brand--dark .app-logo-part--go,
+html body .gr-brand--dark .home-brand-go {
+  color: var(--gr-brand-go);
+}
