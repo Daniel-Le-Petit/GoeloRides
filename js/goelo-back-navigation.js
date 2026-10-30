@@ -3,9 +3,14 @@
   'use strict';
 
   function mount() {
-    if (document.querySelector('.goelo-back-navigation')) return;
+    document.querySelectorAll('.goelo-back-navigation').forEach(function (old) { old.remove(); });
     var header = document.querySelector('#goelo-navbar, .gr-nav, .nav, header');
     if (!header) return;
+
+    var logo = header.querySelector('.gr-nav__logo, .nav__logo, .topbar-logo, .gr-header-logo, a[href="index.html"]');
+    if (!logo) return;
+    var existing = document.querySelector('.goelo-back-navigation__back');
+    if (existing) { logo.insertAdjacentElement('afterend', existing); return; }
 
     var page = window.location.pathname.split('/').pop();
     var fallbacks = {
@@ -27,9 +32,6 @@
       canGoBack = previous.origin === window.location.origin && window.history.length > 1;
     } catch (e) { /* Ouverture directe : utiliser le lien de repli. */ }
 
-    var nav = document.createElement('nav');
-    nav.className = 'goelo-back-navigation';
-    nav.setAttribute('aria-label', 'Retour et accueil');
     var back = document.createElement('a');
     back.href = fallback;
     back.className = 'goelo-back-navigation__back';
@@ -44,13 +46,10 @@
         window.history.back();
       }
     });
-    var home = document.createElement('a');
-    home.href = 'index.html';
-    home.textContent = 'Accueil';
-    nav.appendChild(back);
-    nav.appendChild(home);
-    header.insertAdjacentElement('afterend', nav);
+    logo.insertAdjacentElement('afterend', back);
   }
+
+  window.addEventListener('goelo:navbar-ready', mount);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mount);
