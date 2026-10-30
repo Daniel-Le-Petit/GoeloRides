@@ -841,6 +841,7 @@
     window.GoeloGpx.bindDownloadButton("pd-gpx-btn", function () {
       return {
         fileRef: sortie && (sortie.gpxUrl || sortie.gpxFile),
+        embeddedPoints: sortie && sortie.embeddedPoints,
         title: sortie && sortie.title,
         sb: getSb(),
         messageEl: "pd-gpx-msg"

@@ -49,7 +49,7 @@
 
     var name = basename(ref);
     if (!/\.gpx$/i.test(name)) return null;
-    return "gpx/" + encodeURI(name);
+    return "gpx/" + encodeURIComponent(name);
   }
 
   function downloadFilename(fileRef, fallbackTitle) {
@@ -75,6 +75,30 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  function gpxFromPoints(points, title) {
+    if (!Array.isArray(points)) return null;
+    var track = points.map(function (p) {
+      if (!p) return null;
+      var lat = Array.isArray(p) ? p[0] : p.lat;
+      var lon = Array.isArray(p) ? p[1] : (p.lon != null ? p.lon : p.lng);
+      var ele = Array.isArray(p) ? p[2] : p.ele;
+      if (lat == null || lon == null || lat === "" || lon === "") return null;
+      lat = Number(lat); lon = Number(lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+      return '<trkpt lat="' + lat + '" lon="' + lon + '">' +
+        (ele != null && ele !== "" && Number.isFinite(Number(ele)) ? '<ele>' + Number(ele) + '</ele>' : '') +
+        '</trkpt>';
+    }).filter(Boolean);
+    if (track.length < 2) return null;
+    var name = String(title || "Parcours GoëloRides").replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c];
+    });
+    return new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<gpx version="1.1" creator="GoëloRides" xmlns="http://www.topografix.com/GPX/1/1">' +
+      '<trk><name>' + name + '</name><trkseg>' + track.join('') + '</trkseg></trk></gpx>'],
+      { type: 'application/gpx+xml' });
+  }
+
   /**
    * Télécharge le GPX ou retourne { ok: false, message }.
    */
@@ -82,19 +106,28 @@
     opts = opts || {};
     var fileRef = opts.fileRef || opts.gpxFile || opts.file || "";
     var url = resolveGpxUrl(fileRef, opts.sb || _sb());
+    var filename = downloadFilename(fileRef, opts.title);
+    function downloadEmbedded() {
+      var blob = gpxFromPoints(opts.embeddedPoints, opts.title);
+      if (!blob) return null;
+      triggerBlobDownload(blob, filename);
+      return { ok: true, filename: filename, fallback: "embedded_points" };
+    }
 
     if (!url) {
-      return {
+      return downloadEmbedded() || {
         ok: false,
         message: opts.emptyMsg || "Aucune trace GPX disponible pour cette sortie."
       };
     }
 
-    var filename = downloadFilename(fileRef, opts.title);
-
     try {
       var res = await fetch(url, { credentials: "same-origin" });
       if (!res.ok) {
+        if (res.status === 404 || res.status === 410) {
+          var recovered = downloadEmbedded();
+          if (recovered) return recovered;
+        }
         return {
           ok: false,
           message: "Impossible de récupérer le fichier GPX (HTTP " + res.status + ")."
@@ -107,6 +140,8 @@
       triggerBlobDownload(blob, filename);
       return { ok: true, url: url, filename: filename };
     } catch (err) {
+      var recovered = downloadEmbedded();
+      if (recovered) return recovered;
       if (isHttpUrl(url)) {
         var a = document.createElement("a");
         a.href = url;
@@ -166,6 +201,7 @@
     GPX_BUCKET: GPX_BUCKET,
     resolveGpxUrl: resolveGpxUrl,
     downloadFilename: downloadFilename,
+    gpxFromPoints: gpxFromPoints,
     downloadGpx: downloadGpx,
     bindDownloadButton: bindDownloadButton
   };
