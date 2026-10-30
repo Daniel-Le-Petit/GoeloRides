@@ -544,6 +544,28 @@ body {
 
 .pd-acc__body a { color: var(--accent); }
 
+.pd-level-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 0.75rem;
+  margin: 0.85rem 0;
+}
+
+.pd-level-fields label { display: grid; gap: 0.3rem; }
+.pd-level-fields input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+.pd-level-fields input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pd-level-result { font-weight: 600; }
+
 /* ─── Participants ──────────────────────────────────────────── */
 .pd-participants-count {
   font-family: var(--font-body);

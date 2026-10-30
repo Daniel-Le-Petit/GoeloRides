@@ -854,6 +854,7 @@
   ========================================================= */
   async function renderAll() {
     renderHero();
+    if (window.GoeloRideLevel) window.GoeloRideLevel.render(sortie);
     renderCities();
     renderParticipants();
     bindJoin();
@@ -935,6 +936,7 @@
         type:      result.data.route_kind   || "",
         raceType:  fc.raceType              || "",
         niveau:    fc.niveau                || "",
+        pace:      result.data.pace_label   || "",
         place:     fc.meetPlace             || "",
         city:      fc.city                  || "",
         date:      fc.rideDateIso           || "",

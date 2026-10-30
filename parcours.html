@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/parcours.css?v=20261030-infos-unifiees">
+  <link rel="stylesheet" href="css/pages/parcours.css?v=20261030-niveau-sortie">
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/pages/parcours-management.css?v=20261028-management">
   <link rel="stylesheet" href="css/pages/pseudo-participation.css?v=20261029-pseudo">
@@ -178,6 +178,31 @@
       <h2 class="pd-section__title" id="pd-infos-title">Informations importantes</h2>
 
       <div class="pd-acc" id="pd-accordions">
+
+        <div class="pd-acc__item" data-section="niveau_sortie">
+          <button type="button" class="pd-acc__head" aria-expanded="false" aria-controls="pd-level-panel">
+            <span>Cette sortie est-elle pour moi ?</span>
+            <span class="pd-acc__chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="pd-acc__panel" id="pd-level-panel">
+            <div class="pd-acc__body" id="pd-level-guide">
+              <p><strong data-level-summary>Caractéristiques du parcours en cours de chargement…</strong></p>
+              <p data-level-group></p>
+              <p>Compare avec une sortie récente que tu termines à l’aise, sur le même type de terrain et avec le même vélo.</p>
+              <div class="pd-level-fields">
+                <label>Ta distance habituelle (km)
+                  <input type="number" min="1" step="any" inputmode="decimal" data-level-distance placeholder="Ex. 30">
+                </label>
+                <label>Ton dénivelé habituel (m D+)
+                  <input type="number" min="0" step="any" inputmode="decimal" data-level-elevation placeholder="Ex. 300">
+                </label>
+              </div>
+              <p class="pd-level-result" data-level-result role="status" aria-live="polite"></p>
+              <p>Les côtes raides, le vent, l’allure et ta forme du jour comptent aussi. Pour une première sortie, garde une marge et parle de ton niveau au capitaine.</p>
+              <a href="groupes.html">Comprendre les niveaux des groupes →</a>
+            </div>
+          </div>
+        </div>
 
         <div class="pd-acc__item" data-section="meteo_maintien_sortie">
           <button type="button" class="pd-acc__head" aria-expanded="false">
@@ -366,7 +391,8 @@
   <script src="js/goelo-activity.js?v=20261028-participation-results"></script>
   <script src="js/goelo-weather.js"></script>
   <script src="js/goelo-pseudo-participation.js?v=20261029-home-sync"></script>
-  <script src="js/parcours.js?v=20261030-gpx-download"></script>
+  <script src="js/goelo-ride-level.js?v=20261030"></script>
+  <script src="js/parcours.js?v=20261030-niveau-sortie"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="goelo-swipe-nav.js" defer></script>
 
