@@ -9,8 +9,9 @@
 
     var logo = header.querySelector('.gr-nav__logo, .nav__logo, .topbar-logo, .gr-header-logo, a[href="index.html"]');
     if (!logo) return;
-    var existing = document.querySelector('.goelo-back-navigation__back');
-    if (existing) { logo.insertAdjacentElement('afterend', existing); return; }
+    document.querySelectorAll('.goelo-back-navigation__back').forEach(function (old) { old.remove(); });
+    if (logo.dataset.goeloBackLogo === '1') return;
+    logo.dataset.goeloBackLogo = '1';
 
     var page = window.location.pathname.split('/').pop();
     var fallbacks = {
@@ -32,10 +33,9 @@
       canGoBack = previous.origin === window.location.origin && window.history.length > 1;
     } catch (e) { /* Ouverture directe : utiliser le lien de repli. */ }
 
-    var back = document.createElement('a');
+    var back = logo;
     back.href = fallback;
-    back.className = 'goelo-back-navigation__back';
-    back.textContent = '← Retour';
+    back.insertBefore(document.createTextNode('<< '), back.firstChild);
     back.setAttribute('aria-label', canGoBack ? 'Revenir à la page précédente' :
       (fallback === 'sorties.html' ? 'Revenir aux sorties' :
         fallback === 'team-rider.html' ? 'Revenir à l’espace Ride Leader' :
@@ -46,7 +46,6 @@
         window.history.back();
       }
     });
-    logo.insertAdjacentElement('afterend', back);
   }
 
   window.addEventListener('goelo:navbar-ready', mount);
