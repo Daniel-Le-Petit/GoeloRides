@@ -753,6 +753,16 @@ window.goeloGetSb = function () {
   function _openModal(id) {
     var m = document.getElementById(id);
     if (!m) return;
+    var drawer = document.getElementById("gr-mobile-drawer");
+    if (drawer && !drawer.hidden) {
+      if (typeof window.closeMobileMenu === "function") window.closeMobileMenu();
+      drawer.hidden = true;
+      document.documentElement.classList.remove("gr-mobile-menu-open");
+      document.body.classList.remove("gr-mobile-menu-open");
+      // Restaurer le focus sur un bouton visible à la fermeture de la modale.
+      var burger = document.querySelector("[data-goelo-navbar-burger]");
+      if (burger) burger.focus();
+    }
     _lastFocus = document.activeElement;
     m.hidden = false;
     requestAnimationFrame(function () {
