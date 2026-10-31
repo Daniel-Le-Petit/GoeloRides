@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/account.css">
+  <link rel="stylesheet" href="css/pages/account.css?v=20261031-account-v2">
 
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -19,14 +19,16 @@
   <div data-goelo-navbar data-goelo-navbar-active="bookings"></div>
 
   <header class="gr-page-header">
-    <h1>Mes inscriptions</h1>
-    <p>Les sorties auxquelles tu es inscrit·e.</p>
+    <p class="ac-kicker">LE PROCHAIN RENDEZ-VOUS EST DEHORS</p>
+    <h1>Mes inscriptions<span class="ac-title-dot">.</span></h1>
+    <p>Ta place dans le groupe. Toutes les infos pour prendre le départ.</p>
   </header>
 
+  <noscript><p class="ac-nojs">Active JavaScript pour ouvrir ton espace personnel. Tu peux aussi <a href="sorties.html">consulter les sorties</a>.</p></noscript>
   <main class="ac-main" id="main-content" role="main">
     <nav class="ac-account-nav" aria-label="Mon espace">
-      <a href="profile.html" >Mon profil</a>
-      <a href="my-bookings.html" aria-current="page">Mes inscriptions</a>
+      <a href="profile.html">Mon compte</a>
+      <a href="my-bookings.html" aria-current="page">Mes sorties</a>
     </nav>
 
     <div id="bookings-gate" class="ac-gate" hidden>
@@ -35,26 +37,34 @@
       <button type="button" class="ac-gate__btn" data-goelo-auth-trigger>Se connecter</button>
     </div>
 
+    <div id="bookings-loading" class="ac-loading" role="status"><span class="ac-spinner" aria-hidden="true"></span> On retrouve tes sorties…</div>
     <div id="bookings-fatal" class="ac-error" role="alert" hidden></div>
+    <button type="button" id="bookings-retry" class="ac-btn ac-btn--secondary" hidden>Réessayer le chargement</button>
 
-    <section class="ac-card" id="bookings-content" hidden>
-      <div class="ac-section-head"><h2>Mon agenda vélo</h2><a class="ac-btn" href="sorties.html">Découvrir les sorties</a></div>
-      <div class="ac-filters" role="group" aria-label="Période des inscriptions"><button type="button" data-period="upcoming" aria-pressed="true">À venir <span id="count-upcoming">0</span></button><button type="button" data-period="past" aria-pressed="false">Passées <span id="count-past">0</span></button></div>
+    <div id="bookings-content" hidden>
+      <div class="ac-bookings-toolbar"><div class="ac-filters" role="group" aria-label="Période des inscriptions"><button type="button" data-period="upcoming" aria-pressed="true">À venir <span id="count-upcoming">0</span></button><button type="button" data-period="past" aria-pressed="false">Passées <span id="count-past">0</span></button></div><a class="ac-btn" href="sorties.html">Trouver une sortie <span aria-hidden="true">→</span></a></div>
       <p id="bookings-feedback" role="status" aria-live="polite"></p>
-      <div id="bookings-list"></div>
-    </section>
+      <div class="ac-bookings-layout">
+        <section aria-label="Mes sorties"><div id="bookings-list"></div></section>
+        <aside class="ac-bookings-aside">
+          <section class="ac-ready-card"><span class="ac-ready-icon" aria-hidden="true">→</span><p class="ac-kicker">ON SE RETROUVE AU DÉPART</p><h2>Le plaisir de rouler ensemble.</h2><p>Un casque, de l’eau, un vélo vérifié. Et quelques minutes d’avance pour faire connaissance.</p><a href="infos-pratiques.html">Bien préparer ma sortie →</a></section>
+          <section class="ac-card ac-howto"><h2>Une place, un engagement</h2><p>Un imprévu ? Désinscris-toi dès que possible pour libérer ta place.</p><p>En liste d’attente, ta place n’est pas encore confirmée. Consulte ton statut avant de partir.</p><a class="ac-text-link" href="groupes.html">Choisir le bon groupe →</a></section>
+        </aside>
+      </div>
+    </div>
 
   </main>
 
   <script src="js/goelo-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="js/goelo-auth-state.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/goelo-profile.js"></script>
+  <script src="js/goelo-auth-state.js?v=20261031-account-v2"></script>
+  <script src="js/auth.js?v=20261031-account-v2"></script>
+  <script src="js/goelo-account.js?v=20261031-account-v2"></script>
+  <script src="js/goelo-profile.js?v=20261031-account-v2"></script>
   <script src="js/goelo-ui.js"></script>
   <script src="js/goelo-navbar.js"></script>
   <script src="js/goelo-sortie-dates.js"></script>
-  <script src="js/my-bookings.js"></script>
+  <script src="js/my-bookings.js?v=20261031-account-v2"></script>
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>
 </html>

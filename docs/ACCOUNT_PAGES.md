@@ -2,7 +2,7 @@
 
 Les pages `profile.html` et `my-bookings.html` partagent la palette marine, la navigation de compte et des styles adaptés au mobile.
 
-Le profil enregistre pseudo, niveau et ville dans `profiles` sous les politiques RLS existantes. Les metadata Auth sont également mises à jour pour rester cohérentes avec la synchronisation effectuée à la connexion. Le rôle et l’e-mail ne sont pas modifiables par ce formulaire.
+Le profil enregistre pseudo, nom et prénom (`username`), niveau et ville dans `profiles` sous les politiques RLS existantes. Les metadata Auth sont également mises à jour pour rester cohérentes avec la synchronisation effectuée à la connexion. Le rôle et l’e-mail ne sont pas modifiables par ce formulaire.
 
 ## Migration
 
@@ -34,3 +34,12 @@ node goelorides-tests/tests/integration/account-pages-browser.cjs
 ```
 
 La variable facultative `CHROMIUM_PATH` sélectionne un navigateur système ; `QA_OUTPUT_DIR` active les captures dans un dossier existant.
+
+
+## Reprise du 31 octobre — pages et chargement
+
+Les pages ont été revues : fiche cycliste, formulaire en deux colonnes sur ordinateur, cartes de sorties avec dates et caractéristiques disponibles, téléchargement iCalendar. Le calendrier utilise le départ en Europe/Paris et ne suppose aucune durée de sortie.
+
+`js/goelo-account.js` charge la session indépendamment de la résolution du rôle et borne chaque attente à 12 secondes. Une session ou une lecture bloquée produit un état explicite avec un bouton Réessayer. Les réponses antérieures à une déconnexion sont ignorées. Les paramètres de version des fichiers compte évitent de mélanger l’ancien JavaScript avec les nouvelles pages.
+
+Le test `account-session-browser.cjs` charge le vrai `auth.js` avec un SDK simulant les cas session prête, absence de session, déconnexion, résolution du rôle bloquée, session bloquée, lecture de profil bloquée et reprise. Le test `account-pages-browser.cjs` couvre aussi le nom complet et le fichier agenda.

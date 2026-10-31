@@ -11,7 +11,7 @@
     admin: "Admin"
   };
 
-  var activeUser = null, generation = 0, loadedId = null, saving = false;
+  var activeUser = null, generation = 0, loadedId = null, saving = false, retrySession = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -36,6 +36,7 @@
 
   /* ── États de page ──────────────────────────────────────────── */
   function showGate() {
+    hide("profile-retry");
     show("profile-gate");
     hide("profile-loading");
     hide("profile-content");
@@ -43,6 +44,7 @@
   }
 
   function showLoading() {
+    hide("profile-retry");
     hide("profile-gate");
     show("profile-loading");
     hide("profile-content");
@@ -52,6 +54,7 @@
   function showProfile() {
     hide("profile-gate");
     hide("profile-loading");
+    hide("profile-retry");
     show("profile-content");
     hide("profile-fatal");
   }
@@ -60,6 +63,7 @@
     hide("profile-gate");
     hide("profile-loading");
     hide("profile-content");
+    show("profile-retry");
     var box = $("profile-fatal");
     if (box) {
       box.textContent = msg;
@@ -100,11 +104,11 @@
     var fetchError = null;
 
     try {
-      var result = await sb
+      var result = await window.GoeloAccount.request(sb
         .from("profiles")
-        .select("pseudo, cyclist_level, city, role")
+        .select("pseudo, username, cyclist_level, city, role")
         .eq("id", user.id)
-        .maybeSingle();
+        .maybeSingle());
       if (result.error) {
         fetchError = result.error;
         console.warn("[profile] profiles fetch:", result.error.message);
@@ -117,7 +121,7 @@
     }
 
     if (request !== generation) return;
-    loadedId = user.id;
+    loadedId = fetchError ? null : user.id;
     var pseudo =
       profile.pseudo ||
       (window.GoeloProfile && window.GoeloProfile.getDisplayName(
@@ -128,7 +132,7 @@
         window.GoeloProfile.profileFromUser(user)
       ) : "?");
 
-    var role = profile.role || window.GOELO_ROLE || "user";
+    var role = profile.role || (window.GoeloAuthState ? window.GoeloAuthState.resolveRoleFromUserAndProfile(user, profile) : "user");
 
     var avatar = $("profile-avatar");
     if (avatar) {
@@ -144,7 +148,9 @@
     setText("profile-role", ROLE_LABELS[role] || role);
     var metadata = user.user_metadata || {};
     var values = { email: user.email || "", pseudo: pseudo === "?" ? "" : pseudo,
-      level: profile.cyclist_level || metadata.cyclist_level || "", city: profile.city || metadata.city || "" };
+      fullname: Object.prototype.hasOwnProperty.call(profile, "username") ? profile.username || "" : metadata.username || metadata.name || "",
+      level: Object.prototype.hasOwnProperty.call(profile, "cyclist_level") ? profile.cyclist_level || "" : metadata.cyclist_level || "",
+      city: Object.prototype.hasOwnProperty.call(profile, "city") ? profile.city || "" : metadata.city || "" };
     Object.keys(values).forEach(function (key) {
       var el = $("profile-" + key);
       if (el.tagName === "SELECT" && values[key] && !Array.from(el.options).some(function (o) { return o.value === values[key]; })) {
@@ -154,6 +160,16 @@
       if (el.tagName === "SELECT") Array.from(el.options).forEach(function (o) { o.defaultSelected = o.value === values[key]; });
       else el.defaultValue = values[key];
     });
+    var levels = {debutant:"Débutant", intermediaire:"Intermédiaire", confirme:"Confirmé"};
+    setText("profile-summary-city", values.city || "Ville à renseigner");
+    setText("profile-summary-level", levels[values.level] || values.level || "À renseigner");
+    var memberSince = new Date(user.created_at);
+    setText("profile-member-since", isNaN(memberSince.getTime()) ? "" : "Membre depuis " + memberSince.toLocaleDateString("fr-FR", {month:"long", year:"numeric"}));
+    if (isNaN(memberSince.getTime())) $("profile-member-since").textContent = "";
+    var filled = [values.pseudo,values.fullname,values.level,values.city].filter(Boolean).length;
+    $("profile-completion").value = filled;
+    setText("profile-completion-label", filled === 4 ? "Ta fiche est complète. Il ne reste plus qu’à rouler !" : filled + " informations sur 4 renseignées.");
+    $("profile-dirty").textContent = fetchError ? "La lecture du profil a échoué. Réessaie avant de modifier tes informations." : "Tes informations sont à jour.";
     $("profile-save").disabled = !!fetchError;
 
     if (fetchError) {
@@ -163,6 +179,7 @@
     }
 
     showProfile();
+    if (fetchError) show("profile-retry");
   }
 
   /* ── Auth events ─────────────────────────────────────────────── */
@@ -178,18 +195,20 @@
     event.preventDefault();
     if (saving || !activeUser || loadedId !== activeUser.id) return;
     var user = activeUser, feedback = $("profile-feedback"), form = $("profile-form");
-    var fields = { pseudo: $("profile-pseudo").value.trim(), cyclist_level: $("profile-level").value || null, city: $("profile-city").value.trim() || null };
+    var fields = { username: $("profile-fullname").value.trim() || null, pseudo: $("profile-pseudo").value.trim(), cyclist_level: $("profile-level").value || null, city: $("profile-city").value.trim() || null };
     if (!fields.pseudo) { $("profile-pseudo").setCustomValidity("Indique un pseudo."); $("profile-pseudo").reportValidity(); return; }
     saving = true;
     Array.from(form.elements).forEach(function (el) { el.disabled = true; });
     feedback.textContent = "Enregistrement…";
     feedback.dataset.error = "false";
     try {
-      var result = await getSb().from("profiles").upsert(Object.assign({ id: user.id }, fields), { onConflict: "id" }).select("pseudo, cyclist_level, city").single();
+      var result = await window.GoeloAccount.request(getSb().from("profiles").upsert(Object.assign({ id: user.id }, fields), { onConflict: "id" }).select("pseudo, username, cyclist_level, city").single());
       if (result.error || !result.data) throw new Error("save_failed");
       if (activeUser !== user) return;
       // Auth synchronise les metadata vers profiles à la connexion : les garder cohérentes.
-      var sync = await getSb().auth.updateUser({ data: fields });
+      var sync;
+      try { sync = await window.GoeloAccount.request(getSb().auth.updateUser({ data: fields })); }
+      catch (syncError) { sync = { error: syncError }; }
       if (activeUser !== user) return;
       if (window.GoeloAuthState) window.GoeloAuthState.setState({ pseudo: fields.pseudo });
       await loadProfile(user);
@@ -200,6 +219,7 @@
     } finally {
       saving = false;
       Array.from(form.elements).forEach(function (el) { el.disabled = false; });
+      $("profile-save").disabled = !loadedId;
     }
   }
 
@@ -208,10 +228,10 @@
     $("profile-pseudo").addEventListener("input", function () { this.setCustomValidity(""); });
     $("profile-form").addEventListener("reset", function () { $("profile-feedback").textContent = ""; $("profile-pseudo").setCustomValidity(""); });
     showLoading();
-    if (window.GoeloAuthState) {
-      onAuth(window.GoeloAuthState.getState());
-      window.GoeloAuthState.subscribe(onAuth);
-    }
+    $("profile-form").addEventListener("input", function () { $("profile-dirty").textContent = "Modifications non enregistrées."; $("profile-feedback").textContent = ""; });
+    $("profile-form").addEventListener("reset", function () { $("profile-dirty").textContent = "Tes informations sont à jour."; });
+    retrySession = window.GoeloAccount.watch(onAuth, function () { showFatal("Ton espace n’a pas pu s’ouvrir. Vérifie ta connexion puis réessaie. Tes informations sont conservées."); });
+    $("profile-retry").addEventListener("click", function () { activeUser = null; loadedId = null; showLoading(); retrySession(); });
   }
 
   if (document.readyState === "loading") {

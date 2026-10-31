@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  var allRows = [], period = "upcoming", currentUser = null, generation = 0;
+  var allRows = [], period = "upcoming", currentUser = null, generation = 0, retrySession = null, bookingsLoaded = false;
 
   function $(id) { return document.getElementById(id); }
 
@@ -28,6 +28,8 @@
   }
 
   function showGate() {
+    hide("bookings-loading");
+    hide("bookings-retry");
     show("bookings-gate");
     hide("bookings-content");
     hide("bookings-fatal");
@@ -35,6 +37,8 @@
 
   function showContent() {
     hide("bookings-gate");
+    hide("bookings-loading");
+    hide("bookings-retry");
     show("bookings-content");
     hide("bookings-fatal");
   }
@@ -42,6 +46,8 @@
   function showFatal(msg) {
     hide("bookings-gate");
     hide("bookings-content");
+    hide("bookings-loading");
+    show("bookings-retry");
     var box = $("bookings-fatal");
     if (box) {
       box.textContent = msg;
@@ -56,9 +62,7 @@
   }
 
   function showLoading() {
-    showContent();
-    var list = $("bookings-list");
-    if (list) list.innerHTML = '<div class="ac-loading">Chargement de tes inscriptions…</div>';
+    hide("bookings-gate"); hide("bookings-fatal"); hide("bookings-content"); hide("bookings-retry"); show("bookings-loading");
   }
 
   function firstNonEmpty(values) {
@@ -145,60 +149,98 @@
   function renderBookings(rows) {
     var list = $("bookings-list");
     if (!list) return;
-
+    function time(row) {
+      var iso = extractDepartureIso(row.routes || row.route);
+      var value = iso ? new Date(iso).getTime() : NaN;
+      return isNaN(value) ? Infinity : value;
+    }
     var now = Date.now();
-    function time(row) { var iso = extractDepartureIso(row.routes || row.route); var n = iso && new Date(iso).getTime(); return n || Infinity; }
     var upcoming = rows.filter(function (r) { return time(r) >= now; });
     var past = rows.filter(function (r) { return time(r) < now; });
     $("count-upcoming").textContent = upcoming.length;
     $("count-past").textContent = past.length;
-    rows = (period === "past" ? past : upcoming).sort(function (a,b) { return period === "past" ? time(b)-time(a) : time(a)-time(b); });
+    rows = (period === "past" ? past : upcoming).slice().sort(function (a, b) {
+      return period === "past" ? time(b) - time(a) : time(a) - time(b);
+    });
     if (!rows.length) {
-      list.innerHTML = '<div class="ac-empty">' + (period === "past" ? 'Aucune sortie passée dans tes inscriptions.' : 'Aucune inscription à venir. Et si tu préparais ta prochaine sortie ?') + '<br><a href="sorties.html">Découvrir les sorties</a></div>';
+      list.innerHTML = '<div class="ac-empty"><svg viewBox="0 0 120 75" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="25" cy="50" r="20"/><circle cx="95" cy="50" r="20"/><path d="M25 50 43 17 65 50H25l23-27h33l14 27M64 50l17-38h13M36 17h17" stroke-linecap="round"/><path d="M1 74h118" stroke="#d4e2df"/></svg><p class="ac-kicker">' + (period === "past" ? 'LES BONS MOMENTS RESTENT' : 'LA ROUTE T’ATTEND') + '</p><h2>' + (period === "past" ? 'L’histoire commence au prochain départ.' : 'Et si on roulait ensemble ?') + '</h2><p>' + (period === "past" ? 'Tes inscriptions aux sorties passées apparaîtront ici. Une inscription ne vaut pas confirmation de présence.' : 'Tu n’as pas encore de sortie à venir. Trouve un groupe à ton rythme et réserve ta place.') + '</p><a class="ac-btn" href="sorties.html">Découvrir les sorties →</a></div>';
       return;
     }
-
+    var nextIndex = rows.findIndex(function (r) {
+      return !/^(cancelled|canceled|annulee|annulée)$/.test((parseFrontConfig(r.routes || r.route) || {}).sortieStatus || "open");
+    });
     list.innerHTML = rows.map(function (row, index) {
       var route = row.routes || row.route || null;
-      var title = extractTitle(route);
-      var when = formatDateTime(extractDepartureIso(route));
-      var group = extractGroup(route);
-      var location = extractLocation(route);
-      var waiting = isWaiting(row);
       var fc = parseFrontConfig(route) || {};
-      var status = fc.sortieStatus || "open";
+      var status = String(fc.sortieStatus || "open").toLowerCase();
       var cancelled = /^(cancelled|canceled|annulee|annulée)$/.test(status);
+      var waiting = isWaiting(row);
+      var next = period === "upcoming" && index === nextIndex;
       var canCancel = period === "upcoming" && /^(open|published|publiee|publiée)$/.test(status) && !!route;
-      var next = period === "upcoming" && !cancelled && index === rows.findIndex(function (r) { return !/^(cancelled|canceled|annulee|annulée)$/.test((parseFrontConfig(r.routes || r.route) || {}).sortieStatus || "open"); });
       var badgeClass = cancelled ? "ac-booking__badge--closed" : waiting ? "ac-booking__badge--wait" : "ac-booking__badge--ok";
-      var badgeLabel = cancelled ? "Sortie annulée" : waiting ? "Liste d’attente" : period === "past" ? "Inscription passée" : "Inscription confirmée";
-      var routeId = row.route_id || (route && route.id) || "";
-      var linkHtml = routeId
-        ? '<a class="ac-booking__link" href="parcours.html?id=' + encodeURIComponent(routeId) + '">Voir la sortie</a>'
-        : "";
+      var badge = cancelled ? "Sortie annulée" : period === "past" ? "Inscription passée" : waiting ? "Liste d’attente" : "Place confirmée";
+      var id = row.route_id || (route && route.id) || "";
+      var departure = extractDepartureIso(route);
+      var date = departure ? new Date(departure) : null;
+      if (date && isNaN(date.getTime())) date = null;
+      var tile = date ? '<strong>' + date.toLocaleDateString('fr-FR', {day:'2-digit',timeZone:'Europe/Paris'}) + '</strong><span>' + date.toLocaleDateString('fr-FR', {month:'short',timeZone:'Europe/Paris'}) + '</span>' : '<strong>—</strong><span>À fixer</span>';
+      var stats = fc.stats || {};
+      var km = Number(stats.totalKm != null ? stats.totalKm : fc.km);
+      var elevation = Number(stats.elevGainM != null ? stats.elevGainM : fc.dplus);
+      var tags = [];
+      if (fc.raceType) tags.push(String(fc.raceType).toUpperCase());
+      if (isFinite(km) && km > 0) tags.push(km.toLocaleString('fr-FR', {maximumFractionDigits:1}) + ' km');
+      if (isFinite(elevation) && elevation > 0) tags.push(Math.round(elevation).toLocaleString('fr-FR') + ' m D+');
+      var group = route && (route.group_label || fc.group_label);
+      if (group) tags.push('Groupe ' + group);
+      var leader = firstNonEmpty([fc.captain, fc.rideLeader]);
+      var meeting = typeof fc.meetTime === 'string' && /^\d{2}:\d{2}$/.test(fc.meetTime) ? fc.meetTime : '';
+      var details = '<div><dt>Rendez-vous</dt><dd>' + escapeHtml(extractLocation(route)) + (meeting ? ' · ' + escapeHtml(meeting) : '') + '</dd></div>';
+      if (leader) details += '<div><dt>Ride Leader</dt><dd>' + escapeHtml(leader) + '</dd></div>';
+      var link = id ? '<a class="ac-booking__link" href="parcours.html?id=' + encodeURIComponent(id) + '">' + (period === 'past' ? 'Revoir la sortie' : 'Préparer ma sortie') + ' →</a>' : '';
+      return '<article class="ac-booking' + (next ? ' ac-booking--next' : '') + '">' +
+        '<div class="ac-booking__heading"><span class="ac-eyebrow">' + (next ? 'MON PROCHAIN DÉPART' : period === 'past' ? 'DANS MON HISTORIQUE' : 'À L’AGENDA') + '</span><span class="ac-booking__badge ' + badgeClass + '">' + badge + '</span></div>' +
+        '<div class="ac-booking__main"><div class="ac-date-tile" aria-hidden="true">' + tile + '</div><div class="ac-booking__body">' +
+        '<div class="ac-ride-tags">' + tags.map(function (tag) { return '<span>' + escapeHtml(tag) + '</span>'; }).join('') + '</div>' +
+        '<h2 class="ac-booking__title">' + escapeHtml(extractTitle(route)) + '</h2>' +
+        '<p class="ac-booking__meta">Départ · ' + escapeHtml(formatDateTime(departure)) + '</p>' +
+        '<dl class="ac-ride-details">' + details + '</dl>' +
+        (waiting && period === 'upcoming' && !cancelled ? '<p class="ac-help">Ta place sera confirmée si un cycliste se désinscrit.</p>' : '') +
+        '</div></div><div class="ac-booking__footer">' + link + '<div class="ac-booking__tools">' +
+        (period === 'upcoming' && date && !cancelled && id ? '<button type="button" class="ac-booking__calendar" data-calendar-id="' + escapeHtml(id) + '">Ajouter à mon agenda</button>' : '') +
+        (canCancel && id ? '<button type="button" class="ac-booking__unsub" data-route-id="' + escapeHtml(id) + '">Me désinscrire</button>' : '') +
+        '</div></div></article>';
+    }).join('');
+  }
 
-      return (
-        '<article class="ac-booking' + (next ? ' ac-booking--next' : '') + '" data-signup-id="' + escapeHtml(row.id || routeId) + '">' +
-          '<div class="ac-booking__body">' + (next ? '<span class="ac-eyebrow">Prochaine sortie</span>' : '') +
-            '<p class="ac-booking__title">' + escapeHtml(title) + "</p>" +
-            '<p class="ac-booking__meta">' + escapeHtml(when) + escapeHtml(group) + "</p>" +
-            '<p class="ac-booking__meta">📍 ' + escapeHtml(location) + "</p>" +
-            linkHtml +
-          "</div>" +
-          '<div class="ac-booking__side">' +
-            '<span class="ac-booking__badge ' + badgeClass + '">' + badgeLabel + "</span>" +
-            (canCancel && routeId ? '<button type="button" class="ac-booking__unsub" data-route-id="' + escapeHtml(routeId) + '">Se désinscrire</button>' : '') +
-          "</div>" +
-        "</article>"
-      );
-    }).join("");
+  function downloadCalendar(routeId) {
+    var row = allRows.find(function (r) { return String(r.route_id || ((r.route || r.routes || {}).id)) === routeId; });
+    if (!row) return;
+    var route = row.routes || row.route;
+    var departure = extractDepartureIso(route);
+    if (!departure) return;
+    function stamp(date) { return new Date(date).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z'); }
+    function text(value) { return String(value).replace(/\\/g, '\\\\').replace(/\r\n|\r|\n/g, '\\n').replace(/;/g, '\\;').replace(/,/g, '\\,'); }
+    var url = new URL('parcours.html?id=' + encodeURIComponent(routeId), window.location.href).href;
+    var event = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//GoeloRides//Sorties//FR','BEGIN:VEVENT',
+      'UID:' + text(routeId) + '@goelorides','DTSTAMP:' + stamp(new Date()),'DTSTART:' + stamp(departure),
+      'SUMMARY:' + text(extractTitle(route)), 'LOCATION:' + text(extractLocation(route)),
+      'DESCRIPTION:' + text('Informations et statut de ton inscription : ' + url), 'URL:' + url,'END:VEVENT','END:VCALENDAR'];
+    // Plier à 75 octets sans couper un caractère UTF-8 (RFC 5545).
+    function fold(line) { var chunks=[], current='', bytes=0; Array.from(line).forEach(function (char) { var size=new TextEncoder().encode(char).length; if(bytes+size>75){chunks.push(current);current=' ';bytes=1;} current+=char;bytes+=size; });chunks.push(current);return chunks.join('\r\n'); }
+    var blob = new Blob([event.map(fold).join('\r\n') + '\r\n'], {type:'text/calendar;charset=utf-8'});
+    var fileUrl = URL.createObjectURL(blob);
+    var link = document.createElement('a'); link.href=fileUrl;link.download='goelorides-sortie.ics';document.body.appendChild(link);link.click();link.remove();
+    setTimeout(function () { URL.revokeObjectURL(fileUrl); }, 1000);
+    $("bookings-feedback").dataset.error = "false";
+    $("bookings-feedback").textContent = "Fichier agenda téléchargé. Ouvre-le pour ajouter la sortie à ton calendrier.";
   }
 
   async function fetchBookings(user) {
     var sb = getSb();
     if (!sb) throw new Error("Client Supabase indisponible.");
 
-    var result = await sb.rpc("account_my_bookings");
+    var result = await window.GoeloAccount.request(sb.rpc("account_my_bookings"));
     if (result.error) throw new Error(result.error.message);
 
     return normalizeRows(result.data);
@@ -217,7 +259,7 @@
     btn.textContent = "Désinscription…";
 
     try {
-      var result = await sb.rpc("account_cancel_booking", { p_route_id: routeId });
+      var result = await window.GoeloAccount.request(sb.rpc("account_cancel_booking", { p_route_id: routeId }));
       if (result.error) throw new Error(result.error.message);
 
       var payload = result.data;
@@ -242,6 +284,8 @@
     if (!list || list.getAttribute("data-bound") === "1") return;
     list.setAttribute("data-bound", "1");
     list.addEventListener("click", function (e) {
+      var calendar = e.target.closest("[data-calendar-id]");
+      if (calendar) { downloadCalendar(calendar.getAttribute("data-calendar-id")); return; }
       var btn = e.target.closest("[data-route-id]");
       if (!btn) return;
       handleUnsubscribe(btn.getAttribute("data-route-id"), btn);
@@ -260,12 +304,15 @@
     }
 
     var request = ++generation;
+    bookingsLoaded = false;
     showLoading();
 
     try {
       var rows = await fetchBookings(user);
       if (request !== generation) return;
       allRows = rows;
+      bookingsLoaded = true;
+      showContent();
       renderBookings(allRows);
     } catch (err) {
       console.warn("[my-bookings]", err.message);
@@ -289,11 +336,12 @@
       button.addEventListener("click", function () {
         period = button.dataset.period;
         document.querySelectorAll("[data-period]").forEach(function (b) { b.setAttribute("aria-pressed", String(b === button)); });
-        if (currentUser) renderBookings(allRows);
+        if (currentUser && bookingsLoaded) renderBookings(allRows);
       });
     });
     showLoading();
-    if (window.GoeloAuthState) { onAuth(window.GoeloAuthState.getState()); window.GoeloAuthState.subscribe(onAuth); }
+    retrySession = window.GoeloAccount.watch(onAuth, function () { showFatal("Tes inscriptions n’ont pas pu s’ouvrir. Vérifie ta connexion puis réessaie."); });
+    $("bookings-retry").addEventListener("click", function () { currentUser = null; showLoading(); retrySession(); });
   }
 
   if (document.readyState === "loading") {

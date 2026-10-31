@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/account.css">
+  <link rel="stylesheet" href="css/pages/account.css?v=20261031-account-v2">
 
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -19,14 +19,16 @@
   <div data-goelo-navbar data-goelo-navbar-active="profile"></div>
 
   <header class="gr-page-header">
-    <h1>Mon profil</h1>
-    <p>Ton identité sur GoëloRides.</p>
+    <p class="ac-kicker">L’ESPRIT DE GROUPE COMMENCE ICI</p>
+    <h1>Mon profil<span class="ac-title-dot">.</span></h1>
+    <p>On roule ensemble. Faisons connaissance.</p>
   </header>
 
+  <noscript><p class="ac-nojs">Active JavaScript pour ouvrir ton espace personnel. Tu peux aussi <a href="sorties.html">consulter les sorties</a>.</p></noscript>
   <main class="ac-main" id="main-content" role="main">
     <nav class="ac-account-nav" aria-label="Mon espace">
-      <a href="profile.html" aria-current="page">Mon profil</a>
-      <a href="my-bookings.html" >Mes inscriptions</a>
+      <a href="profile.html" aria-current="page">Mon compte</a>
+      <a href="my-bookings.html" >Mes sorties</a>
     </nav>
 
     <div id="profile-gate" class="ac-gate" hidden>
@@ -35,44 +37,62 @@
       <button type="button" class="ac-gate__btn" data-goelo-auth-trigger>Se connecter</button>
     </div>
 
-    <div id="profile-loading" class="ac-loading" hidden>Chargement du profil…</div>
+    <div id="profile-loading" class="ac-loading" role="status"><span class="ac-spinner" aria-hidden="true"></span> Ouverture de ton espace cycliste…</div>
 
     <div id="profile-fatal" class="ac-error" role="alert" hidden></div>
+    <button type="button" id="profile-retry" class="ac-btn ac-btn--secondary" hidden>Réessayer le chargement</button>
 
     <div id="profile-content" hidden>
       <div id="profile-banner" class="ac-banner" role="alert" hidden></div>
 
-      <section class="ac-card ac-identity">
-        <div class="ac-profile-head">
-          <div class="ac-avatar" id="profile-avatar" aria-hidden="true">GR</div>
-          <div><h2 class="ac-profile-name" id="profile-name">—</h2><p class="ac-profile-role" id="profile-role">—</p></div>
-        </div>
-        <a class="ac-link" href="my-bookings.html">Retrouver mes inscriptions →</a>
-      </section>
-      <section class="ac-card">
-        <h2>Mes informations</h2>
-        <p class="ac-help">Un profil à jour pour mieux se retrouver au départ.</p>
-        <form id="profile-form" class="ac-fields">
-          <div class="ac-field"><label for="profile-email">E-mail du compte</label><input id="profile-email" type="email" readonly aria-describedby="email-help"><p class="ac-help" id="email-help">L’adresse e-mail ne se modifie pas depuis ce formulaire.</p></div>
-          <div class="ac-field"><label for="profile-pseudo">Pseudo</label><input id="profile-pseudo" name="pseudo" autocomplete="nickname" required maxlength="40" placeholder="Ton pseudo"><p class="ac-help">Le nom affiché aux autres cyclistes.</p></div>
-          <div class="ac-field"><label for="profile-level">Niveau cycliste</label><select id="profile-level" name="cyclist_level" aria-describedby="level-help"><option value="">Niveau à renseigner</option><option value="debutant">Débutant</option><option value="intermediaire">Intermédiaire</option><option value="confirme">Confirmé</option></select><p class="ac-help" id="level-help">Débutant : tu découvres les sorties. Intermédiaire : tu roules régulièrement. Confirmé : tu es à l’aise sur des sorties soutenues. Consulte aussi le rythme de chaque groupe.</p></div>
-          <div class="ac-field"><label for="profile-city">Ville ou commune</label><input id="profile-city" name="city" autocomplete="address-level2" maxlength="80" placeholder="Ville à renseigner"></div>
-          <div class="ac-actions"><button class="ac-btn" id="profile-save" type="submit">Enregistrer</button><button class="ac-btn ac-btn--secondary" type="reset">Annuler les modifications</button></div>
-          <p id="profile-feedback" role="status" aria-live="polite"></p>
-        </form>
-      </section>
+      <div class="ac-profile-layout">
+        <aside class="ac-sidebar" aria-label="Ma fiche cycliste">
+          <section class="ac-member-card">
+            <p class="ac-kicker">GOËLO RIDES · LES CYCLISTES</p>
+            <div class="ac-avatar" id="profile-avatar" aria-hidden="true">GR</div>
+            <h2 id="profile-name">—</h2>
+            <span class="ac-role" id="profile-role">Cycliste</span>
+            <p class="ac-member-city" id="profile-summary-city">Ville à renseigner</p>
+            <div class="ac-member-level"><span>Mon niveau</span><strong id="profile-summary-level">À renseigner</strong></div>
+            <p class="ac-member-since" id="profile-member-since"></p>
+          </section>
+          <section class="ac-card ac-completion">
+            <h2>Prêt·e à rejoindre le groupe ?</h2>
+            <p id="profile-completion-label" class="ac-help">Complète ta fiche pour être reconnu·e au départ.</p>
+            <progress id="profile-completion" max="4" value="0" aria-label="Informations de profil renseignées"></progress>
+            <a class="ac-text-link" href="groupes.html">Trouver le groupe à mon rythme <span aria-hidden="true">→</span></a>
+          </section>
+          <a class="ac-outings-link" href="my-bookings.html"><span class="ac-outings-icon" aria-hidden="true">→</span><span><strong>Mes prochaines sorties</strong><small>Rendez-vous, groupes et inscriptions</small></span></a>
+        </aside>
+        <section class="ac-card ac-profile-editor">
+          <div class="ac-editor-heading"><span class="ac-section-number" aria-hidden="true">01</span><div><h2>Ma fiche cycliste</h2><p class="ac-help">Les bonnes infos pour se retrouver au départ.</p></div></div>
+          <form id="profile-form">
+            <div class="ac-form-grid">
+              <div class="ac-field"><label for="profile-pseudo">Mon pseudo <span aria-hidden="true">*</span></label><input id="profile-pseudo" name="pseudo" autocomplete="nickname" required maxlength="40" placeholder="Comment t’appelle-t-on ?"><p class="ac-help">Ton nom dans les listes de participants.</p></div>
+              <div class="ac-field"><label for="profile-fullname">Nom et prénom</label><input id="profile-fullname" name="username" autocomplete="name" maxlength="80" placeholder="Ton nom et ton prénom"><p class="ac-help">Ce nom peut aussi apparaître si ton pseudo est absent.</p></div>
+              <div class="ac-field"><label for="profile-city">Ma ville ou commune</label><input id="profile-city" name="city" autocomplete="address-level2" maxlength="80" placeholder="Saint-Quay-Portrieux, Paimpol…"></div>
+              <div class="ac-field"><label for="profile-level">Mon niveau cycliste</label><select id="profile-level" name="cyclist_level" aria-describedby="level-help"><option value="">Choisir mon niveau</option><option value="debutant">Débutant</option><option value="intermediaire">Intermédiaire</option><option value="confirme">Confirmé</option></select></div>
+            </div>
+            <div class="ac-level-guide" id="level-help"><strong>Chacun son rythme.</strong><p>Tu découvres les sorties ? Débutant. Tu roules régulièrement ? Intermédiaire. À l’aise sur des sorties soutenues ? Confirmé. Le rythme de chaque groupe reste le meilleur repère.</p><a href="groupes.html">Découvrir les groupes →</a></div>
+            <div class="ac-account-email"><span class="ac-section-number" aria-hidden="true">02</span><div class="ac-field"><label for="profile-email">Mon compte</label><input id="profile-email" type="email" readonly aria-describedby="email-help"><p class="ac-help" id="email-help">Ton adresse de connexion. Elle ne se modifie pas ici.</p></div></div>
+            <div class="ac-save-bar"><p class="ac-help" id="profile-dirty">Tes informations sont à jour.</p><div class="ac-actions"><button class="ac-btn ac-btn--secondary" type="reset">Annuler</button><button class="ac-btn" id="profile-save" type="submit">Enregistrer mon profil <span aria-hidden="true">→</span></button></div></div>
+            <p id="profile-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
     </div>
 
   </main>
 
   <script src="js/goelo-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="js/goelo-auth-state.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/goelo-profile.js"></script>
+  <script src="js/goelo-auth-state.js?v=20261031-account-v2"></script>
+  <script src="js/auth.js?v=20261031-account-v2"></script>
+  <script src="js/goelo-account.js?v=20261031-account-v2"></script>
+  <script src="js/goelo-profile.js?v=20261031-account-v2"></script>
   <script src="js/goelo-ui.js"></script>
   <script src="js/goelo-navbar.js"></script>
-  <script src="js/profile.js"></script>
+  <script src="js/profile.js?v=20261031-account-v2"></script>
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>
 </html>
