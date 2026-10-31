@@ -1,0 +1,25 @@
+/* Avant le hero : annonces persistantes, sans animation ni masquage mémorisé. */
+html body #home-priority-alerts[hidden] { display: none !important; }
+html body #home-priority-alerts { position: relative; z-index: 110; margin: 0; padding: max(.85rem, env(safe-area-inset-top)) clamp(1rem,4vw,3rem) .85rem; background: #fff4eb; color: #2f1612; }
+html body .home-priority-alert { display: flex; align-items: center; gap: 1rem; max-width: 1200px; margin: auto; padding: 1.1rem 1.25rem; background: #fff8f5; border: 2px solid #c13e2a; border-left-width: 7px; border-radius: 12px; text-align: left; }
+html body .home-priority-alert + .home-priority-alert { margin-top: .75rem; }
+html body .home-priority-alert--schedule { border-color: #a65a09; background: #fff9e8; }
+html body .home-priority-alert__icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #ae3224; color: white; font: 800 1.5rem/1 Inter,sans-serif; }
+html body .home-priority-alert--schedule .home-priority-alert__icon { background: #935300; }
+html body .home-priority-alert__body { flex: 1; min-width: 0; }
+html body .home-priority-alert h2 { font: 700 clamp(1.1rem,2.6vw,1.6rem)/1.25 'Outfit',Inter,sans-serif; color: #7f251c; margin: .35rem 0 .5rem; overflow-wrap: anywhere; }
+html body .home-priority-alert--schedule h2 { color: #744000; }
+html body .home-priority-alert p { font: 500 .9rem/1.5 Inter,sans-serif; color: #56382e; margin: 0; }
+html body .home-priority-alert .home-priority-alert__label { font-size: .65rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #804333; }
+html body .home-priority-alert .home-priority-alert__meta { margin-top: .4rem; font-size: .78rem; }
+html body .home-priority-alert a.home-priority-alert__link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .75rem 1rem; flex-shrink: 0; background: #852b20; border: 1px solid #852b20; border-radius: 7px; color: #fff; font: 700 .8rem/1.4 Inter,sans-serif; text-decoration: none; }
+html body .home-priority-alert--schedule a.home-priority-alert__link { background: #744000; border-color: #744000; }
+html body .home-priority-alert a:focus-visible { outline: 3px solid #162b40; outline-offset: 4px; }
+html body .home-priority-alert__stale { max-width: 1200px; margin: .75rem auto 0; font: .8rem/1.5 Inter,sans-serif; }
+html.has-priority-alerts body .goelo-navbar.gr-nav { position: relative; }
+@media(max-width:700px) {
+  html body .home-priority-alert { gap: .7rem; padding: 1rem; flex-wrap: wrap; }
+  html body .home-priority-alert__icon { width: 28px; height: 28px; font-size: 1.2rem; align-self: flex-start; }
+  html body .home-priority-alert__body { flex-basis: calc(100% - 40px); }
+  html body .home-priority-alert a.home-priority-alert__link { width: 100%; }
+}

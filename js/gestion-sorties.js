@@ -380,11 +380,34 @@ function duplicateSortie() {
   showToast('Copie préparée : choisis une nouvelle date, puis enregistre ou publie.');
 }
 
-function confirmCancel() {
-  document.getElementById('confirm-cancel').classList.remove('open');
-  document.getElementById('statut').value = 'annulee';
-  updateStatusBadge('annulee');
-  showToast('Sortie annulée');
+async function confirmCancel() {
+  if (routeSavePending) return;
+  if (!window.routeId) { showToast('Enregistre la sortie avant de pouvoir l’annuler.', 'error'); return; }
+  routeSavePending = true;
+  const buttons = document.querySelectorAll('#confirm-cancel button');
+  buttons.forEach(button => { button.disabled = true; });
+  try {
+    const sb = await getSb();
+    const current = await sb.from('routes').select('front_config').eq('id', window.routeId).single();
+    if (current.error || !current.data) throw new Error('Impossible de retrouver la sortie.');
+    let fc = current.data.front_config || {};
+    if (typeof fc === 'string') fc = JSON.parse(fc);
+    fc = { ...fc, sortieStatus: 'annulee' };
+    const result = await sb.from('routes').update({ front_config: fc }).eq('id', window.routeId).select('id').single();
+    if (result.error || !result.data) throw new Error('L’annulation n’a pas été enregistrée. Réessaie.');
+    window._loadedFrontConfig = fc;
+    document.getElementById('confirm-cancel').classList.remove('open');
+    document.getElementById('statut').value = 'annulee';
+    updateStatusBadge('annulee');
+    document.getElementById('save-dot').classList.add('saved');
+    document.getElementById('save-status').textContent = 'Annulation enregistrée';
+    showToast('Sortie annulée et enregistrée.');
+  } catch (error) {
+    showToast(error.message || 'Impossible d’annuler la sortie.', 'error');
+  } finally {
+    routeSavePending = false;
+    buttons.forEach(button => { button.disabled = false; });
+  }
 }
 
 /* ── GPX IMPORT ── */
