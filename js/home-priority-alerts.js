@@ -28,8 +28,9 @@
       return '<article class="home-priority-alert '+(cancelled?'home-priority-alert--cancelled':'home-priority-alert--schedule')+'">'+
         '<div class="home-priority-alert__icon" aria-hidden="true">!</div><div class="home-priority-alert__body">'+
         '<p class="home-priority-alert__label">INFORMATION IMPORTANTE · '+text(when)+'</p>'+
-        '<h2>'+(cancelled?'Sortie annulée':'Horaire ou date modifiés')+' — '+text(row.title || 'Sortie GoëloRides')+'</h2>'+
+        '<h2>'+(cancelled?'Sortie annulée':row.kind==='information'?'Information importante':'Horaire ou date modifiés')+' — '+text(row.title || 'Sortie GoëloRides')+'</h2>'+
         '<p>'+text(cancelled ? 'Ne te rends pas au départ prévu'+(hour(row.departure)?' à '+hour(row.departure):'')+'.' : changes(row))+'</p>'+
+        (row.message ? '<p class="home-priority-alert__message">'+text(row.message)+'</p>' : '')+
         (row.group || row.place ? '<p class="home-priority-alert__meta">'+text([row.group,row.place].filter(Boolean).join(' · '))+'</p>' : '')+
         '</div><a class="home-priority-alert__link" href="parcours.html?id='+encodeURIComponent(row.route_id)+'">Voir les informations →</a></article>';
     }).join('');

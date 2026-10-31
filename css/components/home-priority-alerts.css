@@ -23,3 +23,5 @@ html.has-priority-alerts body .goelo-navbar.gr-nav { position: relative; }
   html body .home-priority-alert__body { flex-basis: calc(100% - 40px); }
   html body .home-priority-alert a.home-priority-alert__link { width: 100%; }
 }
+
+html body .home-priority-alert .home-priority-alert__message { margin-top: .6rem; font-weight: 700; white-space: pre-line; overflow-wrap: anywhere; }

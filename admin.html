@@ -675,6 +675,7 @@
   if (window.location.hash === '#gtr-approvals') window.location.replace('admin-approbations.html');
 </script>
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
+  <link rel="stylesheet" href="css/components/admin-home-alerts.css?v=20261031-admin-alerts">
 </head>
 <body class="admin-dashboard">
 
@@ -687,6 +688,7 @@
     <a href="admin-approbations.html">Approbations</a>
     <a href="admin-cyclistes.html">Cyclistes</a>
     <a href="admin-sondages.html">Sondages</a>
+    <a href="#admin-home-alerts">Alertes accueil</a>
     <a href="allrides.html">Itinéraires</a>
     <a href="gestion-sorties.html">Sorties</a>
     <a href="community-manager.html">Communication</a>
@@ -724,6 +726,13 @@
     </nav>
 
     <!-- Activity dashboard -->
+    <section id="admin-home-alerts" aria-labelledby="admin-home-alerts-title" hidden>
+      <div class="admin-ha-heading"><h2 id="admin-home-alerts-title">Alertes de l’accueil</h2><a href="index.html">Voir l’accueil →</a><button id="admin-home-alerts-refresh" type="button">Actualiser</button></div>
+      <p class="admin-ha-intro">Affiche ou retire une information prioritaire pour une sortie des sept prochains jours. Le message est visible par tous les visiteurs. Retirer l’alerte ne modifie pas la sortie ; un nouveau changement de date, d’horaire ou une annulation peut en créer une nouvelle.</p>
+      <p id="admin-home-alerts-status" role="status" aria-live="polite"></p>
+      <div id="admin-home-alerts-list"></div>
+    </section>
+
     <section class="admin-section" id="act-dashboard">
       <div class="admin-section__head">
         <div>
@@ -843,6 +852,7 @@
 <script src="js/goelo-activity-export.js?v=20261028-export"></script>
 <script src="js/goelo-admin-activity.js?v=20261028-export"></script>
 <script src="js/gestion-team-rider-admin.js"></script>
+<script src="js/admin-home-alerts.js?v=20261031-admin-alerts"></script>
 <script src="goelo-swipe-nav.js" defer></script>
 
 <script src="js/goelo-back-navigation.js" defer></script>

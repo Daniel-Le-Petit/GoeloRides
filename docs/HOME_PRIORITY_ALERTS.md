@@ -25,3 +25,13 @@ Vérifications : PostgreSQL (capture, permissions, expiration, réouverture, rep
 Le bouton « Confirmer l’annulation » dans l’éditeur enregistre désormais le statut en base avant d’annoncer le succès. Il conserve les autres paramètres et la visibilité de la sortie.
 
 Les tests n’annulent aucune sortie réelle ; ils utilisent une base isolée ou des réponses simulées. La présence des annonces sur le site Render dépend de son déploiement du dernier code de la branche main.
+
+## Pilotage par l’administrateur
+
+Dans **Admin → Alertes accueil** (`admin.html#admin-home-alerts`), chaque sortie publique pertinente dispose d’un état, d’un message facultatif limité à 400 caractères et des commandes **Afficher sur l’accueil / Actualiser le message** et **Retirer**. Un lien ouvre aussi l’éditeur de la sortie.
+
+Le retrait masque l’alerte pour tous les visiteurs et reste mémorisé en base ; il ne change pas la sortie. Une nouvelle annulation ou modification de date/horaires réactive l’alerte automatique et efface le message devenu potentiellement obsolète. Une réactivation manuelle préserve la nature et les anciens horaires de l’alerte automatique. Une nouvelle alerte manuelle sur une sortie non annulée est présentée comme une « Information importante », sans prétendre qu’un horaire a changé.
+
+La migration `20261031170000_admin_home_alerts.sql` a été appliquée via le run GitHub Actions `41234254407`, après réussite des tests PostgreSQL isolés. Chaque commande vérifie le rôle admin côté serveur ; les Ride Leaders, utilisateurs ordinaires et visiteurs ne peuvent pas activer ou retirer une alerte. La liste exclut aussi les sorties privées et les brouillons.
+
+Les visiteurs voient la publication ou le retrait au prochain chargement de l’accueil ou lors de son actualisation automatique (au maximum 60 secondes pendant que l’onglet reste ouvert). Les essais navigateur utilisent des réponses simulées ; aucune alerte réelle n’a été déclenchée pour tester l’interface.
