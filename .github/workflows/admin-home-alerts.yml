@@ -1,0 +1,65 @@
+name: Administration des alertes — migration Supabase
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261031170000_admin_home_alerts.sql'
+      - 'goelorides-tests/tests/integration/admin-home-alerts-postgres.cjs'
+      - '.github/workflows/admin-home-alerts.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261031170000_admin_home_alerts.sql'
+      - 'goelorides-tests/tests/integration/admin-home-alerts-postgres.cjs'
+      - '.github/workflows/admin-home-alerts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: admin-home-alerts-migration
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local_test_only
+          POSTGRES_DB: goelo_alerts_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Tests de migration sur PostgreSQL isolé
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGDATABASE: goelo_alerts_test
+          PGUSER: postgres
+          PGPASSWORD: local_test_only
+        run: node goelorides-tests/tests/integration/admin-home-alerts-postgres.cjs
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Appliquer la migration des alertes prioritaires dans une transaction
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_DATABASE_URL:-}" ]; then
+            echo 'Secret GitHub SUPABASE_DATABASE_URL manquant.'
+            exit 1
+          fi
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261031170000_admin_home_alerts.sql
+          psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -At -c "SELECT 'home_priority_alerts disponible : ' || (to_regprocedure('public.admin_home_alert_set(text,boolean,text)') IS NOT NULL);"
