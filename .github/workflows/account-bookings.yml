@@ -1,0 +1,69 @@
+name: Espace personnel — migration Supabase
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261031120000_account_bookings.sql'
+      - 'goelorides-tests/tests/integration/account-bookings-postgres.cjs'
+      - '.github/workflows/account-bookings.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261031120000_account_bookings.sql'
+      - 'goelorides-tests/tests/integration/account-bookings-postgres.cjs'
+      - '.github/workflows/account-bookings.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: account-bookings-migration
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local_test_only
+          POSTGRES_DB: goelo_account_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Tests de migration sur PostgreSQL isolé
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGDATABASE: goelo_account_test
+          PGUSER: postgres
+          PGPASSWORD: local_test_only
+        run: node goelorides-tests/tests/integration/account-bookings-postgres.cjs
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Appliquer la migration de l’espace personnel dans une transaction
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_DATABASE_URL:-}" ]; then
+            echo 'Secret GitHub SUPABASE_DATABASE_URL manquant.'
+            exit 1
+          fi
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261031120000_account_bookings.sql
+          psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+          SELECT 'account_my_bookings disponible : ' || (to_regprocedure('public.account_my_bookings()') IS NOT NULL);
+          SELECT 'account_cancel_booking disponible : ' || (to_regprocedure('public.account_cancel_booking(text)') IS NOT NULL);
+          SELECT 'accès anonyme refusé : ' || (NOT has_function_privilege('anon','public.account_cancel_booking(text)','execute'));
+          SQL
