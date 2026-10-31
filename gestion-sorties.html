@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="stylesheet" href="css/components/participants.css">
-<link rel="stylesheet" href="css/pages/gestion-sorties.css?v=20261031-single-editor">
+<link rel="stylesheet" href="css/pages/gestion-sorties.css?v=20261031-editor-focused">
 
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -77,20 +77,6 @@
         <div class="step-info">
           <div class="step-label">Sécurité & matériel</div>
           <div class="step-sub">Météo, équipement</div>
-        </div>
-      </li>
-      <li class="step-item" data-step="6" onclick="scrollToSection('s6')">
-        <div class="step-icon">6</div>
-        <div class="step-info">
-          <div class="step-label">Flyer (facultatif)</div>
-          <div class="step-sub">Préparer une image à partager</div>
-        </div>
-      </li>
-      <li class="step-item" data-step="7" onclick="scrollToSection('s7')">
-        <div class="step-icon">7</div>
-        <div class="step-info">
-          <div class="step-label">Réseaux (facultatif)</div>
-          <div class="step-sub">Facebook, Instagram</div>
         </div>
       </li>
     </ul>
@@ -384,84 +370,6 @@
       </div>
     </div></details>
 
-    <!-- S6 — PUBLICATION -->
-    <details class="section editor-optional" id="s6"><summary>Flyer de la sortie <span>Facultatif</span></summary><div class="editor-optional__body">
-
-
-      <div class="field">
-        <label class="field__label">Flyer Instagram <span>(1080×1350)</span></label>
-
-        <!-- Étape 1 : choisir la photo de fond -->
-        <div class="flyer-photo-pick" id="flyer-photo-pick">
-          <div class="flyer-photo-pick__icon">🏔</div>
-          <p class="flyer-photo-pick__title">Photo de fond du flyer</p>
-          <p class="flyer-photo-pick__sub">Choisis une photo pour illustrer ta sortie</p>
-          <label class="btn btn--ghost flyer-photo-pick__btn">
-            📂 Choisir la photo
-            <input type="file" id="flyer-bg-input" accept="image/*" style="display:none" onchange="onFlyerBgSelected(this)">
-          </label>
-        </div>
-
-        <!-- Aperçu photo sélectionnée + bouton générer -->
-        <div class="flyer-ready" id="flyer-ready" style="display:none">
-          <div class="flyer-ready__bar">
-            <span class="flyer-ready__file" id="flyer-bg-name">—</span>
-            <button class="btn btn--ghost btn--sm" onclick="document.getElementById('flyer-bg-input').click()">Changer</button>
-            <button class="btn btn--accent" onclick="generateFlyer()">🎨 Générer le flyer</button>
-          </div>
-        </div>
-
-        <!-- Canvas + actions -->
-        <div class="flyer-wrap" id="flyer-wrap" style="display:none">
-          <div class="flyer-preview-wrap">
-            <canvas id="flyer-canvas" width="1080" height="1350"></canvas>
-          </div>
-          <div class="flyer-issues" id="flyer-issues" hidden>
-            <p class="flyer-issues__title">Avertissements zone sûre</p>
-            <ul class="flyer-issues-list" id="flyer-issues-list"></ul>
-          </div>
-          <div class="flyer-actions">
-            <button class="btn btn--ghost" onclick="generateFlyer()">🔄 Regénérer</button>
-            <button class="btn btn--ghost" onclick="copyFlyer()">📋 Copier l'image</button>
-            <button class="btn btn--accent" onclick="downloadFlyer()">⬇ PNG (4:5)</button>
-            <button class="btn btn--ghost" onclick="downloadFlyer('strava')">⬇ PNG Strava (carré)</button>
-          </div>
-        </div>
-      </div>
-    </div></details>
-
-    <!-- S7 — RÉSEAUX SOCIAUX -->
-    <details class="section editor-optional" id="s7"><summary>Textes pour les réseaux sociaux <span>Facultatif</span></summary><div class="editor-optional__body">
-
-      <div class="social-block">
-        <div class="social-block__head">
-          <span class="social-block__logo">📘</span>
-          <span class="social-block__name">Facebook</span>
-        </div>
-        <div class="social-block__text" id="fb-text">— Remplis le formulaire pour générer le texte —</div>
-        <div class="social-block__actions">
-          <button class="btn btn--ghost btn--sm" onclick="generateSocial()">✨ Générer le texte</button>
-          <button class="btn btn--ghost btn--sm" onclick="copyText('fb-text')">📋 Copier</button>
-        </div>
-      </div>
-
-      <div class="social-block">
-        <div class="social-block__head">
-          <span class="social-block__logo">📸</span>
-          <span class="social-block__name">Instagram</span>
-        </div>
-        <div class="social-block__text" id="ig-text">— Remplis le formulaire pour générer le texte —</div>
-        <div class="social-block__actions">
-          <button class="btn btn--ghost btn--sm" onclick="generateSocial()">✨ Générer le texte</button>
-          <button class="btn btn--ghost btn--sm" onclick="copyText('ig-text')">📋 Copier</button>
-        </div>
-      </div>
-
-      <div style="margin-top:1rem;padding:1rem;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r);font-size:.82rem;color:var(--muted);line-height:1.6">
-        Le partage sur les réseaux est facultatif. Les inscriptions se font sur la fiche de la sortie ; les informations importantes apparaissent aussi sur l’accueil.
-      </div>
-    </div></details>
-
   </main>
 </div>
 
@@ -500,7 +408,7 @@
 </script>
 <script src="js/goelo-profile.js"></script>
 <script src="js/signup-participants.js"></script>
-<script src="js/gestion-sorties.js?v=20261031-single-editor" defer></script>
+<script src="js/gestion-sorties.js?v=20261031-editor-focused" defer></script>
 
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>

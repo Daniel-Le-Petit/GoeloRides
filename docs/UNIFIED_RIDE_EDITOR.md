@@ -5,7 +5,7 @@ Le point d’entrée est `gestion-sorties.html?mode=create`, libellé « Créer 
 - « Voir » ouvre toujours `parcours.html?id=…`, y compris dans le cockpit. « Modifier » ouvre l’éditeur.
 - La bibliothèque Itinéraires sert à stocker/importer des traces. « Utiliser cet itinéraire » ouvre l’éditeur commun ; choisir une trace ne publie rien.
 - Le formulaire permet aussi de choisir une trace existante, sans effacer le titre, la date, le groupe ou les horaires déjà renseignés.
-- Les quatre rubriques principales concernent les informations, le départ, la trace et l’organisation. Sécurité, flyer et textes sociaux restent dans des blocs repliables facultatifs.
+- Les quatre rubriques principales concernent les informations, le départ, la trace et l’organisation. Sécurité et matériel restent dans un bloc repliable facultatif. Les outils de flyer et de textes pour les réseaux ont été retirés : la préparation dans ChatGPT et le partage sur Facebook, Messenger et Instagram se font en dehors de GoëloRides.
 - Une création propose « Enregistrer brouillon » et « Publier la sortie ». Le titre et une date valide sont nécessaires à la publication ; aucune date n’est choisie automatiquement.
 - Pour une sortie publiée, le bouton devient « Enregistrer les modifications ». Son état est conservé, notamment pour une sortie annulée. La gestion (statut, duplication, annulation) est séparée de la création.
 - La duplication prépare une nouvelle sortie sans date ni participants et ne touche pas à l’original.

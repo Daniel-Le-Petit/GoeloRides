@@ -210,50 +210,6 @@ body {
 .num-input { width: 70px; text-align: center; background: var(--surface-2); border: 1px solid var(--border-2); color: var(--text); font-family: var(--font-b); font-size: 0.88rem; padding: 0.65rem 0; outline: none; }
 .num-input:focus { border-color: var(--accent); }
 
-/* ── FLYER ── */
-.flyer-photo-pick { border: 2px dashed var(--border-2); border-radius: var(--r); padding: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
-.flyer-photo-pick__icon { font-size: 2rem; opacity: 0.4; }
-.flyer-photo-pick__title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
-.flyer-photo-pick__sub { font-size: 0.75rem; color: var(--muted); }
-.flyer-photo-pick__btn { cursor: pointer; }
-.flyer-ready { margin-top: 0.75rem; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r-sm); padding: 0.65rem 1rem; }
-.flyer-ready__bar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.flyer-ready__file { font-size: 0.8rem; color: var(--accent); font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.flyer-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
-.flyer-issues {
-  grid-column: 1 / -1;
-  margin-top: 0.25rem;
-  padding: 0.75rem 1rem;
-  background: rgba(248, 113, 113, 0.08);
-  border: 1px solid rgba(248, 113, 113, 0.35);
-  border-radius: var(--r-sm);
-}
-.flyer-issues__title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #f87171;
-  margin-bottom: 0.45rem;
-}
-.flyer-issues-list {
-  list-style: disc;
-  padding-left: 1.2rem;
-  font-size: 0.78rem;
-  color: var(--muted);
-  line-height: 1.45;
-}
-.flyer-preview-wrap { background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r); overflow: hidden; aspect-ratio: 4/5; }
-#flyer-canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
-.flyer-actions { display: flex; flex-direction: column; gap: 0.75rem; }
-.flyer-actions .btn { width: 100%; justify-content: center; }
-
-/* ── SOCIAL ── */
-.social-block { background: var(--surface-2); border: 1px solid var(--border-2); border-radius: var(--r); padding: 1.1rem 1.25rem; margin-bottom: 0.75rem; }
-.social-block__head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
-.social-block__logo { font-size: 1.2rem; }
-.social-block__name { font-size: 0.88rem; font-weight: 600; }
-.social-block__text { font-size: 0.8rem; color: var(--muted); background: var(--surface-3); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.75rem; white-space: pre-wrap; line-height: 1.55; }
-.social-block__actions { display: flex; gap: 0.5rem; }
-
 /* ── BUTTONS ── */
 .btn { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-d); font-size: 0.88rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.65rem 1.25rem; border-radius: var(--r-sm); border: 1.5px solid transparent; cursor: pointer; transition: all 0.15s; text-decoration: none; white-space: nowrap; }
 .btn--accent   { background: var(--accent); color: #000; border-color: var(--accent); }
@@ -311,7 +267,6 @@ body {
   .field-row, .field-row-3 { grid-template-columns: 1fr; }
   .check-grid { grid-template-columns: 1fr 1fr; }
   .gpx-stats { grid-template-columns: 1fr 1fr; }
-  .flyer-wrap { grid-template-columns: 1fr; }
   .action-bar { padding: 0.85rem 1rem; flex-wrap: wrap; }
 }
 
