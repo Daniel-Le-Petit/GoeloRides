@@ -4,75 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Mes inscriptions aux sorties GoëloRides.">
-  <meta name="theme-color" content="#0D0D0D">
+  <meta name="theme-color" content="#0d1820">
   <title>Mes inscriptions · GoëloRides</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages/account.css">
-  <style>
-    :root {
-      --bg: #0D0D0D;
-      --surface: #1A1A1A;
-      --border: #2E2E2E;
-      --accent: #C8F135;
-      --text: #F0F0F0;
-      --muted: #888888;
-      --r: 10px;
-    }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; margin: 0; }
 
-    .ac-loading, .ac-error { padding: 16px; border-radius: var(--r); font-size: 14px; }
-    .ac-loading { color: var(--muted); }
-    .ac-error {
-      color: #ff8f8f;
-      background: rgba(255, 107, 107, 0.08);
-      border: 1px solid rgba(255, 107, 107, 0.25);
-    }
-
-    .ac-booking {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-    .ac-booking:last-child { border-bottom: none; }
-    .ac-booking__body { flex: 1 1 240px; min-width: 0; }
-    .ac-booking__title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; margin: 0 0 4px; }
-    .ac-booking__meta { color: var(--muted); font-size: 13px; margin: 0 0 4px; }
-    .ac-booking__link { color: var(--accent); text-decoration: none; font-size: 13px; }
-    .ac-booking__link:hover { text-decoration: underline; }
-    .ac-booking__side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: 0 0 auto; }
-    .ac-booking__badge {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      white-space: nowrap;
-    }
-    .ac-booking__badge--ok { color: var(--accent); border-color: var(--accent); }
-    .ac-booking__badge--wait { color: #f0c040; border-color: #f0c040; }
-    .ac-booking__unsub {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .ac-booking__unsub:hover { border-color: #ff6b6b; color: #ff6b6b; }
-    .ac-booking__unsub:disabled { opacity: .5; cursor: not-allowed; }
-  </style>
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
 </head>
@@ -85,6 +24,10 @@
   </header>
 
   <main class="ac-main" id="main-content" role="main">
+    <nav class="ac-account-nav" aria-label="Mon espace">
+      <a href="profile.html" >Mon profil</a>
+      <a href="my-bookings.html" aria-current="page">Mes inscriptions</a>
+    </nav>
 
     <div id="bookings-gate" class="ac-gate" hidden>
       <h2>Connexion requise</h2>
@@ -95,7 +38,9 @@
     <div id="bookings-fatal" class="ac-error" role="alert" hidden></div>
 
     <section class="ac-card" id="bookings-content" hidden>
-      <p class="ac-card__title">Sorties inscrites</p>
+      <div class="ac-section-head"><h2>Mon agenda vélo</h2><a class="ac-btn" href="sorties.html">Découvrir les sorties</a></div>
+      <div class="ac-filters" role="group" aria-label="Période des inscriptions"><button type="button" data-period="upcoming" aria-pressed="true">À venir <span id="count-upcoming">0</span></button><button type="button" data-period="past" aria-pressed="false">Passées <span id="count-past">0</span></button></div>
+      <p id="bookings-feedback" role="status" aria-live="polite"></p>
       <div id="bookings-list"></div>
     </section>
 
@@ -108,6 +53,7 @@
   <script src="js/goelo-profile.js"></script>
   <script src="js/goelo-ui.js"></script>
   <script src="js/goelo-navbar.js"></script>
+  <script src="js/goelo-sortie-dates.js"></script>
   <script src="js/my-bookings.js"></script>
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>

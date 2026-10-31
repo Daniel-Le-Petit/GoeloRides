@@ -11,6 +11,8 @@
     admin: "Admin"
   };
 
+  var activeUser = null, generation = 0, loadedId = null, saving = false;
+
   function $(id) { return document.getElementById(id); }
 
   function getSb() {
@@ -90,6 +92,8 @@
       return;
     }
 
+    var request = ++generation;
+    activeUser = user;
     showLoading();
 
     var profile = {};
@@ -112,6 +116,8 @@
       console.warn("[profile] profiles fetch (exception):", err && err.message);
     }
 
+    if (request !== generation) return;
+    loadedId = user.id;
     var pseudo =
       profile.pseudo ||
       (window.GoeloProfile && window.GoeloProfile.getDisplayName(
@@ -136,10 +142,19 @@
 
     setText("profile-name", pseudo);
     setText("profile-role", ROLE_LABELS[role] || role);
-    setText("profile-email", user.email || "—");
-    setText("profile-pseudo", pseudo);
-    setText("profile-level", profile.cyclist_level || "—");
-    setText("profile-city", profile.city || "—");
+    var metadata = user.user_metadata || {};
+    var values = { email: user.email || "", pseudo: pseudo === "?" ? "" : pseudo,
+      level: profile.cyclist_level || metadata.cyclist_level || "", city: profile.city || metadata.city || "" };
+    Object.keys(values).forEach(function (key) {
+      var el = $("profile-" + key);
+      if (el.tagName === "SELECT" && values[key] && !Array.from(el.options).some(function (o) { return o.value === values[key]; })) {
+        el.add(new Option(values[key], values[key]));
+      }
+      el.value = values[key];
+      if (el.tagName === "SELECT") Array.from(el.options).forEach(function (o) { o.defaultSelected = o.value === values[key]; });
+      else el.defaultValue = values[key];
+    });
+    $("profile-save").disabled = !!fetchError;
 
     if (fetchError) {
       showBanner("Certaines informations de profil n'ont pas pu être chargées.");
@@ -152,24 +167,51 @@
 
   /* ── Auth events ─────────────────────────────────────────────── */
   function onAuth(detail) {
+    if (detail && detail.pending) return;
     var user = detail && detail.user;
-    if (!user && window.GoeloAuthState) user = window.GoeloAuthState.getState().user;
-    if (!user) {
-      showGate();
-      return;
-    }
+    if (!user) { generation++; loadedId = null; activeUser = null; showGate(); return; }
+    if (activeUser && activeUser.id === user.id) return;
     loadProfile(user);
   }
 
-  function init() {
-    if (window.GoeloAuthState && !window.GoeloAuthState.getState().pending) {
-      onAuth(window.GoeloAuthState.getState());
-    } else {
-      showLoading();
+  async function saveProfile(event) {
+    event.preventDefault();
+    if (saving || !activeUser || loadedId !== activeUser.id) return;
+    var user = activeUser, feedback = $("profile-feedback"), form = $("profile-form");
+    var fields = { pseudo: $("profile-pseudo").value.trim(), cyclist_level: $("profile-level").value || null, city: $("profile-city").value.trim() || null };
+    if (!fields.pseudo) { $("profile-pseudo").setCustomValidity("Indique un pseudo."); $("profile-pseudo").reportValidity(); return; }
+    saving = true;
+    Array.from(form.elements).forEach(function (el) { el.disabled = true; });
+    feedback.textContent = "Enregistrement…";
+    feedback.dataset.error = "false";
+    try {
+      var result = await getSb().from("profiles").upsert(Object.assign({ id: user.id }, fields), { onConflict: "id" }).select("pseudo, cyclist_level, city").single();
+      if (result.error || !result.data) throw new Error("save_failed");
+      if (activeUser !== user) return;
+      // Auth synchronise les metadata vers profiles à la connexion : les garder cohérentes.
+      var sync = await getSb().auth.updateUser({ data: fields });
+      if (activeUser !== user) return;
+      if (window.GoeloAuthState) window.GoeloAuthState.setState({ pseudo: fields.pseudo });
+      await loadProfile(user);
+      feedback.textContent = sync.error ? "Profil enregistré. La synchronisation du compte a échoué : réenregistre avant ta prochaine connexion." : "Tes informations ont bien été enregistrées.";
+      feedback.dataset.error = sync.error ? "true" : "false";
+    } catch (err) {
+      if (activeUser === user) { feedback.textContent = "Impossible d’enregistrer tes modifications. Elles sont conservées ici, réessaie."; feedback.dataset.error = "true"; }
+    } finally {
+      saving = false;
+      Array.from(form.elements).forEach(function (el) { el.disabled = false; });
     }
-    window.addEventListener("goelo:role-ready", function (e) { onAuth(e.detail); });
-    window.addEventListener("goelo:auth-success", function (e) { onAuth(e.detail); });
-    window.addEventListener("goelo:auth-state", function (e) { onAuth(e.detail); });
+  }
+
+  function init() {
+    $("profile-form").addEventListener("submit", saveProfile);
+    $("profile-pseudo").addEventListener("input", function () { this.setCustomValidity(""); });
+    $("profile-form").addEventListener("reset", function () { $("profile-feedback").textContent = ""; $("profile-pseudo").setCustomValidity(""); });
+    showLoading();
+    if (window.GoeloAuthState) {
+      onAuth(window.GoeloAuthState.getState());
+      window.GoeloAuthState.subscribe(onAuth);
+    }
   }
 
   if (document.readyState === "loading") {
