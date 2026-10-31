@@ -11,7 +11,7 @@
     admin: "Admin"
   };
 
-  var activeUser = null, generation = 0, loadedId = null, saving = false, retrySession = null;
+  var activeUser = null, generation = 0, loadedId = null, saving = false, retrySession = null, changingEmail = false;
 
   function $(id) { return document.getElementById(id); }
 
@@ -178,6 +178,7 @@
       hideBanner();
     }
 
+    updateEmailDisplay(user);
     showProfile();
     if (fetchError) show("profile-retry");
   }
@@ -186,8 +187,8 @@
   function onAuth(detail) {
     if (detail && detail.pending) return;
     var user = detail && detail.user;
-    if (!user) { generation++; loadedId = null; activeUser = null; showGate(); return; }
-    if (activeUser && activeUser.id === user.id) return;
+    if (!user) { generation++; loadedId = null; activeUser = null; setEmailEditor(false); $("profile-email-status").textContent = ""; $("profile-email-feedback").textContent = ""; showGate(); return; }
+    if (activeUser && activeUser.id === user.id) { updateEmailDisplay(user); return; }
     loadProfile(user);
   }
 
@@ -223,7 +224,74 @@
     }
   }
 
+  function updateEmailDisplay(user) {
+    $("profile-email").value = user.email || "";
+    $("profile-email-status").textContent = user.new_email && user.new_email !== user.email
+      ? "Changement en attente vers " + user.new_email + ". Consulte tes e-mails pour le confirmer."
+      : "";
+    if (activeUser && activeUser.id === user.id) {
+      activeUser.email = user.email;
+      activeUser.new_email = user.new_email;
+    }
+  }
+
+  function setEmailEditor(open) {
+    $("profile-email-form").hidden = !open;
+    $("profile-email-edit").hidden = open;
+    $("profile-email-edit").setAttribute("aria-expanded", String(open));
+    if (open) $("profile-new-email").focus();
+    else { $("profile-email-form").reset(); $("profile-new-email").setCustomValidity(""); }
+  }
+
+  async function changeEmail(event) {
+    event.preventDefault();
+    if (changingEmail || !activeUser) return;
+    var user = activeUser, userId = user.id, feedback = $("profile-email-feedback");
+    var email = $("profile-new-email").value.trim();
+    if (email.toLowerCase() === String(user.email || "").toLowerCase()) {
+      $("profile-new-email").setCustomValidity("Indique une adresse différente de ton adresse actuelle.");
+      $("profile-new-email").reportValidity();
+      return;
+    }
+    if (!$("profile-email-form").reportValidity()) return;
+    changingEmail = true;
+    Array.from($("profile-email-form").elements).forEach(function (el) { el.disabled = true; });
+    feedback.dataset.error = "false";
+    feedback.textContent = "Envoi de la demande…";
+    try {
+      var result = await window.GoeloAccount.request(getSb().auth.updateUser({ email: email }));
+      if (result.error) throw result.error;
+      if (!result.data || !result.data.user || result.data.user.id !== userId) throw new Error("email_unconfirmed_request");
+      if (!activeUser || activeUser.id !== userId) return;
+      var updated = result.data.user;
+      updateEmailDisplay(updated);
+      var changed = String(updated.email || "").toLowerCase() === email.toLowerCase();
+      $("profile-email-status").textContent = changed ? "Ton adresse de connexion a été mise à jour." : "Confirmation demandée pour " + email + ". Suis les instructions reçues par e-mail. Ton adresse actuelle reste utilisée jusqu’à confirmation.";
+      feedback.textContent = "";
+      setEmailEditor(false);
+      $("profile-email-edit").focus();
+    } catch (error) {
+      if (!activeUser || activeUser.id !== userId) return;
+      feedback.dataset.error = "true";
+      var code = error.code || "";
+      feedback.textContent = code === "email_exists" || code === "user_already_exists"
+        ? "Cette adresse est déjà utilisée. Choisis une autre adresse."
+        : code === "over_email_send_rate_limit" || error.status === 429
+        ? "Trop de demandes rapprochées. Patiente quelques minutes avant de réessayer."
+        : code === "reauthentication_needed" || code === "session_not_found" || error.status === 401
+        ? "Reconnecte-toi puis relance le changement d’adresse."
+        : "La demande n’a pas pu être confirmée. Vérifie tes e-mails avant de réessayer.";
+    } finally {
+      changingEmail = false;
+      Array.from($("profile-email-form").elements).forEach(function (el) { el.disabled = false; });
+    }
+  }
+
   function init() {
+    $("profile-email-edit").addEventListener("click", function () { $("profile-email-feedback").textContent = ""; setEmailEditor(true); });
+    $("profile-email-cancel").addEventListener("click", function () { setEmailEditor(false); $("profile-email-feedback").textContent = ""; $("profile-email-edit").focus(); });
+    $("profile-new-email").addEventListener("input", function () { this.setCustomValidity(""); });
+    $("profile-email-form").addEventListener("submit", changeEmail);
     $("profile-form").addEventListener("submit", saveProfile);
     $("profile-pseudo").addEventListener("input", function () { this.setCustomValidity(""); });
     $("profile-form").addEventListener("reset", function () { $("profile-feedback").textContent = ""; $("profile-pseudo").setCustomValidity(""); });

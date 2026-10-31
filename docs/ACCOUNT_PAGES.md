@@ -2,7 +2,7 @@
 
 Les pages `profile.html` et `my-bookings.html` partagent la palette marine, la navigation de compte et des styles adaptés au mobile.
 
-Le profil enregistre pseudo, nom et prénom (`username`), niveau et ville dans `profiles` sous les politiques RLS existantes. Les metadata Auth sont également mises à jour pour rester cohérentes avec la synchronisation effectuée à la connexion. Le rôle et l’e-mail ne sont pas modifiables par ce formulaire.
+Le profil enregistre pseudo, nom et prénom (`username`), niveau et ville dans `profiles` sous les politiques RLS existantes. Les metadata Auth sont également mises à jour pour rester cohérentes avec la synchronisation effectuée à la connexion. Le rôle ne se modifie pas dans ce formulaire. L’e-mail dispose d’un formulaire séparé utilisant Supabase Auth (`updateUser({ email })`) : l’adresse actuelle reste affichée tant que le serveur ne confirme pas le changement. Les confirmations par e-mail suivent les règles du projet Supabase.
 
 ## Migration
 
@@ -43,3 +43,6 @@ Les pages ont été revues : fiche cycliste, formulaire en deux colonnes sur ord
 `js/goelo-account.js` charge la session indépendamment de la résolution du rôle et borne chaque attente à 12 secondes. Une session ou une lecture bloquée produit un état explicite avec un bouton Réessayer. Les réponses antérieures à une déconnexion sont ignorées. Les paramètres de version des fichiers compte évitent de mélanger l’ancien JavaScript avec les nouvelles pages.
 
 Le test `account-session-browser.cjs` charge le vrai `auth.js` avec un SDK simulant les cas session prête, absence de session, déconnexion, résolution du rôle bloquée, session bloquée, lecture de profil bloquée et reprise. Le test `account-pages-browser.cjs` couvre aussi le nom complet et le fichier agenda.
+
+
+Le changement d’adresse est initié uniquement par le bouton « Envoyer la confirmation ». Les tests simulent cette opération et n’envoient aucun e-mail réel. Ils vérifient le rejet d’une adresse identique, la demande en attente sans écraser l’adresse actuelle, les erreurs, l’annulation du formulaire et la mise à jour confirmée par le serveur.
