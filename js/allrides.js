@@ -84,6 +84,8 @@
   }
 
   function syncCreateButton() {
+    var createSortie = document.getElementById("ar-create-sortie");
+    if (createSortie) createSortie.hidden = !canCreateRide();
     var btn = document.getElementById("ar-create-btn");
     if (!btn) return;
     btn.hidden = !canImportRide();
@@ -545,7 +547,7 @@
     var selected = state.selectedId && String(state.selectedId) === id;
 
     var actions = canCreateRide()
-      ? '<a class="go-sc-btn go-sc-btn--primary" href="gestion-sorties.html?mode=create&amp;ride=' + encodeURIComponent(id) + '">Créer une sortie</a>'
+      ? '<a class="go-sc-btn go-sc-btn--primary" href="gestion-sorties.html?mode=create&amp;ride=' + encodeURIComponent(id) + '">Utiliser cet itinéraire</a>'
       : '';
 
     if (hasGpx(ride)) {

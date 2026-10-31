@@ -9,7 +9,7 @@ async function scenario(fail){
    update(payload) { updates.push(payload); return {eq() { return {select() { return {single:async()=>fail ? {error:{}} : {data:{id:'r1'}}}; }}; }}; }
   }; }
  };
- const context={window:{routeId:'r1'},document:{getElementById:el,querySelectorAll:()=>[]},routeSavePending:false,updateStatusBadge(){},showToast:(...args)=>toasts.push(args),getSb:async()=>sb};
+ const context={window:{routeId:'r1'},document:{getElementById:el,querySelectorAll:()=>[]},routeSavePending:false,updateStatusBadge(){},syncEditorMode(){},showToast:(...args)=>toasts.push(args),getSb:async()=>sb};
  vm.createContext(context);vm.runInContext(code,context);await context.confirmCancel();assert.equal(updates.length,1);assert.equal(updates[0].front_config.visibility,'public');assert.equal(updates[0].front_config.sortieStatus,'annulee');assert.equal(context.routeSavePending,false);
  if(fail){assert(!toasts.some(t=>t[0]==='Sortie annulée et enregistrée.'));assert.equal(el('statut').value,'publiee');}else{assert.equal(el('statut').value,'annulee');assert(toasts.some(t=>t[0]==='Sortie annulée et enregistrée.'));}
 }

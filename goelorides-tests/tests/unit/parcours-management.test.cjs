@@ -43,5 +43,5 @@ test('les cartes publiques ne contiennent plus les actions de gestion ; espace R
   const card = { id: 'route-1', title: 'Boucle', participants: [] };
   const html = context.GoeloSortieCards.buildCardHtml(card, { viewMode: 'sorties' });
   assert(!/Dupliquer|Modifier|data-go-sc-cancel/.test(html)); assert(html.includes('Voir'));
-  const adminHtml = context.GoeloSortieCards.buildCardHtml(card, { viewMode: 'team-rider' }); assert(adminHtml.includes('Dupliquer')); assert(adminHtml.includes('Modifier'));
+  const adminHtml = context.GoeloSortieCards.buildCardHtml(card, { viewMode: 'team-rider' }); assert(adminHtml.includes('go-sc-btn--voir\" href=\"parcours.html?id=route-1')); assert(adminHtml.includes('Dupliquer')); assert(adminHtml.includes('Modifier'));
 });

@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Gestion des sorties · GoëloRides</title>
+<title>Créer une sortie · GoëloRides</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="stylesheet" href="css/components/participants.css">
-<link rel="stylesheet" href="css/pages/gestion-sorties.css">
+<link rel="stylesheet" href="css/pages/gestion-sorties.css?v=20261031-single-editor">
 
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -21,7 +21,7 @@
 <nav class="nav">
   <a href="index.html" class="nav__logo">GOËLO<em>RIDES</em></a>
   <span class="nav__sep">/</span>
-  <span class="nav__title">Gestion des sorties</span>
+  <span class="nav__title" id="editor-nav-title">Créer une sortie</span>
   <div class="nav__spacer"></div>
   <div class="nav__user">
     <span class="nav__dot"></span>
@@ -35,8 +35,8 @@
   <aside class="sidebar">
     <div>
       <div class="sidebar__progress-label">
-        <span>Progression</span>
-        <span class="sidebar__progress-pct" id="progress-pct">14%</span>
+        <span>Prêt à publier</span>
+        <span class="sidebar__progress-pct" id="progress-pct">0%</span>
       </div>
       <div class="sidebar__progress-bar-wrap">
         <div class="sidebar__progress-bar" id="progress-bar"></div>
@@ -82,14 +82,14 @@
       <li class="step-item" data-step="6" onclick="scrollToSection('s6')">
         <div class="step-icon">6</div>
         <div class="step-info">
-          <div class="step-label">Publication</div>
-          <div class="step-sub">Statut, flyer</div>
+          <div class="step-label">Flyer (facultatif)</div>
+          <div class="step-sub">Préparer une image à partager</div>
         </div>
       </li>
       <li class="step-item" data-step="7" onclick="scrollToSection('s7')">
         <div class="step-icon">7</div>
         <div class="step-info">
-          <div class="step-label">Réseaux sociaux</div>
+          <div class="step-label">Réseaux (facultatif)</div>
           <div class="step-sub">Facebook, Instagram</div>
         </div>
       </li>
@@ -98,9 +98,32 @@
 
   <!-- FORM -->
   <main class="form-main" id="form-main">
+    <header class="editor-heading">
+      <a href="team-rider.html">← Mes sorties</a>
+      <h1 id="editor-title">Créer une sortie</h1>
+      <p id="editor-intro">Prépare le rendez-vous, choisis un groupe et publie quand tout est prêt.</p>
+      <div class="editor-heading__actions"><a id="editor-view" hidden>Voir la fiche publique →</a>
+        <details id="editor-management" hidden><summary>Gérer cette sortie</summary><div class="editor-management__actions"><button type="button" class="btn btn--ghost" onclick="duplicateSortie()">Dupliquer pour une autre date</button><button type="button" class="btn btn--danger" onclick="document.getElementById('confirm-cancel').classList.add('open')">Annuler la sortie</button></div></details></div>
+    </header>
+    <div class="editor-source" id="editor-source"><div><strong>Un seul formulaire, avec ou sans trace.</strong><p>Pars de zéro, importe un GPX ci-dessous ou reprends un itinéraire de la bibliothèque.</p></div><button type="button" class="btn btn--ghost" id="editor-pick-ride">Choisir un itinéraire existant</button></div>
     <p class="publication-hint" id="duplicate-notice" role="status" hidden>Nouvelle sortie à partir d’une copie : choisis une nouvelle date. Les participants ne sont pas repris. La sortie d’origine reste inchangée.</p>
     <p class="publication-hint">Le titre et la date sont obligatoires pour publier. Tu peux enregistrer un brouillon incomplet.</p>
     <p class="publication-errors" id="publication-errors" role="alert" hidden></p>
+
+    <div class="editor-status" id="editor-status" hidden>      <div class="field">
+        <label class="field__label" for="statut">Statut de la sortie</label>
+        <select class="field__select" id="statut" onchange="updateStatusBadge(this.value)">
+          <option value="brouillon">Brouillon</option>
+          <option value="publiee">Publiée</option>
+          <option value="complete">Complète</option>
+          <option value="annulee">Annulée</option>
+          <option value="reportee">Reportée</option>
+        </select>
+        <div style="margin-top:.5rem" id="status-badge-wrap">
+          <span class="status-pill status-pill--draft" id="status-badge">● Brouillon</span>
+        </div>
+      </div>
+</div>
 
     <!-- S1 — INFOS GÉNÉRALES -->
     <section class="section" id="s1">
@@ -137,7 +160,7 @@
 
       <div class="field">
         <label class="field__label" for="titre">Titre de la sortie <span class="publication-required">(obligatoire)</span></label>
-        <input class="field__input" type="text" id="titre" placeholder="Ex : Route des Falaises" maxlength="80" required aria-describedby="titre-error">
+        <input class="field__input" type="text" id="titre" minlength="2" placeholder="Ex : Route des Falaises" maxlength="80" required aria-describedby="titre-error">
         <p class="publication-field-error" id="titre-error" hidden></p>
       </div>
 
@@ -336,11 +359,7 @@
     </section>
 
     <!-- S5 — SÉCURITÉ -->
-    <section class="section" id="s5">
-      <div class="section__head">
-        <span class="section__num">05</span>
-        <h2 class="section__title">Sécurité & matériel</h2>
-      </div>
+    <details class="section editor-optional" id="s5"><summary>Sécurité & matériel <span>Facultatif</span></summary><div class="editor-optional__body">
 
       <div class="field">
         <label class="field__label" for="meteo">Météo minimale <span>(optionnel)</span></label>
@@ -363,28 +382,11 @@
           <label class="check-item"><input type="checkbox"> <span>Gravel</span></label>
         </div>
       </div>
-    </section>
+    </div></details>
 
     <!-- S6 — PUBLICATION -->
-    <section class="section" id="s6">
-      <div class="section__head">
-        <span class="section__num">06</span>
-        <h2 class="section__title">Publication</h2>
-      </div>
+    <details class="section editor-optional" id="s6"><summary>Flyer de la sortie <span>Facultatif</span></summary><div class="editor-optional__body">
 
-      <div class="field">
-        <label class="field__label" for="statut">Statut de la sortie</label>
-        <select class="field__select" id="statut" onchange="updateStatusBadge(this.value)">
-          <option value="brouillon">Brouillon</option>
-          <option value="publiee">Publiée</option>
-          <option value="complete">Complète</option>
-          <option value="annulee">Annulée</option>
-          <option value="reportee">Reportée</option>
-        </select>
-        <div style="margin-top:.5rem" id="status-badge-wrap">
-          <span class="status-pill status-pill--draft" id="status-badge">● Brouillon</span>
-        </div>
-      </div>
 
       <div class="field">
         <label class="field__label">Flyer Instagram <span>(1080×1350)</span></label>
@@ -393,7 +395,7 @@
         <div class="flyer-photo-pick" id="flyer-photo-pick">
           <div class="flyer-photo-pick__icon">🏔</div>
           <p class="flyer-photo-pick__title">Photo de fond du flyer</p>
-          <p class="flyer-photo-pick__sub">Choisis <code>goeloRidesHomePage.jpg</code> ou n'importe quelle photo</p>
+          <p class="flyer-photo-pick__sub">Choisis une photo pour illustrer ta sortie</p>
           <label class="btn btn--ghost flyer-photo-pick__btn">
             📂 Choisir la photo
             <input type="file" id="flyer-bg-input" accept="image/*" style="display:none" onchange="onFlyerBgSelected(this)">
@@ -426,14 +428,10 @@
           </div>
         </div>
       </div>
-    </section>
+    </div></details>
 
     <!-- S7 — RÉSEAUX SOCIAUX -->
-    <section class="section" id="s7">
-      <div class="section__head">
-        <span class="section__num">07</span>
-        <h2 class="section__title">Réseaux sociaux</h2>
-      </div>
+    <details class="section editor-optional" id="s7"><summary>Textes pour les réseaux sociaux <span>Facultatif</span></summary><div class="editor-optional__body">
 
       <div class="social-block">
         <div class="social-block__head">
@@ -460,9 +458,9 @@
       </div>
 
       <div style="margin-top:1rem;padding:1rem;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r);font-size:.82rem;color:var(--muted);line-height:1.6">
-        ⚠️ Les participants doivent suivre <strong style="color:var(--text)">@goelo.rides</strong> sur Facebook ou Instagram, ou rejoindre le groupe Strava, et activer les notifications pour être informés des sorties.
+        Le partage sur les réseaux est facultatif. Les inscriptions se font sur la fiche de la sortie ; les informations importantes apparaissent aussi sur l’accueil.
       </div>
-    </section>
+    </div></details>
 
   </main>
 </div>
@@ -474,17 +472,15 @@
     <span id="save-status">Non sauvegardé</span>
   </div>
   <div class="action-bar__spacer"></div>
-  <button class="btn btn--ghost btn--sm" onclick="duplicateSortie()">⧉ Dupliquer</button>
-  <button class="btn btn--danger btn--sm" onclick="document.getElementById('confirm-cancel').classList.add('open')">✕ Annuler</button>
-  <button class="btn btn--ghost action-bar__primary" onclick="saveDraft()" aria-label="Enregistrer le brouillon"><span class="action-bar__full-label">Enregistrer brouillon</span><span class="action-bar__short-label">Brouillon</span></button>
-  <button class="btn btn--accent action-bar__primary" onclick="publishSortie()" aria-label="Publier la sortie"><span class="action-bar__full-label">🚀 Publier la sortie</span><span class="action-bar__short-label">🚀 Publier</span></button>
+  <button id="editor-save-draft" class="btn btn--ghost action-bar__primary" onclick="saveDraft()" aria-label="Enregistrer le brouillon"><span class="action-bar__full-label">Enregistrer brouillon</span><span class="action-bar__short-label">Brouillon</span></button>
+  <button id="editor-publish" class="btn btn--accent action-bar__primary" onclick="publishSortie()" aria-label="Publier la sortie"><span class="action-bar__full-label">🚀 Publier la sortie</span><span class="action-bar__short-label">🚀 Publier</span></button>
 </div>
 
 <!-- CONFIRM ANNULATION -->
 <div class="confirm-overlay" id="confirm-cancel">
   <div class="confirm-box">
     <h3>Annuler cette sortie ?</h3>
-    <p>Cette action notifiera les participants inscrits. Elle est réversible depuis l'admin.</p>
+    <p>La sortie sera marquée comme annulée. Une alerte pourra apparaître sur l’accueil pour informer les visiteurs.</p>
     <div class="confirm-box__actions">
       <button class="btn btn--ghost btn--sm" onclick="document.getElementById('confirm-cancel').classList.remove('open')">Retour</button>
       <button class="btn btn--danger btn--sm" onclick="confirmCancel()">Confirmer l'annulation</button>
@@ -493,6 +489,7 @@
 </div>
 
 <!-- TOASTS -->
+<dialog id="editor-ride-dialog" class="editor-ride-dialog" aria-labelledby="editor-ride-title"><button type="button" id="editor-ride-close" class="editor-ride-close" aria-label="Fermer">×</button><h2 id="editor-ride-title">Choisir un itinéraire</h2><p>La trace est reprise dans ce formulaire. Tes informations de rendez-vous sont conservées.</p><div id="editor-ride-list" role="status"></div></dialog>
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
@@ -503,7 +500,7 @@
 </script>
 <script src="js/goelo-profile.js"></script>
 <script src="js/signup-participants.js"></script>
-<script src="js/gestion-sorties.js?v=20261031-persist-cancel" defer></script>
+<script src="js/gestion-sorties.js?v=20261031-single-editor" defer></script>
 
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>

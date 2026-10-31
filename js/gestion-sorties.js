@@ -44,13 +44,13 @@ function showToast(msg, type = 'info') {
 }
 
 /* ── PROGRESS ── */
-const FIELDS = ['titre','date','heure-rdv','lieu','capitaine'];
+const FIELDS = ['titre','date'];
 function updateProgress() {
   let done = 0;
   FIELDS.forEach(id => { const el = document.getElementById(id); if (el && el.value.trim()) done++; });
   const gpxDone = document.getElementById('gpx-status').classList.contains('visible') ? 1 : 0;
-  const total = FIELDS.length + 1;
-  const pct = Math.round(((done + gpxDone) / total) * 100);
+  const total = FIELDS.length;
+  const pct = Math.round((done / total) * 100);
   document.getElementById('progress-bar').style.width = pct + '%';
   document.getElementById('progress-pct').textContent = pct + '%';
 
@@ -78,6 +78,8 @@ FIELDS.forEach(id => {
 
 /* ── SCROLL TO SECTION ── */
 function scrollToSection(id) {
+  const section = document.getElementById(id);
+  if (section?.tagName === 'DETAILS') section.open = true;
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
   const stepNum = id.replace('s','');
@@ -153,7 +155,7 @@ async function saveDraft() {
       result = await sb.rpc('route_create', payload);
     }
 
-    finishRouteSave(result);
+    finishRouteSave(result, payload);
     dot.classList.add('saved');
     label.textContent =
       'Sauvegardé ' +
@@ -235,7 +237,9 @@ async function publishSortie() {
   routeSavePending = true;
   try {
     const sb = await getSb();
-    const payload = buildPayload('publiee');
+    const selectedStatus = document.getElementById('statut').value;
+    const status = window.mode === 'edit' && window._loadedFrontConfig?.sortieStatus !== 'brouillon' ? (selectedStatus || 'publiee') : 'publiee';
+    const payload = buildPayload(status);
     let result;
     if (window.mode === 'edit') {
       result = await sb.rpc('route_update', {
@@ -249,12 +253,13 @@ async function publishSortie() {
     } else {
       result = await sb.rpc('route_create', payload);
     }
-    finishRouteSave(result);
-    document.getElementById('statut').value = 'publiee';
-    updateStatusBadge('publiee');
+    finishRouteSave(result, payload);
+    document.getElementById('statut').value = status;
+    updateStatusBadge(status);
     document.getElementById('save-dot').classList.add('saved');
     document.getElementById('save-status').textContent = 'Publié';
-    showToast('🚀 Sortie publiée avec succès !');
+    syncEditorMode();
+    showToast('Sortie enregistrée. Tu peux ouvrir sa fiche publique.');
   } catch (e) {
     showToast('Erreur : ' + e.message, 'error');
   } finally {
@@ -292,7 +297,11 @@ function buildPayload(statut) {
 
   // front_config : tout ce que sorties.js lit pour afficher la carte
   const front_config = {
-    visibility: statut === 'publiee' ? 'public' : 'draft',
+    ...savedFc,
+    address: document.getElementById('adresse').value.trim(),
+    weatherMinimum: document.getElementById('meteo').value,
+    recommendedEquipment: Array.from(document.querySelectorAll('#s5 input[type=checkbox]:checked')).map(input => input.closest('label').textContent.trim()),
+    visibility: statut === 'brouillon' ? 'draft' : statut === 'publiee' ? 'public' : savedFc.visibility || 'public',
     sortieStatus: statut,
     raceType: type,
     levelClass: `level-${groupe}`,
@@ -322,7 +331,7 @@ function buildPayload(statut) {
   };
 
   return {
-    p_track_name:   titre,
+    p_track_name:   titre || (statut === 'brouillon' ? 'Brouillon sans titre' : ''),
     p_group_label:  groupLabel,
     p_pace_label:   pace[groupe],
     p_front_config: front_config,
@@ -330,9 +339,9 @@ function buildPayload(statut) {
   };
 }
 
-function finishRouteSave(result) {
+function finishRouteSave(result, payload) {
   if (result.error) throw result.error;
-  if (result.data?.ok === false) throw new Error(result.data.error || 'Enregistrement refusé');
+  if (!result.data || result.data.ok !== true || !result.data.route_id) throw new Error(result.data?.error || 'Le serveur n’a pas confirmé l’enregistrement.');
   if (result.data?.route_id) {
     window.routeId = result.data.route_id;
     window.mode = 'edit';
@@ -341,22 +350,30 @@ function finishRouteSave(result) {
     url.searchParams.set('id', window.routeId);
     window.history.replaceState(null, '', url);
   }
+  if (payload) window._loadedFrontConfig = payload.p_front_config;
+  window.editorDirty = false;
+  syncEditorMode();
   const notice = document.getElementById('duplicate-notice');
   if (notice) notice.hidden = true;
 }
 
 function duplicateSortie() {
+  if (routeSavePending) return;
   window.routeId = null;
   window.mode = 'create';
   const url = new URL(window.location.href);
   url.searchParams.set('mode', 'create');
   url.searchParams.delete('id');
+  url.searchParams.delete('ride');
   window.history.replaceState(null, '', url);
   const title = document.getElementById('titre');
   title.value = title.value.replace(/ \(copie\)$/, '').slice(0, 72) + ' (copie)';
   document.getElementById('date').value = '';
   document.getElementById('statut').value = 'brouillon';
   updateStatusBadge('brouillon');
+  window._loadedFrontConfig = { ...(window._loadedFrontConfig || {}), sortieStatus: 'brouillon', visibility: 'draft' };
+  window.editorDirty = true;
+  syncEditorMode();
   document.getElementById('save-dot').classList.remove('saved');
   document.getElementById('save-status').textContent = 'Copie non enregistrée';
   ['gs-route-participants', 'gs-participants-preview'].forEach(id => {
@@ -401,6 +418,8 @@ async function confirmCancel() {
     updateStatusBadge('annulee');
     document.getElementById('save-dot').classList.add('saved');
     document.getElementById('save-status').textContent = 'Annulation enregistrée';
+    window.editorDirty = false;
+    syncEditorMode();
     showToast('Sortie annulée et enregistrée.');
   } catch (error) {
     showToast(error.message || 'Impossible d’annuler la sortie.', 'error');
@@ -1233,9 +1252,10 @@ async function loadReusableRide(rideId) {
   description.textContent = ride.description || '';
   const minutes = Math.round(Number(ride.estimated_time_min));
   const file = /^https?:\/\//i.test(ride.gpx_url || '') ? ride.gpx_url : '';
-  populateForm({ track_name: ride.title || '', front_config: {
-    rideDateIso: '', meetTime: '08:30', rideTime: '09:00',
-    description: description.innerHTML, visibility: 'draft', sortieStatus: 'brouillon',
+  const current = buildPayload('brouillon').p_front_config;
+  populateForm({ track_name: document.getElementById('titre').value.trim() || ride.title || '', front_config: {
+    ...current,
+    description: document.getElementById('rte-desc').innerHTML.trim() || description.innerHTML, visibility: 'draft', sortieStatus: 'brouillon',
     stats: { totalKm: ride.distance_km, elevGainM: ride.elevation_gain },
     estimatedDurationHm: minutes > 0 ? Math.floor(minutes / 60) + 'h' + String(Math.round(minutes % 60)).padStart(2, '0') : '',
     embeddedPoints: points, file: file
@@ -1246,6 +1266,7 @@ async function loadReusableRide(rideId) {
     notice.textContent = 'Itinéraire repris : choisis une date, complète le lieu et le capitaine, puis enregistre ta nouvelle sortie.';
     notice.hidden = false;
   }
+  window.editorDirty = true;
   document.getElementById('date').focus();
 }
 
@@ -1258,8 +1279,8 @@ async function loadRoute(routeId, duplicate = false) {
     .eq('id', routeId)
     .single();
 
-  if (error) {
-    showToast(error.message, 'error');
+  if (error || !data) {
+    showToast(error?.message || 'Sortie introuvable.', 'error');
     return false;
   }
 
@@ -1417,6 +1438,9 @@ function populateForm(route) {
   document.getElementById('cp').value = fc.cp || '';
   document.getElementById('capitaine').value = fc.captain || fc.rideLeader || '';
   if (fc.niveau) document.getElementById('niveau').value = fc.niveau;
+  document.getElementById('adresse').value = fc.address || '';
+  document.getElementById('meteo').value = fc.weatherMinimum || '';
+  if (Array.isArray(fc.recommendedEquipment)) document.querySelectorAll('#s5 input[type=checkbox]').forEach(input => { input.checked = fc.recommendedEquipment.includes(input.closest('label').textContent.trim()); });
   if (Object.prototype.hasOwnProperty.call(fc, 'maxParticipants')) {
     const unlimited = document.getElementById('illimite');
     unlimited.checked = fc.maxParticipants == null;
@@ -1436,7 +1460,8 @@ function populateForm(route) {
   document.getElementById('rte-desc').innerHTML =
     fc.description || fc.shortDesc || '';
 
-  const statut = fc.sortieStatus || (fc.visibility === 'public' ? 'publiee' : 'brouillon');
+  const statusAliases = {open:'publiee',published:'publiee',cancelled:'annulee',canceled:'annulee','annulée':'annulee',closed:'complete'};
+  const statut = statusAliases[fc.sortieStatus] || fc.sortieStatus || (fc.visibility === 'public' ? 'publiee' : 'brouillon');
   document.getElementById('statut').value = statut;
   updateStatusBadge(statut);
 
@@ -1482,28 +1507,29 @@ document.addEventListener('keydown', e => {
 
 /* ── INIT ── */
 window.addEventListener('DOMContentLoaded', async () => {
-  // Date par défaut : prochaine sortie (samedi suivant)
-  const now = new Date();
-  const day = now.getDay();
-  const daysUntilSat = (6 - day + 7) % 7 || 7;
-  const nextSat = new Date(now);
-  nextSat.setDate(now.getDate() + daysUntilSat);
-  document.getElementById('date').value = nextSat.toISOString().split('T')[0];
+  // La date est choisie explicitement pour éviter une publication au mauvais jour.
+  document.getElementById('date').value = '';
 
   // ── PARAMS URL (UNE SEULE FOIS) ──
   const params = new URLSearchParams(window.location.search);
 
   const sourceId = params.get('id');
-  window.mode = params.get('mode') || 'create';
+  window.mode = params.get('mode') || (sourceId ? 'edit' : 'create');
   window.routeId = window.mode === 'edit' ? sourceId : null;
 
   console.log("MODE =", window.mode);
   console.log("ROUTE ID =", window.routeId);
 
-  // ── LOAD MODE EDIT ──
-  if (window.mode === 'edit' && window.routeId) {
-    await loadRoute(window.routeId);
+  // Une source manquante ne doit jamais devenir une nouvelle sortie par accident.
+  if (window.mode === 'edit') {
+    document.querySelectorAll('.action-bar button').forEach(button=>{button.disabled=true;});
+    try {
+      const loaded = window.routeId && await loadRoute(window.routeId);
+      if (!loaded) throw Error('load_failed');
+      document.querySelectorAll('.action-bar button').forEach(button=>{button.disabled=false;});
+    } catch (_) { editorLoadError('Impossible de charger la sortie. Reviens à Mes sorties pour réessayer.'); return; }
   }
+  if (!['create','edit','duplicate'].includes(window.mode)) { editorLoadError('Ce lien est invalide. Reviens à Mes sorties.'); return; }
   if (window.mode === 'duplicate') {
     const buttons = document.querySelectorAll('.action-bar button');
     buttons.forEach(button => { button.disabled = true; });
@@ -1552,6 +1578,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   } catch(e) { /* silencieux */ }
 
+  syncEditorMode();
   updateProgress();
 });
 
@@ -1562,3 +1589,54 @@ window.addEventListener("goelo:signup-changed", function (e) {
 });
 
 bindGuestParticipantUi();
+
+
+/* Navigation et actions communes aux modes créer, modifier et dupliquer. */
+function syncEditorMode() {
+  const editing = window.mode === 'edit' && !!window.routeId;
+  const status = document.getElementById('statut').value;
+  const published = editing && status !== 'brouillon';
+  document.getElementById('editor-title').textContent = editing ? 'Modifier la sortie' : 'Créer une sortie';
+  document.getElementById('editor-nav-title').textContent = editing ? 'Modifier la sortie' : 'Créer une sortie';
+  document.title = (editing ? 'Modifier la sortie' : 'Créer une sortie') + ' · GoëloRides';
+  document.getElementById('editor-intro').textContent = editing ? 'Retrouve ici les informations, le parcours et la publication de cette sortie.' : 'Avec ou sans GPX, tout se prépare dans ce formulaire.';
+  document.getElementById('editor-management').hidden = !editing;
+  document.getElementById('editor-source').hidden = published;
+  document.getElementById('editor-status').hidden = !editing;
+  const view = document.getElementById('editor-view');view.hidden = !editing;
+  if (editing) view.href = 'parcours.html?id=' + encodeURIComponent(window.routeId);
+  document.getElementById('editor-save-draft').hidden = published;
+  const publish = document.getElementById('editor-publish');
+  publish.setAttribute('aria-label', published ? 'Enregistrer les modifications' : 'Publier la sortie');
+  publish.querySelector('.action-bar__full-label').textContent = published ? 'Enregistrer les modifications' : 'Publier la sortie';
+  publish.querySelector('.action-bar__short-label').textContent = published ? 'Enregistrer' : 'Publier';
+}
+function editorLoadError(message) {
+  const summary=document.getElementById('publication-errors');summary.textContent=message;summary.hidden=false;
+  document.querySelectorAll('.action-bar button, #editor-management button, #editor-source button').forEach(button=>{button.disabled=true;});
+}
+async function chooseReusableRide() {
+  const dialog=document.getElementById('editor-ride-dialog'),list=document.getElementById('editor-ride-list');
+  dialog.showModal();list.textContent='Chargement des itinéraires…';
+  try {
+    const sb=await getSb();const result=await sb.from('rides').select('id,title').order('title');
+    if(result.error||!Array.isArray(result.data))throw Error('Impossible de charger la bibliothèque.');
+    list.replaceChildren();
+    if(!result.data.length)list.textContent='Aucun itinéraire enregistré. Tu peux importer un GPX dans le formulaire.';
+    result.data.forEach(ride=>{
+      const button=document.createElement('button');button.type='button';button.textContent=ride.title||'Itinéraire sans titre';
+      button.addEventListener('click',async()=>{
+        list.querySelectorAll('button').forEach(el=>{el.disabled=true;});
+        try {await loadReusableRide(ride.id);dialog.close();syncEditorMode();showToast('Itinéraire repris. Tes informations de rendez-vous sont conservées.');}
+        catch(error){showToast(error.message||'Import impossible.','error');}
+        finally{list.querySelectorAll('button').forEach(el=>{el.disabled=false;});}
+      });list.appendChild(button);
+    });
+  } catch(error) {list.textContent='La bibliothèque est indisponible. Tu peux réessayer ou importer directement un GPX.';}
+}
+document.getElementById('editor-pick-ride').addEventListener('click',chooseReusableRide);
+document.getElementById('editor-ride-close').addEventListener('click',()=>document.getElementById('editor-ride-dialog').close());
+document.getElementById('form-main').addEventListener('input',()=>{
+  window.editorDirty=true;document.getElementById('save-dot').classList.remove('saved');document.getElementById('save-status').textContent='Modifications non enregistrées';
+});
+window.addEventListener('beforeunload',event=>{if(window.editorDirty){event.preventDefault();event.returnValue='';}});
