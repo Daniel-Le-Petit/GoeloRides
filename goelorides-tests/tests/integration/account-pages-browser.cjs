@@ -27,8 +27,12 @@ await page.fill('#profile-fullname','Camille Martin');await page.fill('#profile-
 await page.waitForFunction(()=>document.querySelector('#profile-feedback').textContent.includes('bien été'));
 assert.equal(await page.textContent('#profile-name'),'Nouveau pseudo');assert.equal(await page.inputValue('#profile-fullname'),'Camille Martin');
 await page.fill('#profile-city','Modification');await page.click('button[type=reset]');assert.equal(await page.inputValue('#profile-city'),'Paimpol');
-// Régression : l’ouverture doit fonctionner même sans gestionnaire de clic JavaScript.
-await page.evaluate(()=>{const summary=document.querySelector('#profile-email-edit');summary.replaceWith(summary.cloneNode(true));});
+await page.click('#profile-email-edit');
+assert(await page.locator('#profile-email-editor').evaluate(el=>el.matches(':modal')));
+assert.equal(await page.evaluate(()=>document.activeElement.id),'profile-new-email');
+await page.keyboard.press('Escape');assert(await page.locator('#profile-email-editor').isHidden());
+assert.equal(await page.evaluate(()=>document.activeElement.id),'profile-email-edit');
+await page.click('#profile-email-edit');await page.click('#profile-email-close');assert(await page.locator('#profile-email-editor').isHidden());
 await page.click('#profile-email-edit');
 await page.fill('#profile-new-email','camille@example.test');await page.click('#profile-email-submit');
 assert.equal(await page.evaluate(()=>!!window.lastEmailRequest),false);
@@ -68,15 +72,5 @@ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)
 if(process.env.QA_OUTPUT_DIR) await page.screenshot({path:path.join(process.env.QA_OUTPUT_DIR,'bookings-mobile.png'),fullPage:true});
 await page.setViewportSize({width:1440,height:1000});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 await page.evaluate(()=>GoeloAuthState.setState({user:null,role:'visitor'}));assert(await page.locator('#bookings-gate').isVisible());
-const nativeContext=await browser.newContext({javaScriptEnabled:false});
-const nativePage=await nativeContext.newPage();
-const disclosure=fs.readFileSync(path.join(root,'profile.html'),'utf8').match(/<details id="profile-email-editor"[\s\S]*?<\/details>/)[0];
-await nativePage.setContent(disclosure);
-assert(await nativePage.locator('#profile-new-email').isHidden());
-await nativePage.locator('#profile-email-edit').click();
-assert(await nativePage.locator('#profile-new-email').isVisible());
-await nativePage.locator('#profile-email-edit').press('Enter');
-assert(await nativePage.locator('#profile-new-email').isHidden());
-await nativeContext.close();
 assert.deepEqual(errors,[]);await browser.close();console.log('PASS: édition, sauvegarde, annulation des modifications, tri, heure Paris, historique, refus de faux retrait, désinscription confirmée, déconnexion, mobile.');
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/account.css?v=20261031-email-disclosure-v3">
+  <link rel="stylesheet" href="css/pages/account.css?v=20261031-email-modal-v4">
 
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -80,14 +80,18 @@
           <section class="ac-email-settings" aria-labelledby="email-title">
             <div class="ac-account-email"><span class="ac-section-number" aria-hidden="true">02</span><div class="ac-field"><h3 id="email-title">Mon adresse de connexion</h3><label class="ac-sr-only" for="profile-email">Adresse actuelle</label><input id="profile-email" type="email" readonly aria-describedby="email-help"><p class="ac-help" id="email-help">Tu peux changer d’adresse. Elle restera utilisée jusqu’à la confirmation de la nouvelle.</p></div></div>
             <p id="profile-email-status" class="ac-help" role="status" aria-live="polite"></p>
-            <details id="profile-email-editor" class="ac-email-disclosure">
-              <summary id="profile-email-edit" class="ac-btn ac-btn--secondary">Changer mon adresse e-mail</summary>
+            <button id="profile-email-edit" class="ac-btn ac-btn--secondary" type="button" commandfor="profile-email-editor" command="show-modal" aria-haspopup="dialog">Changer mon adresse e-mail</button>
+            <dialog id="profile-email-editor" class="ac-email-dialog" aria-labelledby="email-dialog-title" aria-describedby="email-confirm-help">
+              <button id="profile-email-close" class="ac-email-dialog__close" type="button" commandfor="profile-email-editor" command="close" aria-label="Fermer">×</button>
+              <p class="ac-kicker">MON COMPTE</p>
+              <h2 id="email-dialog-title">Changer mon adresse e-mail</h2>
+              <p class="ac-help">Saisis ta nouvelle adresse de connexion. Le changement devra être confirmé par e-mail.</p>
               <form id="profile-email-form">
-              <div class="ac-field"><label for="profile-new-email">Nouvelle adresse e-mail</label><input id="profile-new-email" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="254" placeholder="nouvelle-adresse@exemple.fr" aria-describedby="email-confirm-help"><p class="ac-help" id="email-confirm-help">Suis les instructions reçues par e-mail pour finaliser le changement. Vérifie aussi les messages envoyés à ton adresse actuelle.</p></div>
+              <div class="ac-field"><label for="profile-new-email">Nouvelle adresse e-mail</label><input id="profile-new-email" name="email" type="email" autocomplete="email" inputmode="email" autofocus required maxlength="254" placeholder="nouvelle-adresse@exemple.fr" aria-describedby="email-confirm-help"><p class="ac-help" id="email-confirm-help">Suis les instructions reçues par e-mail pour finaliser le changement. Vérifie aussi les messages envoyés à ton adresse actuelle.</p></div>
               <div class="ac-actions"><button class="ac-btn ac-btn--secondary" id="profile-email-cancel" type="button">Annuler</button><button class="ac-btn" id="profile-email-submit" type="submit">Envoyer la confirmation</button></div>
               <p id="profile-email-feedback" role="status" aria-live="polite"></p>
               </form>
-            </details>
+            </dialog>
           </section>
         </section>
       </div>
@@ -97,13 +101,13 @@
 
   <script src="js/goelo-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="js/goelo-auth-state.js?v=20261031-email-disclosure-v3"></script>
-  <script src="js/auth.js?v=20261031-email-disclosure-v3"></script>
-  <script src="js/goelo-account.js?v=20261031-email-disclosure-v3"></script>
-  <script src="js/goelo-profile.js?v=20261031-email-disclosure-v3"></script>
+  <script src="js/goelo-auth-state.js?v=20261031-email-modal-v4"></script>
+  <script src="js/auth.js?v=20261031-email-modal-v4"></script>
+  <script src="js/goelo-account.js?v=20261031-email-modal-v4"></script>
+  <script src="js/goelo-profile.js?v=20261031-email-modal-v4"></script>
   <script src="js/goelo-ui.js"></script>
   <script src="js/goelo-navbar.js"></script>
-  <script src="js/profile.js?v=20261031-email-disclosure-v3"></script>
+  <script src="js/profile.js?v=20261031-email-modal-v4"></script>
 <script src="js/goelo-back-navigation.js" defer></script>
 </body>
 </html>

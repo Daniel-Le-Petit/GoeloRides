@@ -236,7 +236,9 @@
   }
 
   function setEmailEditor(open) {
-    $("profile-email-editor").open = open;
+    var dialog = $("profile-email-editor");
+    if (open && !dialog.open) dialog.showModal();
+    else if (!open && dialog.open) dialog.close();
     if (open) $("profile-new-email").focus();
     else { $("profile-email-form").reset(); $("profile-new-email").setCustomValidity(""); }
   }
@@ -286,11 +288,21 @@
   }
 
   function init() {
-    $("profile-email-editor").addEventListener("toggle", function () {
-      if (this.open) {
-        $("profile-email-feedback").textContent = "";
-        $("profile-new-email").focus();
-      }
+    $("profile-email-edit").addEventListener("click", function (event) {
+      event.preventDefault();
+      $("profile-email-feedback").textContent = "";
+      setEmailEditor(true);
+    });
+    $("profile-email-close").addEventListener("click", function (event) { event.preventDefault(); setEmailEditor(false); });
+    $("profile-email-editor").addEventListener("close", function () {
+      $("profile-email-form").reset();
+      $("profile-new-email").setCustomValidity("");
+      $("profile-email-feedback").textContent = "";
+    });
+    $("profile-email-editor").addEventListener("click", function (event) {
+      if (event.target !== this) return;
+      var box = this.getBoundingClientRect();
+      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) setEmailEditor(false);
     });
     $("profile-email-cancel").addEventListener("click", function () { setEmailEditor(false); $("profile-email-feedback").textContent = ""; $("profile-email-edit").focus(); });
     $("profile-new-email").addEventListener("input", function () { this.setCustomValidity(""); });
