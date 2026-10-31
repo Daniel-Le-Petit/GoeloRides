@@ -46,3 +46,6 @@ Le test `account-session-browser.cjs` charge le vrai `auth.js` avec un SDK simul
 
 
 Le changement d’adresse est initié uniquement par le bouton « Envoyer la confirmation ». Les tests simulent cette opération et n’envoient aucun e-mail réel. Ils vérifient le rejet d’une adresse identique, la demande en attente sans écraser l’adresse actuelle, les erreurs, l’annulation du formulaire et la mise à jour confirmée par le serveur.
+
+
+L’ouverture du changement d’e-mail utilise désormais un élément HTML natif `details` / `summary`, sans dépendance à un gestionnaire de clic JavaScript. Le test navigateur vérifie l’ouverture à la souris et la fermeture au clavier avec JavaScript désactivé, ainsi que l’envoi et les confirmations simulés.

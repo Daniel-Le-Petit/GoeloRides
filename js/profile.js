@@ -236,9 +236,7 @@
   }
 
   function setEmailEditor(open) {
-    $("profile-email-form").hidden = !open;
-    $("profile-email-edit").hidden = open;
-    $("profile-email-edit").setAttribute("aria-expanded", String(open));
+    $("profile-email-editor").open = open;
     if (open) $("profile-new-email").focus();
     else { $("profile-email-form").reset(); $("profile-new-email").setCustomValidity(""); }
   }
@@ -288,7 +286,12 @@
   }
 
   function init() {
-    $("profile-email-edit").addEventListener("click", function () { $("profile-email-feedback").textContent = ""; setEmailEditor(true); });
+    $("profile-email-editor").addEventListener("toggle", function () {
+      if (this.open) {
+        $("profile-email-feedback").textContent = "";
+        $("profile-new-email").focus();
+      }
+    });
     $("profile-email-cancel").addEventListener("click", function () { setEmailEditor(false); $("profile-email-feedback").textContent = ""; $("profile-email-edit").focus(); });
     $("profile-new-email").addEventListener("input", function () { this.setCustomValidity(""); });
     $("profile-email-form").addEventListener("submit", changeEmail);
