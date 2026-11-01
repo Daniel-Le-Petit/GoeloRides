@@ -1,0 +1,11 @@
+# Photos des sorties
+
+La page publique `dans-la-roue.html` reprend « Dans la roue du groupe » de la branche `feature/galerie-sorties`. L’accueil propose « Nos sorties en images » dans le footer. Elle affiche uniquement les albums publiés qui contiennent des photos valides, du plus récent au plus ancien. Chaque album ouvre une visionneuse avec précédent/suivant, clavier et fermeture Échap ; le lien Facebook est facultatif. Pas de photos de démonstration ni d’import automatique des images présentes dans le dépôt.
+
+Depuis le panneau admin, « Photos des sorties » ouvre `admin-photos.html`. Choisir une sortie préremplit titre/date ; l’association est facultative. Ajouter des JPG/PNG/WebP, vérifier l’autorisation de diffusion, enregistrer en brouillon ou cocher la publication. Pour retirer un album de la galerie, décocher sa publication et enregistrer. Modifier permet aussi de retirer des photos de l’album.
+
+Les photos sont converties en JPEG de 1600 pixels maximum avant téléversement, avec 40 photos maximum par album et 5 Mo maximum par objet. Les fichiers sources ne sont pas modifiés. Les fichiers déposés dans le bucket public `ride-photos` restent accessibles par leur URL, y compris en brouillon : ce n’est pas un stockage confidentiel. Retirer une photo de l’album ne supprime pas le fichier du bucket ; une suppression physique reste possible depuis Supabase Storage.
+
+La migration `20261101190000_ride_albums.sql` crée les albums et le bucket. La lecture publique est contrôlée par RLS ; écriture des albums et téléversement sont réservés aux administrateurs côté serveur, avec la même définition d’admin que les alertes. Elle dépend de la migration admin des alertes déjà appliquée. Le workflow `ride-albums.yml` teste la migration sur PostgreSQL isolé avant application transactionnelle à Supabase avec le secret existant `SUPABASE_DATABASE_URL`.
+
+Vérifications : `ride-gallery-browser.cjs` (affichage mobile, visionneuse, erreur/reprise, vide, liens interdits, édition en brouillon et retrait des contrôles après déconnexion) ; `ride-albums-postgres.cjs` (droits anon/membre/Ride Leader/admin, brouillon/publication/retrait, validations et stockage). Les tests utilisent des données synthétiques ; aucune photo réelle n’est publiée.
