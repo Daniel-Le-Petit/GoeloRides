@@ -9,3 +9,13 @@
 .early-rides-empty, .early-rides-error { color: #f1f7f8; background: #112c38f2; border: 1px solid #64818b; padding: 16px; border-radius: 10px; font: .9rem/1.5 Inter,sans-serif; }
 .early-rides-error button { display: inline-flex; align-items: center; min-height: 44px; background: #f9d71c; color: #14222d; border: 0; border-radius: 7px; padding: 10px 16px; margin: 10px 14px 0 0; font-weight: 700; cursor: pointer; }
 .early-ride-card a:focus-visible, .early-rides-error :is(a,button):focus-visible { outline: 3px solid #f9d71c; outline-offset: 3px; }
+/* Accueil : contenu lisible sans image, animation ni superpositions. */
+html body .home-upcoming-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 12px; padding: 8px 0; width: 100%; }
+html body .home-upcoming-card { position: relative; opacity: 1; visibility: visible; animation: none; transform: none; min-width: 0; height: auto; padding: 18px; text-align: left; color: #f4f8fa; border: 1px solid #7296a3; border-radius: 12px; background: #112e3af5; }
+html body .home-upcoming-card h3 { display: block; color: #fff; font: 700 1.1rem/1.4 Inter,sans-serif; margin: .6rem 0; overflow-wrap: anywhere; }
+html body .home-upcoming-card p { color: #d9e7ec; font: 400 .8rem/1.6 Inter,sans-serif; margin: .4rem 0; }
+html body .home-upcoming-card .home-upcoming-card__date { color: #f9d71c; font-weight: 700; }
+html body .home-upcoming-card__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .8rem; }
+html body .home-upcoming-card__actions a, html body .home-upcoming-card__actions button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .65rem 1rem; border: 1px solid #f9d71c; border-radius: 7px; color: #142532 !important; background: #f9d71c; font: 700 .8rem/1.4 Inter,sans-serif; text-decoration: none; cursor: pointer; }
+html body .home-upcoming-card__actions button { color: #fff !important; background: transparent; border-color: #9cb2be; }
+html body .home-upcoming-card__actions :focus-visible { outline: 3px solid #fff; outline-offset: 4px; }

@@ -322,32 +322,28 @@
   }
 
   function renderUpcomingSorties() {
-    var root = document.getElementById("gr-upcoming-rides");
-    if (!root || !window.GoeloSortieCards) return;
-
-    if (root.querySelector("[role=alert]") && !upcomingState.sorties.length) return;
-    var cards = upcomingState.sorties.map(sortieToCard);
-    updateUpcomingSubtitle(cards.length);
-
-    if (!cards.length) {
-      root.innerHTML = "";
-      _syncUpcomingNav();
-      return;
-    }
-
-    window.GoeloSortieCards.renderList(cards, root, {
-      viewMode: "sorties",
-      groupDots: true,
-      joinedRouteIds: upcomingState.joinedRouteIds,
-      asList: true,
-      emptyHtml: "",
-      trackSource: "home"
+    var root=document.getElementById("gr-upcoming-rides");
+    if(!root)return;
+    if(root.querySelector("[role=alert]")&&!upcomingState.sorties.length)return;
+    updateUpcomingSubtitle(upcomingState.sorties.length);
+    var list=document.createElement("div");list.className="home-upcoming-cards";
+    upcomingState.sorties.forEach(function(ride){
+      var card=document.createElement("article");card.className="home-upcoming-card";card.dataset.routeId=ride.id;
+      var date=document.createElement("p");date.className="home-upcoming-card__date";
+      date.textContent=ride.date&&!isNaN(ride.date.getTime())?ride.date.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"Date à confirmer";
+      var title=document.createElement("h3");title.textContent=ride.title;
+      var tags=document.createElement("p");tags.className="home-upcoming-card__meta";
+      tags.textContent=[ride.group,ride.km!=null?Number(ride.km).toLocaleString("fr-FR",{maximumFractionDigits:1})+" km":"",ride.dplus!=null?Math.round(ride.dplus)+" m D+":""].filter(Boolean).join(" · ");
+      var meeting=document.createElement("p");meeting.textContent=[ride.meetTime?"Rendez-vous à "+ride.meetTime:"",ride.place].filter(Boolean).join(" · ");
+      var actions=document.createElement("div");actions.className="home-upcoming-card__actions";
+      var link=document.createElement("a");link.className="btn-primary home-upcoming-card__link";link.href="parcours.html?id="+encodeURIComponent(ride.id);link.textContent="Voir la sortie →";actions.appendChild(link);
+      if(window.GoeloPseudoParticipation&&!window.GOELO_AUTH_PENDING&&!window.GOELO_USER&&!/^(cancelled|canceled|annulee|annulée)$/.test(ride.status)){
+        var join=document.createElement("button");join.type="button";join.dataset.guestJoin=ride.id;join.dataset.guestTitle=ride.title;join.dataset.guestSummary=date.textContent;join.textContent=window.GoeloPseudoParticipation.hasLocal(ride.id)?"Inscrit ✓":"Rejoindre";actions.appendChild(join);
+      }
+      card.appendChild(date);card.appendChild(title);if(tags.textContent)card.appendChild(tags);if(meeting.textContent)card.appendChild(meeting);card.appendChild(actions);list.appendChild(card);
     });
-
-    requestAnimationFrame(function () {
-      _syncUpcomingNav();
-      refreshHomeScrollTracking();
-    });
+    root.replaceChildren(list);
+    _syncUpcomingNav();requestAnimationFrame(refreshHomeScrollTracking);
   }
 
   function _getUpcomingScroller() {
@@ -373,7 +369,7 @@
     upcomingNavBound = true;
 
     function scrollByDir(dir) {
-      var card = scroller.querySelector(".go-sc-list > li");
+      var card = scroller.querySelector(".home-upcoming-card");
       var step = card ? card.offsetWidth + 14 : scroller.clientWidth * 0.85;
       scroller.scrollBy({ left: dir * step, behavior: "smooth" });
     }

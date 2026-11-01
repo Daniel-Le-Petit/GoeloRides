@@ -15,7 +15,7 @@
       parts.forEach(function(p){values[p.type]=p.value;});return values.year+'-'+values.month+'-'+values.day;
     } catch (_) { var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   }
-  function completeViewExists() { return !!host.querySelector('.go-sc-card'); }
+  function completeViewExists() { return !!host.querySelector('.go-sc-card,.home-upcoming-card'); }
   function failed() {
     host.setAttribute('aria-busy','false');
     if (completeViewExists()) return;

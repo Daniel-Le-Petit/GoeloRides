@@ -36,7 +36,8 @@ const root=path.resolve(__dirname,'../../..');
  for(const file of ['index','sorties']){
   await page.goto('http://rides.test/'+file+'.html');
   const host=file==='index'?'#gr-upcoming-rides':'#sorties-list';
-  await page.locator(host+' .go-sc-card').waitFor();
+  const cardSelector=file==='index'?'.home-upcoming-card':'.go-sc-card';
+  await page.locator(host+' '+cardSelector).waitFor();
   assert((await page.textContent(host)).includes('Sortie publique visible'));assert(await page.evaluate(()=>window.GOELO_AUTH_PENDING));
   if(file==='sorties'){
    await page.evaluate(()=>{window.GOELO_ROLE='admin';window.GOELO_USER={id:'admin'};window.GOELO_AUTH_PENDING=false;window.dispatchEvent(new CustomEvent('goelo:role-ready',{detail:{role:'admin'}}));});
@@ -53,7 +54,7 @@ const root=path.resolve(__dirname,'../../..');
   assert(!(await page.textContent(host)).includes('Aucune sortie'));
   await page.unroute('**/rest/v1/rpc/*');await page.evaluate(()=>window.failPublic=false);
   await page.locator(host).getByRole('button',{name:'Réessayer'}).click();
-  await page.locator(host+' .go-sc-card').waitFor();
+  await page.locator(host+' '+cardSelector).waitFor();
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   console.log('PASS',file,': affichage sans session, enrichissements bloqués, erreur explicite, reprise et mobile');
  }

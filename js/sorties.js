@@ -482,7 +482,7 @@ async function fetchSorties(publicOnly) {
     if (!host) return;
     if (state.loadError && !state.sorties.length && host.querySelector("[role=alert]")) return;
     if (!window.GoeloSortieCards) {
-      host.innerHTML = '<p class="go-sc-empty">Chargement…</p>';
+      if (!host.querySelector(".early-ride-card,.early-rides-empty")) host.innerHTML = '<p class="go-sc-empty" role="alert">L’affichage détaillé est indisponible. <a href="sorties.html?v=20261101-detail-public">Recharger la page</a></p>';
       return;
     }
     var list = sortedSorties(state.sorties.filter(matchesFilter)).map(sortieToCard);

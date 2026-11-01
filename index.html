@@ -13,7 +13,7 @@
   </script>
 
   <script src="js/goelo-config.js?v=20261101-early"></script>
-  <link rel="stylesheet" href="css/components/early-rides.css?v=20261101-early">
+  <link rel="stylesheet" href="css/components/early-rides.css?v=20261101-readable-card">
   <link rel="stylesheet" href="goelo-modals.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -4468,7 +4468,7 @@
       parts.forEach(function(p){values[p.type]=p.value;});return values.year+'-'+values.month+'-'+values.day;
     } catch (_) { var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   }
-  function completeViewExists() { return !!host.querySelector('.go-sc-card'); }
+  function completeViewExists() { return !!host.querySelector('.go-sc-card,.home-upcoming-card'); }
   function failed() {
     host.setAttribute('aria-busy','false');
     if (completeViewExists()) return;
@@ -4751,7 +4751,7 @@
   <script src="js/sortie-cards.js?v=20261101-public-loading"></script>
   <script src="js/goelo-poll.js?v=20260801-schedule-1"></script>
   <script src="js/goelo-poll-multi.js?v=20260801-multi-1"></script>
-  <script src="js/home.js?v=20261101-public-loading"></script>
+  <script src="js/home.js?v=20261101-readable-card"></script>
 
   <!-- google analytics -->
   <script>

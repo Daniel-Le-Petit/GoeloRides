@@ -16,3 +16,12 @@ Le maintien du message initial malgré le délai de reprise montre que le démar
 `js/goelo-rides-early.js` est la source intégrée dans les deux pages HTML. Le test `early-rides-browser.cjs` bloque volontairement tous les autres scripts et vérifie l’affichage, le filtrage des données privées, l’erreur et la reprise. Le test `public-rides-loading-browser.cjs` vérifie aussi le relais vers les cartes enrichies.
 
 Le premier texte devient « Recherche des sorties… ». Le maintien de l’ancien « Chargement… » après publication doit conduire à vérifier la version réellement déployée sur Render, et non à supposer qu’un nouveau correctif est déjà exécuté sur le téléphone.
+
+
+## Fiche Parcours et carte d’accueil lisible
+
+La fiche `parcours.html` avait son propre blocage : attente de la session, des participants puis de la carte avant la fin du chargement. La lecture publique et le rendu des informations sont désormais effectués avant ces enrichissements. Les lectures privées conservent le client authentifié et un délai limite ; la présence d’une session n’est pas une condition à la lecture d’une fiche publique.
+
+L’accueil affiche désormais une carte compacte dédiée (titre, date, groupe, distance, rendez-vous, lien vers la fiche), sans image ni animation. Il ne dépend plus du rendu cinématique des cartes de la liste. Le démarrage intégré reconnaît ce rendu pour éviter de l’écraser.
+
+Validation : test navigateur de la fiche publique avec connexion, participants et météo bloqués ; test du rendu dédié de l’accueil, de la liste et de la reprise après erreur. Aucune inscription ni sortie réelle n’a été modifiée.

@@ -6,7 +6,7 @@
   <meta name="description" content="Calendrier des sorties vélo GoëloRides - filtres, parcours et inscriptions. Départ parking du Kasino à Saint-Quay-Portrieux.">
   <meta name="theme-color" content="#0D0D0D">
   <script src="js/goelo-config.js?v=20261101-early"></script>
-  <link rel="stylesheet" href="css/components/early-rides.css?v=20261101-early">
+  <link rel="stylesheet" href="css/components/early-rides.css?v=20261101-readable-card">
   <link rel="manifest" href="/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -122,7 +122,7 @@
       parts.forEach(function(p){values[p.type]=p.value;});return values.year+'-'+values.month+'-'+values.day;
     } catch (_) { var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   }
-  function completeViewExists() { return !!host.querySelector('.go-sc-card'); }
+  function completeViewExists() { return !!host.querySelector('.go-sc-card,.home-upcoming-card'); }
   function failed() {
     host.setAttribute('aria-busy','false');
     if (completeViewExists()) return;
@@ -261,7 +261,7 @@
   <script src="js/goelo-sortie-dates.js"></script>
   <script src="js/goelo-pseudo-participation.js?v=20261029-home-sync"></script>
   <script src="js/sortie-cards.js?v=20261101-public-loading"></script>
-  <script src="js/sorties.js?v=20261101-public-loading"></script>
+  <script src="js/sorties.js?v=20261101-detail-public"></script>
   <script src="js/goelo-swipe-nav.js" defer></script>
   <script>
     window.GOELO_ONESIGNAL_APP_ID = "";
