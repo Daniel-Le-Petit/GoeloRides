@@ -36,9 +36,17 @@ const root=path.resolve(__dirname,'../../..');
  for(const file of ['index','sorties']){
   await page.goto('http://rides.test/'+file+'.html');
   const host=file==='index'?'#gr-upcoming-rides':'#sorties-list';
-  const cardSelector=file==='index'?'.home-upcoming-card':'.go-sc-card';
+  const cardSelector='.go-sc-card';
   await page.locator(host+' '+cardSelector).waitFor();
-  assert((await page.textContent(host)).includes('Sortie publique visible'));assert(await page.evaluate(()=>window.GOELO_AUTH_PENDING));
+  assert((await page.textContent(host)).includes('Sortie publique visible'));
+  if(file==='index') {
+   const card=page.locator(host+' .go-sc-card').first();
+   assert.equal(await card.locator('.go-sc-card__bg').count(),1);
+   assert.equal(await card.locator('.go-sc-card__cal').count(),1);
+   assert.equal(await card.locator('.go-sc-card__stats').count(),1);
+   assert.equal(await card.evaluate(el=>getComputedStyle(el).position),'relative');
+   assert.equal(await card.evaluate(el=>getComputedStyle(el).overflow),'hidden');
+  }assert(await page.evaluate(()=>window.GOELO_AUTH_PENDING));
   if(file==='sorties'){
    await page.evaluate(()=>{window.GOELO_ROLE='admin';window.GOELO_USER={id:'admin'};window.GOELO_AUTH_PENDING=false;window.dispatchEvent(new CustomEvent('goelo:role-ready',{detail:{role:'admin'}}));});
    await page.waitForFunction(()=>document.querySelector('#sorties-list').textContent.includes('Brouillon privé admin'));

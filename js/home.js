@@ -326,6 +326,16 @@
     if(!root)return;
     if(root.querySelector("[role=alert]")&&!upcomingState.sorties.length)return;
     updateUpcomingSubtitle(upcomingState.sorties.length);
+    if (window.GoeloSortieCards && upcomingState.sorties.length) {
+      var visualHost = document.createElement("div");
+      window.GoeloSortieCards.renderList(upcomingState.sorties.map(sortieToCard), visualHost, {
+        viewMode: "home", joinedRouteIds: upcomingState.joinedRouteIds,
+        trackSource: "home", groupDots: true
+      });
+      root.replaceChildren(...visualHost.childNodes);
+      _syncUpcomingNav();requestAnimationFrame(refreshHomeScrollTracking);
+      return;
+    }
     var list=document.createElement("div");list.className="home-upcoming-cards";
     upcomingState.sorties.forEach(function(ride){
       var card=document.createElement("article");card.className="home-upcoming-card";card.dataset.routeId=ride.id;
@@ -369,7 +379,7 @@
     upcomingNavBound = true;
 
     function scrollByDir(dir) {
-      var card = scroller.querySelector(".home-upcoming-card");
+      var card = scroller.querySelector(".go-sc-card,.home-upcoming-card");
       var step = card ? card.offsetWidth + 14 : scroller.clientWidth * 0.85;
       scroller.scrollBy({ left: dir * step, behavior: "smooth" });
     }

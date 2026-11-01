@@ -19,3 +19,9 @@ html body .home-upcoming-card__actions { display: flex; flex-wrap: wrap; gap: .7
 html body .home-upcoming-card__actions a, html body .home-upcoming-card__actions button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .65rem 1rem; border: 1px solid #f9d71c; border-radius: 7px; color: #142532 !important; background: #f9d71c; font: 700 .8rem/1.4 Inter,sans-serif; text-decoration: none; cursor: pointer; }
 html body .home-upcoming-card__actions button { color: #fff !important; background: transparent; border-color: #9cb2be; }
 html body .home-upcoming-card__actions :focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+/* L’accueil garde les cartes visuelles partagées, sans attendre les enrichissements. */
+#gr-upcoming-rides .go-sc-list { width: 100%; margin: 0; padding: 8px 0; list-style: none; }
+#gr-upcoming-rides .go-sc-list > li { min-width: 0; }
+#gr-upcoming-rides .go-sc-card { animation: none; opacity: 1; visibility: visible; background: #112e3a; color: #fff; }
+#gr-upcoming-rides .go-sc-card__title { color: #fff; }
