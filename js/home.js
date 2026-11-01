@@ -194,21 +194,8 @@
   }
 
   async function fetchUpcomingSorties() {
-    var sb = getSb();
-    if (!sb) {
-      console.warn("[GoëloHome] Supabase non disponible");
-      return [];
-    }
-
-    var res = await sb.rpc("routes_upcoming_homepage", { p_limit: 3 });
-
-    if (res.error) {
-      console.error("[GoëloHome] routes_upcoming_homepage:", res.error);
-      return [];
-    }
-
-    var data = res.data;
-    if (!Array.isArray(data)) data = [];
+    var data = await window.GoeloPublicData.rpc("routes_upcoming_homepage", {p_limit:3});
+    if (!Array.isArray(data)) throw new Error("invalid_public_response");
 
     return data.map(function(row) {
       var km = row.totalKm != null ? row.totalKm : (row.km != null ? row.km : null);
@@ -338,6 +325,7 @@
     var root = document.getElementById("gr-upcoming-rides");
     if (!root || !window.GoeloSortieCards) return;
 
+    if (root.querySelector("[role=alert]") && !upcomingState.sorties.length) return;
     var cards = upcomingState.sorties.map(sortieToCard);
     updateUpcomingSubtitle(cards.length);
 
@@ -375,11 +363,14 @@
     nav.hidden = !(hasMany && canScroll);
   }
 
+  var upcomingNavBound = false;
   function _bindUpcomingNav() {
+    if (upcomingNavBound) return;
     var scroller = _getUpcomingScroller();
     var prev = document.getElementById("gr-upcoming-prev");
     var next = document.getElementById("gr-upcoming-next");
     if (!scroller) return;
+    upcomingNavBound = true;
 
     function scrollByDir(dir) {
       var card = scroller.querySelector(".go-sc-list > li");
@@ -404,6 +395,7 @@
 
     try {
       upcomingState.sorties = await fetchUpcomingSorties();
+      root.replaceChildren();
       renderUpcomingSorties();
 
       Promise.all([
@@ -448,8 +440,12 @@
 
     } catch (err) {
       console.error("[GoëloHome] initUpcomingSorties:", err);
-      upcomingState.sorties = [];
-      renderUpcomingSorties();
+      var sub = document.getElementById("gr-upcoming-sub");
+      if (sub) sub.textContent = "Les sorties n’ont pas pu être chargées.";
+      root.innerHTML = '<p class="go-sc-empty" role="alert">Chargement indisponible pour le moment.</p>';
+      var retry = document.createElement("button");retry.type="button";retry.className="go-sc-btn";retry.textContent="Réessayer";
+      retry.addEventListener("click",function(){retry.disabled=true;initUpcomingSorties();});root.appendChild(retry);
+
     }
 
     _bindUpcomingNav();
