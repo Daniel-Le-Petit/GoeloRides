@@ -2,6 +2,9 @@
 (function(global){
   'use strict';
   async function rpc(name,payload){
+    var initial = global.GoeloInitialPublicReads && global.GoeloInitialPublicReads[name];
+    if(initial){delete global.GoeloInitialPublicReads[name];return initial;}
+
     var config=global.GOELO_CONFIG||{};
     if(!config.SUPABASE_URL||!config.SUPABASE_ANON_KEY)throw Error('public_config_missing');
     var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},12000);

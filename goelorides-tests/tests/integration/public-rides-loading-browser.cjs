@@ -21,9 +21,9 @@ const root=path.resolve(__dirname,'../../..');
   if(url.hostname==='api-fixture.test'){
    const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'POST, OPTIONS'};
    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
-   const failed=await page.evaluate(()=>window.failPublic);
+   var failed,rows;
+   try { failed=await page.evaluate(()=>window.failPublic);rows=await page.evaluate(()=>window.publicRows); } catch (_) { return route.abort().catch(()=>{}); }
    if(failed)return route.fulfill({status:503,headers,contentType:'application/json',body:JSON.stringify({code:'test_unavailable'})});
-   const rows=await page.evaluate(()=>window.publicRows);
    const data=url.pathname.endsWith('routes_upcoming_homepage')?rows.map(r=>({...r,...r.front_config})):rows;
    return route.fulfill({headers,contentType:'application/json',body:JSON.stringify(data)});
   }

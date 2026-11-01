@@ -1,0 +1,11 @@
+/* Affichage autonome avant les modules d’enrichissement. */
+.early-rides-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: 12px; width: 100%; padding: 8px 0; }
+.early-ride-card { text-align: left; padding: 18px; border: 1px solid #64818b; border-radius: 12px; background: #112c38f2; color: #f1f7f8; }
+.early-ride-card h3 { font: 700 1.15rem/1.35 Inter,sans-serif; margin: 8px 0; color: #fff; overflow-wrap: anywhere; }
+.early-ride-card p { font: 400 .8rem/1.5 Inter,sans-serif; margin: 6px 0; color: #d3e2e7; }
+.early-ride-card .early-ride-card__date { color: #f9d71c; font-weight: 600; }
+.early-ride-card a, .early-rides-error a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; color: #f9d71c !important; font: 700 .8rem Inter,sans-serif; text-decoration: underline; text-underline-offset: 4px; }
+.early-ride-card__cancelled { display: block; color: #ffc3b1; font-size: .8rem; margin-top: 8px; }
+.early-rides-empty, .early-rides-error { color: #f1f7f8; background: #112c38f2; border: 1px solid #64818b; padding: 16px; border-radius: 10px; font: .9rem/1.5 Inter,sans-serif; }
+.early-rides-error button { display: inline-flex; align-items: center; min-height: 44px; background: #f9d71c; color: #14222d; border: 0; border-radius: 7px; padding: 10px 16px; margin: 10px 14px 0 0; font-weight: 700; cursor: pointer; }
+.early-ride-card a:focus-visible, .early-rides-error :is(a,button):focus-visible { outline: 3px solid #f9d71c; outline-offset: 3px; }
