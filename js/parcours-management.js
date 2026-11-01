@@ -33,11 +33,7 @@
     function render() {
       host.hidden = !canEdit();
       if (host.hidden) { host.replaceChildren(); return; }
-      var wasOpen = host.querySelector && host.querySelector('details[open]');
-      var panel = document.createElement('details');
-      panel.open = !!(wasOpen || busy || errorMessage);
-      var title = document.createElement('summary'); title.textContent = 'Gérer cette sortie';
-      panel.appendChild(title);
+      var title = document.createElement('h2'); title.textContent = 'Gestion de la sortie';
       var actions = document.createElement('div'); actions.className = 'pd-management-actions';
       if (isAdmin()) actions.appendChild(link('Dupliquer', 'duplicate'));
       actions.appendChild(link('Modifier', 'edit'));
@@ -51,10 +47,8 @@
       }
       var status = document.createElement('p'); status.className = 'pd-management-status';
       status.setAttribute('role', errorMessage ? 'alert' : 'status');
-      status.textContent = errorMessage || (isCancelled() ? 'Cette sortie est annulée.' : '');
-      panel.appendChild(actions);
-      if(status.textContent)panel.appendChild(status);
-      host.replaceChildren(panel);
+      status.textContent = errorMessage || (isCancelled() ? 'Cette sortie est annulée.' : 'Actions réservées à la gestion de cette sortie.');
+      host.replaceChildren(title, actions, status);
     }
     async function cancelRide() {
       if (busy || !isAdmin() || !canEdit() || isCancelled()) return;

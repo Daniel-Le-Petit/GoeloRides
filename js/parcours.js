@@ -6,6 +6,7 @@
  *    status='joined' (ou 'waiting') ET canceled_at IS NULL
  *  - renderJoin() : état bouton basé uniquement sur isJoined(), pas sur
  *    sortie.participants ni sur l'existence d'une ancienne ligne
+ *  - waitForAuthReady() avant le premier renderJoin (session hydratée)
  *  - goelo:role-ready sans { once:true } pour resync après auth tardive
  *  - bindJoin() appelé une seule fois après renderAll(), guard dataset.bound
  *  - bindAccordions() dans parcours.js (toggle .is-open + max-height panneau)
@@ -53,13 +54,13 @@
     if (!sb) return null;
 
     /* Session locale d'abord (évite la course avec resolveRole au chargement) */
-    var sessionResult = await window.GoeloPublicData.deadline(sb.auth.getSession());
+    var sessionResult = await sb.auth.getSession();
     var sessionUser = sessionResult.data && sessionResult.data.session
       ? sessionResult.data.session.user
       : null;
     if (sessionUser) return sessionUser;
 
-    var result = await window.GoeloPublicData.deadline(sb.auth.getUser());
+    var result = await sb.auth.getUser();
     return (result.data && result.data.user) ? result.data.user : null;
   }
 
@@ -461,7 +462,7 @@
       console.warn("[parcours] GoeloSignupParticipants manquant");
       return 0;
     }
-    var result = await window.GoeloPublicData.deadline(SP.fetchForRoute(sortie.id, getSb()));
+    var result = await SP.fetchForRoute(sortie.id, getSb());
     sortie.participants = result.participants || [];
     return typeof result.count === "number" ? result.count : sortie.participants.length;
   }
@@ -858,13 +859,44 @@
     renderParticipants();
     bindJoin();
     bindGpxDownload();
-    renderJoin().catch(function(error){console.warn("[parcours] État d’inscription indisponible");});
+    await renderJoin();
     bindAccordions();
   }
 
   /* =========================================================
      INIT
   ========================================================= */
+  function waitForAuthReady() {
+    return new Promise(function (resolve) {
+      var sb = getSb();
+      if (!sb) {
+        resolve();
+        return;
+      }
+      sb.auth.getSession().then(function (sessionResult) {
+        if (sessionResult.data && sessionResult.data.session) {
+          resolve();
+          return;
+        }
+        if (window.GOELO_USER) {
+          resolve();
+          return;
+        }
+        var done = false;
+        function finish() {
+          if (done) return;
+          done = true;
+          window.removeEventListener("goelo:role-ready", onReady);
+          clearTimeout(timer);
+          resolve();
+        }
+        function onReady() { finish(); }
+        window.addEventListener("goelo:role-ready", onReady);
+        var timer = setTimeout(finish, 2500);
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", async function () {
     try {
       setLoading(true);
@@ -872,18 +904,19 @@
       var id = new URLSearchParams(location.search).get("id");
       if (!id) throw new Error("Param\u00e8tre id manquant dans l'URL");
 
-      // Une fiche publique ne doit attendre ni la connexion ni ses enrichissements.
-      var rows = await window.GoeloPublicData.rpc("routes_list", {p_filter:{}});
-      if (!Array.isArray(rows)) throw new Error("Réponse du serveur invalide");
-      var publicRoute = rows.find(function(row){ return String(row.id) === id; });
-      var result = {data:publicRoute};
-      if (!publicRoute) {
-        var sb = getSb();
-        if (!sb) throw new Error("Cette sortie est introuvable ou nécessite une connexion.");
-        result = await window.GoeloPublicData.deadline(sb.from("routes").select("*").eq("id",id).single());
-        if (result.error) throw new Error("Cette sortie est introuvable ou tu n’as pas l’accès nécessaire.");
-        if (!result.data) throw new Error("Sortie introuvable");
-      }
+      var sb = getSb();
+      if (!sb) throw new Error("Supabase non initialis\u00e9");
+
+      /* Laisser auth.js hydrater la session avant de lire l'état inscrit */
+      await waitForAuthReady();
+
+      var result = await sb
+        .from("routes")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error("Sortie introuvable");
 
       var fc = result.data.front_config || {};
       if (typeof fc === "string") {
@@ -929,25 +962,20 @@
         console.warn("[parcours] aucune donn\u00e9e de trac\u00e9 pour", sortie.id);
       }
 
+      await syncParticipantsUI();
       await renderAll();
-      setLoading(false);
-      syncParticipantsUI().catch(function(){console.warn("[parcours] Participants indisponibles");});
-      loadWeather().catch(function(){console.warn("[parcours] Météo indisponible");});
-      initMap().catch(function(){console.warn("[parcours] Carte indisponible");});
+      loadWeather();
+      await initMap();
 
     } catch (err) {
       console.error("[parcours.js]", err);
       var errEl = document.getElementById("error");
-      if (errEl) {
-        errEl.textContent = "Impossible de charger cette sortie. Vérifie ta connexion puis réessaie.";
-        var retry=document.createElement("button");retry.type="button";retry.textContent="Réessayer";retry.onclick=function(){location.reload();};errEl.appendChild(retry);
-      }
+      if (errEl) errEl.textContent = err.message;
     } finally {
       setLoading(false);
     }
 
     window.addEventListener("goelo:signup-changed", function (event) {
-      if (!sortie) return;
       if (event.detail && event.detail.route_id && String(event.detail.route_id) !== String(sortie.id)) return;
       syncParticipantsUI();
       renderJoin();

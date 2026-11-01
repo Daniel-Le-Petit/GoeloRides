@@ -190,12 +190,7 @@
    *   - Le filtre visibility "public" est appliqué ici pour la vue publique.
    *     La vue admin (gestion-sorties) appellera routes_list différemment.
    */
-async function fetchSorties(publicOnly) {
-  if (publicOnly || !isAdmin()) {
-    var rows = await window.GoeloPublicData.rpc("routes_list", {p_filter:{}});
-    if (!Array.isArray(rows)) throw Error("invalid_public_response");
-    return rows.map(dbRowToSortie).filter(function(row){return row.visibility === "public";});
-  }
+async function fetchSorties() {
   var sb = getSb();
   if (!sb) {
     console.warn("[sorties] Supabase non disponible");
@@ -210,11 +205,11 @@ async function fetchSorties(publicOnly) {
     query = query.eq("is_active", true);
   }
 
-  var res = await window.GoeloPublicData.deadline(query.order("created_at", { ascending: false }));
+  var res = await query.order("created_at", { ascending: false });
 
   if (res.error) {
     console.error("[sorties] erreur:", res.error);
-    throw res.error;
+    return [];
   }
 
   return (res.data || []).map(dbRowToSortie);
@@ -334,7 +329,6 @@ async function fetchSorties(publicOnly) {
     search:          "",
     joinedRouteIds:  new Set(),
     sortBy:          "date",
-    loadError:       false,
     userCoords:      null
   };
 
@@ -480,9 +474,8 @@ async function fetchSorties(publicOnly) {
   function render() {
     var host = document.getElementById("sorties-list");
     if (!host) return;
-    if (state.loadError && !state.sorties.length && host.querySelector("[role=alert]")) return;
     if (!window.GoeloSortieCards) {
-      if (!host.querySelector(".early-ride-card,.early-rides-empty")) host.innerHTML = '<p class="go-sc-empty" role="alert">L’affichage détaillé est indisponible. <a href="sorties.html?v=20261101-detail-public">Recharger la page</a></p>';
+      host.innerHTML = '<p class="go-sc-empty">Chargement…</p>';
       return;
     }
     var list = sortedSorties(state.sorties.filter(matchesFilter)).map(sortieToCard);
@@ -787,32 +780,7 @@ async function fetchSorties(publicOnly) {
   document.addEventListener("DOMContentLoaded", async function () {
     initSortiesPageTracking();
 
-    // Les sorties publiques se chargent même si la session reste en attente.
-    var publicLoaded = false, refreshId = 0;
-    async function refresh(publicOnly) {
-      var ticket = ++refreshId;
-      try {
-        var rows = await fetchSorties(publicOnly);
-        if (ticket !== refreshId) return;
-        state.sorties = rows;
-        state.loadError = false;
-        publicLoaded = true;
-        render();
-        fetchJoinedRouteIds().then(render).catch(function(error){console.warn("[sorties] inscriptions indisponibles");});
-        reloadParticipants().catch(function(error){console.warn("[sorties] participants indisponibles");});
-        enrichWeather();
-        refreshSortiesScrollTracking();
-      } catch (error) {
-        if (ticket !== refreshId) return;
-        state.loadError = true;
-        console.warn("[sorties] chargement indisponible");
-        var host=document.getElementById("sorties-list");
-        if (!state.sorties.length) {
-          host.innerHTML='<p class="go-sc-empty" role="alert">Les sorties n’ont pas pu être chargées.</p>';
-          var retry=document.createElement("button");retry.type="button";retry.className="go-sc-btn";retry.textContent="Réessayer";retry.onclick=function(){retry.disabled=true;refresh(true);};host.appendChild(retry);
-        }
-      }
-    }
+    if (window.GoeloUI) await window.GoeloUI.waitForRole();
 
     initFiltersForRole();
     applyTeamRiderState();
@@ -823,15 +791,17 @@ async function fetchSorties(publicOnly) {
     window.addEventListener("goelo:role-ready", async function () {
       initFiltersForRole();
       applyTeamRiderState();
-      if (!isAdmin()) { state.sorties = state.sorties.filter(function(row){return row.visibility === "public";}); if (publicLoaded) render(); }
-      if (publicLoaded) refresh(!isAdmin());
+      state.sorties = await fetchSorties();
+      await fetchJoinedRouteIds();
+      render();
     });
 
     window.addEventListener("goelo:auth-success", async function () {
       initFiltersForRole();
       applyTeamRiderState();
-      if (!isAdmin()) { state.sorties = state.sorties.filter(function(row){return row.visibility === "public";}); if (publicLoaded) render(); }
-      if (publicLoaded) refresh(!isAdmin());
+      state.sorties = await fetchSorties();
+      await fetchJoinedRouteIds();
+      render();
     });
 
     window.addEventListener("goelo:signup-changed", function () {
@@ -853,8 +823,12 @@ async function fetchSorties(publicOnly) {
       if (state.sorties.length) reloadParticipants();
     });
 
-    await refresh(true);
-    if (isAdmin()) refresh(false);
+    state.sorties = await fetchSorties();
+    await fetchJoinedRouteIds();
+    await reloadParticipants();
+    render();
+    enrichWeather();
+    refreshSortiesScrollTracking();
     state.sorties.forEach(function (s) {
       loadStats(s).then(function (st) {
         if (st && (st.km != null || st.dplus != null)) {

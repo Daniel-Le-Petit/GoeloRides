@@ -12,7 +12,3 @@
 #pd-management .pd-manage-btn:disabled { opacity: .55; cursor: not-allowed; }
 .pd-management-status { margin: 14px 0 0; color: #c3cac5; line-height: 1.5; }
 .pd-management-status[role=alert] { color: #ffc3ae; }
-
-#pd-management summary { cursor: pointer; font: 600 .9rem/1.5 Inter,system-ui,sans-serif; padding: 4px 0; }
-#pd-management details[open] .pd-management-actions { margin-top: 16px; }
-#pd-management summary:focus-visible { outline: 2px solid #9acbb7; outline-offset: 4px; }

@@ -194,8 +194,21 @@
   }
 
   async function fetchUpcomingSorties() {
-    var data = await window.GoeloPublicData.rpc("routes_upcoming_homepage", {p_limit:3});
-    if (!Array.isArray(data)) throw new Error("invalid_public_response");
+    var sb = getSb();
+    if (!sb) {
+      console.warn("[GoëloHome] Supabase non disponible");
+      return [];
+    }
+
+    var res = await sb.rpc("routes_upcoming_homepage", { p_limit: 3 });
+
+    if (res.error) {
+      console.error("[GoëloHome] routes_upcoming_homepage:", res.error);
+      return [];
+    }
+
+    var data = res.data;
+    if (!Array.isArray(data)) data = [];
 
     return data.map(function(row) {
       var km = row.totalKm != null ? row.totalKm : (row.km != null ? row.km : null);
@@ -322,38 +335,31 @@
   }
 
   function renderUpcomingSorties() {
-    var root=document.getElementById("gr-upcoming-rides");
-    if(!root)return;
-    if(root.querySelector("[role=alert]")&&!upcomingState.sorties.length)return;
-    updateUpcomingSubtitle(upcomingState.sorties.length);
-    if (window.GoeloSortieCards && upcomingState.sorties.length) {
-      var visualHost = document.createElement("div");
-      window.GoeloSortieCards.renderList(upcomingState.sorties.map(sortieToCard), visualHost, {
-        viewMode: "home", joinedRouteIds: upcomingState.joinedRouteIds,
-        trackSource: "home", groupDots: true
-      });
-      root.replaceChildren(...visualHost.childNodes);
-      _syncUpcomingNav();requestAnimationFrame(refreshHomeScrollTracking);
+    var root = document.getElementById("gr-upcoming-rides");
+    if (!root || !window.GoeloSortieCards) return;
+
+    var cards = upcomingState.sorties.map(sortieToCard);
+    updateUpcomingSubtitle(cards.length);
+
+    if (!cards.length) {
+      root.innerHTML = "";
+      _syncUpcomingNav();
       return;
     }
-    var list=document.createElement("div");list.className="home-upcoming-cards";
-    upcomingState.sorties.forEach(function(ride){
-      var card=document.createElement("article");card.className="home-upcoming-card";card.dataset.routeId=ride.id;
-      var date=document.createElement("p");date.className="home-upcoming-card__date";
-      date.textContent=ride.date&&!isNaN(ride.date.getTime())?ride.date.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"Date à confirmer";
-      var title=document.createElement("h3");title.textContent=ride.title;
-      var tags=document.createElement("p");tags.className="home-upcoming-card__meta";
-      tags.textContent=[ride.group,ride.km!=null?Number(ride.km).toLocaleString("fr-FR",{maximumFractionDigits:1})+" km":"",ride.dplus!=null?Math.round(ride.dplus)+" m D+":""].filter(Boolean).join(" · ");
-      var meeting=document.createElement("p");meeting.textContent=[ride.meetTime?"Rendez-vous à "+ride.meetTime:"",ride.place].filter(Boolean).join(" · ");
-      var actions=document.createElement("div");actions.className="home-upcoming-card__actions";
-      var link=document.createElement("a");link.className="btn-primary home-upcoming-card__link";link.href="parcours.html?id="+encodeURIComponent(ride.id);link.textContent="Voir la sortie →";actions.appendChild(link);
-      if(window.GoeloPseudoParticipation&&!window.GOELO_AUTH_PENDING&&!window.GOELO_USER&&!/^(cancelled|canceled|annulee|annulée)$/.test(ride.status)){
-        var join=document.createElement("button");join.type="button";join.dataset.guestJoin=ride.id;join.dataset.guestTitle=ride.title;join.dataset.guestSummary=date.textContent;join.textContent=window.GoeloPseudoParticipation.hasLocal(ride.id)?"Inscrit ✓":"Rejoindre";actions.appendChild(join);
-      }
-      card.appendChild(date);card.appendChild(title);if(tags.textContent)card.appendChild(tags);if(meeting.textContent)card.appendChild(meeting);card.appendChild(actions);list.appendChild(card);
+
+    window.GoeloSortieCards.renderList(cards, root, {
+      viewMode: "sorties",
+      groupDots: true,
+      joinedRouteIds: upcomingState.joinedRouteIds,
+      asList: true,
+      emptyHtml: "",
+      trackSource: "home"
     });
-    root.replaceChildren(list);
-    _syncUpcomingNav();requestAnimationFrame(refreshHomeScrollTracking);
+
+    requestAnimationFrame(function () {
+      _syncUpcomingNav();
+      refreshHomeScrollTracking();
+    });
   }
 
   function _getUpcomingScroller() {
@@ -369,17 +375,14 @@
     nav.hidden = !(hasMany && canScroll);
   }
 
-  var upcomingNavBound = false;
   function _bindUpcomingNav() {
-    if (upcomingNavBound) return;
     var scroller = _getUpcomingScroller();
     var prev = document.getElementById("gr-upcoming-prev");
     var next = document.getElementById("gr-upcoming-next");
     if (!scroller) return;
-    upcomingNavBound = true;
 
     function scrollByDir(dir) {
-      var card = scroller.querySelector(".go-sc-card,.home-upcoming-card");
+      var card = scroller.querySelector(".go-sc-list > li");
       var step = card ? card.offsetWidth + 14 : scroller.clientWidth * 0.85;
       scroller.scrollBy({ left: dir * step, behavior: "smooth" });
     }
@@ -401,7 +404,6 @@
 
     try {
       upcomingState.sorties = await fetchUpcomingSorties();
-      root.replaceChildren();
       renderUpcomingSorties();
 
       Promise.all([
@@ -446,12 +448,8 @@
 
     } catch (err) {
       console.error("[GoëloHome] initUpcomingSorties:", err);
-      var sub = document.getElementById("gr-upcoming-sub");
-      if (sub) sub.textContent = "Les sorties n’ont pas pu être chargées.";
-      root.innerHTML = '<p class="go-sc-empty" role="alert">Chargement indisponible pour le moment.</p>';
-      var retry = document.createElement("button");retry.type="button";retry.className="go-sc-btn";retry.textContent="Réessayer";
-      retry.addEventListener("click",function(){retry.disabled=true;initUpcomingSorties();});root.appendChild(retry);
-
+      upcomingState.sorties = [];
+      renderUpcomingSorties();
     }
 
     _bindUpcomingNav();
