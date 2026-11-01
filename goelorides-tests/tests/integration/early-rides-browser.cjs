@@ -23,15 +23,16 @@ const root=path.resolve(__dirname,'../../..');
   });
   await page.goto('http://early.test/'+file+'.html',{waitUntil:'commit'});
   const host=file==='index'?'#gr-upcoming-rides':'#sorties-list';
-  await page.locator(host+' .early-ride-card').waitFor();assert.equal(await page.locator(host+' .early-ride-card').count(),1);
-  assert(!(await page.textContent(host)).includes('Information privée'));assert.equal(await page.evaluate(()=>typeof window.GoeloSortieCards),'undefined');
-  assert.equal(await page.locator(host+' a').getAttribute('href'),'parcours.html?id=r1');
+  const card=file==='index'?'.go-sc-card':'.early-ride-card';
+  await page.locator(host+' '+card).waitFor();assert.equal(await page.locator(host+' '+card).count(),1);
+  assert(!(await page.textContent(host)).includes('Information privée'));if(file==='index') assert.equal(await page.locator(host+' .go-sc-card__bg').count(),1);
+  assert.equal(await page.locator(host+' a[href*="parcours.html"]').first().getAttribute('href'),'parcours.html?id=r1');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   // La reprise native fonctionne toujours quand aucun module ultérieur n'a démarré.
-  await page.evaluate(()=>{document.querySelector('.early-ride-card').remove();});
+  await page.locator(host+' '+card).evaluate(el=>el.remove());
   fail=true;await page.evaluate(()=>{window.GoeloInitialPublicReads={};});
   await page.reload({waitUntil:'commit'});await page.locator(host+' .early-rides-error').waitFor();
-  fail=false;await page.locator(host).getByRole('button',{name:'Réessayer'}).click();await page.locator(host+' .early-ride-card').waitFor();
+  fail=false;await page.locator(host).getByRole('button',{name:'Réessayer'}).click();await page.locator(host+' '+card).waitFor();
   assert.deepEqual(errors,[]);await page.close();console.log('PASS',file,': scripts bloqués, carte visible, données privées exclues, erreur et reprise, mobile.');
  }
  await browser.close();

@@ -20,23 +20,23 @@ function setup(role, owner = false) {
   const window = { GoeloAuthState: { getState: () => state, subscribe: callback => { onChange = callback; } }, goeloGetSb: () => sb, addEventListener() {}, confirm: () => confirm };
   const context = { window, document: { readyState: 'complete', getElementById: () => host, createElement: tag => new Element(tag) }, location: { search: '?id=route-1' }, URLSearchParams };
   vm.createContext(context); vm.runInContext(source, context);
-  return { host, updates, buttons: () => host.children[1]?.children || [], setMode: value => mode = value, setConfirm: value => confirm = value, changeRole: value => { state = { role: value, user: { id: 'self' }, pending: false }; onChange(); } };
+  return { host, updates, buttons: () => host.children[0]?.children[1]?.children || [], setMode: value => mode = value, setConfirm: value => confirm = value, changeRole: value => { state = { role: value, user: { id: 'self' }, pending: false }; onChange(); } };
 }
 test('gestion masquée aux visiteurs, membres et Ride Leaders non responsables', async () => {
   for (const role of ['visitor', 'user', 'team_rider']) { const app = setup(role); await tick(); assert.equal(app.host.hidden, true); }
 });
 test('admin : liens de duplication et modification ; propriétaire : modification seulement', async () => {
-  const admin = setup('admin'); await tick(); assert.deepEqual(admin.buttons().map(b => b.textContent), ['Dupliquer','Modifier','Annuler la sortie']);
+  const admin = setup('admin'); await tick(); assert.equal(admin.host.children[0].tag, 'details'); assert.equal(admin.host.children[0].open, false); assert.deepEqual(admin.buttons().map(b => b.textContent), ['Dupliquer','Modifier','Annuler la sortie']);
   assert.match(admin.buttons()[0].href, /mode=duplicate&id=route-1$/);
   const owner = setup('team_rider', true); await tick(); assert.deepEqual(owner.buttons().map(b => b.textContent), ['Modifier']);
   admin.changeRole('user'); assert.equal(admin.host.hidden, true); assert.equal(admin.host.children.length, 0);
 });
 test('annulation : confirmation obligatoire, données préservées et résultat serveur vérifié', async () => {
   const app = setup('admin'); await tick(); app.setConfirm(false); await app.buttons()[2].handlers.click(); assert.equal(app.updates.length, 0);
-  app.setConfirm(true); await app.buttons()[2].handlers.click(); assert.equal(app.updates[0].front_config.distance, 20); assert.equal(app.updates[0].front_config.sortieStatus, 'cancelled'); assert.equal(app.buttons()[2].disabled, true); assert.match(app.host.children[2].textContent, /est annulée/);
+  app.setConfirm(true); await app.buttons()[2].handlers.click(); assert.equal(app.updates[0].front_config.distance, 20); assert.equal(app.updates[0].front_config.sortieStatus, 'cancelled'); assert.equal(app.buttons()[2].disabled, true); assert.match(app.host.children[0].children[2].textContent, /est annulée/);
 });
 test('un refus ou une absence de confirmation conserve le bouton et affiche une erreur', async () => {
-  for (const mode of ['denied','zero']) { const app = setup('admin'); await tick(); app.setMode(mode); await app.buttons()[2].handlers.click(); assert.match(app.host.children[2].textContent, /Impossible/); assert.equal(app.buttons()[2].disabled, false); }
+  for (const mode of ['denied','zero']) { const app = setup('admin'); await tick(); app.setMode(mode); await app.buttons()[2].handlers.click(); assert.match(app.host.children[0].children[2].textContent, /Impossible/); assert.equal(app.buttons()[2].disabled, false); }
 });
 test('les cartes publiques ne contiennent plus les actions de gestion ; espace Ride Leader conservé', () => {
   const context = { GOELO_ROLE: 'admin', GOELO_USER: { id: 'self' } }; vm.createContext(context); vm.runInContext(fs.readFileSync(path.join(root, 'js/sortie-cards.js'), 'utf8'), context);

@@ -138,13 +138,19 @@
     var rows=data.map(function(row){
       var fc=row.front_config||row;
       if(typeof fc==='string'){try{fc=JSON.parse(fc);}catch(_){fc={};}}
-      return {id:row.id,title:row.track_name||row.title||'Sortie GoëloRides',group:row.group_label||'',date:fc.rideDateIso||'',time:fc.meetTime||fc.rideTime||'',place:fc.meetPlace||fc.meet_place||'',visibility:fc.visibility||'public',status:fc.sortieStatus||'open',active:row.is_active!==false};
+      return {id:row.id,title:row.track_name||row.title||'Sortie GoëloRides',group:row.group_label||'',date:fc.rideDateIso||'',time:fc.meetTime||fc.rideTime||'',place:fc.meetPlace||fc.meet_place||'',visibility:fc.visibility||'public',status:fc.sortieStatus||'open',active:row.is_active!==false,stats:fc.stats||{},imageUrl:fc.thumbSrc||fc.coverImageUrl||'',type:fc.raceType||'route'};
     }).filter(function(row){return row.active && row.visibility==='public' && /^\d{4}-\d{2}-\d{2}$/.test(row.date) && row.date>=day && !/^(draft|brouillon)$/.test(row.status);});
     rows.sort(function(a,b){return (a.date+' '+a.time).localeCompare(b.date+' '+b.time);});
     if(home)rows=rows.slice(0,3);
     host.setAttribute('aria-busy','false');
     if(subtitle)subtitle.textContent=rows.length ? rows.length+' sortie'+(rows.length>1?'s':'')+' à venir' : 'Aucune sortie programmée pour le moment';
     if(!rows.length){host.innerHTML='<p class="early-rides-empty">Aucune sortie à venir pour le moment.</p>';return;}
+    if(home && window.GoeloSortieCards) {
+      window.GoeloSortieCards.renderList(rows.map(function(row){
+        return {id:row.id,title:row.title,group:row.group,groupKey:window.GoeloSortieCards.groupKeyFromLabel(row.group),date:new Date(row.date+'T12:00:00'),meetTime:row.time,place:row.place,status:row.status,type:row.type,imageUrl:row.imageUrl,km:row.stats.totalKm,dplus:row.stats.elevGainM,participants:[]};
+      }),host,{viewMode:'home',groupDots:true});
+      return;
+    }
     host.innerHTML='<div class="early-rides-list">'+rows.map(function(row){
       var date;
       try{date=new Date(row.date+'T12:00:00Z').toLocaleDateString('fr-FR',{timeZone:'Europe/Paris',weekday:'long',day:'numeric',month:'long'});}catch(_){date=row.date;}
@@ -178,6 +184,7 @@
   }
   load();
 })();
+
 </script>
 
       <!-- Colonne droite grisée : actions réservées aux Team Riders -->
