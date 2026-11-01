@@ -846,9 +846,9 @@ html.site-retheme {
   outline: none;
 }
 .gr-footer-link svg {
-  width: 16px; height: 16px;
+  width: 24px; height: 24px;
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 1;
 }
 
 /* Brand-specific colors for social media icons */
