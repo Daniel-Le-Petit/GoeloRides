@@ -14,3 +14,5 @@
 .apn-meta, .apn-hint, .apn-read-label { font-size:12px; color:var(--muted); }
 .apn-read-label { padding:8px; }
 @media(max-width:600px) { .apn-panel { padding:14px; } .apn-item { flex-direction:column; } .apn-bell { margin-left:auto; } }
+
+@media(max-width:600px) { .apn-bell-label { display:none; } .apn-bell { min-width:44px; justify-content:center; padding:8px; } .admin-dashboard .topbar-crown { display:none; } }

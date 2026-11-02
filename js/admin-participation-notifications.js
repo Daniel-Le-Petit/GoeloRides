@@ -19,7 +19,8 @@
   list.innerHTML=rows.length?rows.map(function(n){return '<li class="apn-item'+(n.is_read?' is-read':'')+'"><div><p><strong>'+esc(n.participant_name)+'</strong> '+(n.action==='joined'?'participe à':'s’est désinscrit·e de')+' <strong>'+esc(n.route_title)+'</strong></p><p class="apn-meta">'+esc(when(n.created_at))+' · '+esc(n.participant_count)+' participant'+(n.participant_count===1?'':'s')+' lors du changement</p><a href="parcours.html?id='+encodeURIComponent(n.route_id)+'">Voir la sortie →</a></div>'+(!n.is_read?'<button type="button" data-apn-read="'+esc(n.id)+'">Marquer lue</button>':'<span class="apn-read-label">Lue</span>')+'</li>';}).join(''):'<li class="apn-empty">Les prochaines inscriptions et désinscriptions apparaîtront ici.</li>';
   mark.disabled=!rows.some(function(n){return !n.is_read;});disable.hidden=!enabled;enable.hidden=enabled;
   var s=data.service||{},recent=s.checked_at&&Date.now()-new Date(s.checked_at).getTime()<30*60000;
-  if(!s.configured)pushStatus.textContent=enabled?'Cet appareil est enregistré. L’envoi OneSignal reste à configurer côté serveur ; les alertes sont conservées ici.':'Les alertes sont disponibles ici. L’envoi OneSignal doit encore être configuré côté serveur.';
+  if(s.problem==='provider_authorization')pushStatus.textContent='OneSignal refuse l’authentification du service d’envoi. La configuration serveur doit être corrigée ; les alertes restent disponibles ici.';
+  else if(!s.configured)pushStatus.textContent=enabled?'Cet appareil est enregistré. L’envoi OneSignal reste à configurer côté serveur ; les alertes sont conservées ici.':'Les alertes sont disponibles ici. L’envoi OneSignal doit encore être configuré côté serveur.';
   else if(enabled)pushStatus.textContent=recent?'Alertes activées sur cet appareil. Envoi périodique, généralement en quelques minutes.':'Cet appareil est enregistré. Le dernier contrôle de l’envoi serveur date de plus de 30 minutes ; vérifie le traitement des notifications.';
   else pushStatus.textContent='Active les alertes sur cet appareil pour recevoir les prochaines participations et désinscriptions.';
  }
@@ -61,7 +62,7 @@
   bell.addEventListener('click',function(){root.hidden=!root.hidden;bell.setAttribute('aria-expanded',String(!root.hidden));if(!root.hidden){load();root.scrollIntoView({block:'start',behavior:'smooth'});}});
   enable.addEventListener('click',activate);disable.addEventListener('click',deactivate);mark.addEventListener('click',function(){read(rows.filter(function(n){return !n.is_read;}).map(function(n){return n.id;}));});
   $('admin-participation-refresh').addEventListener('click',load);list.addEventListener('click',function(event){var b=event.target.closest('[data-apn-read]');if(b)read([b.getAttribute('data-apn-read')]);});
-  global.addEventListener('goelo:role-ready',changeAuth);global.addEventListener('goelo:auth-success',changeAuth);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')load();});changeAuth();
+  global.addEventListener('goelo:auth-state',changeAuth);global.addEventListener('goelo:role-ready',changeAuth);global.addEventListener('goelo:auth-success',changeAuth);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')load();});changeAuth();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })(window);
