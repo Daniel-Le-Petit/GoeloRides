@@ -26,3 +26,10 @@ test('robots exclus, panne du suivi indépendante des actions, retour Safari mes
  const failing=setup({failure:true});assert.doesNotThrow(()=>failing.c.GoeloFeatureTracking.record('gpx','success'));
  const a=setup();a.intersect();a.flush();a.listeners.pageshow({persisted:true});a.intersect();a.flush();assert.equal(a.events.filter(e=>e.meta.analytics_action==='page').length,2);assert.equal(a.events.filter(e=>e.meta.analytics_action==='exposed').length,2);
 });
+
+test('navigation du menu du bas observée, sans confondre un lien interne à la même page',()=>{
+ const a=setup();const link={tagName:'A',href:'https://goelorides.onrender.com/dans-la-roue.html',disabled:false,getAttribute:()=>null,closest:selector=>selector.includes('.goelo-mobile-tabbar')?{}:null};
+ a.docListeners.click({target:{closest:()=>link}});
+ const nav=a.events.find(e=>e.meta.analytics_action==='navigation');assert.equal(nav.meta.target_page,'album');assert.equal(nav.meta.surface,'bottom');
+ link.href=a.c.location.href+'#pd-map';a.docListeners.click({target:{closest:()=>link}});assert.equal(a.events.filter(e=>e.meta.analytics_action==='navigation').length,1);
+});

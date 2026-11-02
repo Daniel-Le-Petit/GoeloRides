@@ -77,7 +77,7 @@
     try { url = new URL(el.href, location.href); } catch (_) { return; }
     if (url.origin !== location.origin) return;
     var target = pageNames[url.pathname.split('/').pop() || 'index.html'];
-    if (!target || url.pathname === location.pathname && !url.search) return;
+    if (!target || url.pathname === location.pathname && url.search === location.search) return;
     var surface = el.closest('.goelo-mobile-tabbar, .mobile-nav') ? 'bottom' : el.closest('nav, .gr-mobile-drawer') ? 'top' : 'content';
     emit('navigation', null, 'clicked', { target_page: target, surface: surface });
   }
