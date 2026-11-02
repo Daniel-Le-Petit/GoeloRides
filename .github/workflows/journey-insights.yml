@@ -1,0 +1,22 @@
+name: Parcours utilisateurs et lisibilité du Dashboard
+on:
+  pull_request:
+    paths:
+      - 'js/goelo-*activity.js'
+      - 'js/goelo-feature-tracking.js'
+      - 'js/goelo-journey-insights.js'
+      - 'goelorides-tests/tests/unit/*insights*.cjs'
+      - 'goelorides-tests/tests/unit/feature-tracking.test.cjs'
+      - '.github/workflows/journey-insights.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test goelorides-tests/tests/unit/journey-insights.test.cjs goelorides-tests/tests/unit/admin-insights.test.cjs goelorides-tests/tests/unit/feature-tracking.test.cjs goelorides-tests/tests/unit/activity-registration.test.cjs goelorides-tests/tests/unit/guest-pseudo*.test.cjs

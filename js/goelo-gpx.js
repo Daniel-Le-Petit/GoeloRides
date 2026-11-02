@@ -3,6 +3,8 @@
  */
 (function (global) {
   "use strict";
+  function trackResult(feature, outcome) { try { if (window.GoeloFeatureTracking) window.GoeloFeatureTracking.record(feature, outcome); } catch (_) {} }
+
 
   var GPX_BUCKET = "rides-gpx";
 
@@ -174,7 +176,9 @@
       btn.setAttribute("aria-busy", "true");
       if (msgEl) msgEl.textContent = "";
 
+      trackResult('gpx', 'requested');
       var result = await downloadGpx(opts);
+      trackResult('gpx', result.ok ? result.fallback === 'direct_link' ? 'opened' : 'success' : 'error');
 
       btn.removeAttribute("aria-busy");
 

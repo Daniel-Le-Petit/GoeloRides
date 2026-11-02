@@ -6,6 +6,8 @@
  */
 (function (global) {
   "use strict";
+  function trackResult(feature, outcome) { try { if (window.GoeloFeatureTracking) window.GoeloFeatureTracking.record(feature, outcome); } catch (_) {} }
+
 
   var STORAGE_KEY = "goelo_poll_voter_key_v1";
   var VOTED_PREFIX = "goelo_poll_voted_";
@@ -296,6 +298,7 @@
       });
 
       if (res.error) {
+        trackResult("polls", "error");
         console.warn("[GoëloPoll] vote RPC error:", res.error.message);
         return;
       }
@@ -311,6 +314,7 @@
       });
 
       if (data.ok === false) {
+        trackResult("polls", "error");
         console.error(
           "[GoëloPoll] Vote non mis à jour:",
           data.error,
@@ -320,6 +324,7 @@
         return;
       }
 
+      if (data.ok === true || String(data.my_option_id) === String(optionId)) trackResult("polls", "success");
       applyServerPayload(
         root,
         state.poll,
@@ -327,6 +332,7 @@
         data.my_option_id || optionId
       );
     } catch (err) {
+      trackResult("polls", "error");
       console.warn("[GoëloPoll] vote exception:", err);
     } finally {
       root.classList.remove("is-busy");
