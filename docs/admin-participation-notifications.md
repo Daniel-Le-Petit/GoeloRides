@@ -1,0 +1,17 @@
+# Alertes privées de participation
+
+La cloche du Dashboard affiche les 40 derniers changements confirmés, avec un compteur de toutes les alertes non lues. Une lecture est propre à chaque administrateur. Le bouton « Marquer les alertes affichées comme lues » ne marque pas des événements arrivés après le chargement.
+
+La migration `20261102210000_admin_participation_notifications.sql` observe directement `signups` et `guest_participants`. Elle compare leur état effectif à un état de référence initialisé sans notification. Les membres, invités sans compte et ajouts/retraits manuels sont couverts. Une liste d'attente n'est pas une participation confirmée ; sa promotion l'est. Les anciennes lignes, répétitions, simples clics, écritures du journal et transactions annulées ne créent pas de notification. Supprimer une sortie ne rejoue pas les désinscriptions. La migration se lance dans une transaction et bloque brièvement les écritures de ces deux tables pour installer une référence cohérente.
+
+Les tables, jetons OneSignal des appareils, réservations et lectures sont privées. Les RPC du navigateur imposent un compte administrateur authentifié. Aucune clé REST OneSignal ne va dans le HTML ou le JavaScript public. L'administrateur choisit explicitement les appareils auxquels envoyer les alertes ; désactiver ces alertes ne désabonne pas des notifications générales du site.
+
+L'envoi utilise le workflow `admin-participation-notifications.yml`, le secret GitHub déjà utilisé `SUPABASE_DATABASE_URL` et **`ONESIGNAL_REST_API_KEY`**, à enregistrer dans **Settings → Secrets and variables → Actions**. Ne pas coller la clé dans une conversation, un fichier du dépôt ou une variable publique. L'App ID public de l'application existante est utilisé par défaut ; la variable GitHub `ONESIGNAL_APP_ID` peut le remplacer si l'application change.
+
+Le workflow traite la file toutes les cinq minutes environ. GitHub peut retarder une exécution : ce n'est pas un envoi instantané garanti. La file est persistante ; les réservations expirent après un arrêt du worker. Chaque destinataire possède une clé d'idempotence stable réutilisée auprès de OneSignal. Une réponse positive du fournisseur confirme l'acceptation, pas la livraison physique au téléphone. Les erreurs temporaires sont retentées, les messages de plus de 24 heures sont abandonnés pour ne pas envoyer une avalanche d'anciennes alertes. Un compte devenu non administrateur, un appareil désactivé ou une alerte déjà lue ne doit plus recevoir un envoi en attente.
+
+Le statut affiché distingue clé absente/refusée, appareil non enregistré et appareil enregistré. Il signale aussi un dernier contrôle de traitement trop ancien. Sans clé, la migration et la cloche fonctionnent ; aucun envoi push n'est annoncé.
+
+Sur iPhone/iPad compatible Web Push (iOS/iPadOS 16.4+), ajouter le site à l'écran d'accueil depuis Safari, ouvrir cette application, se connecter en administrateur puis choisir « Activer les alertes sur cet appareil ». La permission native seule ne suffit pas : le client attend l'identifiant d'abonnement OneSignal et la confirmation de sa sauvegarde serveur.
+
+Tests unitaires : `node --test goelorides-tests/tests/unit/admin-participation*.test.cjs`. Le workflow exécute en plus les tests PostgreSQL sur une base locale isolée `goelo_notify_test`, jamais sur les participations de production.

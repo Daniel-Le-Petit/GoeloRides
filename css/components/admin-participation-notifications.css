@@ -1,0 +1,16 @@
+.apn-bell { display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:8px 12px; border:1px solid #54776e; border-radius:10px; background:#1c3532; color:#f0faf5; font:600 13px Inter,sans-serif; cursor:pointer; }
+.apn-badge { min-width:22px; padding:3px 5px; border-radius:14px; background:#c9ed88; color:#16251c; text-align:center; }
+.apn-panel { margin:0 0 24px; padding:20px; border:1px solid var(--border); border-radius:14px; background:var(--surface); scroll-margin-top:120px; }
+.apn-panel[hidden], .apn-bell[hidden], .apn-panel [hidden], .apn-badge[hidden] { display:none!important; }
+.apn-panel h2 { margin:0 0 8px; font-size:22px; }
+.apn-panel p { margin:0 0 10px; line-height:1.55; }
+.apn-tools { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+.apn-panel button, .apn-panel a { min-height:44px; display:inline-flex; align-items:center; padding:8px 12px; border:1px solid #59756e; border-radius:8px; color:#f0faf5; background:#263d37; font:600 12px Inter,sans-serif; cursor:pointer; text-decoration:none; }
+.apn-panel button:disabled { opacity:.55; cursor:default; }
+.apn-panel button:focus-visible, .apn-panel a:focus-visible, .apn-bell:focus-visible { outline:2px solid #c9ed88; outline-offset:3px; }
+.apn-list { list-style:none; padding:0; margin:16px 0 0; display:grid; gap:10px; max-height:600px; overflow:auto; }
+.apn-item { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:14px; border:1px solid #648b7d; border-radius:10px; background:rgba(105,157,131,.08); }
+.apn-item.is-read { border-color:var(--border); background:transparent; }
+.apn-meta, .apn-hint, .apn-read-label { font-size:12px; color:var(--muted); }
+.apn-read-label { padding:8px; }
+@media(max-width:600px) { .apn-panel { padding:14px; } .apn-item { flex-direction:column; } .apn-bell { margin-left:auto; } }
