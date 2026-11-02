@@ -264,8 +264,10 @@ html.site-retheme {
 /* Sous-titre */
 .gr-hero-subtitle {
   font-family: var(--font-body);
-  font-size: clamp(0.92rem, 1.4vw, 1.1rem);
-  color: var(--color-muted);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  font-weight: 500;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 2px 12px rgba(0, 0, 0, 0.65);
   max-width: 32rem;
   line-height: 1.5;
   margin: 0 0 0.85rem;
