@@ -63,15 +63,16 @@
 
   var SCROLL_DEPTHS = [25, 50, 75, 100];
 
+  var _memoryVisitorId = null;
   function getVisitorSessionId() {
     var key = "visitor_session_id";
-    var existing = localStorage.getItem(key);
-
+    var existing;
+    try { existing = localStorage.getItem(key); } catch (_) {}
     if (existing) return existing;
-
-    var id = crypto.randomUUID();
-    localStorage.setItem(key, id);
-    return id;
+    if (!_memoryVisitorId) _memoryVisitorId = global.crypto && global.crypto.randomUUID
+      ? global.crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    try { localStorage.setItem(key, _memoryVisitorId); } catch (_) {}
+    return _memoryVisitorId;
   }
 
   function detectCurrentPage() {
@@ -212,6 +213,7 @@
 
   function journeyStepLabel(ev) {
     if (!ev) return null;
+    if (global.GoeloJourneyInsights && global.GoeloJourneyInsights.isTracked(ev)) return global.GoeloJourneyInsights.eventLabel(ev);
     var outcome = participationOutcome(ev);
     if (outcome) return {
       joined: 'Inscription à une sortie confirmée', waiting: 'Demande en liste d’attente',
@@ -256,6 +258,7 @@
     }).map(function (event) { return event.metadata.participation_attempt_id; }).filter(Boolean));
     return (items || []).filter(function (ev) {
       if (participationOutcome(ev) && requests.has((ev.metadata || {}).participation_attempt_id)) return false;
+      if (global.GoeloJourneyInsights && global.GoeloJourneyInsights.isTracked(ev) && ['exposed', 'available'].indexOf(ev.metadata.analytics_action) !== -1) return false;
       return !isScrollDepthEvent(ev.event_type) && !/_FOOTER_VIEWED$/.test(ev.event_type);
     }).length;
   }
@@ -287,7 +290,11 @@
   function registrationProgress(session) {
     var items = (session && session.items) || [];
     var types = items.map(function (event) { return event.event_type; });
-    var viewed = types.some(function (type) {
+    var viewed = items.some(function (event) {
+      if (global.GoeloJourneyInsights && global.GoeloJourneyInsights.isTracked(event)) {
+        return event.metadata.analytics_action === 'page' && event.metadata.page === 'parcours';
+      }
+      var type = event.event_type;
       return ['UPCOMING_RIDE_CARD_CLICKED', 'UPCOMING_RIDE_VIEW_CLICKED', 'RIDE_VIEWED', 'PAGE_PARCOURS_VIEWED', 'RIDE_INFO_OPENED'].indexOf(type) !== -1;
     });
     var clicked = types.indexOf('RIDE_PARTICIPATE_CLICKED') !== -1 || types.indexOf('UPCOMING_RIDE_JOIN_CLICKED') !== -1;
@@ -306,6 +313,7 @@
       var title = String(event.route_title || (event.metadata || {}).route_title || '').trim();
       if (title && !containsTechnicalRouteId(title) && routes.indexOf(title) === -1) routes.push(title);
       if (isScrollDepthEvent(event.event_type) || /_FOOTER_VIEWED$/.test(event.event_type)) return;
+      if (global.GoeloJourneyInsights && global.GoeloJourneyInsights.isTracked(event) && ['available', 'exposed'].indexOf(event.metadata.analytics_action) !== -1) return;
       var label = journeyStepLabel(event);
       if (label && steps[steps.length - 1] !== label) steps.push(label);
     });
@@ -322,7 +330,7 @@
       browsing: 'Des actions sur le site sont enregistrées, sans consultation de sortie observée.'
     };
     if (confirmed && types.indexOf('RIDE_LEFT') !== -1) descriptions.confirmed = 'Une inscription et une désinscription sont observées dans ce parcours. Consulte le détail pour voir les sorties concernées.';
-    return { viewed: viewed, clicked: clicked, confirmed: confirmed, hasError: outcomes.indexOf('error') !== -1, authRequested: outcomes.indexOf('auth_required') !== -1, status: status, label: labels[status], description: descriptions[status], steps: steps, routes: routes };
+    return { viewed: viewed, clicked: clicked, confirmed: confirmed, waiting: waiting, hasError: outcomes.indexOf('error') !== -1, authRequested: outcomes.indexOf('auth_required') !== -1, status: status, label: labels[status], description: descriptions[status], steps: steps, routes: routes };
   }
 
   function analyzeScenarios(sessions) {
@@ -442,6 +450,7 @@
   }
 
   function eventLabel(row) {
+    if (global.GoeloJourneyInsights && global.GoeloJourneyInsights.isTracked(row)) return global.GoeloJourneyInsights.eventLabel(row);
     var label = row.label && String(row.label).trim();
     var title = row.route_title && String(row.route_title).trim();
     if (label && containsTechnicalRouteId(label)) {
@@ -491,7 +500,7 @@
       created_at: row.created_at,
       metadata: meta,
       visitor_session_id: meta.visitor_session_id || row.visitor_session_id || null,
-      route_title: row.route_title || meta.route_title || null
+      route_title: meta.analytics_version === 1 && !meta.route_id ? null : row.route_title || meta.route_title || null
     };
   }
 

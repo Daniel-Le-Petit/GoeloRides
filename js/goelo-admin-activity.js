@@ -9,9 +9,13 @@
   var _sessions = [];
   var _allEvents = [];
   var _visibleEvents = [];
-  var _activeTab = "journeys";
+  var _activeTab = "overview";
   var _selectedSessionId = null;
   var _hideOwn = true;
+  var _hideBots = true;
+  var _days = 30;
+  var _coverage = 'Chargement de l’historique…';
+  var _loadPromise = null;
 
   function _$(id) { return document.getElementById(id); }
 
@@ -103,6 +107,50 @@
   var _journeyFilter = 'all';
   var JOURNEYS_PER_PAGE = 4;
 
+  function observationSummary() {
+    return window.GoeloJourneyInsights.summarize(_visibleEvents, window.GoeloActivity);
+  }
+
+  function coverageHtml() {
+    return '<p class="act-observation-note">' + esc(_coverage) + '</p>' +
+      '<p class="act-observation-note">Filtres : ' + _days + ' jours · ' + (_hideOwn ? 'mes activités masquées' : 'mes activités incluses') + ' · ' + (_hideBots ? 'robots et tests identifiables masqués' : 'robots et tests inclus') + '. Un parcours est séparé après 30 minutes d’inactivité ; ce n’est pas une personne unique. Un nettoyage peut réduire l’historique disponible.</p>';
+  }
+
+  function renderOverview() {
+    var panel = _$('act-analytics-panel'), summary = observationSummary();
+    if (!panel) return;
+    var priorities = summary.features.filter(function (row) { return row.eligible >= 5 && (row.unseen || row.errors); })
+      .sort(function (a, b) { return b.errors - a.errors || b.unseen / b.eligible - a.unseen / a.eligible; }).slice(0, 3);
+    panel.innerHTML = '<h3 class="act-registration-title">Ce qui se passe sur le site</h3>' + coverageHtml() +
+      '<div class="act-insight-kpis">' + [
+        [summary.sessions.length, 'Parcours observés'], [summary.clicked, 'Avec un clic de participation'],
+        [summary.confirmed, 'Avec une inscription confirmée'], [summary.noConfirmation, 'Clic sans confirmation observée']
+      ].map(function (card) { return '<div><strong>' + card[0] + '</strong><span>' + card[1] + '</span></div>'; }).join('') + '</div>' +
+      '<p class="act-observation-note">Ces étapes peuvent manquer dans l’historique chargé. Aucune absence de confirmation ne prouve un abandon.</p>' +
+      '<h3 class="act-registration-title">À examiner en priorité</h3>' +
+      (priorities.length ? '<div class="act-insight-priorities">' + priorities.map(function (row) {
+        return '<article><h4>' + esc(row.label) + '</h4><p>' + (row.errors ? row.errors + ' parcours avec une erreur technique observée. Vérifier le fonctionnement sur mobile avant de changer la présentation.' : row.unseen + ' / ' + row.eligible + ' parcours où le bloc était proposé, sans visibilité ni interaction observée. Piste à tester : ' + esc(row.suggestion)) + '</p></article>';
+      }).join('') + '</div>' : '<p class="act-observation-note">Pas encore assez d’observations pour faire ressortir une priorité. Les nouvelles mesures se rempliront avec les prochaines visites ; les anciennes traces ne permettent pas de savoir quels blocs étaient visibles.</p>') +
+      '<h3 class="act-registration-title">Pages découvertes</h3><ul class="act-page-discovery">' + summary.navigation.map(function (row) {
+        return '<li><span>' + esc(row.label) + '</span><strong>' + row.count + '</strong></li>';
+      }).join('') + '</ul><p class="act-observation-note">Sur les ' + summary.tracked + ' parcours contenant le nouveau suivi. Une page ouverte n’est pas une preuve de lecture. Les pistes proposées restent des hypothèses à tester.</p>' +
+      '<button type="button" class="act-visit-detail-btn" data-act-open-features>Voir les fonctionnalités découvertes</button>';
+  }
+
+  function renderFeatures() {
+    var panel = _$('act-analytics-panel'), summary = observationSummary();
+    if (!panel) return;
+    panel.innerHTML = '<h3 class="act-registration-title">Ce qui est vu et utilisé</h3>' + coverageHtml() +
+      '<p class="act-observation-note">Disponible = bloc présent et affichable sur la page, même hors écran. Visible = au moins la moitié du bloc (ou de l’écran pour un grand bloc), pendant une seconde, onglet actif. Les chiffres comptent des parcours, une seule fois par fonctionnalité. Un clic seul ne confirme pas une opération réussie.</p>' +
+      '<div class="act-feature-list">' + summary.features.map(function (row) {
+        return '<article class="act-feature-card"><h4>' + esc(row.label) + '</h4>' +
+          (!row.eligible ? '<p>Pas encore de mesures sur les pages concernées.</p>' :
+            '<dl><div><dt>Disponible sur la page</dt><dd>' + row.eligible + '</dd></div><div><dt>Visible</dt><dd>' + row.seen + '</dd></div><div><dt>Interaction</dt><dd>' + row.used + '</dd></div><div><dt>Non observé à l’écran</dt><dd>' + row.unseen + '</dd></div></dl>' +
+            '<p>' + row.seenWithoutUse + ' parcours : bloc visible, sans interaction enregistrée. ' + (row.eligible < 5 ? 'Échantillon encore très faible. ' : '') + (row.errors ? row.errors + ' avec une erreur observée. ' : '') + '</p>' +
+            '<details><summary>Comprendre et tester une amélioration</summary><p>' + esc(row.suggestion) + ' Comparer ensuite les observations sur une période similaire. Une absence d’interaction ne signifie pas un désintérêt ; le contenu a pu suffire ou être consulté autrement.</p><p>' + row.followed + ' parcours avec une interaction puis une inscription observée plus tard dans la même visite' + '. Cette succession ne prouve pas que la fonctionnalité a provoqué l’inscription.</p></details>') + '</article>';
+      }).join('') + '</div>';
+  }
+
   function registrationOverviewHtml() {
     var GA = window.GoeloActivity;
     var progress = _sessions.map(GA.registrationProgress);
@@ -117,7 +165,7 @@
     return '<div class="act-registration-overview">' + counts.map(function (step) {
       return '<div><strong>' + step.count + '</strong><span>' + step.label + '</span></div>';
     }).join('') + '</div>' +
-      '<p class="act-observation-note">' + _sessions.length + ' parcours observés · derniers 200 événements chargés.</p><details class="act-measurement-note"><summary>Comment lire ces chiffres ?</summary><p>Chaque compteur indique les parcours où une étape a été observée. Un parcours n’est pas un visiteur unique : les passages d’un même navigateur sont séparés après 30 minutes d’inactivité. Les données peuvent être partielles. Un clic ne prouve pas une inscription, et une absence de confirmation ne prouve pas un abandon.</p></details>' +
+      '<p class="act-observation-note">' + _sessions.length + ' parcours observés · ' + esc(_coverage) + '</p><details class="act-measurement-note"><summary>Comment lire ces chiffres ?</summary><p>Chaque compteur indique les parcours où une étape a été observée. Un parcours n’est pas un visiteur unique : les passages d’un même navigateur sont séparés après 30 minutes d’inactivité. Les données peuvent être partielles. Un clic ne prouve pas une inscription, et une absence de confirmation ne prouve pas un abandon.</p></details>' +
       (unlinked ? '<p class="act-observation-note act-observation-note--warning">' + unlinked + ' confirmation' + (unlinked > 1 ? 's d’inscription ne sont pas reliées' : ' d’inscription n’est pas reliée') + ' à un parcours. ' + (unlinked > 1 ? 'Leur origine reste inconnue.' : 'Son origine reste inconnue.') + ' Ces traces peuvent concerner des inscriptions déjà visibles dans les compteurs ; ne les additionne pas.</p><button type="button" class="act-visit-detail-btn" data-act-show-signups>Voir les inscriptions des membres</button>' : '');
   }
 
@@ -217,11 +265,12 @@
       ['accounts', 'Comptes et connexions', ['USER_REGISTERED', 'USER_LOGIN']],
       ['social', 'Commentaires et intérêts', ['COMMENT_CREATED', 'LIKE_ADDED', 'LIKE_REMOVED']],
       ['routes', 'Création de sorties', ['RIDE_CREATED']],
+      ['features', 'Fonctionnalités et navigation', []],
       ['alerts', 'Alertes', ['ERROR_API', 'SUSPICIOUS_LOGIN']]
     ];
     var types = (categories.filter(function (category) { return category[0] === _memberCategory; })[0] || categories[0])[2];
     var filtered = events.filter(function (event) {
-      return (!_memberId || memberKey(event) === _memberId) && (_memberCategory === 'all' || types.indexOf(event.event_type) !== -1 || (_memberCategory === 'alerts' && GA.participationOutcome(event) === 'error'));
+      return (!_memberId || memberKey(event) === _memberId) && (_memberCategory === 'all' || (_memberCategory === 'features' && window.GoeloJourneyInsights.isTracked(event)) || types.indexOf(event.event_type) !== -1 || (_memberCategory === 'alerts' && GA.participationOutcome(event) === 'error'));
     });
     var pages = Math.max(1, Math.ceil(filtered.length / 8));
     _memberPage = Math.min(_memberPage, pages - 1);
@@ -273,7 +322,9 @@
   }
 
   function renderActiveTab() {
-    if (_activeTab === "members") renderMembers();
+    if (_activeTab === "overview") renderOverview();
+    else if (_activeTab === "features") renderFeatures();
+    else if (_activeTab === "members") renderMembers();
     else if (_activeTab === "scenarios") renderScenarios();
     else if (_activeTab === "funnel") renderFunnel();
     else renderJourneys();
@@ -294,9 +345,13 @@
       return event.visitor_session_id || (event.metadata || {}).visitor_session_id;
     }
     var ownSessions = new Set(_allEvents.filter(isOwn).map(sessionId).filter(Boolean));
-    var events = _hideOwn ? _allEvents.filter(function (event) {
+    var eligible = _allEvents.filter(function (event) {
+      return new Date(event.created_at).getTime() >= Date.now() - _days * 86400000 &&
+        (!_hideBots || !window.GoeloJourneyInsights.automated(event));
+    });
+    var events = _hideOwn ? eligible.filter(function (event) {
       return !isOwn(event) && !ownSessions.has(sessionId(event));
-    }) : _allEvents;
+    }) : eligible;
     _visibleEvents = events;
     _sessions = window.GoeloActivity.buildVisitorSessions(events);
     if (_selectedSessionId && !sessionById(_selectedSessionId)) {
@@ -312,7 +367,7 @@
   }
 
   function setActiveTab(tab) {
-    _activeTab = tab || "journeys";
+    _activeTab = tab || "overview";
     _selectedSessionId = null;
     var detail = _$('act-session-detail');
     if (detail) detail.hidden = true;
@@ -328,27 +383,29 @@
   }
 
   async function loadActivity() {
+    if (_loadPromise) return _loadPromise;
     var sb = window.goeloGetSb ? window.goeloGetSb() : null;
-    if (!sb || !window.GoeloActivity) return;
-
-    setLoading(true);
-    var GA = window.GoeloActivity;
-    var data = await GA.fetchAnalyticsEvents(sb, 200);
-
-    renderStats(data.stats);
-    _allEvents = data.events || [];
-    renderFilteredActivity();
-
-    if (data.error) {
-      var errEl = _$("act-feed-error");
-      if (errEl) {
-        errEl.hidden = false;
-        errEl.textContent = "Flux limité : " + data.error;
+    if (!sb || !window.GoeloActivity || !canExportActivity()) return;
+    _loadPromise = (async function () {
+      setLoading(true);
+      var GA = window.GoeloActivity;
+      var results = await Promise.allSettled([GA.fetchAnalyticsEvents(sb, 200), window.GoeloJourneyInsights.collect(sb)]);
+      if (!canExportActivity()) { _allEvents = []; _visibleEvents = []; _sessions = []; setLoading(true); return; }
+      var data = results[0].status === 'fulfilled' ? results[0].value : { events: [], stats: {}, error: 'Lecture des chiffres indisponible' };
+      renderStats(data.stats);
+      if (results[1].status === 'fulfilled') {
+        var history = results[1].value;
+        _allEvents = GA.formatEvents(history.rows);
+        _coverage = history.partial ? 'Historique partiel : 5 000 activités récentes au maximum sur 30 jours.' : 'Activités accessibles des 30 derniers jours (' + _allEvents.length + ' traces).';
+      } else {
+        _allEvents = data.events || [];
+        _coverage = 'Historique limité au flux récent : 200 événements au maximum, sans garantie de couvrir la période choisie.';
       }
-    } else {
-      var errBox = _$("act-feed-error");
-      if (errBox) errBox.hidden = true;
-    }
+      renderFilteredActivity();
+      var box = _$('act-feed-error');
+      if (box) { box.hidden = !data.error; box.textContent = data.error ? 'Chiffres clés indisponibles : ' + data.error : ''; }
+    })();
+    try { await _loadPromise; } finally { _loadPromise = null; }
   }
 
   var _exportBusy = false;
@@ -423,6 +480,10 @@
     if (exportLink) exportLink.addEventListener('click', function (event) {
       if (!canExportActivity()) { event.preventDefault(); exportLink.hidden = true; }
     });
+    var days = _$('act-period');
+    if (days) days.addEventListener('change', function () { _days = Number(days.value) === 7 ? 7 : 30; _journeyPage = 0; _memberPage = 0; renderFilteredActivity(); });
+    var hideBots = _$('act-hide-bots');
+    if (hideBots) hideBots.addEventListener('change', function () { _hideBots = hideBots.checked; renderFilteredActivity(); });
     var hideOwn = _$('act-hide-own');
     if (hideOwn) hideOwn.addEventListener('change', function () {
       _hideOwn = hideOwn.checked;
@@ -466,6 +527,7 @@
         renderJourneys();
       });
       panel.addEventListener("click", function (e) {
+        if (e.target.closest('[data-act-open-features]')) { setActiveTab('features'); return; }
         if (e.target.closest('[data-act-show-signups]')) {
           _memberCategory = 'signups';
           _memberId = '';
@@ -611,7 +673,15 @@
   function init() {
     var section = _$("act-dashboard");
     if (!section) return;
+    if (section.dataset.activityBound === '1') return;
+    section.dataset.activityBound = '1';
     bindControls();
+    window.addEventListener('goelo:role-ready', function () {
+      if (canExportActivity()) { loadActivity(); return; }
+      _allEvents = []; _visibleEvents = []; _sessions = [];
+      var panel = _$('act-analytics-panel'); if (panel) panel.textContent = 'Accès administrateur requis.';
+      var detail = _$('act-session-detail'); if (detail) { detail.hidden = true; detail.innerHTML = ''; }
+    });
     loadActivity();
     startTicker();
   }

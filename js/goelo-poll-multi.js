@@ -4,6 +4,8 @@
  */
 (function (global) {
   "use strict";
+  function trackResult(feature, outcome) { try { if (window.GoeloFeatureTracking) window.GoeloFeatureTracking.record(feature, outcome); } catch (_) {} }
+
 
   var SUBMITTED_PREFIX = "goelo_poll_multi_submitted_";
 
@@ -266,14 +268,17 @@
         p_voter_key: voterKey
       });
       if (res.error) {
+        trackResult("polls", "error");
         setHint(root, res.error.message, true);
         return;
       }
       var data = res.data || {};
       if (data.ok === false) {
+        trackResult("polls", "error");
         setHint(root, data.error === "no_options" ? "Cochez au moins une réponse." : (data.error || "Échec"), true);
         return;
       }
+      if (data.ok === true || Array.isArray(data.my_option_ids) && data.my_option_ids.length) trackResult("polls", "success");
       applyPayload(
         root,
         state.poll,
@@ -285,6 +290,7 @@
         true
       );
     } catch (err) {
+      trackResult("polls", "error");
       console.warn("[GoëloPollMulti] submit:", err);
       setHint(root, "Erreur réseau.", true);
     } finally {

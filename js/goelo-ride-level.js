@@ -1,5 +1,7 @@
 (function (global) {
   "use strict";
+  function trackResult(feature, outcome) { try { if (window.GoeloFeatureTracking) window.GoeloFeatureTracking.record(feature, outcome); } catch (_) {} }
+
 
   function number(value) {
     if (value == null || String(value).trim() === "") return null;
@@ -52,6 +54,8 @@
       if (panel && root.closest('.pd-acc__item').classList.contains('is-open')) panel.style.maxHeight = panel.scrollHeight + 'px';
     }
     distance.oninput = elevation.oninput = update;
+    function trackComparison() { if (number(distance.value) > 0 && number(elevation.value) != null) trackResult('level', 'success'); }
+    distance.onchange = elevation.onchange = trackComparison;
     update();
   }
 
