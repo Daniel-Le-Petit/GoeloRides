@@ -677,6 +677,9 @@
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
   <link rel="stylesheet" href="css/components/admin-home-alerts.css?v=20261031-admin-alerts">
 <link rel="stylesheet" href="css/pages/admin-insights.css?v=20261102">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="css/components/admin-participation-notifications.css?v=20261102">
 </head>
 <body class="admin-dashboard">
 
@@ -684,6 +687,7 @@
 <header class="topbar">
   <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
   <span class="topbar-crown">👑 ADMIN</span>
+  <button type="button" id="admin-participation-bell" class="apn-bell" hidden aria-label="Alertes de participation" aria-expanded="false" aria-controls="admin-participation-panel"><span aria-hidden="true">🔔</span> <span class="apn-bell-label">Participations</span> <span id="admin-participation-count" class="apn-badge" hidden>0</span></button>
   <nav class="topbar-nav" aria-label="Sections admin">
     <a href="#act-dashboard" class="is-active">Activité</a>
     <a href="admin-approbations.html">Approbations</a>
@@ -721,6 +725,15 @@
       <p class="page-sub">Tes raccourcis et le suivi de l’activité du site.</p>
     </div>
 
+    <section id="admin-participation-panel" class="apn-panel" hidden aria-labelledby="admin-participation-title">
+      <h2 id="admin-participation-title">Participations et désinscriptions</h2>
+      <p class="apn-hint">Uniquement les changements confirmés depuis l’activation du suivi. Les ajouts et retraits d’invités par un administrateur sont inclus.</p>
+      <div class="apn-tools"><button type="button" id="admin-participation-refresh">Actualiser</button><button type="button" id="admin-participation-mark">Marquer les alertes affichées comme lues</button></div>
+      <p id="admin-participation-status" role="status" aria-live="polite"></p>
+      <div class="apn-tools"><button type="button" id="admin-participation-enable">Activer les alertes sur cet appareil</button><button type="button" id="admin-participation-disable" hidden>Désactiver ces alertes sur cet appareil</button></div>
+      <p id="admin-participation-push-status" class="apn-hint" role="status" aria-live="polite"></p>
+      <ul id="admin-participation-list" class="apn-list"></ul>
+    </section>
     <nav class="admin-quicklinks" aria-label="Actions rapides">
       <a href="gestion-sorties.html?mode=create"><strong>＋ Créer une sortie</strong><span>Préparer le prochain rendez-vous</span></a>
       <a href="allrides.html"><strong>Itinéraires</strong><span>Retrouver les parcours réutilisables</span></a>
@@ -843,6 +856,7 @@
 -->
 <script src="js/goelo-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/goelo-auth-state.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/goelo-profile.js"></script>
 <script src="js/goelo-journey-insights.js?v=20261102"></script>
@@ -854,5 +868,8 @@
 <script src="goelo-swipe-nav.js" defer></script>
 
 <script src="js/goelo-back-navigation.js" defer></script>
+<script>window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";</script>
+<script src="goelo-onesignal.js?v=16" defer></script>
+<script src="js/admin-participation-notifications.js?v=20261102" defer></script>
 </body>
 </html>

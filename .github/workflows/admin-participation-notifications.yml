@@ -1,0 +1,85 @@
+name: Alertes des participations et désinscriptions
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261102210000_admin_participation_notifications.sql'
+      - 'scripts/admin-participation-push.cjs'
+      - 'js/admin-participation-notifications.js'
+      - 'goelorides-tests/tests/**/*admin-participation*'
+      - '.github/workflows/admin-participation-notifications.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261102210000_admin_participation_notifications.sql'
+      - 'scripts/admin-participation-push.cjs'
+      - 'js/admin-participation-notifications.js'
+      - 'goelorides-tests/tests/**/*admin-participation*'
+      - '.github/workflows/admin-participation-notifications.yml'
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: admin-participation-notifications
+  cancel-in-progress: false
+jobs:
+  test:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local_test_only
+          POSTGRES_DB: goelo_notify_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Tests du client et de l’envoi privé
+        run: node --test goelorides-tests/tests/unit/admin-participation*.test.cjs
+      - name: Tests PostgreSQL isolés
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGDATABASE: goelo_notify_test
+          PGUSER: postgres
+          PGPASSWORD: local_test_only
+        run: node goelorides-tests/tests/integration/admin-participation-notifications-postgres.cjs
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event_name != 'schedule'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer les alertes privées en transaction
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_DATABASE_URL:-}" || { echo 'SUPABASE_DATABASE_URL manquant'; exit 1; }
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261102210000_admin_participation_notifications.sql
+  send:
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (github.event_name == 'schedule' || needs.deploy.result == 'success')
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Envoyer les alertes aux appareils administrateurs enregistrés
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+          ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
+          ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID }}
+        run: node scripts/admin-participation-push.cjs
