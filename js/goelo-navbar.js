@@ -6,6 +6,7 @@
 
   var NAV_LINKS = [
     { id: "sorties", label: "Sorties", href: "sorties.html" },
+    { id: "albums", label: "Album du groupe", href: "dans-la-roue.html" },
     { id: "groupes", label: "Groupes", href: "groupes.html" },
     { id: "infos", label: "Infos pratiques", href: "infos-pratiques.html" },
     { id: "actus", label: "Actualités", href: "https://www.instagram.com/goelo.rides/", external: true }
@@ -45,6 +46,7 @@
       index: "home",
       sorties: "sorties",
       groupes: "groupes",
+      "dans-la-roue": "albums",
       "infos-pratiques": "infos",
       profile: "profile",
       "my-bookings": "bookings"
