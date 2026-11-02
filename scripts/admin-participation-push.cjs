@@ -59,10 +59,10 @@ async function dispatch({ sql, fetchImpl = fetch, apiKey, appId = APP_ID }) {
 function databaseSql(statement) {
   if (!process.env.SUPABASE_DATABASE_URL) throw Error('database_not_configured');
   try {
-    return execFileSync('psql',['-X','-qAt','-v','ON_ERROR_STOP=1'],{input:statement,encoding:'utf8',timeout:20000,stdio:['pipe','pipe','pipe'],env:{...process.env,PGDATABASE:process.env.SUPABASE_DATABASE_URL,PGCONNECT_TIMEOUT:'15'}}).trim();
-  } catch(_) { throw Error('database_operation_failed'); }
+    return execFileSync('psql',['-X','-qAt','-v','ON_ERROR_STOP=1','--dbname',process.env.SUPABASE_DATABASE_URL],{input:statement,encoding:'utf8',timeout:20000,stdio:['pipe','pipe','pipe'],env:{...process.env,PGCONNECT_TIMEOUT:'15'}}).trim();
+  } catch(error) { throw Error(error.code==='ENOENT'?'postgres_client_missing':error.status===2?'database_connection_failed':'database_operation_failed'); }
 }
 if(require.main===module)dispatch({sql:databaseSql,apiKey:process.env.ONESIGNAL_REST_API_KEY,appId:process.env.ONESIGNAL_APP_ID||APP_ID})
  .then(result=>console.log(result.configured?'Push administrateur : '+result.sent+' envoi(s) accepté(s), '+result.failed+' échec(s).':'Push administrateur non configuré : vérifier ONESIGNAL_REST_API_KEY dans les secrets GitHub. Les alertes du Dashboard restent disponibles.'))
- .catch(()=>{console.error('Traitement des alertes interrompu ; consulter la configuration serveur. Aucun secret n’est affiché.');process.exitCode=1;});
+ .catch(error=>{const known=['database_not_configured','postgres_client_missing','database_connection_failed','database_operation_failed','invalid_app_id','invalid_queued_message'];console.error('Traitement des alertes interrompu ('+(known.includes(error.message)?error.message:'unconfirmed')+'). Vérifier la configuration serveur ; aucun secret n’est affiché.');process.exitCode=1;});
 module.exports={payload,dispatch};

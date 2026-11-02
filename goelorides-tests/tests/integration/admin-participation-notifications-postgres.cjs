@@ -54,5 +54,7 @@ const asyncSql=s=>new Promise((resolve,reject)=>execFile('psql',['-X','-qAt','-v
  sql("INSERT INTO guest_participants(route_id,first_name)VALUES('r','Expiration'); UPDATE admin_participation_notifications SET created_at=now()-interval '25 hours' WHERE participant_name='Expiration';");assert.deepEqual(JSON.parse(sql('SELECT admin_participation_push_claim();')),[]);
  // Supprimer une sortie ne produit pas une avalanche de désinscriptions.
  const before=sql('SELECT count(*) FROM admin_participation_notifications');sql("DELETE FROM routes WHERE id='r';");assert.equal(sql('SELECT count(*) FROM admin_participation_notifications'),before);
+ const worker=execFileSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs')],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
+ assert.match(worker,/Push administrateur non configuré/);assert.equal(sql('SELECT problem FROM admin_participation_push_status WHERE singleton'),'missing_key');
  console.log('PASS PostgreSQL : migration répétable, aucun historique rejoué, membres/invités, compteurs, transitions effectives, attente, rollback, droits, lectures personnelles, file concurrente, désactivation et révocation.');
 })().catch(e=>{console.error(e.message);process.exitCode=1});
