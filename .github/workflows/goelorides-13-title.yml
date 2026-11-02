@@ -1,0 +1,28 @@
+name: Corriger le titre GoëloRides 13
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261102160000_goelorides_13_title.sql'
+      - '.github/workflows/goelorides-13-title.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: goelorides-13-title
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Corriger et vérifier les titres de la sortie, des albums et des activités
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_DATABASE_URL:-}"
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261102160000_goelorides_13_title.sql
