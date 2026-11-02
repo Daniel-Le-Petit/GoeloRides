@@ -8,3 +8,8 @@ test('seule une réponse fournisseur positive confirme l’envoi',async()=>{cons
 test('une panne ou un quota prépare une reprise sans annoncer envoyé',async()=>{for(const options of [{network:true},{status:429}]){const m=mock(options),result=await dispatch({...m,apiKey:'key'});assert.equal(result.sent,0);assert(m.queries.some(s=>s.includes("status='pending'")));assert(!m.queries.some(s=>s.includes("status='sent'")));}});
 test('révocation, abonnement désactivé ou notification lue empêchent l’envoi',async()=>{const m=mock({inactive:true});const result=await dispatch({...m,apiKey:'key'});assert.equal(result.sent,0);assert.equal(m.requests.length,0);assert(m.queries.some(s=>s.includes("status='skipped'")));});
 test('clé refusée et absence de destinataire ne produisent pas de faux succès',async()=>{const m=mock({status:401});assert.equal((await dispatch({...m,apiKey:'key'})).configured,false);assert(m.queries.some(s=>s.includes('provider_authorization')));const n=mock({body:{id:null,recipients:0}});assert.equal((await dispatch({...n,apiKey:'key'})).sent,0);assert(n.queries.some(s=>s.includes('no_recipient')));});
+
+test('un refus de clé restitue les messages du lot non tentés sans consommer leurs essais',async()=>{
+ const m=mock({status:401}),other={...item,delivery_id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'};let batches=0;const sql=s=>{m.queries.push(s);if(s.includes('push_claim'))return JSON.stringify(++batches===1?[item,other]:[]);if(s.startsWith('SELECT EXISTS'))return 't';return '';};
+ await dispatch({...m,sql,apiKey:'key'});assert.equal(m.requests.length,1);assert(m.queries.some(s=>s.includes('attempts=greatest(attempts-1,0)')&&s.includes(other.delivery_id)));
+});

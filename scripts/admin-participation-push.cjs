@@ -46,6 +46,8 @@ async function dispatch({ sql, fetchImpl = fetch, apiKey, appId = APP_ID }) {
         sql(`UPDATE public.admin_participation_deliveries SET status=${quote(retry?'pending':'failed')},lease_until=NULL,last_error=${quote(error)},next_attempt_at=now()+make_interval(mins=>${delay}) WHERE id=${quote(item.delivery_id)}::uuid AND status='processing';`);failed++;
         if(['http_401','http_403'].includes(error)) {
           sql(`UPDATE public.admin_participation_deliveries SET status='pending',attempts=greatest(attempts-1,0),next_attempt_at=now()+interval '15 minutes' WHERE id=${quote(item.delivery_id)}::uuid;`);
+          const remaining=items.filter(other=>other.delivery_id!==item.delivery_id&&UUID.test(other.delivery_id)).map(other=>quote(other.delivery_id)+'::uuid');
+          if(remaining.length)sql(`UPDATE public.admin_participation_deliveries SET status='pending',attempts=greatest(attempts-1,0),lease_until=NULL,next_attempt_at=now()+interval '15 minutes' WHERE status='processing' AND id IN (${remaining.join(',')});`);
           sql(`UPDATE public.admin_participation_push_status SET configured=false,checked_at=now(),problem='provider_authorization' WHERE singleton;`);
           return {configured:false,sent,failed};
         }
