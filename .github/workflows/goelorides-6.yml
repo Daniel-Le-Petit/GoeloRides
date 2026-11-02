@@ -1,0 +1,29 @@
+name: Ajouter la sortie GoëloRides 6
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261102140000_goelorides_6_traversee.sql'
+      - '.github/workflows/goelorides-6.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: goelorides-6-migration
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ajouter la sortie et vérifier sa présence
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_DATABASE_URL:-}"
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261102140000_goelorides_6_traversee.sql
+          psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -At -c "SELECT track_name || ' · ' || (front_config->>'rideDateIso') FROM public.routes WHERE is_active AND front_config->>'rideDateIso' = '2026-08-01' AND track_name = 'GoëloRides #6 - La traversée du Goëlo';"
