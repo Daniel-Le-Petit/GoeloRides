@@ -54,6 +54,13 @@ const asyncSql=s=>new Promise((resolve,reject)=>execFile('psql',['-X','-qAt','-v
  sql("INSERT INTO guest_participants(route_id,first_name)VALUES('r','Expiration'); UPDATE admin_participation_notifications SET created_at=now()-interval '25 hours' WHERE participant_name='Expiration';");assert.deepEqual(JSON.parse(sql('SELECT admin_participation_push_claim();')),[]);
  // Supprimer une sortie ne produit pas une avalanche de désinscriptions.
  const before=sql('SELECT count(*) FROM admin_participation_notifications');sql("DELETE FROM routes WHERE id='r';");assert.equal(sql('SELECT count(*) FROM admin_participation_notifications'),before);
+ sql("INSERT INTO admin_participation_notifications(route_id,route_title,action,participant_name,participant_count,created_at) SELECT 'history','Historique','joined','Cycliste '||n,1,now()-make_interval(mins=>n) FROM generate_series(1,45)n;");
+ let remaining=JSON.parse(as(A,'SELECT admin_participation_notifications_list()'));assert(remaining.unread_count>40);
+ for(let page=0;remaining.unread_count>0&&page<4;page++){
+   const ids=remaining.items.filter(n=>!n.is_read).map(n=>"'"+n.id+"'");assert(ids.length>0,'Les anciennes alertes non lues doivent rester accessibles');
+   as(A,'SELECT admin_participation_notifications_read(ARRAY['+ids.join(',')+']::uuid[])');remaining=JSON.parse(as(A,'SELECT admin_participation_notifications_list()'));
+ }
+ assert.equal(remaining.unread_count,0);
  const worker=execFileSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs')],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
  assert.match(worker,/Push administrateur non configuré/);assert.equal(sql('SELECT problem FROM admin_participation_push_status WHERE singleton'),'missing_key');
  console.log('PASS PostgreSQL : migration répétable, aucun historique rejoué, membres/invités, compteurs, transitions effectives, attente, rollback, droits, lectures personnelles, file concurrente, désactivation et révocation.');

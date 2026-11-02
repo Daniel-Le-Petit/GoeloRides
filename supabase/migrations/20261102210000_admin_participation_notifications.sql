@@ -128,10 +128,10 @@ CREATE OR REPLACE FUNCTION public.admin_participation_notifications_list(p_subsc
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE uid uuid:=public._admin_notifications_user(); rows jsonb; unread int; service jsonb; device_enabled boolean;
 BEGIN
-  SELECT coalesce(jsonb_agg(to_jsonb(q) ORDER BY q.created_at DESC,q.id DESC),'[]'::jsonb) INTO rows FROM (
+  SELECT coalesce(jsonb_agg(to_jsonb(q) ORDER BY q.is_read ASC,q.created_at DESC,q.id DESC),'[]'::jsonb) INTO rows FROM (
     SELECT n.*,r.notification_id IS NOT NULL AS is_read FROM public.admin_participation_notifications n
       LEFT JOIN public.admin_participation_reads r ON r.notification_id=n.id AND r.user_id=uid
-      ORDER BY n.created_at DESC,n.id DESC LIMIT 40
+      ORDER BY (r.notification_id IS NULL) DESC,n.created_at DESC,n.id DESC LIMIT 40
   ) q;
   SELECT count(*) INTO unread FROM public.admin_participation_notifications n WHERE NOT EXISTS(
     SELECT 1 FROM public.admin_participation_reads r WHERE r.notification_id=n.id AND r.user_id=uid);
