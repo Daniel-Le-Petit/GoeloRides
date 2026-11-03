@@ -31,3 +31,20 @@ test('les anciens favoris profonds restent utilisables sans charger le détail s
   const a=setup({hash});assert.deepEqual(a.redirects,[target]);assert.equal(a.initialized(),0);
  }
 });
+
+function dashboardReturn({page='allrides.html',search='',referrer='',role='visitor'}={}){
+ const handlers={},host={children:[],firstChild:null,insertBefore(link){if(!this.children.includes(link))this.children.unshift(link);link.parentNode=this;this.firstChild=this.children[0]},removeChild(link){this.children=this.children.filter(n=>n!==link);link.parentNode=null;this.firstChild=this.children[0]||null}};
+ const c={URL,URLSearchParams,location:{pathname:'/'+page,search,origin:'https://goelorides.onrender.com'},document:{readyState:'complete',referrer,querySelector:()=>host,createElement:()=>({parentNode:null})},GOELO_ROLE:role,addEventListener:(key,fn)=>handlers[key]=fn};c.window=c;vm.createContext(c);vm.runInContext(read('js/admin-dashboard-return.js'),c);return {c,host,handlers};
+}
+test('retour explicite pour les pages appelées depuis le Dashboard, même après rechargement',()=>{
+ for(const page of ['allrides.html','gestion-sorties.html']){
+  const a=dashboardReturn({page,search:'?mode=create&from=admin'});assert.equal(a.host.children.length,1);assert.equal(a.host.children[0].href,'admin.html');assert.equal(a.host.children[0].textContent,'← Retour au Dashboard');
+  const b=dashboardReturn({page,referrer:'https://goelorides.onrender.com/admin.html'});assert.equal(b.host.children.length,1);
+ }
+ assert.equal(dashboardReturn({page:'admin-sondages.html'}).host.children.length,1);
+});
+test('les vues publiques et Ride Leader ordinaires ne montrent pas de lien admin ; le rôle tardif est pris en compte',()=>{
+ const a=dashboardReturn();assert.equal(a.host.children.length,0);a.c.GOELO_ROLE='admin';a.handlers['goelo:role-ready']();assert.equal(a.host.children.length,1);a.c.GOELO_ROLE='user';a.handlers['goelo:auth-state']();assert.equal(a.host.children.length,0);
+ assert.equal(dashboardReturn({page:'gestion-sorties.html',role:'team_rider'}).host.children.length,0);assert.equal(dashboardReturn({page:'sorties.html',role:'admin'}).host.children.length,0);
+ for(const file of ['gestion-sorties.html','allrides.html','admin-sondages.html'])assert(read(file).includes('js/admin-dashboard-return.js?v=20261103'));
+});

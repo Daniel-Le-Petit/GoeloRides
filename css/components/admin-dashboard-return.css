@@ -1,0 +1,3 @@
+a.goelo-dashboard-return{display:inline-flex;align-items:center;min-height:44px;max-width:100%;margin:0 0 16px;padding:10px 16px;border:1px solid #59756e;border-radius:10px;background:#203832;color:#f0faf5;text-decoration:none;font:600 .85rem/1.4 Inter,sans-serif;text-transform:none;letter-spacing:normal}
+a.goelo-dashboard-return:hover{border-color:#b8dba6;color:#dff2d5}
+a.goelo-dashboard-return:focus-visible{outline:2px solid #b8dba6;outline-offset:3px}
