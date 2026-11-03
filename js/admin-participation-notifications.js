@@ -59,7 +59,7 @@
   root.hidden=false;bell.setAttribute('aria-expanded','true');load();
   if(scroll){var show=function(){if(isAdmin()&&!root.hidden)root.scrollIntoView({block:'start',behavior:'smooth'});};if(global.requestAnimationFrame)global.requestAnimationFrame(show);else show();}
  }
- function openFromHash(){if(global.location&&global.location.hash==='#admin-participation-panel')openPanel(true);}
+ function openFromHash(){if(root.dataset&&root.dataset.apnPage==='true')openPanel(false);else if(global.location&&global.location.hash==='#admin-participation-panel')openPanel(true);}
  function changeAuth(){
   var a=auth();if(a.pending||a.role!=='admin'||!a.user){revision++;userId=null;device=null;rows=[];enabled=false;root.hidden=true;bell.hidden=true;bell.setAttribute('aria-expanded','false');list.innerHTML='';badge.hidden=true;clearInterval(timer);timer=null;return;}
   if(userId===a.user.id)return;revision++;userId=a.user.id;device=storedDevice();bell.hidden=false;load();openFromHash();clearInterval(timer);timer=setInterval(function(){if(document.visibilityState!=='hidden')load();},30000);

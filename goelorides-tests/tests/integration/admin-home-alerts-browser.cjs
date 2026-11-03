@@ -19,7 +19,7 @@ await page.route('**/*',async route=>{
  const file=path.join(root,decodeURIComponent(u.pathname));if(!file.startsWith(root+'/')||!fs.existsSync(file))return route.fulfill({status:404,body:''});
  return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.html')?'text/html':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'image/png'});
 });
-await page.goto('http://admin.test/admin.html#admin-home-alerts');await page.locator('.admin-ha-card').waitFor();
+await page.goto('http://admin.test/admin-alertes-accueil.html');await page.locator('.admin-ha-card').waitFor();
 assert(await page.locator('[data-alert-action=hide]').isDisabled());
 await page.locator('textarea').fill('Départ <modifié> : vérifie les horaires.');await page.click('[data-alert-action=show]');await page.waitForFunction(()=>document.querySelector('#admin-home-alerts-status').textContent==='Alerte affichée sur l’accueil.');
 assert.equal(await page.textContent('.admin-ha-badge'),'Visible sur l’accueil');assert.equal(await page.inputValue('.admin-ha-card textarea'),'Départ <modifié> : vérifie les horaires.');
