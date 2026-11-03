@@ -1,4 +1,4 @@
-/* Espace cycliste : marine, papier clair et jaune de Saint-Quay. */
+/* Espace cycliste GoëloRides. */
 :root {
   --bg: #0d1820;
   --surface: #ffffff;
@@ -198,3 +198,47 @@ button:disabled { cursor: wait; opacity: .55; }
 .ac-email-dialog__close:hover { background: #edf2f1; }
 html:has(.ac-email-dialog[open]) { overflow: hidden; }
 @media (max-width: 450px) { .ac-email-dialog { padding: 1.5rem; } .ac-email-dialog .ac-actions { flex-wrap: wrap; } .ac-email-dialog .ac-actions > button { flex: 1; } }
+
+/* Palette GoëloRides commune au profil, aux inscriptions et à la fenêtre e-mail. */
+:root{--bg:#0D0D0D;--surface:#1A1A1A;--border:#2E2E2E;--accent:#C8F135;--text:#F0F0F0;--muted:#bcbcbc;--font-display:'Barlow Condensed',sans-serif;color-scheme:dark}
+body{background:var(--bg);color:var(--text)}
+.gr-page-header{background:linear-gradient(150deg,#1A1A1A,#151a0e);border-bottom:1px solid var(--border)}
+.gr-page-header .ac-kicker,.gr-page-header>p:last-child{color:var(--muted)}
+.ac-card,.ac-loading,.ac-gate,.ac-booking,.ac-empty,.ac-email-dialog{background:var(--surface);color:var(--text);border-color:var(--border)}
+.ac-member-card,.ac-ready-card{background:linear-gradient(145deg,#242820,#1A1A1A)}
+.ac-member-card::after,.ac-member-level,.ac-account-nav,.ac-account-email,.ac-save-bar,.ac-email-settings,.ac-booking__heading,.ac-booking__footer{border-color:var(--border)}
+.ac-account-nav a[aria-current]{color:var(--accent);border-color:var(--accent)}
+.ac-member-card .ac-kicker,.ac-member-city,.ac-member-level>span,.ac-member-since,.ac-ready-card .ac-kicker,.ac-ready-card p:not(.ac-kicker){color:var(--muted)}
+.ac-avatar{background:var(--accent);color:#0D0D0D}
+.ac-role,.ac-section-number,.ac-outings-link,.ac-level-guide,.ac-filters,.ac-date-tile,.ac-ride-tags span,.ac-email-settings>.ac-help:not(:empty){background:#242424;color:var(--text);border-color:var(--border)}
+.ac-level-guide{border-left-color:var(--accent)}
+.ac-outings-link small,.ac-eyebrow,.ac-ride-details dt{color:var(--muted)}
+.ac-text-link,.ac-level-guide a,.ac-level-guide strong,.ac-booking__link,.ac-booking__calendar,.ac-empty svg{color:var(--accent)}
+.ac-field input,.ac-field select{background:#111;color:var(--text);border-color:#555}
+.ac-field input::placeholder{color:#999}
+.ac-field input[readonly]{background:transparent;color:var(--text)}
+.ac-btn,.ac-gate__btn,.ac-booking--next .ac-booking__link{background:var(--accent);color:#0D0D0D}
+.ac-btn:hover,.ac-gate__btn:hover{background:#d7ff58}
+.ac-btn--secondary{background:#242424;color:var(--text);border-color:#555}
+.ac-btn--secondary:hover{background:#303030}
+.ac-filters{border-color:var(--border)}
+.ac-filters button{color:var(--muted)}
+.ac-filters button[aria-pressed=true]{background:var(--accent);color:#0D0D0D}
+.ac-filters span{background:#353535;color:#F0F0F0}
+.ac-date-tile strong,.ac-ride-details dd{color:var(--text)}
+.ac-booking--next{border-color:#60654c}
+.ac-booking--next .ac-booking__heading{background:#282d1b}
+.ac-booking__badge{background:#24331e;color:#c0ed9b}
+.ac-booking__badge--wait{background:#3a3019;color:#f5d889}
+.ac-booking__badge--closed,.ac-error,.ac-banner{background:#38221e;border-color:#785048;color:#ffb4a8}
+.ac-booking__unsub,.ac-email-dialog__close{color:var(--muted)}
+.ac-booking__unsub:hover{color:#ffb4a8}
+.ac-email-dialog__close:hover{background:#303030}
+.ac-email-dialog .ac-kicker{color:var(--accent)}
+#profile-feedback,#bookings-feedback,#profile-email-feedback{color:#c0ed9b}
+#profile-feedback[data-error=true],#bookings-feedback[data-error=true],#profile-email-feedback[data-error=true]{color:#ffb4a8}
+.ac-completion progress{accent-color:var(--accent)}
+.ac-completion progress::-webkit-progress-bar{background:#333}
+.ac-completion progress::-webkit-progress-value{background:var(--accent)}
+.ac-spinner{border-color:#444;border-top-color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline-color:var(--accent)}

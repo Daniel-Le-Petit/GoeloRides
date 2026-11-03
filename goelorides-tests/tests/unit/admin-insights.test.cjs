@@ -3,8 +3,8 @@ const root=path.resolve(__dirname,'../../..');
 function setup(rows, options={}) {
  const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:'',textContent:'',hidden:true,dataset:{},setAttribute(){},handlers:{},addEventListener(name,fn){this.handlers[name]=fn},focus(){this.focused=true},closest(){return null}});return elements.get(id)};
  const c={console,document:{getElementById:el,querySelectorAll:()=>[],addEventListener(){}},setInterval:()=>1,clearInterval(){},setTimeout,clearTimeout,GOELO_ROLE:'admin',GOELO_USER:{id:'daniel-id'},GOELO_DISPLAY_NAME:'Daniel',addEventListener(){}};c.window=c;
- c.goeloGetSb=()=>({});vm.createContext(c);
- for(const file of ['goelo-journey-insights','goelo-activity'])vm.runInContext(fs.readFileSync(path.join(root,'js',file+'.js'),'utf8'),c);
+ c.goeloGetSb=()=>({rpc:async()=>options.networkError?{error:{message:'denied'}}:{data:options.networks||[]}});vm.createContext(c);
+ for(const file of ['goelo-journey-insights','goelo-activity','goelo-network-insights'])vm.runInContext(fs.readFileSync(path.join(root,'js',file+'.js'),'utf8'),c);
  c.GoeloActivity.fetchAnalyticsEvents=async()=>({stats:{},events:c.GoeloActivity.formatEvents(rows)});
  c.GoeloJourneyInsights.collect=options.denied?async()=>{throw Error('denied')}:async()=>({rows,partial:!!options.partial});
  const source=fs.readFileSync(path.join(root,'js/goelo-admin-activity.js'),'utf8').replace('window.GoeloAdminActivity = { init: init, refresh: loadActivity };','window.GoeloAdminActivity = { init: init, refresh: loadActivity, tab: setActiveTab, bind: bindControls };');vm.runInContext(source,c);
@@ -55,4 +55,15 @@ test('aucune activité : accès désactivés et pas de conclusion sur un abandon
  const a=setup([]);await a.c.GoeloAdminActivity.refresh();const html=a.el('act-analytics-panel').innerHTML;
  assert.equal((html.match(/data-act-review-journeys="[^"]+" disabled/g)||[]).length,3);
  assert.match(html,/Aucune absence.*ne prouve un abandon/);
+});
+
+test('rapprochement réseau : seules les clés retournées par la RPC privée sont utilisées',async()=>{
+ const key='a'.repeat(64),ids=['11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222'];
+ const rows=ids.map((id,i)=>({...event('browser-'+i,'Camille'),id}));
+ rows[0].metadata.network_key='b'.repeat(64);
+ const a=setup(rows,{networks:ids.map(event_id=>({event_id,network_key:key,period:'2026-11'}))});
+ await a.c.GoeloAdminActivity.refresh();a.c.GoeloAdminActivity.tab('networks');
+ const html=a.el('act-analytics-panel').innerHTML;assert.match(html,/Réseau AAAAAAAA/);assert.match(html,/2 visites observées/);assert(!html.includes('BBBBBBBB'));assert.match(html,/ne prouvent pas pourquoi/);
+ const b=setup(rows,{networkError:true});await b.c.GoeloAdminActivity.refresh();b.c.GoeloAdminActivity.tab('networks');
+ assert(!b.el('act-analytics-panel').innerHTML.includes('Réseau BBBBBBBB'));assert.match(b.el('act-analytics-panel').innerHTML,/indisponible/);
 });
