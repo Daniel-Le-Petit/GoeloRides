@@ -694,17 +694,34 @@ body {
   .goelo-mobile-tabbar a:hover { color: var(--accent); }
 }
 
-/* Accès au guide depuis les caractéristiques essentielles de la sortie. */
-.pd-level-shortcut{display:inline-flex;align-items:center;justify-content:center;gap:10px;align-self:flex-start;max-width:100%;min-height:44px;margin:0 0 16px;padding:10px 14px;border:1px solid #587b6f;border-radius:10px;background:#203831;color:#edf6ed;font:600 .85rem/1.4 Inter,sans-serif;text-align:left;cursor:pointer}
-.pd-level-shortcut:hover{border-color:#b7dca3;color:#e4f6d9}
-.pd-level-shortcut:focus-visible{outline:2px solid #b7dca3;outline-offset:3px}
-.pd-level-shortcut:disabled{opacity:.55;cursor:default}
-.pd-acc__item[data-section="niveau_sortie"]{scroll-margin-top:96px}
 
-/* Action secondaire : garder la participation au premier plan. */
-#pd-calendar[hidden]{display:none!important}
-#pd-calendar{margin:0 0 18px}
-#pd-calendar a.pd-calendar__link,#pd-calendar a.pd-calendar__link:visited{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;padding:10px 14px;border:1px solid #C8F135;border-radius:10px;background:#1A1A1A;color:#C8F135;font:600 .85rem/1.4 Inter,sans-serif;text-decoration:none;text-align:center}
-#pd-calendar a.pd-calendar__link:hover{background:#292e1a}
-#pd-calendar a.pd-calendar__link:focus-visible{outline:2px solid #C8F135;outline-offset:3px}
-#pd-calendar p{margin:8px 0 0;color:#bcbcbc;font:400 .75rem/1.5 Inter,sans-serif}
+/* Informations alignées et deux actions secondaires sur une même ligne. */
+.pd-metrics{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;row-gap:14px;padding-bottom:18px;margin-bottom:18px}
+.pd-metrics__cell{gap:5px}
+.pd-metrics__label{line-height:1.4}
+.pd-metrics__value{line-height:1.4}
+.pd-hero-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:10px;margin:0 0 16px}
+.pd-hero-tools #pd-calendar[hidden]{display:none!important}
+.pd-hero-tools #pd-calendar{display:contents}
+.pd-hero-tools .pd-level-shortcut,
+.pd-hero-tools #pd-calendar a.pd-calendar__link,
+.pd-hero-tools #pd-calendar a.pd-calendar__link:visited{
+  display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-width:0;min-height:46px;margin:0;padding:10px 8px;
+  border:1px solid #60654c;border-radius:10px;background:#1A1A1A;color:#C8F135;
+  font:600 .85rem/1.4 Inter,sans-serif;letter-spacing:normal;text-align:center;text-decoration:none;cursor:pointer
+}
+.pd-hero-tools .pd-level-shortcut{grid-column:1;grid-row:1}
+.pd-hero-tools #pd-calendar a.pd-calendar__link{grid-column:2;grid-row:1}
+.pd-hero-tools .pd-level-shortcut:hover,
+.pd-hero-tools #pd-calendar a.pd-calendar__link:hover{background:#292e1a;border-color:#C8F135}
+.pd-hero-tools .pd-level-shortcut:focus-visible,
+.pd-hero-tools #pd-calendar a.pd-calendar__link:focus-visible{outline:2px solid #C8F135;outline-offset:3px}
+.pd-hero-tools .pd-level-shortcut:disabled{opacity:.55;cursor:default}
+.pd-hero-tools #pd-calendar p{grid-column:1/-1;margin:0;color:#bcbcbc;font:400 .75rem/1.5 Inter,sans-serif}
+.pd-hero .pd-join{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:0 0 18px}
+.pd-hero .pd-join__btn{width:100%;min-height:50px;box-sizing:border-box;margin:0;font-size:1.05rem;letter-spacing:normal}
+.pd-hero .pd-join__count{margin:0;text-align:center}
+.pd-hero .pd-join__count:empty{display:none}
+.pd-hero .pd-notice{margin:0}
+.pd-acc__item[data-section="niveau_sortie"]{scroll-margin-top:96px}
+@media(min-width:700px){.pd-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}

@@ -39,9 +39,9 @@ test('lien de téléchargement public, nettoyage du fichier précédent, repli s
  assert.match(await a.created[0].text(),/DTSTART:20270413T063000Z/);
  a.api.render({...route,date:''});assert.equal(a.host.hidden,true);assert.equal(a.link.href,undefined);assert.deepEqual(a.revoked,['blob:calendar-1']);
 });
-test('action secondaire après la participation et script chargé avant le rendu de sortie',()=>{
+test('action secondaire près de la participation et script chargé avant le rendu de sortie',()=>{
  const html=fs.readFileSync(path.join(root,'parcours.html'),'utf8');
- assert(html.indexOf('id="pd-calendar"')>html.indexOf('id="pd-join-btn"'));
+ assert(html.indexOf('id="pd-calendar"')>html.indexOf('id="pd-metrics"'));
  assert(html.indexOf('js/goelo-calendar.js')<html.indexOf('js/parcours.js'));
- assert.match(html,/l’agenda ne se met pas à jour automatiquement/);
+ assert.match(html,/Agenda non synchronisé/);
 });
