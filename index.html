@@ -4402,6 +4402,7 @@
   <link rel="stylesheet" href="css/pages/home-buttons.css?v=20261028-petrol-slate">
   <link rel="stylesheet" href="css/pages/pseudo-participation.css?v=20261029-pseudo">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
+<link rel="stylesheet" href="css/pages/home-album.css?v=20261103">
 </head>
 <body>
 
@@ -4446,6 +4447,15 @@
           <div class="gr-upcoming__scroll" id="gr-upcoming-scroll">
             <div class="gr-upcoming__track" id="gr-upcoming-rides" aria-live="polite"></div>
           </div>
+        </div>
+      </section>
+      <section id="gr-home-album" class="gr-home-album" aria-labelledby="gr-home-album-title" hidden>
+        <h2 id="gr-home-album-title" class="gr-home-album__heading">Dans la roue du groupe</h2>
+        <p class="gr-home-album__intro">Des paysages, des rencontres et le plaisir de rouler ensemble.</p>
+        <div id="gr-home-album-photos" class="gr-home-album__photos"></div>
+        <div class="gr-home-album__actions">
+          <a href="sorties.html" data-home-album-rides>Rouler avec nous →</a>
+          <a href="dans-la-roue.html" class="gr-home-album__gallery" data-home-album-gallery>Voir l’album</a>
         </div>
       </section>
       <aside class="gr-hero-poll" aria-labelledby="gr-poll-heading" data-no-swipe-nav hidden>
@@ -4899,7 +4909,7 @@
   <script src="js/home-admin-actions.js"></script>
   <script src="js/goelo-navbar.js"></script>
   <script src="js/signup-participants.js"></script>
-  <script src="js/goelo-journey-insights.js?v=20261102"></script>
+  <script src="js/goelo-journey-insights.js?v=20261103-home-album"></script>
 <script src="js/goelo-activity.js?v=20261102-insights"></script>
   <script src="js/goelo-weather.js"></script>
   <script src="js/goelo-sortie-dates.js"></script>
@@ -4940,6 +4950,7 @@
   <script src="js/ui.js" defer></script>
 
 
-<script src="js/goelo-feature-tracking.js?v=20261102" defer></script>
+<script src="js/goelo-feature-tracking.js?v=20261103-home-album" defer></script>
+<script src="js/home-album.js?v=20261103" defer></script>
 </body>
 </html>

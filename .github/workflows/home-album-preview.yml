@@ -1,0 +1,31 @@
+name: Photos des albums sur l’accueil
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'js/home-album.js'
+      - 'js/ride-gallery.js'
+      - 'css/pages/home-album.css'
+      - 'goelorides-tests/tests/unit/home-album.test.cjs'
+      - 'goelorides-tests/tests/integration/home-album-browser.cjs'
+      - '.github/workflows/home-album-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test goelorides-tests/tests/unit/home-album.test.cjs goelorides-tests/tests/unit/feature-tracking.test.cjs goelorides-tests/tests/unit/journey-insights.test.cjs goelorides-tests/tests/unit/guest-pseudo*.test.cjs
+      - run: npm ci --prefix goelorides-tests
+      - run: node goelorides-tests/node_modules/playwright/cli.js install --with-deps chromium
+      - run: node goelorides-tests/tests/integration/home-album-browser.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: home-album-mobile
+          path: /tmp/home-album-mobile.png

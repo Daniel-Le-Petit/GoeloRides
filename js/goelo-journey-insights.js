@@ -13,8 +13,8 @@
     ['participants', 'Liste des participants', ['parcours'], 'Rappeler les participants près du bouton de participation.'],
     ['groups', 'Présentation des groupes', ['groupes'], 'Rendre le choix du groupe accessible depuis les cartes de sorties.'],
     ['practical', 'Informations pratiques', ['infos'], 'Ajouter un lien vers les informations essentielles sur la fiche sortie.'],
-    ['album', 'Photos des albums', ['album'], 'Mettre une photo et un accès Album près des prochaines sorties.'],
-    ['album_to_rides', 'De l’album vers les sorties', ['album'], 'Placer Voir les prochaines sorties juste après les photos.']
+    ['album', 'Photos des albums', ['home', 'album'], 'Mettre une photo et un accès Album près des prochaines sorties.'],
+    ['album_to_rides', 'De l’album vers les sorties', ['home', 'album'], 'Placer Voir les prochaines sorties juste après les photos.']
   ].map(function (row) { return { key: row[0], label: row[1], pages: row[2], suggestion: row[3] }; });
   function metadata(event) { return event && event.metadata || {}; }
   function isTracked(event) { return metadata(event).analytics_version === 1; }
