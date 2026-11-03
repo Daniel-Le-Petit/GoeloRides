@@ -57,7 +57,7 @@
  function openPanel(scroll){
   if(!isAdmin())return;
   root.hidden=false;bell.setAttribute('aria-expanded','true');load();
-  if(scroll)root.scrollIntoView({block:'start',behavior:'smooth'});
+  if(scroll){var show=function(){if(isAdmin()&&!root.hidden)root.scrollIntoView({block:'start',behavior:'smooth'});};if(global.requestAnimationFrame)global.requestAnimationFrame(show);else show();}
  }
  function openFromHash(){if(global.location&&global.location.hash==='#admin-participation-panel')openPanel(true);}
  function changeAuth(){
