@@ -8,8 +8,9 @@ const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',publi
  const config="window.GOELO_CONFIG={SUPABASE_URL:'"+BASE+"',SUPABASE_ANON_KEY:'public-test'};";
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());
-  if(u.origin===BASE&&u.pathname==='/rest/v1/ride_albums')return route.fulfill({status:mode==='error'?500:200,contentType:'application/json',body:JSON.stringify(mode==='empty'?[]:albums)});
-  if(u.origin===BASE&&u.pathname.startsWith('/storage/'))return route.fulfill({status:mode==='broken'?404:200,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320"><rect width="480" height="320" fill="#416951"/><path d="M0 260L200 80L480 260" fill="#89a897"/></svg>'});
+  if(u.origin===BASE&&u.pathname==='/rest/v1/ride_albums')return route.fulfill({status:mode==='error'?500:200,contentType:'application/json',body:JSON.stringify(mode==='empty'?[]:mode==='broken'?albums.map(a=>({...a,photos:a.photos.map(url=>url.replace('/test/','/test/broken-'))})):albums)});
+  if(u.origin===BASE&&u.pathname.startsWith('/storage/')&&mode==='broken')return route.fulfill({status:404,contentType:'text/plain',body:'missing image'});
+  if(u.origin===BASE&&u.pathname.startsWith('/storage/'))return route.fulfill({status:200,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320"><rect width="480" height="320" fill="#416951"/><path d="M0 260L200 80L480 260" fill="#89a897"/></svg>'});
   if(u.hostname!=='home.test')return route.fulfill({body:'',contentType:'text/javascript'});
   if(u.pathname==='/preview.html')return route.fulfill({contentType:'text/html',body:read('index.html')});
   if(u.pathname==='/js/goelo-config.js')return route.fulfill({contentType:'text/javascript',body:config});
@@ -21,6 +22,6 @@ const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',publi
  for(const width of [320,390,1100]){await page.setViewportSize({width,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const a of await page.locator('.gr-home-album__actions a').all())assert((await a.boundingBox()).height>=44);}
  await page.setViewportSize({width:390,height:844});await page.locator('#gr-home-album').scrollIntoViewIfNeeded();await page.waitForFunction(()=>Array.from(document.querySelectorAll('#gr-home-album img')).every(img=>img.complete&&img.naturalWidth>0));await page.locator('#gr-home-album').screenshot({path:'/tmp/home-album-mobile.png'});
  await page.locator('[data-home-album-photo]').nth(1).click();await page.waitForURL('**/dans-la-roue.html#album-two');await page.locator('#album-two').waitFor();assert(await page.evaluate(()=>window.scrollY>0));await page.locator('#album-two .cover').click();assert(await page.locator('#photo-viewer').isVisible());await page.locator('#photo-close').click();assert(await page.locator('#photo-viewer').isHidden());
- for(const m of ['empty','error','broken']){mode=m;await page.goto('http://home.test/preview.html');await page.waitForFunction(()=>window.GoeloHomeAlbum);await page.evaluate(()=>window.GoeloHomeAlbum.load());await page.locator('#gr-home-album').waitFor({state:'hidden'});}
+ for(const m of ['empty','error','broken']){mode=m;await page.goto('http://home.test/preview.html');await page.waitForFunction(()=>window.GoeloHomeAlbum);await page.evaluate(()=>window.GoeloHomeAlbum.load());if(m==='broken')await page.evaluate(()=>document.getElementById('gr-home-album').scrollIntoView({block:'start'}));await page.locator('#gr-home-album').waitFor({state:'hidden'});}
  assert.deepEqual(errors,[]);await browser.close();console.log('PASS : aperçus publiés, liens vers les albums, visionneuse conservée, CTA sorties, mobile/desktop et repli silencieux.');
 })().catch(e=>{console.error(e);process.exit(1)});
