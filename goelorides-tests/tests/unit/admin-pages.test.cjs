@@ -8,12 +8,12 @@ test('le Dashboard ne contient que son titre et ses sept cadres, sans détail ni
  for(const target of ['admin-participations.html','admin-alertes-accueil.html','admin-activite.html'])assert(main.includes('href="'+target+'"'));
 });
 test('chaque page de détail conserve ses contrôles, son module et un retour Dashboard',()=>{
- for(const [file,id,script] of [['admin-participations.html','admin-participation-panel','admin-participation-notifications.js'],['admin-alertes-accueil.html','admin-home-alerts','admin-home-alerts.js'],['admin-activite.html','act-dashboard','goelo-admin-activity.js']]){
-  const html=read(file);assert(html.includes('href="admin.html">← Retour au Dashboard'));assert(html.includes('id="'+id+'"'));assert(html.includes('src="js/'+script));assert(html.includes('src="js/admin-page.js'));
+ for(const [file,id,script] of [['admin-participations.html','admin-participation-panel','admin-participation-notifications.js'],['admin-alertes-accueil.html','admin-home-alerts','admin-home-alerts.js'],['admin-activite-vue.html','act-dashboard','goelo-admin-activity.js']]){
+  const html=read(file);assert(html.includes('href="admin.html">← Retour au Dashboard')||html.includes('href="admin.html">Dashboard'));assert(html.includes('id="'+id+'"'));assert(html.includes('src="js/'+script));assert(html.includes('src="js/admin-page.js'));
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length,file+' : identifiant dupliqué');
  }
  assert(read('admin-participations.html').includes('data-apn-page="true"'));
- assert(read('admin-activite.html').includes('id="act-export-btn"'));assert(read('admin-activite.html').includes('data-act-tab="members"'));
+ assert(read('admin-activite-outils.html').includes('id="act-export-btn"'));assert(read('admin-activite-utilisateurs.html').includes('data-activity-view="members"'));
 });
 function setup({file='admin.html',hash='',admin=false,activity=false}={}){
  const elements=new Map(),handlers={},redirects=[];let initialized=0;
@@ -47,4 +47,23 @@ test('les vues publiques et Ride Leader ordinaires ne montrent pas de lien admin
  const a=dashboardReturn();assert.equal(a.host.children.length,0);a.c.GOELO_ROLE='admin';a.handlers['goelo:role-ready']();assert.equal(a.host.children.length,1);a.c.GOELO_ROLE='user';a.handlers['goelo:auth-state']();assert.equal(a.host.children.length,0);
  assert.equal(dashboardReturn({page:'gestion-sorties.html',role:'team_rider'}).host.children.length,0);assert.equal(dashboardReturn({page:'sorties.html',role:'admin'}).host.children.length,0);
  for(const file of ['gestion-sorties.html','allrides.html','admin-sondages.html'])assert(read(file).includes('js/admin-dashboard-return.js?v=20261103'));
+});
+
+test('Activité est un hub de six liens, sans compteur, filtre, tableau ni module analytique',()=>{
+ const html=read('admin-activite.html'),main=html.slice(html.indexOf('<div id="gtr-admin-panel"'),html.indexOf('</div><!-- /#gtr-admin-panel -->'));
+ assert.equal((main.match(/class="activity-hub-card"/g)||[]).length,6);
+ for(const token of ['id="act-dashboard"','id="act-export-btn"','id="act-period"','data-act-tab=','<table','<details'])assert(!main.includes(token));
+ for(const script of ['goelo-admin-activity.js','goelo-activity.js','goelo-network-insights.js'])assert(!html.includes('src="js/'+script));
+});
+test('chaque cadre ouvre une page dédiée avec une seule rubrique et ses retours',()=>{
+ const pages={vue:'overview',parcours:'journeys',fonctionnalites:'features',reseaux:'networks',utilisateurs:'members',outils:'tools'};
+ const hub=read('admin-activite.html');
+ for(const [slug,view]of Object.entries(pages)){
+  const file='admin-activite-'+slug+'.html',html=read(file);assert(hub.includes('href="'+file+'"'));assert(html.includes('data-activity-view="'+view+'"'));assert(html.includes('href="admin-activite.html">← Retour à Activité'));assert(html.includes('href="admin.html">Dashboard'));
+  assert(!html.includes('data-act-tab='));
+  assert.equal(html.includes('id="act-export-btn"'),view==='tools');
+  assert.equal(html.includes('id="act-cleanup-btn"'),view==='tools');
+  assert.equal(html.includes('id="act-period"'),view!=='tools');
+  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,file);
+ }
 });

@@ -16,10 +16,10 @@
 </script>
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
   <link rel="stylesheet" href="css/components/admin-home-alerts.css?v=20261031-admin-alerts">
-<link rel="stylesheet" href="css/pages/admin-insights.css?v=20261103-networks">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="css/components/admin-participation-notifications.css?v=20261102">
+  <link rel="stylesheet" href="css/pages/admin-activity-hub.css?v=20261103">
 </head>
 <body class="admin-dashboard">
 
@@ -61,98 +61,15 @@
   <div class="page">
 
     <a class="admin-page-return" href="admin.html">← Retour au Dashboard</a>
-    <div class="page-header"><h1 class="page-title">Activité du site</h1><p class="page-sub">Comprendre les visites, les fonctionnalités découvertes et les participations.</p></div>
-<section class="admin-section" id="act-dashboard">
-      <div class="admin-section__head">
-        <div>
-          <h2 class="admin-section__title">Vue <span>d’ensemble</span></h2>
-          <p class="admin-section__sub">Les chiffres clés du site. Les analyses détaillées sont disponibles ci-dessous.</p>
-        </div>
-
-      </div>
-
-      <div class="act-stats">
-        <div class="act-stat-card">
-          <div class="act-stat-card__label">Sorties actives</div>
-          <div class="act-stat-card__value" id="act-stat-rides">—</div>
-          <div class="act-stat-card__sub" id="act-stat-rides-sub"></div>
-        </div>
-        <div class="act-stat-card">
-          <div class="act-stat-card__label">Cyclistes inscrits</div>
-          <div class="act-stat-card__value" id="act-stat-cyclists">—</div>
-          <div class="act-stat-card__sub" id="act-stat-cyclists-sub"></div>
-        </div>
-        <div class="act-stat-card">
-          <div class="act-stat-card__label">Événements du jour</div>
-          <div class="act-stat-card__value" id="act-stat-live">—</div>
-          <div class="act-stat-card__sub" id="act-stat-live-sub"></div>
-        </div>
-        <div class="act-stat-card act-stat-card--alert">
-          <div class="act-stat-card__label">Alertes</div>
-          <div class="act-stat-card__value" id="act-stat-alerts">—</div>
-          <div class="act-stat-card__sub" id="act-stat-alerts-sub"></div>
-        </div>
-      </div>
-
-      <p class="act-feed-error" id="act-feed-error" hidden></p>
-      <div class="admin-activity-tools" aria-label="Export des activités">
-        <button class="btn-refresh" id="act-export-btn" type="button" style="min-height:44px">Exporter les activités en CSV</button>
-        <p id="act-export-status" class="admin-section__sub" role="status" aria-live="polite">Export pour analyser les visites et les inscriptions, y compris tes propres essais.</p>
-        <a class="btn-refresh" id="act-export-download" hidden style="min-height:44px;white-space:normal" download>Télécharger le CSV</a>
-      </div>
-
-      <details class="admin-activity-details" id="admin-activity-details" open>
-        <summary>Comprendre les visites et les participations</summary>
-        <div class="admin-activity-tools">
-          <label class="act-period-filter" for="act-period">Période<select id="act-period"><option value="7">7 derniers jours</option><option value="30" selected>30 derniers jours</option></select></label>
-          <label class="admin-own-filter"><input type="checkbox" id="act-hide-bots" checked> Masquer robots et tests identifiables</label>
-          <label class="admin-own-filter"><input type="checkbox" id="act-hide-own" checked> Masquer mes activités</label>
-          <p id="act-visible-count" aria-live="polite"></p>
-          <p class="admin-section__sub">Ce filtre masque tes sessions dans les analyses ci-dessous. Les chiffres clés restent les totaux du site.</p>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn-refresh" id="act-refresh-btn" type="button">
-            <span class="btn-refresh__icon">↻</span> Actualiser
-          </button>
-          <button class="btn-refresh" id="act-cleanup-btn" type="button" style="border-color: var(--red); color: var(--red);">
-            <span>🗑️</span> Nettoyer les activités
-          </button>
-        </div>
-        </div>
-      <div class="act-analytics">
-        <div class="act-analytics__main">
-          <nav class="act-tabs" role="tablist" aria-label="Analyses visiteurs">
-<button type="button" class="act-tab is-active" id="act-tab-overview" role="tab" aria-controls="act-analytics-panel" tabindex="0" data-act-tab="overview" aria-selected="true">Vue d’ensemble</button>
-<button type="button" class="act-tab" id="act-tab-features" role="tab" aria-controls="act-analytics-panel" tabindex="-1" data-act-tab="features" aria-selected="false">Fonctionnalités</button>
-<button type="button" class="act-tab" id="act-tab-journeys" role="tab" aria-controls="act-analytics-panel" tabindex="-1" data-act-tab="journeys" aria-selected="false">Parcours visiteurs</button>
-<button type="button" class="act-tab" id="act-tab-members" role="tab" aria-controls="act-analytics-panel" tabindex="-1" data-act-tab="members" aria-selected="false">Activité des utilisateurs</button>
-<button type="button" class="act-tab" id="act-tab-networks" role="tab" aria-controls="act-analytics-panel" tabindex="-1" data-act-tab="networks" aria-selected="false">Retours réseau</button>
-          </nav>
-          <div id="act-analytics-panel" role="tabpanel" aria-labelledby="act-tab-overview">
-            <div class="gtr-loading">
-              <div class="gtr-loading__dot"></div>
-              <div class="gtr-loading__dot"></div>
-              <div class="gtr-loading__dot"></div>
-            </div>
-          </div>
-          <div id="act-session-detail" class="act-session-detail" hidden></div>
-        </div>
-        <aside class="act-ticker" aria-label="Alertes récentes">
-          <div class="act-ticker__head">
-            <span class="act-ticker__title">Alertes</span>
-            <span class="act-ticker__live"><span class="act-ticker__dot"></span> Live</span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
-            <span style="font-size:.68rem;color:var(--muted);"><span id="act-ticker-count">0</span> récents</span>
-            <button type="button" class="act-ticker__pause" id="act-ticker-pause">Pause</button>
-          </div>
-          <div class="act-ticker__list" id="act-ticker-list">
-            <p class="act-ticker__empty">Chargement…</p>
-          </div>
-        </aside>
-      </div>
-      </details>
-    </section>
-
+    <header class="admin-hub-heading"><h1 class="page-title">Activité du site</h1><p class="page-sub">Choisis ce que tu souhaites comprendre. Chaque cadre ouvre sa page.</p></header>
+    <nav class="activity-hub-grid" aria-label="Analyses de l’activité">
+      <a class="activity-hub-card" href="admin-activite-vue.html"><span class="activity-hub-card__icon" aria-hidden="true">◉</span><h2>Vue d’ensemble</h2><p>Les chiffres essentiels et les points à examiner.</p><span class="activity-hub-card__open">Ouvrir →</span></a>
+      <a class="activity-hub-card" href="admin-activite-parcours.html"><span class="activity-hub-card__icon" aria-hidden="true">→</span><h2>Parcours visiteurs</h2><p>Voir les étapes avant une participation et les tentatives sans confirmation.</p><span class="activity-hub-card__open">Ouvrir →</span></a>
+      <a class="activity-hub-card" href="admin-activite-fonctionnalites.html"><span class="activity-hub-card__icon" aria-hidden="true">▦</span><h2>Fonctionnalités</h2><p>Comprendre les blocs vus, utilisés ou peu découverts.</p><span class="activity-hub-card__open">Ouvrir →</span></a>
+      <a class="activity-hub-card" href="admin-activite-reseaux.html"><span class="activity-hub-card__icon" aria-hidden="true">↻</span><h2>Retours réseau</h2><p>Rapprocher les visites répétées d’un même réseau, sans confondre les personnes.</p><span class="activity-hub-card__open">Ouvrir →</span></a>
+      <a class="activity-hub-card" href="admin-activite-utilisateurs.html"><span class="activity-hub-card__icon" aria-hidden="true">♙</span><h2>Activité des utilisateurs</h2><p>Retrouver les inscriptions, désinscriptions et autres actions.</p><span class="activity-hub-card__open">Ouvrir →</span></a>
+      <a class="activity-hub-card" href="admin-activite-outils.html"><span class="activity-hub-card__icon" aria-hidden="true">↓</span><h2>Exporter et nettoyer</h2><p>Télécharger les activités ou gérer l’historique conservé.</p><span class="activity-hub-card__open">Ouvrir →</span></a>
+    </nav>
   </div><!-- /.page -->
 </div><!-- /#gtr-admin-panel -->
 
@@ -171,11 +88,6 @@
 <script src="js/goelo-auth-state.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/goelo-profile.js"></script>
-<script src="js/goelo-journey-insights.js?v=20261103-home-album"></script>
-<script src="js/goelo-activity.js?v=20261102-insights"></script>
-<script src="js/goelo-activity-export.js?v=20261028-export"></script>
-<script src="js/goelo-network-insights.js?v=20261103"></script>
-<script src="js/goelo-admin-activity.js?v=20261103-networks"></script>
 
 <script src="js/admin-page.js?v=20261103" defer></script>
 </body>
