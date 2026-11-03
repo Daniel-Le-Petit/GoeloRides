@@ -285,6 +285,9 @@
       ? participantsPreviewHtml(participants)
       : "";
     var secondaryActions = buildSecondaryActions(card, opts);
+    var showGuestNote = opts.trackSource === "home" && getUserRole() === "visitor" &&
+      !cancelled && !isSortiePassed(card) &&
+      !(global.GoeloPseudoParticipation && global.GoeloPseudoParticipation.hasLocal(card.id));
 
     var statutBadge = "";
     if (opts.viewMode === "team-rider" && card.statut) {
@@ -327,6 +330,7 @@
             "</div>" +
             '<div class="go-sc-card__top-actions">' + buildTopActions(card, opts) + "</div>" +
           "</header>" +
+          (showGuestNote ? '<p class="go-sc-card__join-note">Un pseudo suffit · Sans compte</p>' : "") +
           '<h2 class="go-sc-card__title">' + escapeHtml(card.title) + "</h2>" +
           '<div class="go-sc-card__stats" role="group" aria-label="Statistiques">' +
             '<div class="go-sc-stat"><span class="go-sc-stat__label">Sport</span>' +
