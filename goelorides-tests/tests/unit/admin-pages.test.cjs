@@ -1,8 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'../../..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
-test('le Dashboard ne contient que son titre et ses sept cadres, sans détail ni requête d’activité',()=>{
+test('le Dashboard ne contient que son titre et ses onze cadres regroupés, sans détail ni requête d’activité',()=>{
  const html=read('admin.html');const main=html.slice(html.indexOf('<div id="gtr-admin-panel"'),html.indexOf('</div><!-- /#gtr-admin-panel -->'));
- assert.equal((main.match(/<a href=/g)||[]).length,7);assert(!/<section|<details|<table|<textarea/.test(main));
+ assert.equal((main.match(/<a href=/g)||[]).length,11);assert(!/<section|<details|<table|<textarea/.test(main));
  for(const id of ['id="act-dashboard"','id="admin-home-alerts"','id="admin-participation-panel"'])assert(!main.includes(id));
  for(const script of ['gestion-team-rider-admin.js','goelo-admin-activity.js','admin-home-alerts.js','admin-participation-notifications.js','goelo-onesignal.js'])assert(!html.includes('src="js/'+script)&&!html.includes('src="'+script));
  for(const target of ['admin-participations.html','admin-alertes-accueil.html','admin-activite.html'])assert(main.includes('href="'+target+'"'));
@@ -37,7 +37,7 @@ function dashboardReturn({page='allrides.html',search='',referrer='',role='visit
  const c={URL,URLSearchParams,location:{pathname:'/'+page,search,origin:'https://goelorides.onrender.com'},document:{readyState:'complete',referrer,querySelector:()=>host,createElement:()=>({parentNode:null})},GOELO_ROLE:role,addEventListener:(key,fn)=>handlers[key]=fn};c.window=c;vm.createContext(c);vm.runInContext(read('js/admin-dashboard-return.js'),c);return {c,host,handlers};
 }
 test('retour explicite pour les pages appelées depuis le Dashboard, même après rechargement',()=>{
- for(const page of ['allrides.html','gestion-sorties.html']){
+ for(const page of ['allrides.html','gestion-sorties.html','admin-approbations.html','admin-cyclistes.html','team-rider.html','community-manager.html']){
   const a=dashboardReturn({page,search:'?mode=create&from=admin'});assert.equal(a.host.children.length,1);assert.equal(a.host.children[0].href,'admin.html');assert.equal(a.host.children[0].textContent,'← Retour au Dashboard');
   const b=dashboardReturn({page,referrer:'https://goelorides.onrender.com/admin.html'});assert.equal(b.host.children.length,1);
  }
@@ -65,5 +65,19 @@ test('chaque cadre ouvre une page dédiée avec une seule rubrique et ses retour
   assert.equal(html.includes('id="act-cleanup-btn"'),view==='tools');
   assert.equal(html.includes('id="act-period"'),view!=='tools');
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,file);
+ }
+});
+
+test('toutes les anciennes destinations du menu sont accessibles depuis les cadres, sans liste dupliquée en haut',()=>{
+ const html=read('admin.html'),targets=[...html.matchAll(/<a href="([^"]+)"><strong>/g)].map(m=>m[1].split('?')[0]);
+ for(const page of ['admin-activite.html','admin-participations.html','admin-approbations.html','admin-cyclistes.html','admin-sondages.html','admin-alertes-accueil.html','admin-photos.html','allrides.html','team-rider.html','community-manager.html'])assert(targets.includes(page),page);
+ assert.equal(new Set(targets).size,11);assert.equal((html.match(/class="admin-hub-group"/g)||[]).length,3);
+ for(const page of ['admin.html','admin-activite.html','admin-participations.html','admin-alertes-accueil.html','admin-approbations.html','admin-cyclistes.html','admin-sondages.html','community-manager.html','admin-activite-vue.html','admin-activite-parcours.html','admin-activite-fonctionnalites.html','admin-activite-reseaux.html','admin-activite-utilisateurs.html','admin-activite-outils.html'])assert(!read(page).includes('<nav class="topbar-nav"'),page);
+});
+test('les quatre nouvelles destinations ont un retour Dashboard dans leur espace protégé',()=>{
+ for(const page of ['admin-approbations.html','admin-cyclistes.html','team-rider.html','community-manager.html']){
+  const html=read(page);assert(html.includes('js/admin-dashboard-return.js?v=20261103-menu'));assert(html.includes('css/components/admin-dashboard-return.css?v=20261103-menu'));
+  const a=dashboardReturn({page,search:'?from=admin'});assert.equal(a.host.children[0].textContent,'← Retour au Dashboard');
+  const visitor=dashboardReturn({page,role:'visitor'});assert.equal(visitor.host.children.length,0);
  }
 });

@@ -10,16 +10,13 @@
   <link rel="stylesheet" href="css/pages/admin-shell.css?v=20261103">
 
 <link rel="stylesheet" href="css/components/back-navigation.css">
-<link rel="stylesheet" href="css/pages/admin-dashboard.css?v=20261103-pages">
+<link rel="stylesheet" href="css/pages/admin-dashboard.css?v=20261103-grouped-menu">
 <script>
   if (window.location.hash === '#gtr-approvals') window.location.replace('admin-approbations.html');
 </script>
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
-  <link rel="stylesheet" href="css/components/admin-home-alerts.css?v=20261031-admin-alerts">
-<link rel="stylesheet" href="css/pages/admin-insights.css?v=20261102">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="css/components/admin-participation-notifications.css?v=20261102">
 </head>
 <body class="admin-dashboard">
 
@@ -27,19 +24,6 @@
 <header class="topbar">
   <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
   <span class="topbar-crown">👑 ADMIN</span>
-  <a href="admin-participations.html" data-admin-only id="admin-participation-bell" class="apn-bell" hidden aria-label="Alertes de participation"><span aria-hidden="true">🔔</span> <span class="apn-bell-label">Participations</span> <span id="admin-participation-count" class="apn-badge" hidden>0</span></a>
-  <nav class="topbar-nav" aria-label="Sections admin">
-    <a href="admin-activite.html">Activité</a>
-    <a href="admin-participations.html" id="admin-participation-nav">Participations</a>
-    <a href="admin-approbations.html">Approbations</a>
-    <a href="admin-cyclistes.html">Cyclistes</a>
-    <a href="admin-sondages.html">Sondages</a>
-    <a href="admin-alertes-accueil.html">Alertes accueil</a>
-    <a href="admin-photos.html">Photos des sorties</a>
-    <a href="allrides.html">Itinéraires</a>
-    <a href="team-rider.html">Gérer les sorties</a>
-    <a href="community-manager.html">Communication</a>
-  </nav>
   <div class="topbar-spacer"></div>
   <div class="topbar-user">
     <div class="topbar-av" id="admin-avatar">AD</div>
@@ -62,17 +46,34 @@
 
     <div class="page-header admin-hub-heading">
       <h1 class="page-title">Administration <span>GoëloRides</span></h1>
-      <p class="page-sub">Tes raccourcis et le suivi de l’activité du site.</p>
+      <p class="page-sub">Tes outils pour les sorties, le groupe et le site.</p>
     </div>
-    <nav class="admin-quicklinks" aria-label="Actions rapides">
-      <a href="admin-participations.html"><strong>🔔 Alertes de participation</strong><span>Activer les notifications et voir les inscriptions / désinscriptions</span></a>
-      <a href="gestion-sorties.html?mode=create&amp;from=admin"><strong>＋ Créer une sortie</strong><span>Préparer le prochain rendez-vous</span></a>
-      <a href="allrides.html?from=admin"><strong>Itinéraires</strong><span>Retrouver les parcours réutilisables</span></a>
-      <a href="admin-sondages.html"><strong>Sondages</strong><span>Consulter les réponses</span></a>
-      <a href="admin-photos.html"><strong>Album du groupe</strong><span>Ajouter les photos et les souvenirs des sorties</span></a>
-      <a href="admin-alertes-accueil.html"><strong>Alertes de l’accueil</strong><span>Afficher ou retirer les messages importants sur l’accueil</span></a>
-      <a href="admin-activite.html"><strong>Activité du site</strong><span>Comprendre les visites, les parcours et les participations</span></a>
-    </nav>
+    <div class="admin-hub-group" role="group" aria-labelledby="admin-group-sorties">
+      <header class="admin-hub-group__head"><h2 id="admin-group-sorties">Sorties</h2><p>Préparer les parcours et suivre les participants.</p></header>
+      <nav class="admin-quicklinks" aria-label="Sorties">
+        <a href="gestion-sorties.html?mode=create&amp;from=admin"><strong>＋ Créer une sortie</strong><span>Préparer le prochain rendez-vous</span></a>
+        <a href="team-rider.html?from=admin"><strong>Gérer les sorties</strong><span>Retrouver, modifier et organiser les sorties</span></a>
+        <a href="allrides.html?from=admin"><strong>Itinéraires</strong><span>Retrouver les parcours réutilisables</span></a>
+        <a href="admin-participations.html"><strong>🔔 Alertes de participation</strong><span>Activer les notifications et voir les inscriptions / désinscriptions</span></a>
+      </nav>
+    </div>
+    <div class="admin-hub-group" role="group" aria-labelledby="admin-group-communaute">
+      <header class="admin-hub-group__head"><h2 id="admin-group-communaute">Communauté</h2><p>Gérer les cyclistes et faire vivre le groupe.</p></header>
+      <nav class="admin-quicklinks" aria-label="Communauté">
+        <a href="admin-cyclistes.html?from=admin"><strong>Cyclistes</strong><span>Consulter les membres inscrits</span></a>
+        <a href="admin-approbations.html?from=admin"><strong>Approbations Ride Leaders</strong><span>Examiner et valider les demandes</span></a>
+        <a href="admin-photos.html"><strong>Album du groupe</strong><span>Ajouter les photos et les souvenirs des sorties</span></a>
+        <a href="admin-sondages.html"><strong>Sondages</strong><span>Consulter les réponses du groupe</span></a>
+      </nav>
+    </div>
+    <div class="admin-hub-group" role="group" aria-labelledby="admin-group-site">
+      <header class="admin-hub-group__head"><h2 id="admin-group-site">Site et communication</h2><p>Comprendre les visites et partager les bonnes informations.</p></header>
+      <nav class="admin-quicklinks" aria-label="Site et communication">
+        <a href="admin-activite.html"><strong>Activité du site</strong><span>Comprendre les visites, les parcours et les participations</span></a>
+        <a href="admin-alertes-accueil.html"><strong>Alertes de l’accueil</strong><span>Afficher ou retirer les messages importants sur l’accueil</span></a>
+        <a href="community-manager.html?from=admin"><strong>Communication</strong><span>Préparer et organiser les publications</span></a>
+      </nav>
+    </div>
 
   </div><!-- /.page -->
 </div><!-- /#gtr-admin-panel -->

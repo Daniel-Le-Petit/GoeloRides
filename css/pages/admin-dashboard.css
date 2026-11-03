@@ -93,3 +93,11 @@ body.admin-dashboard { padding-top: 0; }
 .admin-page-return:hover, .admin-page-return:focus-visible { border-color:var(--accent); color:var(--accent); }
 .admin-page-return:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 .admin-dashboard .topbar-nav a[aria-current="page"] { color:var(--accent); border-color:var(--accent); }
+
+/* Dashboard : toutes les destinations sont regroupées en cadres. */
+.admin-hub-group{margin-top:26px}
+.admin-hub-group__head{margin-bottom:12px}
+.admin-hub-group__head h2{margin:0 0 6px;color:#F0F0F0;font:700 1.35rem/1.2 'Barlow Condensed',sans-serif}
+.admin-hub-group__head p{margin:0;color:#bcbcbc;font:400 .8rem/1.5 Inter,sans-serif}
+.admin-hub-group .admin-quicklinks{margin-bottom:0}
+.admin-hub-group .admin-quicklinks a{min-height:105px}
