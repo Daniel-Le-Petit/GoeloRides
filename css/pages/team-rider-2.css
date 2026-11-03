@@ -114,3 +114,17 @@
       white-space: normal;
       word-break: break-word;
     }
+
+/* Une seule entrée Mes sorties ; création visible au-dessus de la liste. */
+.tr-outings-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;margin-bottom:24px}
+.tr-outings-header h1{margin:0 0 8px;color:#F0F0F0;font:800 2rem/1.1 'Barlow Condensed',sans-serif}
+.tr-outings-header p{margin:0;color:#bcbcbc;font:400 .85rem/1.5 Inter,sans-serif}
+a.tr-outings-create,a.tr-outings-create:visited{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:12px 18px;border:1px solid #C8F135;border-radius:10px;background:#C8F135;color:#0D0D0D;font:700 .9rem/1.4 Inter,sans-serif;text-decoration:none;text-align:center}
+a.tr-outings-create:hover{background:#d7ff58}
+a.tr-outings-create:focus-visible,.tr-outings-tools summary:focus-visible{outline:2px solid #C8F135;outline-offset:3px}
+.tr-outings-tools{margin-top:28px;padding:14px 18px;border:1px solid #2E2E2E;border-radius:12px;background:#1A1A1A}
+.tr-outings-tools summary{display:flex;align-items:center;min-height:44px;color:#bcbcbc;font:600 .85rem/1.4 Inter,sans-serif;cursor:pointer}
+.tr-outings-tools summary::after{content:'＋';margin-left:auto;color:#C8F135}
+.tr-outings-tools[open] summary::after{content:'−'}
+a.tr-outings-communication{display:inline-flex;align-items:center;min-height:44px;margin:12px 0;color:#C8F135;font-size:.85rem}
+@media(max-width:600px){.tr-outings-header{align-items:stretch;flex-direction:column}.tr-outings-create{width:100%}}

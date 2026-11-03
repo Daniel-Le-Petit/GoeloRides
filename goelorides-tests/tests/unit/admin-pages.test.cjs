@@ -1,8 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'../../..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
-test('le Dashboard ne contient que son titre et ses onze cadres regroupés, sans détail ni requête d’activité',()=>{
+test('le Dashboard ne contient que son titre et ses dix cadres regroupés, sans détail ni requête d’activité',()=>{
  const html=read('admin.html');const main=html.slice(html.indexOf('<div id="gtr-admin-panel"'),html.indexOf('</div><!-- /#gtr-admin-panel -->'));
- assert.equal((main.match(/<a href=/g)||[]).length,11);assert(!/<section|<details|<table|<textarea/.test(main));
+ assert.equal((main.match(/<a href=/g)||[]).length,10);assert(!/<section|<details|<table|<textarea/.test(main));
  for(const id of ['id="act-dashboard"','id="admin-home-alerts"','id="admin-participation-panel"'])assert(!main.includes(id));
  for(const script of ['gestion-team-rider-admin.js','goelo-admin-activity.js','admin-home-alerts.js','admin-participation-notifications.js','goelo-onesignal.js'])assert(!html.includes('src="js/'+script)&&!html.includes('src="'+script));
  for(const target of ['admin-participations.html','admin-alertes-accueil.html','admin-activite.html'])assert(main.includes('href="'+target+'"'));
@@ -71,7 +71,7 @@ test('chaque cadre ouvre une page dédiée avec une seule rubrique et ses retour
 test('toutes les anciennes destinations du menu sont accessibles depuis les cadres, sans liste dupliquée en haut',()=>{
  const html=read('admin.html'),targets=[...html.matchAll(/<a href="([^"]+)"><strong>/g)].map(m=>m[1].split('?')[0]);
  for(const page of ['admin-activite.html','admin-participations.html','admin-approbations.html','admin-cyclistes.html','admin-sondages.html','admin-alertes-accueil.html','admin-photos.html','allrides.html','team-rider.html','community-manager.html'])assert(targets.includes(page),page);
- assert.equal(new Set(targets).size,11);assert.equal((html.match(/class="admin-hub-group"/g)||[]).length,3);
+ assert.equal(new Set(targets).size,10);assert.equal((html.match(/class="admin-hub-group"/g)||[]).length,3);
  for(const page of ['admin.html','admin-activite.html','admin-participations.html','admin-alertes-accueil.html','admin-approbations.html','admin-cyclistes.html','admin-sondages.html','community-manager.html','admin-activite-vue.html','admin-activite-parcours.html','admin-activite-fonctionnalites.html','admin-activite-reseaux.html','admin-activite-utilisateurs.html','admin-activite-outils.html'])assert(!read(page).includes('<nav class="topbar-nav"'),page);
 });
 test('les quatre nouvelles destinations ont un retour Dashboard dans leur espace protégé',()=>{
@@ -80,4 +80,15 @@ test('les quatre nouvelles destinations ont un retour Dashboard dans leur espace
   const a=dashboardReturn({page,search:'?from=admin'});assert.equal(a.host.children[0].textContent,'← Retour au Dashboard');
   const visitor=dashboardReturn({page,role:'visitor'});assert.equal(visitor.host.children.length,0);
  }
+});
+
+test('Mes sorties remplace les deux cadres proches ; la création est proposée dans la page de liste',()=>{
+ const hub=read('admin.html'),page=read('team-rider.html');
+ assert(!hub.includes('<strong>Gérer les sorties</strong>'));assert(!hub.includes('<strong>＋ Créer une sortie</strong>'));
+ assert.equal((hub.match(/<strong>Mes sorties<\/strong>/g)||[]).length,1);
+ assert(page.includes('<h1>Mes sorties</h1>'));
+ assert(page.indexOf('class="tr-outings-create"')<page.indexOf('id="sorties-list"'));
+ assert.match(page,/<a class="tr-outings-create" href="gestion-sorties.html\?mode=create">/);
+ assert(page.indexOf('class="tr-outings-tools"')>page.indexOf('id="sorties-list"'));
+ assert(page.includes('id="urgence-section"'));assert(page.includes('id="demands-section"'));
 });

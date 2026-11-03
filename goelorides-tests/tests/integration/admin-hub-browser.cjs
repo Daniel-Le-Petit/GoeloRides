@@ -9,6 +9,7 @@ const root=path.resolve(__dirname,'../../..');
   if(u.pathname==='/js/auth.js')return route.fulfill({contentType:'text/javascript',body:`
    window.adminCalls=[];const visitor=new URLSearchParams(location.search).has('visitor');
    window.GoeloAuthState.setState({pending:false,role:visitor?'visitor':'admin',user:visitor?null:{id:'11111111-1111-4111-8111-111111111111'},pseudo:visitor?null:'Daniel'});
+   window.GOELO_ROLE=visitor?'visitor':'admin';window.GOELO_USER=visitor?null:{id:'11111111-1111-4111-8111-111111111111'};window.GOELO_DISPLAY_NAME='Daniel';
    window.goeloGetSb=()=>({rpc:async(name,args)=>{adminCalls.push(name);
     if(name==='admin_participation_notifications_list')return {data:{ok:true,items:[],unread_count:0,device_enabled:false,service:{configured:false}}};
     if(name==='admin_home_alerts_list')return {data:[{route_id:'r1',title:'Boucle des falaises',date:'2099-04-13',departure:'09:00',group:'Groupe vert',visible:false}]};
@@ -27,7 +28,16 @@ const root=path.resolve(__dirname,'../../..');
  });
  const overflow=async()=>assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Débordement horizontal');
  await page.goto('http://admin.test/admin.html');await page.locator('#gtr-admin-panel').waitFor({state:'visible'});
- assert.equal(await page.locator('.admin-quicklinks a').count(),11);assert.equal(await page.locator('.admin-hub-group').count(),3);assert.equal(await page.locator('.topbar-nav').count(),0);assert.equal(await page.locator('#act-dashboard,#admin-home-alerts,#admin-participation-panel').count(),0);assert.deepEqual(await page.evaluate(()=>window.adminCalls),[]);await overflow();await page.screenshot({path:'/tmp/admin-hub-mobile.png',fullPage:true});
+ assert.equal(await page.locator('.admin-quicklinks a').count(),10);assert.equal(await page.locator('.admin-hub-group').count(),3);assert.equal(await page.locator('.topbar-nav').count(),0);assert.equal(await page.locator('#act-dashboard,#admin-home-alerts,#admin-participation-panel').count(),0);assert.deepEqual(await page.evaluate(()=>window.adminCalls),[]);await overflow();await page.screenshot({path:'/tmp/admin-hub-mobile.png',fullPage:true});
+ await page.locator('.admin-quicklinks').getByRole('link',{name:/Mes sorties/}).click();
+ await page.getByRole('heading',{name:'Mes sorties',exact:true}).waitFor();
+ assert.equal(await page.locator('.tr-outings-create').getAttribute('href'),'gestion-sorties.html?mode=create');
+ assert.equal(await page.locator('.tr-outings-tools').evaluate(el=>el.open),false);
+ assert(await page.locator('#sorties-list').isVisible());
+ for(const width of [320,390,1100]){await page.setViewportSize({width,height:844});await overflow();assert((await page.locator('.tr-outings-create').boundingBox()).height>=44);}
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'/tmp/admin-mes-sorties-mobile.png',fullPage:true});
+ await page.getByRole('link',{name:'← Retour au Dashboard'}).click();await page.locator('.admin-hub-group').first().waitFor();
+
  await page.getByRole('link',{name:/Alertes de participation/}).last().click();await page.locator('#admin-participation-panel').waitFor({state:'visible'});assert(await page.getByRole('button',{name:'Activer les alertes sur cet appareil'}).isVisible());await overflow();await page.screenshot({path:'/tmp/admin-participations-mobile.png',fullPage:true});
  await page.getByRole('link',{name:'← Retour au Dashboard'}).click();await page.locator('.admin-hub-group').first().waitFor();assert.deepEqual(await page.evaluate(()=>window.adminCalls),[]);
  await page.locator('.admin-quicklinks').getByRole('link',{name:/Alertes de l’accueil/}).click();await page.locator('.admin-ha-card').waitFor();assert(await page.locator('[data-alert-action=show]').isVisible());await overflow();await page.screenshot({path:'/tmp/admin-alertes-accueil-mobile.png',fullPage:true});
