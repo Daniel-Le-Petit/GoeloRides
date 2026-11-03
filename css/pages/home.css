@@ -2038,3 +2038,6 @@ body.gr-mobile-menu-open .gr-header-connect:focus-visible,
 
 .gr-footer-links .gr-footer-link { width: 44px; min-height: 44px; justify-content: center; flex-shrink: 0; }
 .gr-footer-links .gr-footer-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 6px; }
+
+/* Une inscription invitée expliquée près de Rejoindre, sans élargir les boutons. */
+#gr-upcoming-rides .go-sc-card__join-note{align-self:flex-end;max-width:100%;margin:0;padding:6px 9px;border:1px solid rgba(255,255,255,.16);border-radius:8px;background:rgba(0,0,0,.62);color:#edf5ef;font:500 .75rem/1.4 Inter,sans-serif;white-space:normal;text-align:right}
