@@ -128,3 +128,17 @@ a.tr-outings-create:focus-visible,.tr-outings-tools summary:focus-visible{outlin
 .tr-outings-tools[open] summary::after{content:'−'}
 a.tr-outings-communication{display:inline-flex;align-items:center;min-height:44px;margin:12px 0;color:#C8F135;font-size:.85rem}
 @media(max-width:600px){.tr-outings-header{align-items:stretch;flex-direction:column}.tr-outings-create{width:100%}}
+
+/* Petits écrans : filtres sur deux colonnes et en-tête sans débordement. */
+body .topbar{flex-wrap:wrap}
+body .topbar-user{min-width:0;max-width:100%}
+body .topbar-user #user-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dashboard>.tabs{flex-wrap:wrap}
+#dashboard>.tabs .stab{min-height:44px}
+@media(max-width:600px){
+ body .topbar{padding:.75rem .85rem;gap:8px}
+ body .topbar-user{margin-left:auto}
+ body .topbar-user #user-name{max-width:110px}
+ #dashboard>.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #dashboard>.tabs .stab{min-width:0;padding:8px}
+}

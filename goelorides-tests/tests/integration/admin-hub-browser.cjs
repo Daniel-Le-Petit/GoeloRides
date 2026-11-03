@@ -26,7 +26,7 @@ const root=path.resolve(__dirname,'../../..');
   const file=path.resolve(root,'.'+decodeURIComponent(u.pathname));if(!file.startsWith(root+path.sep)||!fs.existsSync(file))return route.fulfill({status:404,body:''});
   return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.html')?'text/html':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream'});
  });
- const overflow=async()=>assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Débordement horizontal');
+ const overflow=async()=>{const issue=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth?null:{url:location.pathname,width:innerWidth,nodes:Array.from(document.querySelectorAll('body *')).filter(el=>{const r=el.getBoundingClientRect();return r.width&&r.right>innerWidth+1}).slice(0,8).map(el=>({tag:el.tagName,class:el.className,id:el.id,right:el.getBoundingClientRect().right}))});assert.equal(issue,null,JSON.stringify(issue));};
  await page.goto('http://admin.test/admin.html');await page.locator('#gtr-admin-panel').waitFor({state:'visible'});
  assert.equal(await page.locator('.admin-quicklinks a').count(),10);assert.equal(await page.locator('.admin-hub-group').count(),3);assert.equal(await page.locator('.topbar-nav').count(),0);assert.equal(await page.locator('#act-dashboard,#admin-home-alerts,#admin-participation-panel').count(),0);assert.deepEqual(await page.evaluate(()=>window.adminCalls),[]);await overflow();await page.screenshot({path:'/tmp/admin-hub-mobile.png',fullPage:true});
  await page.locator('.admin-quicklinks').getByRole('link',{name:/Mes sorties/}).click();
