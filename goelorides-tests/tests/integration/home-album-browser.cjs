@@ -4,6 +4,7 @@ const photo=n=>BASE+'/storage/v1/object/public/ride-photos/test/'+n+'.jpg';
 const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',published:true,photos:[photo(1),photo(2)]},{id:'two',title:'Tour du Goëlo',ride_date:'2099-04-12',published:true,photos:[photo(3)]}];
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox']}),page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];let mode='ok';page.on('pageerror',e=>errors.push(e.message));
+ page.setDefaultTimeout(10000);page.setDefaultNavigationTimeout(15000);
  const config="window.GOELO_CONFIG={SUPABASE_URL:'"+BASE+"',SUPABASE_ANON_KEY:'public-test'};";
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());
@@ -22,4 +23,4 @@ const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',publi
  await page.locator('[data-home-album-photo]').nth(1).click();await page.waitForURL('**/dans-la-roue.html#album-two');await page.locator('#album-two').waitFor();assert(await page.evaluate(()=>window.scrollY>0));await page.locator('#album-two .cover').click();assert(await page.locator('#photo-viewer').isVisible());await page.locator('#photo-close').click();assert(await page.locator('#photo-viewer').isHidden());
  for(const m of ['empty','error','broken']){mode=m;await page.goto('http://home.test/preview.html');await page.waitForFunction(()=>window.GoeloHomeAlbum);await page.evaluate(()=>window.GoeloHomeAlbum.load());await page.locator('#gr-home-album').waitFor({state:'hidden'});}
  assert.deepEqual(errors,[]);await browser.close();console.log('PASS : aperçus publiés, liens vers les albums, visionneuse conservée, CTA sorties, mobile/desktop et repli silencieux.');
-})().catch(e=>{console.error(e);process.exitCode=1});
+})().catch(e=>{console.error(e);process.exit(1)});
