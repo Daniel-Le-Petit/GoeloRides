@@ -122,10 +122,16 @@
     var priorities = summary.features.filter(function (row) { return row.eligible >= 5 && (row.unseen || row.errors); })
       .sort(function (a, b) { return b.errors - a.errors || b.unseen / b.eligible - a.unseen / a.eligible; }).slice(0, 3);
     panel.innerHTML = '<h3 class="act-registration-title">Ce qui se passe sur le site</h3>' + coverageHtml() +
-      '<div class="act-insight-kpis">' + [
-        [summary.sessions.length, 'Parcours observés'], [summary.clicked, 'Avec un clic de participation'],
-        [summary.confirmed, 'Avec une inscription confirmée'], [summary.noConfirmation, 'Clic sans confirmation observée']
-      ].map(function (card) { return '<div><strong>' + card[0] + '</strong><span>' + card[1] + '</span></div>'; }).join('') + '</div>' +
+      registrationOverviewHtml() +
+      '<h3 class="act-registration-title">Parcours à examiner</h3>' +
+      '<div class="act-participation-checks">' + [
+        ['viewed', 'Consultation sans clic observé'],
+        ['clicked', 'Clic sans confirmation observée'],
+        ['error', 'Erreur technique observée']
+      ].map(function (item) {
+        var count = _sessions.filter(function (session) { return journeyMatches(session, item[0]); }).length;
+        return '<button type="button" data-act-review-journeys="' + item[0] + '"' + (!count ? ' disabled' : '') + '><strong>' + count + '</strong><span>' + item[1] + '</span><small>Voir les parcours →</small></button>';
+      }).join('') + '</div>' +
       '<p class="act-observation-note">Ces étapes peuvent manquer dans l’historique chargé. Aucune absence de confirmation ne prouve un abandon.</p>' +
       '<h3 class="act-registration-title">À examiner en priorité</h3>' +
       (priorities.length ? '<div class="act-insight-priorities">' + priorities.map(function (row) {
@@ -192,16 +198,20 @@
       '<ul>' + session.items.map(function (event) { return '<li>' + esc(fmtTime(event.created_at)) + ' · ' + esc(event.event_type) + '</li>'; }).join('') + '</ul></details>';
   }
 
+  function journeyMatches(session, filter) {
+    var progress = window.GoeloActivity.registrationProgress(session);
+    return filter === 'all' || (filter === 'confirmed' && progress.confirmed) ||
+      (filter === 'clicked' && progress.clicked && !progress.confirmed && !progress.waiting) ||
+      (filter === 'error' && progress.hasError) || (filter === 'auth' && progress.authRequested) ||
+      (filter === 'viewed' && progress.viewed && !progress.clicked && !progress.confirmed && !progress.waiting);
+  }
+
   function renderJourneys() {
     var GA = window.GoeloActivity;
     var panel = _$('act-analytics-panel');
     if (!panel || !GA) return;
     var filtered = _sessions.filter(function (session) {
-      var progress = GA.registrationProgress(session);
-      return _journeyFilter === 'all' || (_journeyFilter === 'confirmed' && progress.confirmed) ||
-        (_journeyFilter === 'clicked' && progress.clicked && !progress.confirmed) ||
-        (_journeyFilter === 'error' && progress.hasError) || (_journeyFilter === 'auth' && progress.authRequested) ||
-        (_journeyFilter === 'viewed' && progress.viewed && !progress.clicked && !progress.confirmed);
+      return journeyMatches(session, _journeyFilter);
     });
     var pageCount = Math.max(1, Math.ceil(filtered.length / JOURNEYS_PER_PAGE));
     _journeyPage = Math.min(_journeyPage, pageCount - 1);
@@ -527,6 +537,15 @@
         renderJourneys();
       });
       panel.addEventListener("click", function (e) {
+        var review = e.target.closest('[data-act-review-journeys]');
+        if (review) {
+          var filter = review.getAttribute('data-act-review-journeys');
+          if (['viewed', 'clicked', 'error'].indexOf(filter) === -1 || review.disabled) return;
+          _journeyFilter = filter; _journeyPage = 0; _selectedSessionId = null;
+          setActiveTab('journeys');
+          var select = _$('act-journey-filter'); if (select) select.focus();
+          return;
+        }
         if (e.target.closest('[data-act-open-features]')) { setActiveTab('features'); return; }
         if (e.target.closest('[data-act-show-signups]')) {
           _memberCategory = 'signups';

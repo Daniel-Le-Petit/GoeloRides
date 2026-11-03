@@ -24,3 +24,14 @@
 .act-feature-card details p + p { margin-top:10px; }
 #admin-activity-details button:focus-visible, #admin-activity-details select:focus-visible, #admin-activity-details summary:focus-visible { outline:2px solid #a5d2bd; outline-offset:3px; }
 @media(min-width:900px) { #admin-activity-details .act-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); } .act-feature-list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Accès direct aux parcours utiles, aux couleurs GoëloRides. */
+#admin-activity-details .act-participation-checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 16px}
+#admin-activity-details .act-participation-checks button{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;min-height:100px;padding:14px;border:1px solid #4a4a4a;border-radius:12px;background:#1A1A1A;color:#F0F0F0;font:600 13px/1.5 Inter,sans-serif;text-align:left;cursor:pointer}
+#admin-activity-details .act-participation-checks strong{font-size:26px;line-height:1.1;color:#C8F135}
+#admin-activity-details .act-participation-checks small{color:#C8F135;font-size:12px}
+#admin-activity-details .act-participation-checks button:hover:not(:disabled){border-color:#C8F135}
+#admin-activity-details .act-participation-checks button:disabled{opacity:.6;cursor:default}
+#admin-activity-details .act-participation-checks button:disabled small{display:none}
+#admin-activity-details .act-participation-checks button:focus-visible{outline:2px solid #C8F135;outline-offset:3px}
+@media(max-width:600px){#admin-activity-details .act-participation-checks{grid-template-columns:1fr}#admin-activity-details .act-participation-checks button{min-height:80px}}
