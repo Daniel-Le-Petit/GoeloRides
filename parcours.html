@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/parcours.css?v=20261103-calendar">
+  <link rel="stylesheet" href="css/pages/parcours.css?v=20261103-aligned-actions">
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/pages/pseudo-participation.css?v=20261103-confirmation">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -105,17 +105,18 @@
         </div>
       </div>
 
-      <button type="button" class="pd-level-shortcut" id="pd-level-shortcut" aria-controls="pd-level-panel" aria-expanded="false" disabled>Cette sortie est-elle pour moi ? <span aria-hidden="true">→</span></button>
+      <div class="pd-hero-tools">
+        <button type="button" class="pd-level-shortcut" id="pd-level-shortcut" aria-label="Cette sortie est-elle adaptée à mon niveau ?" aria-controls="pd-level-panel" aria-expanded="false" disabled>Mon niveau</button>
+        <div class="pd-calendar" id="pd-calendar" hidden>
+          <a class="pd-calendar__link" id="pd-calendar-link" aria-label="Ajouter cette sortie à mon calendrier" download>Calendrier</a>
+          <p>Agenda non synchronisé : vérifie cette fiche avant le départ.</p>
+        </div>
+      </div>
 
       <!-- Participation -->
       <div class="pd-join">
         <button type="button" class="pd-join__btn" id="pd-join-btn">Je participe !</button>
         <p class="pd-join__count" id="pd-join-count"></p>
-      </div>
-
-      <div class="pd-calendar" id="pd-calendar" hidden>
-        <a class="pd-calendar__link" id="pd-calendar-link" download>Ajouter à mon calendrier</a>
-        <p>Fichier calendrier (.ics). Vérifie cette page avant le départ : l’agenda ne se met pas à jour automatiquement.</p>
       </div>
 
       <!-- Message important -->
