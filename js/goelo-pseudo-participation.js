@@ -73,10 +73,14 @@
     field('[data-pseudo-fields]').hidden = data.joined;
     field('[data-pseudo-cancel]').hidden = !data.joined;
     field('[data-pseudo-submit]').hidden = data.joined;
-    field('[data-pseudo-title]').textContent = data.joined ? 'Ma participation' : 'Je participe à cette sortie';
+    field('[data-pseudo-title]').textContent = data.joined ? 'Participation confirmée' : 'Je participe à cette sortie';
     field('[data-pseudo-message]').textContent = data.joined
       ? (confirmed ? 'Tu es inscrit·e, ' : 'Tu participes à cette sortie, ') + data.pseudo + ' !'
       : confirmed ? 'Ta participation est annulée.' : 'Ton pseudo sera affiché parmi les participants.';
+    field('[data-pseudo-next]').hidden = !data.joined;
+    field('[data-pseudo-place]').hidden = !current.place;
+    field('[data-pseudo-place]').textContent = current.place ? 'Lieu de rendez-vous : ' + current.place : '';
+    field('[data-pseudo-details]').setAttribute('href', 'parcours.html?id=' + encodeURIComponent(current.id));
     field('[data-pseudo-storage]').textContent = data.joined
       ? persistent ? 'Tu peux retrouver et annuler ta participation sur cet appareil. Si tu effaces ses données, contacte l’organisateur pour annuler.' : 'Cet appareil ne peut pas mémoriser ta participation. Contacte l’organisateur si tu souhaites annuler après avoir quitté la page.'
       : 'Sans compte, sans mot de passe, sans e-mail.';
@@ -91,7 +95,7 @@
     dialog = document.createElement('dialog');
     dialog.className = 'go-pseudo-dialog';
     dialog.setAttribute('aria-labelledby', 'go-pseudo-title');
-    dialog.innerHTML = '<form><h2 id="go-pseudo-title" data-pseudo-title>Je participe à cette sortie</h2><p class="go-pseudo-route" data-pseudo-route></p><div data-pseudo-fields><label for="go-pseudo-input">Ton pseudo</label><input id="go-pseudo-input" name="pseudo" autocomplete="nickname" placeholder="Ex. : Camille" minlength="2" maxlength="60" required></div><p data-pseudo-message role="status" aria-live="polite"></p><p class="go-pseudo-note" data-pseudo-storage>Sans compte, sans mot de passe, sans e-mail.</p><button type="submit" data-pseudo-submit>Confirmer ma participation</button><button type="button" data-pseudo-cancel hidden>Annuler ma participation</button><button type="button" class="go-pseudo-close" data-pseudo-close>Fermer</button></form>';
+    dialog.innerHTML = '<form><h2 id="go-pseudo-title" data-pseudo-title>Je participe à cette sortie</h2><p class="go-pseudo-route" data-pseudo-route></p><div data-pseudo-fields><label for="go-pseudo-input">Ton pseudo</label><input id="go-pseudo-input" name="pseudo" autocomplete="nickname" placeholder="Ex. : Camille" minlength="2" maxlength="60" required></div><p data-pseudo-message role="status" aria-live="polite"></p><div class="go-pseudo-next" data-pseudo-next hidden><p data-pseudo-place hidden></p><p>Retrouve les horaires, le point de départ et les informations pratiques dans les détails de la sortie.</p><a class="go-pseudo-details" data-pseudo-details>Voir les détails de la sortie →</a></div><p class="go-pseudo-note" data-pseudo-storage>Sans compte, sans mot de passe, sans e-mail.</p><button type="submit" data-pseudo-submit>Confirmer ma participation</button><button type="button" data-pseudo-cancel hidden>Annuler ma participation</button><button type="button" class="go-pseudo-close" data-pseudo-close>Fermer</button></form>';
     document.body.appendChild(dialog);
     dialog.addEventListener('cancel', function (event) { if (busy) event.preventDefault(); });
     dialog.addEventListener('close', function () {
@@ -141,6 +145,7 @@
     field('[data-pseudo-fields]').hidden = false;
     field('[data-pseudo-submit]').hidden = false;
     field('[data-pseudo-cancel]').hidden = true;
+    field('[data-pseudo-next]').hidden = true;
     field('[data-pseudo-message]').textContent = 'Vérification de ta participation…';
     field('[data-pseudo-storage]').textContent = 'Sans compte, sans mot de passe, sans e-mail.';
     dialog.showModal(); lock(true);
@@ -161,7 +166,7 @@
       var button = event.target.closest('[data-guest-join]');
       if (!button) return;
       event.preventDefault(); event.stopImmediatePropagation();
-      open({ id: button.getAttribute('data-guest-join'), title: button.getAttribute('data-guest-title'), summary: button.getAttribute('data-guest-summary') }, button);
+      open({ id: button.getAttribute('data-guest-join'), title: button.getAttribute('data-guest-title'), summary: button.getAttribute('data-guest-summary'), place: button.getAttribute('data-guest-place') }, button);
     }, true);
   }
   global.GoeloPseudoParticipation = { open: open, hasLocal: hasLocal, refreshLocal: refreshLocal };

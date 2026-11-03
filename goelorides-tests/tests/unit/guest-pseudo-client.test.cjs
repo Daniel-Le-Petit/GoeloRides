@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const source = fs.readFileSync(path.resolve(__dirname,'../../../js/goelo-pseudo-participation.js'),'utf8');
 function app(options={}) {
-  class Element { constructor() { this.handlers={}; this.hidden=false; this.value=''; } addEventListener(name,fn) { this.handlers[name]=fn; } setAttribute() {} focus() { this.focused=true; } }
+  class Element { constructor() { this.handlers={}; this.hidden=false; this.value=''; } addEventListener(name,fn) { this.handlers[name]=fn; } setAttribute(name,value) { (this.attributes ||= {})[name]=value; } focus() { this.focused=true; } }
   const fields={};const field=selector=>fields[selector]||(fields[selector]=new Element());
   const dialog=new Element();dialog.querySelector=field;dialog.querySelectorAll=()=>['[data-pseudo-submit]','[data-pseudo-cancel]','[data-pseudo-close]'].map(field);dialog.showModal=()=>dialog.open=true;dialog.close=()=>{dialog.open=false;dialog.handlers.close?.()};field('form').reset=()=>field('input').value='';field('form').reportValidity=()=>field('input').value.trim().length>=2;
   const store=new Map(),calls=[],events=[],tracking=[];let active=false,fail=options.fail;
@@ -28,3 +28,20 @@ test('stockage bloqué : participation possible, limite d’annulation annoncée
 });
 
 test('le clic ouvre une tentative et la fermeture sans confirmation ne devient pas une inscription',async()=>{const a=app();await a.api.open({id:'r1'});assert.equal(a.tracking[0],'request');a.dialog.close();assert.equal(a.tracking[1],'unknown');assert.equal(a.events.length,0);});
+
+test('repères visibles seulement après confirmation et masqués après désinscription',async()=>{
+  const a=app();await a.api.open({id:'r/<test>',title:'Boucle',summary:'13 avril · 08h30',place:'Esplanade <du casino>'});
+  assert.equal(a.field('[data-pseudo-next]').hidden,true);
+  a.field('input').value='Camille';await a.submit();
+  assert.equal(a.field('[data-pseudo-next]').hidden,false);
+  assert.equal(a.field('[data-pseudo-details]').attributes.href,'parcours.html?id=r%2F%3Ctest%3E');
+  assert.equal(a.field('[data-pseudo-title]').textContent,'Participation confirmée');
+  assert.equal(a.field('[data-pseudo-place]').textContent,'Lieu de rendez-vous : Esplanade <du casino>');
+  await a.field('[data-pseudo-cancel]').handlers.click();
+  assert.equal(a.field('[data-pseudo-next]').hidden,true);
+});
+test('erreur serveur : aucun repère de confirmation affiché',async()=>{
+  const a=app({fail:'offline'});await a.api.open({id:'r1'});a.field('input').value='Camille';await a.submit();
+  assert.equal(a.field('[data-pseudo-next]').hidden,true);
+  assert.equal(a.events.length,0);
+});
