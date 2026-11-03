@@ -1,0 +1,40 @@
+name: Dashboard en cadres et pages détaillées
+on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'admin-participations.html'
+      - 'admin-alertes-accueil.html'
+      - 'admin-activite.html'
+      - 'js/admin-page.js'
+      - 'js/admin-participation-notifications.js'
+      - 'css/pages/admin-shell.css'
+      - 'css/pages/admin-dashboard.css'
+      - 'goelorides-tests/tests/unit/admin-pages.test.cjs'
+      - 'goelorides-tests/tests/integration/admin-hub-browser.cjs'
+      - '.github/workflows/admin-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Contrôles de structure, accès admin et fonctions existantes
+        run: node --test goelorides-tests/tests/unit/admin-pages.test.cjs goelorides-tests/tests/unit/admin-participation*.test.cjs goelorides-tests/tests/unit/admin-insights.test.cjs
+      - run: npm ci --prefix goelorides-tests
+      - name: Installer le navigateur de test
+        run: node goelorides-tests/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Vérifier les parcours mobiles sur des données simulées
+        run: |
+          node goelorides-tests/tests/integration/admin-hub-browser.cjs
+          node goelorides-tests/tests/integration/admin-home-alerts-browser.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-pages-mobile
+          path: /tmp/admin-*-mobile.png

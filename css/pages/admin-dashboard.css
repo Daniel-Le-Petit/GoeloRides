@@ -85,3 +85,11 @@ body.admin-dashboard { padding-top: 0; }
   .act-visit-card { padding: 0.8rem; }
   .act-member-filters { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Dashboard en cadres ; détails sur des pages dédiées. */
+.admin-hub-heading { padding:1.25rem; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
+.admin-hub-heading .page-sub { margin-bottom:0; }
+.admin-page-return { display:inline-flex; align-items:center; min-height:44px; margin-bottom:1rem; padding:0.5rem 0.85rem; border:1px solid var(--border); border-radius:10px; color:var(--text); text-decoration:none; font-size:0.85rem; }
+.admin-page-return:hover, .admin-page-return:focus-visible { border-color:var(--accent); color:var(--accent); }
+.admin-page-return:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.admin-dashboard .topbar-nav a[aria-current="page"] { color:var(--accent); border-color:var(--accent); }

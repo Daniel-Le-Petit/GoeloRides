@@ -1,6 +1,6 @@
 # Alertes privées de participation
 
-La cloche du Dashboard affiche jusqu’à 40 changements confirmés, avec les non lus en premier et un compteur de toutes les alertes non lues. Marquer les alertes affichées comme lues permet de faire remonter les non lues plus anciennes. Une lecture est propre à chaque administrateur. Le bouton « Marquer les alertes affichées comme lues » ne marque pas des événements arrivés après le chargement.
+La page « Alertes de participation », accessible depuis son cadre sur le Dashboard, affiche jusqu’à 40 changements confirmés, avec les non lus en premier et un compteur de toutes les alertes non lues. Marquer les alertes affichées comme lues permet de faire remonter les non lues plus anciennes. Une lecture est propre à chaque administrateur. Le bouton « Marquer les alertes affichées comme lues » ne marque pas des événements arrivés après le chargement.
 
 La migration `20261102210000_admin_participation_notifications.sql` observe directement `signups` et `guest_participants`. Elle compare leur état effectif à un état de référence initialisé sans notification. Les membres, invités sans compte et ajouts/retraits manuels sont couverts. Une liste d'attente n'est pas une participation confirmée ; sa promotion l'est. Les anciennes lignes, répétitions, simples clics, écritures du journal et transactions annulées ne créent pas de notification. Supprimer une sortie ne rejoue pas les désinscriptions. La migration se lance dans une transaction et bloque brièvement les écritures de ces deux tables pour installer une référence cohérente.
 

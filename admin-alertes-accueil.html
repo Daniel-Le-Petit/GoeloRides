@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Alertes de l’accueil · Administration GoëloRides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/admin-shell.css?v=20261103">
+
+<link rel="stylesheet" href="css/components/back-navigation.css">
+<link rel="stylesheet" href="css/pages/admin-dashboard.css?v=20261103-pages">
+<script>
+  if (window.location.hash === '#gtr-approvals') window.location.replace('admin-approbations.html');
+</script>
+  <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
+  <link rel="stylesheet" href="css/components/admin-home-alerts.css?v=20261031-admin-alerts">
+<link rel="stylesheet" href="css/pages/admin-insights.css?v=20261102">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="css/components/admin-participation-notifications.css?v=20261102">
+</head>
+<body class="admin-dashboard">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
+  <span class="topbar-crown">👑 ADMIN</span>
+  <a href="admin-participations.html" data-admin-only id="admin-participation-bell" class="apn-bell" hidden aria-label="Alertes de participation"><span aria-hidden="true">🔔</span> <span class="apn-bell-label">Participations</span> <span id="admin-participation-count" class="apn-badge" hidden>0</span></a>
+  <nav class="topbar-nav" aria-label="Sections admin">
+    <a href="admin-activite.html">Activité</a>
+    <a href="admin-participations.html" id="admin-participation-nav">Participations</a>
+    <a href="admin-approbations.html">Approbations</a>
+    <a href="admin-cyclistes.html">Cyclistes</a>
+    <a href="admin-sondages.html">Sondages</a>
+    <a href="admin-alertes-accueil.html" aria-current="page">Alertes accueil</a>
+    <a href="admin-photos.html">Photos des sorties</a>
+    <a href="allrides.html">Itinéraires</a>
+    <a href="team-rider.html">Gérer les sorties</a>
+    <a href="community-manager.html">Communication</a>
+  </nav>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <div class="topbar-av" id="admin-avatar">AD</div>
+    <span id="admin-name">Admin</span>
+    <button class="topbar-logout" id="admin-logout-btn">Déconnexion</button>
+  </div>
+</header>
+
+<!-- GATE : visible si non admin -->
+<div id="gtr-admin-gate">
+  <div class="gate-icon">🔒</div>
+  <div class="gate-title">Accès restreint</div>
+  <p class="gate-sub">Cette page est réservée aux administrateurs GoëloRides.</p>
+  <button class="gate-btn" data-goelo-auth-trigger>Se connecter</button>
+</div>
+
+<!-- PANEL ADMIN -->
+<div id="gtr-admin-panel" style="display:none">
+  <div class="page">
+
+    <a class="admin-page-return" href="admin.html">← Retour au Dashboard</a>
+    <div class="page-header"><h1 class="page-title">Alertes de l’accueil</h1><p class="page-sub">Gérer les messages importants affichés aux visiteurs.</p></div>
+<section id="admin-home-alerts" aria-labelledby="admin-home-alerts-title" hidden>
+      <div class="admin-ha-heading"><h2 id="admin-home-alerts-title">Messages des sorties à venir</h2><a href="index.html">Voir l’accueil →</a><button id="admin-home-alerts-refresh" type="button">Actualiser</button></div>
+      <p class="admin-ha-intro">Affiche ou retire une information prioritaire pour une sortie des sept prochains jours. Le message est visible par tous les visiteurs. Retirer l’alerte ne modifie pas la sortie ; un nouveau changement de date, d’horaire ou une annulation peut en créer une nouvelle.</p>
+      <p id="admin-home-alerts-status" role="status" aria-live="polite"></p>
+      <div id="admin-home-alerts-list"></div>
+    </section>
+
+  </div><!-- /.page -->
+</div><!-- /#gtr-admin-panel -->
+
+<!-- Toast container -->
+<div id="gtr-toast-wrap"></div>
+
+<!--
+  ORDRE IMPÉRATIF :
+  1. goelo-config.js   → window.GOELO_CONFIG
+  2. supabase.min.js   → window.supabase
+  3. auth.js           → window.goeloGetSb, window.GOELO_ROLE, goelo:role-ready
+  4. admin-page.js
+-->
+<script src="js/goelo-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/goelo-auth-state.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/goelo-profile.js"></script>
+<script src="js/admin-home-alerts.js?v=20261031-admin-alerts"></script>
+
+<script src="js/admin-page.js?v=20261103" defer></script>
+</body>
+</html>
