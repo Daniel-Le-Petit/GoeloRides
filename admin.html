@@ -690,6 +690,7 @@
   <button type="button" id="admin-participation-bell" class="apn-bell" hidden aria-label="Alertes de participation" aria-expanded="false" aria-controls="admin-participation-panel"><span aria-hidden="true">🔔</span> <span class="apn-bell-label">Participations</span> <span id="admin-participation-count" class="apn-badge" hidden>0</span></button>
   <nav class="topbar-nav" aria-label="Sections admin">
     <a href="#act-dashboard" class="is-active">Activité</a>
+    <a href="#admin-participation-panel" id="admin-participation-nav">Participations</a>
     <a href="admin-approbations.html">Approbations</a>
     <a href="admin-cyclistes.html">Cyclistes</a>
     <a href="admin-sondages.html">Sondages</a>
@@ -735,6 +736,7 @@
       <ul id="admin-participation-list" class="apn-list"></ul>
     </section>
     <nav class="admin-quicklinks" aria-label="Actions rapides">
+      <a href="#admin-participation-panel" id="admin-participation-open"><strong>🔔 Alertes de participation</strong><span>Activer les notifications et voir les inscriptions / désinscriptions</span></a>
       <a href="gestion-sorties.html?mode=create"><strong>＋ Créer une sortie</strong><span>Préparer le prochain rendez-vous</span></a>
       <a href="allrides.html"><strong>Itinéraires</strong><span>Retrouver les parcours réutilisables</span></a>
       <a href="admin-sondages.html"><strong>Sondages</strong><span>Consulter les réponses</span></a>
@@ -870,6 +872,6 @@
 <script src="js/goelo-back-navigation.js" defer></script>
 <script>window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";</script>
 <script src="goelo-onesignal.js?v=16" defer></script>
-<script src="js/admin-participation-notifications.js?v=20261102-push-status" defer></script>
+<script src="js/admin-participation-notifications.js?v=20261103-access" defer></script>
 </body>
 </html>
