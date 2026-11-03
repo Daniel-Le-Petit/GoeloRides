@@ -1,0 +1,21 @@
+name: Accès au guide de niveau de la sortie
+on:
+  pull_request:
+    paths:
+      - 'parcours.html'
+      - 'js/parcours.js'
+      - 'css/pages/parcours.css'
+      - 'goelorides-tests/tests/unit/ride-level-shortcut.test.cjs'
+      - '.github/workflows/ride-level-shortcut.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test goelorides-tests/tests/unit/ride-level-shortcut.test.cjs goelorides-tests/tests/unit/activity-registration.test.cjs goelorides-tests/tests/unit/guest-pseudo*.test.cjs

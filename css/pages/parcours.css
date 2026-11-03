@@ -693,3 +693,10 @@ body {
   .goelo-mobile-tabbar a[aria-current],
   .goelo-mobile-tabbar a:hover { color: var(--accent); }
 }
+
+/* Accès au guide depuis les caractéristiques essentielles de la sortie. */
+.pd-level-shortcut{display:inline-flex;align-items:center;justify-content:center;gap:10px;align-self:flex-start;max-width:100%;min-height:44px;margin:0 0 16px;padding:10px 14px;border:1px solid #587b6f;border-radius:10px;background:#203831;color:#edf6ed;font:600 .85rem/1.4 Inter,sans-serif;text-align:left;cursor:pointer}
+.pd-level-shortcut:hover{border-color:#b7dca3;color:#e4f6d9}
+.pd-level-shortcut:focus-visible{outline:2px solid #b7dca3;outline-offset:3px}
+.pd-level-shortcut:disabled{opacity:.55;cursor:default}
+.pd-acc__item[data-section="niveau_sortie"]{scroll-margin-top:96px}

@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/parcours.css?v=20261030-niveau-sortie">
+  <link rel="stylesheet" href="css/pages/parcours.css?v=20261103-level-shortcut">
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/pages/pseudo-participation.css?v=20261029-pseudo">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -104,6 +104,8 @@
           <span class="pd-metrics__value" id="pd-place">—</span>
         </div>
       </div>
+
+      <button type="button" class="pd-level-shortcut" id="pd-level-shortcut" aria-controls="pd-level-panel" aria-expanded="false" disabled>Cette sortie est-elle pour moi ? <span aria-hidden="true">→</span></button>
 
       <!-- Participation -->
       <div class="pd-join">
@@ -393,7 +395,7 @@
   <script src="js/goelo-weather.js"></script>
   <script src="js/goelo-pseudo-participation.js?v=20261029-home-sync"></script>
   <script src="js/goelo-ride-level.js?v=20261102-insights"></script>
-  <script src="js/parcours.js?v=20261030-niveau-sortie"></script>
+  <script src="js/parcours.js?v=20261103-level-shortcut"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="goelo-swipe-nav.js" defer></script>
 
