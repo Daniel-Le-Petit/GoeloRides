@@ -187,21 +187,22 @@
       }).join('') + '</div>';
   }
 
-  function registrationOverviewHtml() {
+  function registrationOverviewHtml(sessions) {
     var GA = window.GoeloActivity;
-    var progress = _sessions.map(GA.registrationProgress);
+    var measured = sessions || _sessions;
+    var progress = measured.map(GA.registrationProgress);
     var counts = [
       { label: 'Sortie consultée', count: progress.filter(function (p) { return p.viewed; }).length },
       { label: 'Clic de participation', count: progress.filter(function (p) { return p.clicked; }).length },
       { label: 'Inscription confirmée', count: progress.filter(function (p) { return p.confirmed; }).length }
     ];
-    var unlinked = _visibleEvents.filter(function (event) {
+    var unlinked = sessions ? 0 : _visibleEvents.filter(function (event) {
       return event.event_type === 'RIDE_JOINED' && !event.visitor_session_id && GA.registrationProgress({ items: [event] }).confirmed;
     }).length;
     return '<div class="act-registration-overview">' + counts.map(function (step) {
       return '<div><strong>' + step.count + '</strong><span>' + step.label + '</span></div>';
     }).join('') + '</div>' +
-      '<p class="act-observation-note">' + _sessions.length + ' parcours observés · ' + esc(_coverage) + '</p><details class="act-measurement-note"><summary>Comment lire ces chiffres ?</summary><p>Chaque compteur indique les parcours où une étape a été observée. Un parcours n’est pas un visiteur unique : les passages d’un même navigateur sont séparés après 30 minutes d’inactivité. Les données peuvent être partielles. Un clic ne prouve pas une inscription, et une absence de confirmation ne prouve pas un abandon.</p></details>' +
+      '<p class="act-observation-note">' + measured.length + ' parcours observés · ' + esc(_coverage) + '</p><details class="act-measurement-note"><summary>Comment lire ces chiffres ?</summary><p>Chaque compteur indique les parcours où une étape a été observée. Un parcours n’est pas un visiteur unique : les passages d’un même navigateur sont séparés après 30 minutes d’inactivité. Les données peuvent être partielles. Un clic ne prouve pas une inscription, et une absence de confirmation ne prouve pas un abandon.</p></details>' +
       (unlinked ? '<p class="act-observation-note act-observation-note--warning">' + unlinked + ' confirmation' + (unlinked > 1 ? 's d’inscription ne sont pas reliées' : ' d’inscription n’est pas reliée') + ' à un parcours. ' + (unlinked > 1 ? 'Leur origine reste inconnue.' : 'Son origine reste inconnue.') + ' Ces traces peuvent concerner des inscriptions déjà visibles dans les compteurs ; ne les additionne pas.</p><button type="button" class="act-visit-detail-btn" data-act-show-signups>Voir les inscriptions des membres</button>' : '');
   }
 
@@ -251,7 +252,7 @@
     pageCount=Math.max(1,Math.ceil(filtered.length/JOURNEYS_PER_PAGE));
     _journeyPage=Math.min(_journeyPage,pageCount-1);
     shown=filtered.slice(_journeyPage*JOURNEYS_PER_PAGE,(_journeyPage+1)*JOURNEYS_PER_PAGE);
-    panel.innerHTML = (_networkFilter?'<p class="act-observation-note">Parcours du réseau '+esc(_networkFilter.slice(0,8).toUpperCase())+' <button type="button" class="act-visit-detail-btn" data-act-clear-network>Voir tous les réseaux</button></p>':'') + registrationOverviewHtml() +
+    panel.innerHTML = (_networkFilter?'<p class="act-observation-note">Parcours du réseau '+esc(_networkFilter.slice(0,8).toUpperCase())+' <button type="button" class="act-visit-detail-btn" data-act-clear-network>Voir tous les réseaux</button></p>':'') + registrationOverviewHtml(_networkFilter ? filtered : null) +
       '<label class="act-journey-filter" for="act-journey-filter">Parcours à afficher<select id="act-journey-filter">' + options.map(function (option) {
         return '<option value="' + option[0] + '"' + (_journeyFilter === option[0] ? ' selected' : '') + '>' + option[1] + '</option>';
       }).join('') + '</select></label>' +
