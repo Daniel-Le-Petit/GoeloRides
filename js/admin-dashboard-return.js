@@ -3,7 +3,7 @@
  'use strict';
  function init(){
   var page=global.location.pathname.split('/').pop();
-  var targets={'gestion-sorties.html':'#form-main','allrides.html':'.gr-page-header','admin-sondages.html':'#gtr-admin-panel .page'};
+  var targets={'gestion-sorties.html':'#form-main','allrides.html':'.gr-page-header','admin-sondages.html':'#gtr-admin-panel .page','admin-approbations.html':'#gtr-admin-panel .page','admin-cyclistes.html':'#gtr-admin-panel .page','team-rider.html':'#dashboard','community-manager.html':'#dashboard'};
   if(!targets[page])return;
   var fromDashboard=new URLSearchParams(global.location.search).get('from')==='admin';
   try{var previous=new URL(document.referrer);fromDashboard=fromDashboard||(previous.origin===global.location.origin&&previous.pathname.endsWith('/admin.html'));}catch(_){}

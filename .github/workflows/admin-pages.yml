@@ -3,6 +3,12 @@ on:
   pull_request:
     paths:
       - 'admin.html'
+      - 'admin-approbations.html'
+      - 'admin-cyclistes.html'
+      - 'admin-sondages.html'
+      - 'team-rider.html'
+      - 'community-manager.html'
+      - 'js/admin-dashboard-return.js'
       - 'admin-participations.html'
       - 'admin-alertes-accueil.html'
       - 'admin-activite.html'
