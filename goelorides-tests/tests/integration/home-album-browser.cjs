@@ -19,6 +19,20 @@ const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',publi
   return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.html')?'text/html':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream'});
  });
  await page.goto('http://home.test/preview.html');await page.locator('#gr-home-album').waitFor({state:'visible'});assert.equal(await page.locator('[data-home-album-photo]').count(),3);assert.equal(await page.locator('[data-home-album-rides]').getAttribute('href'),'sorties.html');
+
+ // Assert computed colors with every real home stylesheet and legacy inline rule loaded.
+ const palette=await page.evaluate(()=>{
+   const color=(selector,property)=>getComputedStyle(document.querySelector(selector))[property];
+   return {
+     panel:color('#gr-home-album','backgroundColor'),
+     caption:color('.gr-home-album__caption','color'),
+     primary:color('[data-home-album-rides]','color'),
+     primaryBg:color('[data-home-album-rides]','backgroundColor'),
+     secondary:color('[data-home-album-gallery]','color'),
+     secondaryBg:color('[data-home-album-gallery]','backgroundColor')
+   };
+ });
+ assert.deepEqual(palette,{panel:'rgb(26, 26, 26)',caption:'rgb(240, 240, 240)',primary:'rgb(13, 13, 13)',primaryBg:'rgb(200, 241, 53)',secondary:'rgb(200, 241, 53)',secondaryBg:'rgb(26, 26, 26)'});
  for(const width of [320,390,1100]){await page.setViewportSize({width,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const a of await page.locator('.gr-home-album__actions a').all())assert((await a.boundingBox()).height>=44);}
  await page.setViewportSize({width:390,height:844});await page.locator('#gr-home-album').scrollIntoViewIfNeeded();await page.waitForFunction(()=>Array.from(document.querySelectorAll('#gr-home-album img')).every(img=>img.complete&&img.naturalWidth>0));await page.locator('#gr-home-album').screenshot({path:'/tmp/home-album-mobile.png'});
  await page.locator('[data-home-album-photo]').nth(1).click();await page.waitForURL('**/dans-la-roue.html#album-two');await page.locator('#album-two').waitFor();assert(await page.evaluate(()=>window.scrollY>0));await page.locator('#album-two .cover').click();assert(await page.locator('#photo-viewer').isVisible());await page.locator('#photo-close').click();assert(await page.locator('#photo-viewer').isHidden());

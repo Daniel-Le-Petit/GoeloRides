@@ -17,3 +17,23 @@ a.gr-home-album__photo{min-width:0;overflow:hidden;display:flex;flex-direction:c
 
 .gr-home-album__actions a.gr-home-album__gallery:hover{background:rgba(200,241,53,.1);border-color:var(--goelo-accent,#C8F135)}
 a.gr-home-album__photo:hover{border-color:var(--goelo-accent,#C8F135)}
+
+/* Keep the album palette above the legacy light-section and blue-link rules. */
+html.site-retheme .app-main--home section#gr-home-album{
+  background:#1A1A1A;color:#F0F0F0;
+}
+#gr-home-album .gr-home-album__heading{color:#C8F135}
+#gr-home-album .gr-home-album__intro{color:#d0d0d0}
+#gr-home-album a.gr-home-album__photo,
+#gr-home-album a.gr-home-album__photo:visited,
+#gr-home-album .gr-home-album__caption{color:#F0F0F0}
+#gr-home-album .gr-home-album__actions a,
+#gr-home-album .gr-home-album__actions a:visited{
+  background:#C8F135;color:#0D0D0D;border-color:#C8F135;
+}
+#gr-home-album .gr-home-album__actions a:hover{background:#d7ff58}
+#gr-home-album .gr-home-album__actions a.gr-home-album__gallery,
+#gr-home-album .gr-home-album__actions a.gr-home-album__gallery:visited{
+  background:#1A1A1A;color:#C8F135;
+}
+#gr-home-album .gr-home-album__actions a.gr-home-album__gallery:hover{background:rgba(200,241,53,.1)}
