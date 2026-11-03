@@ -54,14 +54,22 @@
   finally{busy=false;enable.disabled=false;}
  }
  async function deactivate(){if(!isAdmin()||busy||!device)return;busy=true;disable.disabled=true;var version=revision;try{await rpc('admin_participation_device_set',{p_subscription_id:device,p_enabled:false});if(version===revision)await load();}catch(_){if(version===revision)pushStatus.textContent='Désactivation non confirmée. Réessaie.';}finally{busy=false;disable.disabled=false;}}
+ function openPanel(scroll){
+  if(!isAdmin())return;
+  root.hidden=false;bell.setAttribute('aria-expanded','true');load();
+  if(scroll)root.scrollIntoView({block:'start',behavior:'smooth'});
+ }
+ function openFromHash(){if(global.location&&global.location.hash==='#admin-participation-panel')openPanel(true);}
  function changeAuth(){
   var a=auth();if(a.pending||a.role!=='admin'||!a.user){revision++;userId=null;device=null;rows=[];enabled=false;root.hidden=true;bell.hidden=true;bell.setAttribute('aria-expanded','false');list.innerHTML='';badge.hidden=true;clearInterval(timer);timer=null;return;}
-  if(userId===a.user.id)return;revision++;userId=a.user.id;device=storedDevice();bell.hidden=false;load();clearInterval(timer);timer=setInterval(function(){if(document.visibilityState!=='hidden')load();},30000);
+  if(userId===a.user.id)return;revision++;userId=a.user.id;device=storedDevice();bell.hidden=false;load();openFromHash();clearInterval(timer);timer=setInterval(function(){if(document.visibilityState!=='hidden')load();},30000);
  }
  function init(){
   root=$('admin-participation-panel');bell=$('admin-participation-bell');if(!root||!bell)return;
   list=$('admin-participation-list');status=$('admin-participation-status');pushStatus=$('admin-participation-push-status');badge=$('admin-participation-count');enable=$('admin-participation-enable');disable=$('admin-participation-disable');mark=$('admin-participation-mark');
   bell.addEventListener('click',function(){root.hidden=!root.hidden;bell.setAttribute('aria-expanded',String(!root.hidden));if(!root.hidden){load();root.scrollIntoView({block:'start',behavior:'smooth'});}});
+  ['admin-participation-open','admin-participation-nav'].forEach(function(id){var link=$(id);if(link)link.addEventListener('click',function(){openPanel(true);});});
+  global.addEventListener('hashchange',openFromHash);
   enable.addEventListener('click',activate);disable.addEventListener('click',deactivate);mark.addEventListener('click',function(){read(rows.filter(function(n){return !n.is_read;}).map(function(n){return n.id;}));});
   $('admin-participation-refresh').addEventListener('click',load);list.addEventListener('click',function(event){var b=event.target.closest('[data-apn-read]');if(b)read([b.getAttribute('data-apn-read')]);});
   global.addEventListener('goelo:auth-state',changeAuth);global.addEventListener('goelo:role-ready',changeAuth);global.addEventListener('goelo:auth-success',changeAuth);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')load();});changeAuth();
