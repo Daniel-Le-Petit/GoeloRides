@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>GoëloRides – Membres GoëloRides</title>
+  <title>Mes sorties · GoëloRides</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/team-rider-2.css">
+  <link rel="stylesheet" href="css/pages/team-rider-2.css?v=20261103-outings">
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
   <link rel="stylesheet" href="css/components/admin-dashboard-return.css?v=20261103-menu">
@@ -38,23 +38,11 @@
 <!-- DASHBOARD : masqué par défaut, affiché par team-rider.js si rôle OK -->
 <main class="main" id="dashboard" style="display:none">
 
-  <p class="slabel" style="margin-top:0">Actions rapides</p>
-  <div class="qa-grid">
-    <button class="qa-btn primary" onclick="location.href='gestion-sorties.html?mode=create'">
-      <div class="qa-icon">+</div>
-      <div><div class="qa-label">Créer une sortie</div><div class="qa-sub">Créer &amp; publier</div></div>
-    </button>
-    <button class="qa-btn" onclick="scrollToId('urgence-section')">
-      <div class="qa-icon">💬</div>
-      <div><div class="qa-label">Message urgence</div><div class="qa-sub">Messenger / annulation</div></div>
-    </button>
-    <button class="qa-btn" onclick="location.href='community-manager.html'">
-      <div class="qa-icon">📋</div>
-      <div><div class="qa-label">Communication</div><div class="qa-sub">Console du jour</div></div>
-    </button>
-  </div>
+  <header class="tr-outings-header">
+    <div><h1>Mes sorties</h1><p>Retrouve les sorties et prépare le prochain rendez-vous.</p></div>
+    <a class="tr-outings-create" href="gestion-sorties.html?mode=create">＋ Créer une sortie</a>
+  </header>
 
-  <p class="slabel">Mes sorties</p>
   <div class="tabs">
     <button class="stab active" onclick="filterSorties('all',this)">Toutes</button>
     <button class="stab" onclick="filterSorties('publiee',this)">Publiées</button>
@@ -65,6 +53,9 @@
     <p style="font-size:.82rem;color:var(--muted)">Chargement…</p>
   </div>
 
+  <details class="tr-outings-tools">
+    <summary>Autres outils</summary>
+    <a class="tr-outings-communication" href="community-manager.html">Ouvrir Communication →</a>
   <p class="slabel" id="urgence-section">Messages urgence Messenger</p>
   <div class="urgence-grid">
     <div class="urgence-btn" onclick="genUrgence(this,'retard')">
@@ -99,6 +90,7 @@
     <div id="demand-list"></div>
   </div>
 
+  </details>
 </main>
 
 <!-- MOBILE NAV — CORRECTION m4 : href corrigé vers team-rider.html -->
@@ -106,7 +98,7 @@
   <a href="index.html"><span>🏠</span>Accueil</a>
   <a href="sorties.html"><span>🚴</span>Sorties</a>
   <a href="gestion-sorties.html?mode=create"><span>＋</span>Créer</a>
-  <a href="team-rider.html" aria-current="page"><span>⚙️</span>Cockpit</a>
+  <a href="team-rider.html" aria-current="page"><span>⚙️</span>Mes sorties</a>
 </nav>
 
 <div class="toast-wrap" id="toast-wrap"></div>
