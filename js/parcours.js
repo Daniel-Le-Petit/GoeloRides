@@ -806,6 +806,7 @@
     var root = document.getElementById("pd-accordions");
     if (!root || root.dataset.bound === "1") return;
     root.dataset.bound = "1";
+    var shortcut = document.getElementById("pd-level-shortcut");
 
     root.querySelectorAll(".pd-acc__item").forEach(function (item) {
       var btn = item.querySelector(".pd-acc__head");
@@ -817,6 +818,7 @@
       btn.addEventListener("click", function () {
         var open = item.classList.toggle("is-open");
         btn.setAttribute("aria-expanded", open ? "true" : "false");
+        if (shortcut && item.getAttribute("data-section") === "niveau_sortie") shortcut.setAttribute("aria-expanded", open ? "true" : "false");
         panel.style.maxHeight = open ? panel.scrollHeight + "px" : "0";
 
         if (open) {
@@ -834,6 +836,19 @@
         }
       });
     });
+    var levelItem = root.querySelector('[data-section="niveau_sortie"]');
+    var levelHead = levelItem && levelItem.querySelector(".pd-acc__head");
+    if (shortcut && levelHead) {
+      shortcut.disabled = false;
+      shortcut.addEventListener("click", function () {
+        if (levelHead.getAttribute("aria-expanded") !== "true") levelHead.click();
+        window.requestAnimationFrame(function () {
+          levelHead.focus({ preventScroll: true });
+          var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          levelItem.scrollIntoView({ block: "start", behavior: reducedMotion ? "auto" : "smooth" });
+        });
+      });
+    }
   }
 
   function bindGpxDownload() {
@@ -859,8 +874,8 @@
     renderParticipants();
     bindJoin();
     bindGpxDownload();
-    await renderJoin();
     bindAccordions();
+    await renderJoin();
   }
 
   /* =========================================================
