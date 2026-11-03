@@ -22,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/pages/parcours.css?v=20261103-aligned-actions">
+  <link rel="stylesheet" href="css/pages/parcours.css?v=20261103-admin-participant">
 <link rel="stylesheet" href="css/components/back-navigation.css">
   <link rel="stylesheet" href="css/pages/pseudo-participation.css?v=20261103-confirmation">
   <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
@@ -327,6 +327,12 @@
       <h2 class="pd-section__title" id="pd-participants-title">
         Participants <span class="pd-participants-count" id="pd-participants-count"></span>
       </h2>
+      <details id="pd-admin-participant" class="pd-admin-participant" hidden>
+        <summary>＋ Ajouter un participant</summary>
+        <p>Pour un cycliste sans connexion : un pseudo suffit.</p>
+        <form><label for="pd-admin-pseudo">Pseudo du participant</label><div><input id="pd-admin-pseudo" autocomplete="off" minlength="2" maxlength="60" required placeholder="Ex. Camille"><button type="submit">Ajouter</button></div></form>
+        <p role="status" aria-live="polite"></p>
+      </details>
       <ul class="pd-participants" id="pd-participants"></ul>
     </section>
 
@@ -396,6 +402,7 @@
   <script src="js/goelo-navbar.js"></script>
   <script src="js/goelo-gpx.js?v=20261102-insights"></script>
   <script src="js/signup-participants.js"></script>
+  <script src="js/admin-manual-participant.js?v=20261103" defer></script>
   <script src="js/goelo-journey-insights.js?v=20261102"></script>
 <script src="js/goelo-activity.js?v=20261102-insights"></script>
   <script src="js/goelo-weather.js"></script>

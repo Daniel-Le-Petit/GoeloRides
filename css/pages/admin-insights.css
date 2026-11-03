@@ -35,3 +35,5 @@
 #admin-activity-details .act-participation-checks button:disabled small{display:none}
 #admin-activity-details .act-participation-checks button:focus-visible{outline:2px solid #C8F135;outline-offset:3px}
 @media(max-width:600px){#admin-activity-details .act-participation-checks{grid-template-columns:1fr}#admin-activity-details .act-participation-checks button{min-height:80px}}
+
+@media(min-width:1100px){#admin-activity-details .act-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}}

@@ -14,6 +14,8 @@
   var _hideOwn = true;
   var _hideBots = true;
   var _days = 30;
+  var _networkFilter = '';
+  var _networkCoverage = 'Mesure réseau disponible uniquement pour les nouvelles activités.';
   var _coverage = 'Chargement de l’historique…';
   var _loadPromise = null;
 
@@ -143,6 +145,34 @@
       '<button type="button" class="act-visit-detail-btn" data-act-open-features>Voir les fonctionnalités découvertes</button>';
   }
 
+  function renderNetworks() {
+    var panel=_$('act-analytics-panel'),api=window.GoeloNetworkInsights;
+    if(!panel||!api)return;
+    var groups=api.group(_visibleEvents,window.GoeloActivity);
+    panel.innerHTML='<h3 class="act-registration-title">Visites répétées depuis un même réseau</h3>'+coverageHtml()+
+      '<p class="act-observation-note">'+esc(_networkCoverage)+' L’identifiant change chaque mois et expire après 30 jours. Une même IP peut être partagée ; un changement de réseau peut séparer une même personne. Ces rapprochements ne prouvent pas pourquoi une inscription n’a pas abouti.</p>'+
+      (groups.length?'<div class="act-feature-list">'+groups.map(function(g){
+        return '<article class="act-feature-card"><h4>Réseau '+esc(g.key.slice(0,8).toUpperCase())+' · '+esc(g.period)+'</h4>'+
+        '<p>'+g.sessions+' visites observées · '+g.browsers+' identifiants de navigateur</p>'+
+        '<dl><div><dt>Consultation sans clic</dt><dd>'+g.noClick+'</dd></div><div><dt>Clic sans confirmation</dt><dd>'+g.noConfirmation+'</dd></div><div><dt>Participation confirmée</dt><dd>'+g.confirmed+'</dd></div><div><dt>Erreur technique</dt><dd>'+g.errors+'</dd></div></dl>'+
+        '<p>'+g.accounts+' créations de compte observées. Les compteurs décrivent des visites, sans fusionner les personnes.</p>'+
+        '<button type="button" class="act-visit-detail-btn" data-act-network="'+g.key+'">Voir les parcours de ce réseau</button></article>';
+      }).join('')+'</div>':'<p class="gtr-empty">Aucun réseau avec plusieurs visites rapprochables dans les activités chargées. Les anciennes activités ne peuvent pas être complétées rétroactivement.</p>');
+  }
+  async function attachNetworkLinks(sb) {
+    _allEvents.forEach(function(e){e.metadata=Object.assign({},e.metadata);delete e.metadata.network_key;delete e.metadata.network_period;});
+    try{
+      var ids=_allEvents.map(function(e){return e.id}).filter(function(id){return /^[a-f0-9-]{36}$/i.test(id||'')}).slice(0,5000);
+      if(!ids.length){_networkCoverage='Aucune activité avec un identifiant exploitable dans la sélection.';return;}
+      var response=await sb.rpc('admin_activity_network_links',{p_event_ids:ids});
+      if(response.error||!Array.isArray(response.data))throw Error('unavailable');
+      if(!canExportActivity())return;
+      var links=new Map(response.data.map(function(row){return [row.event_id,row]}));
+      _allEvents.forEach(function(e){var link=links.get(e.id);if(link&&/^[a-f0-9]{64}$/.test(link.network_key)){e.metadata.network_key=link.network_key;e.metadata.network_period=link.period;}});
+      _networkCoverage=response.data.length+' activités reliées à un identifiant réseau temporaire dans l’historique chargé.';
+    }catch(_){_networkCoverage='Mesure réseau indisponible : la collecte serveur n’est pas encore accessible. Les autres analyses restent disponibles.';}
+  }
+
   function renderFeatures() {
     var panel = _$('act-analytics-panel'), summary = observationSummary();
     if (!panel) return;
@@ -157,21 +187,22 @@
       }).join('') + '</div>';
   }
 
-  function registrationOverviewHtml() {
+  function registrationOverviewHtml(sessions) {
     var GA = window.GoeloActivity;
-    var progress = _sessions.map(GA.registrationProgress);
+    var measured = sessions || _sessions;
+    var progress = measured.map(GA.registrationProgress);
     var counts = [
       { label: 'Sortie consultée', count: progress.filter(function (p) { return p.viewed; }).length },
       { label: 'Clic de participation', count: progress.filter(function (p) { return p.clicked; }).length },
       { label: 'Inscription confirmée', count: progress.filter(function (p) { return p.confirmed; }).length }
     ];
-    var unlinked = _visibleEvents.filter(function (event) {
+    var unlinked = sessions ? 0 : _visibleEvents.filter(function (event) {
       return event.event_type === 'RIDE_JOINED' && !event.visitor_session_id && GA.registrationProgress({ items: [event] }).confirmed;
     }).length;
     return '<div class="act-registration-overview">' + counts.map(function (step) {
       return '<div><strong>' + step.count + '</strong><span>' + step.label + '</span></div>';
     }).join('') + '</div>' +
-      '<p class="act-observation-note">' + _sessions.length + ' parcours observés · ' + esc(_coverage) + '</p><details class="act-measurement-note"><summary>Comment lire ces chiffres ?</summary><p>Chaque compteur indique les parcours où une étape a été observée. Un parcours n’est pas un visiteur unique : les passages d’un même navigateur sont séparés après 30 minutes d’inactivité. Les données peuvent être partielles. Un clic ne prouve pas une inscription, et une absence de confirmation ne prouve pas un abandon.</p></details>' +
+      '<p class="act-observation-note">' + measured.length + ' parcours observés · ' + esc(_coverage) + '</p><details class="act-measurement-note"><summary>Comment lire ces chiffres ?</summary><p>Chaque compteur indique les parcours où une étape a été observée. Un parcours n’est pas un visiteur unique : les passages d’un même navigateur sont séparés après 30 minutes d’inactivité. Les données peuvent être partielles. Un clic ne prouve pas une inscription, et une absence de confirmation ne prouve pas un abandon.</p></details>' +
       (unlinked ? '<p class="act-observation-note act-observation-note--warning">' + unlinked + ' confirmation' + (unlinked > 1 ? 's d’inscription ne sont pas reliées' : ' d’inscription n’est pas reliée') + ' à un parcours. ' + (unlinked > 1 ? 'Leur origine reste inconnue.' : 'Son origine reste inconnue.') + ' Ces traces peuvent concerner des inscriptions déjà visibles dans les compteurs ; ne les additionne pas.</p><button type="button" class="act-visit-detail-btn" data-act-show-signups>Voir les inscriptions des membres</button>' : '');
   }
 
@@ -217,7 +248,11 @@
     _journeyPage = Math.min(_journeyPage, pageCount - 1);
     var shown = filtered.slice(_journeyPage * JOURNEYS_PER_PAGE, (_journeyPage + 1) * JOURNEYS_PER_PAGE);
     var options = [ ['all', 'Tous les parcours'], ['confirmed', 'Avec une inscription confirmée'], ['clicked', 'Clic sans confirmation observée'], ['viewed', 'Consultation sans clic observé'], ['error', 'Erreur de réponse après le clic'], ['auth', 'Connexion demandée après le clic'] ];
-    panel.innerHTML = registrationOverviewHtml() +
+    if (_networkFilter) filtered=filtered.filter(function(session){return session.items.some(function(e){return window.GoeloNetworkInsights&&window.GoeloNetworkInsights.key(e)===_networkFilter;});});
+    pageCount=Math.max(1,Math.ceil(filtered.length/JOURNEYS_PER_PAGE));
+    _journeyPage=Math.min(_journeyPage,pageCount-1);
+    shown=filtered.slice(_journeyPage*JOURNEYS_PER_PAGE,(_journeyPage+1)*JOURNEYS_PER_PAGE);
+    panel.innerHTML = (_networkFilter?'<p class="act-observation-note">Parcours du réseau '+esc(_networkFilter.slice(0,8).toUpperCase())+' <button type="button" class="act-visit-detail-btn" data-act-clear-network>Voir tous les réseaux</button></p>':'') + registrationOverviewHtml(_networkFilter ? filtered : null) +
       '<label class="act-journey-filter" for="act-journey-filter">Parcours à afficher<select id="act-journey-filter">' + options.map(function (option) {
         return '<option value="' + option[0] + '"' + (_journeyFilter === option[0] ? ' selected' : '') + '>' + option[1] + '</option>';
       }).join('') + '</select></label>' +
@@ -333,6 +368,7 @@
 
   function renderActiveTab() {
     if (_activeTab === "overview") renderOverview();
+    else if (_activeTab === "networks") renderNetworks();
     else if (_activeTab === "features") renderFeatures();
     else if (_activeTab === "members") renderMembers();
     else if (_activeTab === "scenarios") renderScenarios();
@@ -411,6 +447,8 @@
         _allEvents = data.events || [];
         _coverage = 'Historique limité au flux récent : 200 événements au maximum, sans garantie de couvrir la période choisie.';
       }
+      await attachNetworkLinks(sb);
+      if (!canExportActivity()) { _allEvents=[]; _visibleEvents=[]; _sessions=[]; return; }
       renderFilteredActivity();
       var box = _$('act-feed-error');
       if (box) { box.hidden = !data.error; box.textContent = data.error ? 'Chiffres clés indisponibles : ' + data.error : ''; }
@@ -537,11 +575,14 @@
         renderJourneys();
       });
       panel.addEventListener("click", function (e) {
+        var network=e.target.closest('[data-act-network]');
+        if(network){var key=network.getAttribute('data-act-network');if(/^[a-f0-9]{64}$/.test(key)){_networkFilter=key;_journeyFilter='all';_journeyPage=0;setActiveTab('journeys');}return;}
+        if(e.target.closest('[data-act-clear-network]')){_networkFilter='';_journeyPage=0;setActiveTab('networks');return;}
         var review = e.target.closest('[data-act-review-journeys]');
         if (review) {
           var filter = review.getAttribute('data-act-review-journeys');
           if (['viewed', 'clicked', 'error'].indexOf(filter) === -1 || review.disabled) return;
-          _journeyFilter = filter; _journeyPage = 0; _selectedSessionId = null;
+          _networkFilter=''; _journeyFilter = filter; _journeyPage = 0; _selectedSessionId = null;
           setActiveTab('journeys');
           var select = _$('act-journey-filter'); if (select) select.focus();
           return;

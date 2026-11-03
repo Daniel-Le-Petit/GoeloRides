@@ -1,0 +1,93 @@
+name: Réseaux de visites, ajout admin et couleurs compte
+on:
+  pull_request:
+    paths:
+      - 'js/goelo-network-insights.js'
+      - 'js/goelo-admin-activity.js'
+      - 'js/admin-manual-participant.js'
+      - 'css/pages/account.css'
+      - 'profile.html'
+      - 'my-bookings.html'
+      - 'supabase/migrations/20261103140000_activity_network_links.sql'
+      - 'goelorides-tests/tests/unit/network-insights.test.cjs'
+      - 'goelorides-tests/tests/unit/admin-manual-participant.test.cjs'
+      - 'goelorides-tests/tests/integration/activity-network-postgres.cjs'
+      - 'goelorides-tests/tests/integration/admin-account-review-browser.cjs'
+      - '.github/workflows/activity-network-links.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261103140000_activity_network_links.sql'
+      - '.github/workflows/activity-network-links.yml'
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: activity-network-links
+  cancel-in-progress: false
+jobs:
+  test:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local_test_only
+          POSTGRES_DB: goelo_network_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test goelorides-tests/tests/unit/network-insights.test.cjs goelorides-tests/tests/unit/admin-manual-participant.test.cjs goelorides-tests/tests/unit/admin-insights.test.cjs goelorides-tests/tests/unit/guest-pseudo*.test.cjs
+      - name: Tests réseau PostgreSQL isolés
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGDATABASE: goelo_network_test
+          PGUSER: postgres
+          PGPASSWORD: local_test_only
+        run: node goelorides-tests/tests/integration/activity-network-postgres.cjs
+      - run: npm ci --prefix goelorides-tests
+      - run: node goelorides-tests/node_modules/playwright/cli.js install --with-deps chromium
+      - run: node goelorides-tests/tests/integration/admin-account-review-browser.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: account-goelo-mobile
+          path: /tmp/*-goelo.png
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event_name != 'schedule'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Activer la mesure réseau privée
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_DATABASE_URL"
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261103140000_activity_network_links.sql
+          psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -At -c "SELECT 'RPC réseau disponible : ' || (to_regprocedure('public.admin_activity_network_links(uuid[])') IS NOT NULL)"
+  cleanup:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Supprimer les rapprochements expirés
+        env:
+          SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_DATABASE_URL"
+          export PGCONNECT_TIMEOUT=15
+          psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DELETE FROM public.activity_network_links WHERE captured_at < now()-interval '30 days'"

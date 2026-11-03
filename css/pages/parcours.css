@@ -725,3 +725,13 @@ body {
 .pd-hero .pd-notice{margin:0}
 .pd-acc__item[data-section="niveau_sortie"]{scroll-margin-top:96px}
 @media(min-width:700px){.pd-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+#pd-admin-participant[hidden]{display:none!important}
+#pd-admin-participant{padding:14px;margin:0 0 16px;border:1px solid #60654c;border-radius:12px;background:#1A1A1A;color:#F0F0F0}
+#pd-admin-participant summary{min-height:44px;display:flex;align-items:center;color:#C8F135;font-weight:600;cursor:pointer}
+#pd-admin-participant p{font-size:.85rem;margin:10px 0}
+#pd-admin-participant label{display:block;margin:12px 0 8px}
+#pd-admin-participant form>div{display:flex;gap:10px}
+#pd-admin-participant input{width:100%;min-width:0;min-height:46px;padding:10px;border:1px solid #666;border-radius:8px;background:#111;color:#fff;font:16px Inter,sans-serif}
+#pd-admin-participant button{min-height:46px;padding:10px 16px;border:1px solid #C8F135;border-radius:8px;background:#C8F135;color:#0D0D0D;font-weight:700;cursor:pointer}
+#pd-admin-participant :focus-visible{outline:2px solid #C8F135;outline-offset:3px}
