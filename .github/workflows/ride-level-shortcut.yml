@@ -4,6 +4,8 @@ on:
     paths:
       - 'parcours.html'
       - 'js/parcours.js'
+      - 'js/goelo-calendar.js'
+      - 'goelorides-tests/tests/unit/ride-calendar.test.cjs'
       - 'css/pages/parcours.css'
       - 'goelorides-tests/tests/unit/ride-level-shortcut.test.cjs'
       - '.github/workflows/ride-level-shortcut.yml'
@@ -18,4 +20,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node --test goelorides-tests/tests/unit/ride-level-shortcut.test.cjs goelorides-tests/tests/unit/activity-registration.test.cjs goelorides-tests/tests/unit/guest-pseudo*.test.cjs
+      - run: node --test goelorides-tests/tests/unit/ride-calendar.test.cjs goelorides-tests/tests/unit/ride-level-shortcut.test.cjs goelorides-tests/tests/unit/activity-registration.test.cjs goelorides-tests/tests/unit/guest-pseudo*.test.cjs

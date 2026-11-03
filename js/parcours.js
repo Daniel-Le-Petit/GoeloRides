@@ -869,6 +869,7 @@
   ========================================================= */
   async function renderAll() {
     renderHero();
+    if (window.GoeloCalendar) window.GoeloCalendar.render(sortie);
     if (window.GoeloRideLevel) window.GoeloRideLevel.render(sortie);
     renderCities();
     renderParticipants();
@@ -954,6 +955,7 @@
         pace:      result.data.pace_label   || "",
         place:     fc.meetPlace             || "",
         city:      fc.city                  || "",
+        status:    fc.sortieStatus || '',
         date:      fc.rideDateIso           || "",
         rideTime:  fc.rideTime              || fc.meetTime || "",
         meetTime:  fc.meetTime              || "",

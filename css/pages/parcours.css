@@ -700,3 +700,11 @@ body {
 .pd-level-shortcut:focus-visible{outline:2px solid #b7dca3;outline-offset:3px}
 .pd-level-shortcut:disabled{opacity:.55;cursor:default}
 .pd-acc__item[data-section="niveau_sortie"]{scroll-margin-top:96px}
+
+/* Action secondaire : garder la participation au premier plan. */
+#pd-calendar[hidden]{display:none!important}
+#pd-calendar{margin:0 0 18px}
+#pd-calendar a.pd-calendar__link,#pd-calendar a.pd-calendar__link:visited{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;padding:10px 14px;border:1px solid #C8F135;border-radius:10px;background:#1A1A1A;color:#C8F135;font:600 .85rem/1.4 Inter,sans-serif;text-decoration:none;text-align:center}
+#pd-calendar a.pd-calendar__link:hover{background:#292e1a}
+#pd-calendar a.pd-calendar__link:focus-visible{outline:2px solid #C8F135;outline-offset:3px}
+#pd-calendar p{margin:8px 0 0;color:#bcbcbc;font:400 .75rem/1.5 Inter,sans-serif}
