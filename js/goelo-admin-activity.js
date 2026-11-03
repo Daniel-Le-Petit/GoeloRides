@@ -10,6 +10,8 @@
   var _allEvents = [];
   var _visibleEvents = [];
   var _activeTab = "overview";
+  var _dedicatedView = null;
+  var ACTIVITY_PAGES = {"overview":"admin-activite-vue.html","journeys":"admin-activite-parcours.html","features":"admin-activite-fonctionnalites.html","networks":"admin-activite-reseaux.html","members":"admin-activite-utilisateurs.html","tools":"admin-activite-outils.html"};
   var _selectedSessionId = null;
   var _hideOwn = true;
   var _hideBots = true;
@@ -367,6 +369,7 @@
   }
 
   function renderActiveTab() {
+    if (_dedicatedView === "tools") return;
     if (_activeTab === "overview") renderOverview();
     else if (_activeTab === "networks") renderNetworks();
     else if (_activeTab === "features") renderFeatures();
@@ -413,6 +416,14 @@
   }
 
   function setActiveTab(tab) {
+    if (_dedicatedView && ACTIVITY_PAGES[tab] && tab !== _dedicatedView) {
+      var query=new URLSearchParams();
+      query.set('days',String(_days));query.set('own',_hideOwn?'1':'0');query.set('bots',_hideBots?'1':'0');
+      if(tab==='journeys'){query.set('filter',_journeyFilter);if(_networkFilter)query.set('network',_networkFilter);}
+      if(tab==='members')query.set('category',_memberCategory);
+      window.location.href=ACTIVITY_PAGES[tab]+'?'+query.toString();
+      return;
+    }
     _activeTab = tab || "overview";
     _selectedSessionId = null;
     var detail = _$('act-session-detail');
@@ -429,6 +440,7 @@
   }
 
   async function loadActivity() {
+    if (_dedicatedView === "tools") return;
     if (_loadPromise) return _loadPromise;
     var sb = window.goeloGetSb ? window.goeloGetSb() : null;
     if (!sb || !window.GoeloActivity || !canExportActivity()) return;
@@ -735,6 +747,21 @@
     if (!section) return;
     if (section.dataset.activityBound === '1') return;
     section.dataset.activityBound = '1';
+    var view=section.dataset.activityView;
+    if(view && ACTIVITY_PAGES[view]){
+      _dedicatedView=view;_activeTab=view;
+      var query=new URLSearchParams(window.location.search);
+      _days=query.get('days')==='7'?7:30;
+      _hideOwn=query.get('own')!=='0';_hideBots=query.get('bots')!=='0';
+      var requestedFilter=query.get('filter')||'all';
+      if(['all','confirmed','clicked','viewed','error','auth'].indexOf(requestedFilter)!==-1)_journeyFilter=requestedFilter;
+      var network=query.get('network');_networkFilter=/^[a-f0-9]{64}$/.test(network||'')?network:'';
+      var category=query.get('category');
+      if(['all','signups','accounts','social','routes','features','alerts'].indexOf(category)!==-1)_memberCategory=category;
+      var period=_$('act-period');if(period)period.value=String(_days);
+      var own=_$('act-hide-own');if(own)own.checked=_hideOwn;
+      var bots=_$('act-hide-bots');if(bots)bots.checked=_hideBots;
+    }
     bindControls();
     window.addEventListener('goelo:role-ready', function () {
       if (canExportActivity()) { loadActivity(); return; }
@@ -742,8 +769,7 @@
       var panel = _$('act-analytics-panel'); if (panel) panel.textContent = 'Accès administrateur requis.';
       var detail = _$('act-session-detail'); if (detail) { detail.hidden = true; detail.innerHTML = ''; }
     });
-    loadActivity();
-    startTicker();
+    if (_dedicatedView !== "tools") { loadActivity(); startTicker(); }
   }
 
   window.GoeloAdminActivity = { init: init, refresh: loadActivity };

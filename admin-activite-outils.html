@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Exporter et nettoyer · Activité GoëloRides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/admin-shell.css?v=20261103">
+
+<link rel="stylesheet" href="css/components/back-navigation.css">
+<link rel="stylesheet" href="css/pages/admin-dashboard.css?v=20261103-pages">
+<script>
+  if (window.location.hash === '#gtr-approvals') window.location.replace('admin-approbations.html');
+</script>
+  <link rel="stylesheet" href="css/components/brand.css?v=20261030-footer">
+  <link rel="stylesheet" href="css/components/admin-home-alerts.css?v=20261031-admin-alerts">
+<link rel="stylesheet" href="css/pages/admin-insights.css?v=20261103-networks">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="css/components/admin-participation-notifications.css?v=20261102">
+  <link rel="stylesheet" href="css/pages/admin-activity-hub.css?v=20261103">
+</head>
+<body class="admin-dashboard">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="index.html" class="topbar-logo">GOËLO<span>RIDES</span></a>
+  <span class="topbar-crown">👑 ADMIN</span>
+  <a href="admin-participations.html" data-admin-only id="admin-participation-bell" class="apn-bell" hidden aria-label="Alertes de participation"><span aria-hidden="true">🔔</span> <span class="apn-bell-label">Participations</span> <span id="admin-participation-count" class="apn-badge" hidden>0</span></a>
+  <nav class="topbar-nav" aria-label="Sections admin">
+    <a href="admin-activite.html" aria-current="page">Activité</a>
+    <a href="admin-participations.html" id="admin-participation-nav">Participations</a>
+    <a href="admin-approbations.html">Approbations</a>
+    <a href="admin-cyclistes.html">Cyclistes</a>
+    <a href="admin-sondages.html">Sondages</a>
+    <a href="admin-alertes-accueil.html">Alertes accueil</a>
+    <a href="admin-photos.html">Photos des sorties</a>
+    <a href="allrides.html">Itinéraires</a>
+    <a href="team-rider.html">Gérer les sorties</a>
+    <a href="community-manager.html">Communication</a>
+  </nav>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <div class="topbar-av" id="admin-avatar">AD</div>
+    <span id="admin-name">Admin</span>
+    <button class="topbar-logout" id="admin-logout-btn">Déconnexion</button>
+  </div>
+</header>
+
+<!-- GATE : visible si non admin -->
+<div id="gtr-admin-gate">
+  <div class="gate-icon">🔒</div>
+  <div class="gate-title">Accès restreint</div>
+  <p class="gate-sub">Cette page est réservée aux administrateurs GoëloRides.</p>
+  <button class="gate-btn" data-goelo-auth-trigger>Se connecter</button>
+</div>
+
+<!-- PANEL ADMIN -->
+<div id="gtr-admin-panel" style="display:none">
+  <div class="page">
+
+    <nav class="activity-page-returns" aria-label="Retours"><a class="admin-page-return" href="admin-activite.html">← Retour à Activité</a><a class="admin-page-return" href="admin.html">Dashboard</a></nav>
+    <header class="page-header"><h1 class="page-title" id="activity-page-title">Exporter et nettoyer</h1><p class="page-sub">Télécharger les activités ou gérer l’historique conservé.</p></header>
+    <section class="admin-section activity-detail-page" id="act-dashboard" data-activity-view="tools" aria-labelledby="activity-page-title">
+      <div class="activity-tools-section"><h2>Exporter les activités</h2>      <div class="admin-activity-tools" aria-label="Export des activités">
+        <button class="btn-refresh" id="act-export-btn" type="button" style="min-height:44px">Exporter les activités en CSV</button>
+        <p id="act-export-status" class="admin-section__sub" role="status" aria-live="polite">Export pour analyser les visites et les inscriptions, y compris tes propres essais.</p>
+        <a class="btn-refresh" id="act-export-download" hidden style="min-height:44px;white-space:normal" download>Télécharger le CSV</a>
+      </div></div>
+      <div class="activity-tools-section"><h2>Nettoyer l’historique</h2><p>Le nettoyage supprime les activités de plus de 7 jours et les activités de Daniel. Il réduit l’historique disponible pour les analyses.</p><button class="btn-refresh" id="act-cleanup-btn" type="button">Nettoyer les activités</button></div>
+    </section>
+  </div><!-- /.page -->
+</div><!-- /#gtr-admin-panel -->
+
+<!-- Toast container -->
+<div id="gtr-toast-wrap"></div>
+
+<!--
+  ORDRE IMPÉRATIF :
+  1. goelo-config.js   → window.GOELO_CONFIG
+  2. supabase.min.js   → window.supabase
+  3. auth.js           → window.goeloGetSb, window.GOELO_ROLE, goelo:role-ready
+  4. admin-page.js
+-->
+<script src="js/goelo-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/goelo-auth-state.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/goelo-profile.js"></script>
+<script src="js/goelo-journey-insights.js?v=20261103-home-album"></script>
+<script src="js/goelo-activity.js?v=20261102-insights"></script>
+<script src="js/goelo-activity-export.js?v=20261028-export"></script>
+<script src="js/goelo-network-insights.js?v=20261103"></script>
+<script src="js/goelo-admin-activity.js?v=20261103-dedicated-pages"></script>
+
+<script src="js/admin-page.js?v=20261103" defer></script>
+</body>
+</html>
