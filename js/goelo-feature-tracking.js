@@ -8,7 +8,7 @@
     ['participation', '#pd-join-btn, .go-sc-btn--join'], ['polls', '.gr-poll-root h2, .gr-poll-root h3, [data-poll-multi] h2, [data-poll-multi] h3'],
     ['level', '[data-section="niveau_sortie"] .pd-acc__head'], ['gpx', '#pd-gpx-btn'], ['map', '#pd-map'],
     ['messenger', '[data-goelo-messenger-open]'], ['participants', '#pd-participants-title'],
-    ['groups', '.gr-page-header h1'], ['practical', 'main h1'], ['album', '#gallery .cover'], ['album_to_rides', '.cta a[href="sorties.html"]']
+    ['groups', '.gr-page-header h1'], ['practical', 'main h1'], ['album', '#gallery .cover, #gr-home-album [data-home-album-photo]'], ['album_to_rides', '.cta a[href="sorties.html"], #gr-home-album [data-home-album-rides]']
   ];
   function identify() { return pageNames[(location.pathname.split('/').pop() || 'index.html').toLowerCase()]; }
   function client() {
@@ -70,7 +70,7 @@
       el.closest('#pd-map, #pd-map-fit') ? 'map' : el.closest('[data-section="niveau_sortie"]') ? 'level' :
       el.closest('[data-poll-option], [data-multi-submit], [data-multi-opt]') ? 'polls' :
       el.closest('#gr-upcoming-rides, .so-main .go-sc-card') ? 'upcoming' :
-      el.closest('#gallery button') ? 'album' : el.closest('.cta a[href="sorties.html"]') && page === 'album' ? 'album_to_rides' : null;
+      el.closest('#gallery button, #gr-home-album [data-home-album-photo], #gr-home-album [data-home-album-gallery]') ? 'album' : (el.closest('.cta a[href="sorties.html"]') && page === 'album' || el.closest('#gr-home-album [data-home-album-rides]')) ? 'album_to_rides' : null;
     if (feature) emit('used', feature, 'clicked');
     if (el.tagName !== 'A') return;
     var url;
