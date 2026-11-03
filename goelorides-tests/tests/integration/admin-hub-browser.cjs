@@ -40,7 +40,7 @@ const root=path.resolve(__dirname,'../../..');
  await page.locator('.activity-hub-grid').getByRole('link',{name:/Vue d’ensemble/}).click();await page.getByRole('heading',{name:'Ce qui se passe sur le site'}).waitFor();assert.equal(await page.locator('[data-act-tab]').count(),0);
  await page.locator('#act-period').selectOption('7');await page.locator('[data-act-review-journeys=viewed]').click();await page.waitForURL('**/admin-activite-parcours.html?*');
  assert.equal(await page.locator('#act-period').inputValue(),'7');assert.equal(await page.locator('#act-journey-filter').inputValue(),'viewed');await page.locator('.act-visit-card').waitFor();
- await page.getByRole('link',{name:'← Retour à Activité'}).click();assert.deepEqual(await page.evaluate(()=>window.adminCalls),[]);
+ await page.getByRole('link',{name:'← Retour à Activité'}).click();await page.locator('.activity-hub-grid').waitFor();assert.deepEqual(await page.evaluate(()=>window.adminCalls),[]);
  await page.locator('.activity-hub-grid').getByRole('link',{name:/Fonctionnalités/}).click();await page.getByRole('heading',{name:'Ce qui est vu et utilisé'}).waitFor();await overflow();
  await page.getByRole('link',{name:'← Retour à Activité'}).click();await page.locator('.activity-hub-grid').getByRole('link',{name:/Retours réseau/}).click();await page.getByRole('heading',{name:'Visites répétées depuis un même réseau'}).waitFor();
  await page.locator('[data-act-network]').click();await page.waitForURL('**/admin-activite-parcours.html?*');await page.locator('[data-act-clear-network]').waitFor();assert.equal(new URL(page.url()).searchParams.get('network'),'a'.repeat(64));
