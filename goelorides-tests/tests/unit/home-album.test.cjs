@@ -29,6 +29,6 @@ test('section masquée sans photos, en cas de panne et si toutes les images sont
  for(const [rows,options] of [[[],{}],[{unexpected:true},{}],[[],{error:true}],[[],{network:true}]]){const a=app(rows,options);await a.c.GoeloHomeAlbum.load();assert.equal(a.section.hidden,true);}
  const a=app([{id:'one',published:true,photos:[photo(1)]}]);await a.c.GoeloHomeAlbum.load();a.grid.children[0].children[0].events.error();assert.equal(a.grid.childElementCount,0);assert.equal(a.section.hidden,true);
 });
-test('le bloc vient après les sorties et propose un accès direct à celles-ci',()=>{
- const html=fs.readFileSync(path.join(root,'index.html'),'utf8');assert(html.indexOf('id="gr-upcoming-rides"')<html.indexOf('id="gr-home-album"'));assert(html.indexOf('id="gr-home-album"')<html.indexOf('<aside class="gr-hero-poll"'));assert.match(html,/<a href="sorties.html" data-home-album-rides>Les sorties/);
+test('le bloc vient après les sorties et conserve uniquement l’accès à l’album',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');assert(html.indexOf('id="gr-upcoming-rides"')<html.indexOf('id="gr-home-album"'));assert(html.indexOf('id="gr-home-album"')<html.indexOf('<aside class="gr-hero-poll"'));assert(!html.includes('data-home-album-rides'));assert.match(html,/data-home-album-gallery>Voir l’album/);
 });

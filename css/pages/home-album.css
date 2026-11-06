@@ -37,3 +37,6 @@ html.site-retheme .app-main--home section#gr-home-album{
   background:#1A1A1A;color:#C8F135;
 }
 #gr-home-album .gr-home-album__actions a.gr-home-album__gallery:hover{background:rgba(200,241,53,.1)}
+
+/* Le lien album unique garde une largeur compacte sur mobile. */
+#gr-home-album .gr-home-album__actions a:only-child{flex:0 1 auto}
