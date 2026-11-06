@@ -9,7 +9,7 @@ function app(options={}){
   calls.push({name,args});if(fail)return {error:{code:'unavailable'}};
   if(name==='admin_participation_device_set'){enabled=args.p_enabled;return {data:{ok:true,enabled}}}
   if(name==='admin_participation_notifications_read'){read=true;return {data:{ok:true}}}
-  const data={ok:true,unread_count:read?0:1,device_enabled:enabled,service:{configured,checked_at:new Date().toISOString()},items:[{id:NOTICE,route_id:'r ?x',route_title:'<script>title</script>',participant_name:'<img src=x onerror=alert(1)>',participant_count:3,action:'joined',created_at:new Date().toISOString(),is_read:read}]};
+  const data={ok:true,unread_count:read?0:1,device_enabled:enabled,service:{configured,checked_at:new Date().toISOString()},items:[{id:NOTICE,route_id:'r ?x',route_title:'<script>title</script>',participant_name:'<img src=x onerror=alert(1)>',participant_count:3,action:options.action||'joined',created_at:new Date().toISOString(),is_read:read}]};
   if(pending)return new Promise(resolve=>pending.resolve=()=>resolve({data}));return {data};
  }}),goeloRequestPushSubscription:async()=>({ok:!options.permissionDenied}),goeloOneSignalInitPromise:async()=>({User:{PushSubscription:{id:DEVICE,optedIn:true,optOut(){throw Error('Les notifications générales ne doivent pas être désactivées')}}}})};
  c.window=c;vm.createContext(c);vm.runInContext(source,c);
@@ -29,4 +29,11 @@ test('le raccourci visible et le lien direct ouvrent le panneau après identific
  const b=app({direct:true});await b.ready();assert.equal(b.el('admin-participation-panel').hidden,false);
  const c=app({direct:true,visitor:true});await c.ready();assert.equal(c.el('admin-participation-panel').hidden,true);assert.equal(c.calls.length,0);
  c.c.GOELO_ROLE='admin';c.c.GOELO_USER={id:UID};c.listeners['goelo:role-ready']();await settle();assert.equal(c.el('admin-participation-panel').hidden,false);
+});
+
+
+test('nouveau compte : nom échappé, lien cyclistes, aucune fausse désinscription',async()=>{
+ const a=app({action:'account_created'});await a.ready();const html=a.el('admin-participation-list').innerHTML;
+ assert(html.includes('a créé son compte cycliste'));assert(html.includes('admin-cyclistes.html'));
+ assert(!html.includes('<img'));assert(!html.includes('désinscrit'));assert(!html.includes('lors du changement'));
 });

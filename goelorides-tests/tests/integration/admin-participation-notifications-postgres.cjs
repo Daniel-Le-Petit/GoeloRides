@@ -62,6 +62,95 @@ const asyncSql=s=>new Promise((resolve,reject)=>execFile('psql',['-X','-qAt','-v
  }
  assert.equal(remaining.unread_count,0);
  const worker=execFileSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs')],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
+ const strictWorker=require('node:child_process').spawnSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs'),'--require-configured'],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
+ assert.equal(strictWorker.status,1);assert.match(strictWorker.stdout,/Push administrateur non configuré/);
  assert.match(worker,/Push administrateur non configuré/);assert.equal(sql('SELECT problem FROM admin_participation_push_status WHERE singleton'),'missing_key');
+ // Recipient extension: apply twice and keep all existing outbox history.
+ sql("ALTER TABLE routes ADD COLUMN assigned_team_rider_id uuid; CREATE TABLE guest_pseudo_registrations(route_id text REFERENCES routes(id),token_hash text,guest_id uuid REFERENCES guest_participants(id) ON DELETE SET NULL,PRIMARY KEY(route_id,token_hash));");
+ const extension=fs.readFileSync(path.join(root,'supabase/migrations/20261106160000_participation_notification_recipients.sql'),'utf8');
+ const history=sql('SELECT count(*) FROM admin_participation_notifications');sql(extension);sql(extension);
+ assert.equal(sql('SELECT count(*) FROM admin_participation_notifications'),history);
+ const db='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',dc='cccccccc-cccc-4ccc-8ccc-cccccccccccc',dd='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+ as(B,`SELECT participation_device_set('${db}',true)`);as(C,`SELECT participation_device_set('${dc}',true)`);as(D,`SELECT participation_device_set('${dd}',true)`);
+ sql(`UPDATE profiles SET role='team_rider' WHERE id='${D}'; INSERT INTO routes(id,track_name,assigned_team_rider_id) VALUES('notify','Test local','${D}');`);
+ assert.equal(sql("SELECT count(*) FROM admin_participation_notifications WHERE route_id='notify'"),'0','Publishing does not notify');
+ sql(`INSERT INTO signups(route_id,user_id,status)VALUES('notify','${C}','waiting');`);
+ assert.equal(sql("SELECT count(*) FROM admin_participation_notifications WHERE route_id='notify'"),'0','Waiting is not confirmation');
+ sql(`UPDATE signups SET status='joined' WHERE route_id='notify';`);
+ let nid=sql("SELECT id FROM admin_participation_notifications WHERE route_id='notify' ORDER BY created_at DESC LIMIT 1");
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_deliveries WHERE notification_id='${nid}'`),'4');
+ assert.equal(sql(`SELECT recipient_kind FROM admin_participation_deliveries WHERE notification_id='${nid}' AND user_id='${C}'`),'participant');
+ assert.equal(sql(`SELECT recipient_kind FROM admin_participation_deliveries WHERE notification_id='${nid}' AND user_id='${D}'`),'leader');
+ as(C,`SELECT participation_device_set('${dc}',true)`);
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_deliveries WHERE notification_id='${nid}'`),'4','Rebinding is idempotent');
+ assert.throws(()=>as(C,'SELECT admin_participation_notifications_list()'));
+ assert.throws(()=>sql("SET ROLE anon; SELECT participation_device_set('"+dc+"',true)"));
+ assert.equal(sql("SELECT has_function_privilege('authenticated','public._participation_delivery_allowed(uuid)','execute')"),'f');
+ // Reassignment and account switch invalidate messages even after they were claimed.
+ sql(`UPDATE routes SET assigned_team_rider_id='${A}' WHERE id='notify';`);
+ assert.equal(sql(`SELECT _participation_delivery_allowed(id) FROM admin_participation_deliveries WHERE notification_id='${nid}' AND user_id='${D}'`),'f');
+ as(D,`SELECT participation_device_set('${dc}',true)`);
+ assert.equal(sql(`SELECT status FROM admin_participation_deliveries WHERE notification_id='${nid}' AND user_id='${C}'`),'skipped');
+ as(C,`SELECT participation_device_set('${dc}',true)`);
+ sql(`INSERT INTO guest_participants(route_id,first_name)VALUES('notify','Invité local');`);
+ nid=sql("SELECT id FROM admin_participation_notifications WHERE route_id='notify' ORDER BY created_at DESC LIMIT 1");
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_deliveries WHERE notification_id='${nid}'`),'2','Admin also leader gets one delivery per device');
+ const token='a'.repeat(64),guestDevice='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+ sql(`INSERT INTO guest_pseudo_registrations SELECT 'notify',encode(sha256(convert_to('${token}','UTF8')),'hex'),id FROM guest_participants WHERE first_name='Invité local';`);
+ sql(`SET ROLE anon; SELECT participation_guest_device_set('notify','${token}','${guestDevice}')`);
+ sql(`SET ROLE anon; SELECT participation_guest_device_set('notify','${token}','${guestDevice}')`);
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_deliveries WHERE notification_id='${nid}' AND recipient_kind='guest'`),'1');
+ assert.equal(sql(`SELECT _participation_delivery_allowed(id) FROM admin_participation_deliveries WHERE notification_id='${nid}' AND recipient_kind='guest'`),'t');
+ assert.throws(()=>sql(`SET ROLE anon; SELECT participation_guest_device_set('notify','${'b'.repeat(64)}','${guestDevice}')`));
+ // An authenticated account can also own a guest token on the same browser.
+ as(C,`SELECT participation_guest_device_set('notify','${token}','${dc}')`);
+ as(C,`SELECT participation_device_set('${dc}',true)`);
+ assert.equal(sql(`SELECT _participation_delivery_allowed(id) FROM admin_participation_deliveries WHERE notification_id='${nid}' AND recipient_kind='guest' AND subscription_id='${dc}'`),'t');
+ sql("DELETE FROM guest_participants WHERE first_name='Invité local';");
+ assert.equal(sql(`SELECT _participation_delivery_allowed(id) FROM admin_participation_deliveries WHERE notification_id='${nid}' AND recipient_kind='guest' AND subscription_id='${guestDevice}'`),'f');
+ assert.equal(sql("SELECT action FROM admin_participation_notifications WHERE route_id='notify' ORDER BY created_at DESC LIMIT 1"),'left','Unregistration retained');
+ as(C,`SELECT participation_device_set('${dc}',false)`);
+ assert.equal(sql(`SELECT enabled FROM admin_participation_devices WHERE subscription_id='${dc}'`),'f');
+ // A disabled admin preference must survive automatic account subscription sync.
+ as(B,`SELECT admin_participation_device_set('${db}',false)`);
+ as(B,`SELECT participation_device_set('${db}',true)`);
+ assert.equal(JSON.parse(as(B,`SELECT admin_participation_notifications_list('${db}')`)).device_enabled,false);
+ sql("INSERT INTO guest_participants(route_id,first_name) VALUES('notify','Préférence respectée');");
+ let last=sql("SELECT id FROM admin_participation_notifications WHERE route_id='notify' ORDER BY created_at DESC LIMIT 1");
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_deliveries WHERE notification_id='${last}' AND user_id='${B}'`),'0');
+ // Old confirmations must not be revived by a later cancellation/re-registration.
+ sql(`UPDATE signups SET status='cancelled',canceled_at=now() WHERE route_id='notify' AND user_id='${C}';`);
+ sql(`INSERT INTO signups(route_id,user_id,status) VALUES('notify','${C}','joined');`);
+ let latestConfirmation=sql("SELECT id FROM admin_participation_notifications WHERE route_id='notify' AND participant_user_id='"+C+"' ORDER BY created_at DESC LIMIT 1");
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_deliveries WHERE recipient_kind='participant' AND user_id='${C}' AND notification_id<>'${latestConfirmation}' AND _participation_delivery_allowed(id)`),'0');
+ // Creation alert is server-side and only for admins, not profile edits/logins.
+ sql(`ALTER TABLE auth.users ADD COLUMN raw_user_meta_data jsonb DEFAULT '{}';
+ CREATE FUNCTION public.notify_fixture_profile() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+   INSERT INTO profiles(id,role,pseudo) VALUES(NEW.id,'user',NEW.raw_user_meta_data->>'pseudo') ON CONFLICT DO NOTHING; RETURN NEW; END$$;
+ CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION notify_fixture_profile();`);
+ const newcomer='55555555-5555-4555-8555-555555555555';
+ sql(`INSERT INTO auth.users(id,raw_user_meta_data) VALUES('${newcomer}','{"pseudo":"Nouveau cycliste"}');`);
+ const accountNotice=sql(`SELECT id FROM admin_participation_notifications WHERE action='account_created' AND participant_user_id='${newcomer}'`);
+ assert(accountNotice);
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_deliveries WHERE notification_id='${accountNotice}'`),'1');
+ assert.equal(sql(`SELECT user_id||':'||recipient_kind FROM admin_participation_deliveries WHERE notification_id='${accountNotice}'`),A+':admin');
+ sql(`UPDATE auth.users SET raw_user_meta_data='{"pseudo":"Autre pseudo"}' WHERE id='${newcomer}'; UPDATE profiles SET pseudo='Autre pseudo' WHERE id='${newcomer}';`);
+ sql(extension);
+ assert.equal(sql(`SELECT count(*) FROM admin_participation_notifications WHERE action='account_created' AND participant_user_id='${newcomer}'`),'1');
+ assert.throws(()=>sql(`SET ROLE anon; SELECT * FROM admin_participation_notifications WHERE action='account_created'`));
+ assert.equal(sql("SELECT has_function_privilege('authenticated','public._cyclist_account_created_notification()','execute')"),'f');
+ sql("BEGIN; INSERT INTO auth.users(id) VALUES('66666666-6666-4666-8666-666666666666'); ROLLBACK;");
+ assert.equal(sql("SELECT count(*) FROM admin_participation_notifications WHERE participant_user_id='66666666-6666-4666-8666-666666666666'"),'0');
+ const {dispatch}=require(path.join(root,'scripts/admin-participation-push.cjs')),sentBodies=[];
+ const deliveryResult=await dispatch({sql,apiKey:'local-mock-only',fetchImpl:async(_url,args)=>{
+   sentBodies.push(JSON.parse(args.body));return {ok:true,json:async()=>({id:'ffffffff-ffff-4fff-8fff-ffffffffffff',recipients:1})};
+ }});
+ assert(deliveryResult.sent>0);
+ const accountBodies=sentBodies.filter(b=>b.data.type==='cyclist_account_created');
+ assert.equal(accountBodies.length,1);assert.deepEqual(accountBodies[0].include_subscription_ids,[DEVICE]);
+ assert.equal(accountBodies[0].url,'https://goelorides.onrender.com/admin-cyclistes.html');
+ assert.equal(sql(`SELECT status FROM admin_participation_deliveries WHERE notification_id='${accountNotice}'`),'sent');
+ console.log('PASS account creation: admin only, one event, no update/reconnection replay, rollback, private access, mocked provider delivery.');
+ console.log('PASS recipient extension: repeatable migration, automatic joined transition, waitlist, participant/admin/leader targeting, overlap deduplication, guest token proof, revocation, no publication push.');
  console.log('PASS PostgreSQL : migration répétable, aucun historique rejoué, membres/invités, compteurs, transitions effectives, attente, rollback, droits, lectures personnelles, file concurrente, désactivation et révocation.');
 })().catch(e=>{console.error(e.message);process.exitCode=1});

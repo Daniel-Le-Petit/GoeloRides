@@ -30,7 +30,7 @@
   var oneSignalInstance = null;
 
   function getAppId() {
-    var id = window.GOELO_ONESIGNAL_APP_ID;
+    var id = window.GOELO_ONESIGNAL_APP_ID || (window.GOELO_CONFIG && window.GOELO_CONFIG.ONESIGNAL_APP_ID);
     return id && String(id).trim() ? String(id).trim() : "";
   }
 
@@ -433,6 +433,75 @@
   if (typeof window.sendNotification !== "function") {
     window.sendNotification = goeloSendNotification;
   }
+
+  // Bind only subscriptions already opted in by the user. Never prompt on login.
+  var pushBindingQueue = Promise.resolve();
+  var pushBindingPaused = false;
+  var pendingGuestPush = {};
+  function participationAuth() {
+    return window.GoeloAuthState ? window.GoeloAuthState.getState() : {
+      user: window.GOELO_USER, pending: window.GOELO_AUTH_PENDING
+    };
+  }
+  async function participationRpc(name, args) {
+    var sb = window.goeloGetSb && window.goeloGetSb();
+    if (!sb) return false;
+    var result = await raceTimeout(sb.rpc(name, args), 10000, 'binding_timeout');
+    return !!(result && !result.error && result.data && result.data.ok === true);
+  }
+  function currentPushSubscription() {
+    return oneSignalInstance && oneSignalInstance.User && oneSignalInstance.User.PushSubscription;
+  }
+  window.goeloSyncParticipationPush = function () {
+    pushBindingQueue = pushBindingQueue.catch(function () {}).then(async function () {
+      var a = participationAuth(), sub = currentPushSubscription();
+      if (pushBindingPaused || a.pending || !a.user || !sub || !sub.id) return false;
+      var saved = await participationRpc('participation_device_set', { p_subscription_id: sub.id, p_enabled: sub.optedIn === true });
+      if (saved) { try { localStorage.setItem('goelo-participation-push-subscription', sub.id); } catch (_) {} }
+      return saved;
+    });
+    return pushBindingQueue;
+  };
+  window.goeloBindGuestParticipationPush = async function (routeId, token) {
+    pendingGuestPush[String(routeId)] = token;
+    var sub = currentPushSubscription();
+    if (!sub || !sub.id || sub.optedIn !== true) return false;
+    return participationRpc('participation_guest_device_set', {
+      p_route_id: String(routeId), p_token: token, p_subscription_id: sub.id
+    });
+  };
+  window.goeloDisableParticipationPush = async function () {
+    pushBindingPaused = true;
+    pendingGuestPush = {};
+    await pushBindingQueue.catch(function () {});
+    var a = participationAuth(), sub = currentPushSubscription();
+    if (a.user && sub && sub.id) {
+      var disabled = false;
+      try { disabled = await participationRpc('participation_device_set', { p_subscription_id: sub.id, p_enabled: false }); } catch (_) {}
+      // If the server is unavailable, prevent this browser retaining a push subscription.
+      if (!disabled && sub.optOut) await raceTimeout(sub.optOut(), 10000, 'optout_timeout');
+    }
+  };
+  function syncParticipationPush() {
+    window.goeloSyncParticipationPush().catch(function () { /* Registration remains independent of push. */ }).then(function () {
+      Object.keys(pendingGuestPush).forEach(function (routeId) {
+        window.goeloBindGuestParticipationPush(routeId, pendingGuestPush[routeId]).catch(function () {});
+      });
+    });
+  }
+  function authParticipationPush() {
+    if (participationAuth().user) pushBindingPaused = false;
+    syncParticipationPush();
+  }
+  window.addEventListener('goelo-onesignal-ready', function () {
+    var sub = currentPushSubscription();
+    if (sub && sub.addEventListener) sub.addEventListener('change', syncParticipationPush);
+    syncParticipationPush();
+  });
+  ['goelo:auth-state', 'goelo:role-ready', 'goelo:auth-success'].forEach(function (event) {
+    window.addEventListener(event, authParticipationPush);
+  });
+  window.addEventListener('goelo:signup-changed', syncParticipationPush);
 
   void goeloOneSignalInitPromise();
 })();

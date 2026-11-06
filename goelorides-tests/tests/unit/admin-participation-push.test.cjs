@@ -13,3 +13,39 @@ test('un refus de clé restitue les messages du lot non tentés sans consommer l
  const m=mock({status:401}),other={...item,delivery_id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'};let batches=0;const sql=s=>{m.queries.push(s);if(s.includes('push_claim'))return JSON.stringify(++batches===1?[item,other]:[]);if(s.startsWith('SELECT EXISTS'))return 't';return '';};
  await dispatch({...m,sql,apiKey:'key'});assert.equal(m.requests.length,1);assert(m.queries.some(s=>s.includes('attempts=greatest(attempts-1,0)')&&s.includes(other.delivery_id)));
 });
+
+test('participant et invité reçoivent une confirmation, les organisateurs une nouvelle participation',()=>{
+ for(const recipient_kind of ['participant','guest']){
+  const body=payload({...item,recipient_kind});
+  assert.equal(body.headings.fr,'Inscription confirmée');
+  assert.match(body.contents.fr,/Ton inscription.*est confirmée/);
+  assert.equal(body.data.type,'participation_confirmed');
+  assert.equal(body.idempotency_key,item.delivery_id);
+ }
+ for(const recipient_kind of ['admin','leader'])assert.match(payload({...item,recipient_kind}).contents.fr,/Camille participe/);
+ assert.equal(payload({...item,recipient_kind:'participant',notification:{...item.notification,action:'left'}}).headings.fr,'Désinscription');
+});
+test('aucun message de publication de sortie ne peut entrer dans cet envoi',()=>{
+ assert.throws(()=>payload({...item,notification:{...item.notification,action:'published'}}),/invalid_notification/);
+});
+test('le contrôle avant envoi utilise la même autorisation serveur que la réservation',async()=>{
+ const m=mock();await dispatch({...m,apiKey:'key'});
+ assert(m.queries.some(s=>s.startsWith('SELECT EXISTS')&&s.includes('_participation_delivery_allowed(d.id)')));
+});
+
+
+test('création de compte : alerte réservée aux administrateurs sans envoi de bienvenue',()=>{
+ const account={...item,recipient_kind:'admin',notification:{...item.notification,action:'account_created'}};
+ const body=payload(account);
+ assert.equal(body.headings.fr,'Nouveau compte cycliste');assert.match(body.contents.fr,/Camille vient de créer son compte/);
+ assert.equal(body.url,'https://goelorides.onrender.com/admin-cyclistes.html');
+ assert.equal(body.data.type,'cyclist_account_created');
+ for(const recipient_kind of ['participant','guest','leader'])assert.throws(()=>payload({...account,recipient_kind}),/invalid_recipient/);
+});
+
+
+test('la CI exige une configuration serveur valide',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const workflow=fs.readFileSync(path.resolve(__dirname,'../../../.github/workflows/admin-participation-notifications.yml'),'utf8');
+ assert(workflow.includes('node scripts/admin-participation-push.cjs --require-configured'));
+});
