@@ -13,7 +13,7 @@ a.gr-home-album__photo{min-width:0;overflow:hidden;display:flex;flex-direction:c
 .gr-home-album__actions a:hover{background:#d7ff58;border-color:#d7ff58}
 .gr-home-album__actions a.gr-home-album__gallery{background:var(--goelo-surface,#1A1A1A);border-color:var(--goelo-accent,#C8F135);color:var(--goelo-accent,#C8F135)}
 .gr-home-album a:focus-visible{outline:2px solid var(--goelo-accent,#C8F135);outline-offset:3px}
-@media(max-width:600px){.gr-home-album{padding:14px;margin:20px 0}.gr-home-album__heading{font-size:1.5rem}.gr-home-album__photos{gap:7px}.gr-home-album__caption{padding:7px;font-size:.7rem}.gr-home-album__actions a{flex:1 1 135px}}
+@media(max-width:600px){.gr-home-album{padding:14px;margin:20px 0}.gr-home-album__heading{font-size:1.5rem}.gr-home-album__photos{gap:7px}.gr-home-album__caption{padding:7px;font-size:.7rem}.gr-home-album__actions a{flex:1 1 0;min-width:0;padding:10px 12px}}
 
 .gr-home-album__actions a.gr-home-album__gallery:hover{background:rgba(200,241,53,.1);border-color:var(--goelo-accent,#C8F135)}
 a.gr-home-album__photo:hover{border-color:var(--goelo-accent,#C8F135)}
