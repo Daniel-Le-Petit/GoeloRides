@@ -68,7 +68,10 @@ function databaseSql(statement) {
 if(require.main===module)dispatch({sql:databaseSql,apiKey:process.env.ONESIGNAL_REST_API_KEY,appId:process.env.ONESIGNAL_APP_ID||APP_ID})
  .then(result=>{
    console.log(result.configured?'Push administrateur : '+result.sent+' envoi(s) accepté(s), '+result.failed+' échec(s).':'Push administrateur non configuré : vérifier ONESIGNAL_REST_API_KEY dans les secrets GitHub. Les alertes du Dashboard restent disponibles.');
-   if(process.argv.includes('--require-configured')&&!result.configured)process.exitCode=1;
+   if(process.argv.includes('--require-configured')&&!result.configured){
+     if(process.env.GITHUB_ACTIONS==='true')console.error('::error::'+(process.env.ONESIGNAL_REST_API_KEY?'OneSignal refused server authentication (HTTP 401/403). Check the GitHub Actions ONESIGNAL_REST_API_KEY for this app.':'ONESIGNAL_REST_API_KEY is missing from GitHub Actions secrets. Supabase secrets are not shared with GitHub Actions.'));
+     process.exitCode=1;
+   }
  })
  .catch(error=>{const known=['database_not_configured','postgres_client_missing','database_connection_failed','database_operation_failed','invalid_app_id','invalid_queued_message'];console.error('Traitement des alertes interrompu ('+(known.includes(error.message)?error.message:'unconfirmed')+'). Vérifier la configuration serveur ; aucun secret n’est affiché.');process.exitCode=1;});
 module.exports={payload,dispatch};
