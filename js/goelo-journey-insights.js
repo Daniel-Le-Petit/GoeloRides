@@ -29,6 +29,12 @@
     var m = metadata(event), f = feature(m.feature), label = f ? f.label : 'Fonctionnalité';
     if (m.analytics_action === 'page') return 'Page ouverte : ' + (pages[m.page] || 'Autre page');
     if (m.analytics_action === 'navigation') return 'Navigation vers ' + (pages[m.target_page] || 'une page') + ' · ' + ({ bottom: 'menu du bas', top: 'menu principal', content: 'contenu' }[m.surface] || 'contenu');
+    if (m.page === 'album' && m.feature === 'album' && m.album_id) {
+      var title = String(m.album_title || 'Album').replace(/[\u0000-\u001f\u007f]/g,'').slice(0,160);
+      if (m.analytics_action === 'exposed') return 'Album apparu à l’écran : ' + title;
+      if (m.analytics_action === 'used' && m.album_action === 'album_opened') return 'Album ouvert : ' + title;
+      if (m.analytics_action === 'used' && m.album_action === 'photo_opened') return 'Photo ' + m.photo_index + (m.photo_count ? '/' + m.photo_count : '') + ' ouverte : ' + title;
+    }
     if (m.analytics_action === 'available') return 'Proposé sur la page : ' + label;
     if (m.analytics_action === 'exposed') return 'Visible à l’écran : ' + label;
     if (m.analytics_action === 'used' && m.feature === 'gpx' && m.outcome === 'success') return 'GPX : fichier préparé pour le navigateur';
