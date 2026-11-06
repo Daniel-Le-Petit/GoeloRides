@@ -20,7 +20,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="css/components/admin-participation-notifications.css?v=20261102">
-  <link rel="stylesheet" href="css/pages/admin-activity-hub.css?v=20261103">
+  <link rel="stylesheet" href="css/pages/admin-activity-hub.css?v=20261106-album-demo">
 </head>
 <body class="admin-dashboard">
 
@@ -53,6 +53,10 @@
     <header class="page-header"><h1 class="page-title" id="activity-page-title">Parcours visiteurs</h1><p class="page-sub">Voir les étapes avant une participation et les tentatives sans confirmation.</p></header>
     <section class="admin-section activity-detail-page" id="act-dashboard" data-activity-view="journeys" aria-labelledby="activity-page-title">
       <p class="act-feed-error" id="act-feed-error" hidden></p>
+      <div class="act-demo-access">
+        <button class="act-visit-detail-btn" id="act-demo-album" type="button" aria-controls="act-session-detail" aria-expanded="false">Voir un exemple fictif</button>
+        <p class="act-observation-note">Un exemple de visite d’album, hors statistiques.</p>
+      </div>
       <div class="admin-activity-details" id="admin-activity-details">
         <div class="activity-page-filters">
   <label class="act-period-filter" for="act-period">Période<select id="act-period"><option value="7">7 derniers jours</option><option value="30" selected>30 derniers jours</option></select></label>
@@ -87,7 +91,7 @@
 <script src="js/goelo-activity.js?v=20261102-insights"></script>
 <script src="js/goelo-activity-export.js?v=20261028-export"></script>
 <script src="js/goelo-network-insights.js?v=20261103"></script>
-<script src="js/goelo-admin-activity.js?v=20261103-dedicated-pages"></script>
+<script src="js/goelo-admin-activity.js?v=20261106-album-demo"></script>
 
 <script src="js/admin-page.js?v=20261103" defer></script>
 </body>

@@ -50,6 +50,15 @@ const root=path.resolve(__dirname,'../../..');
  await page.locator('.activity-hub-grid').getByRole('link',{name:/Vue d’ensemble/}).click();await page.getByRole('heading',{name:'Ce qui se passe sur le site'}).waitFor();assert.equal(await page.locator('[data-act-tab]').count(),0);
  await page.locator('#act-period').selectOption('7');await page.locator('[data-act-review-journeys=viewed]').click();await page.waitForURL('**/admin-activite-parcours.html?*');
  assert.equal(await page.locator('#act-period').inputValue(),'7');assert.equal(await page.locator('#act-journey-filter').inputValue(),'viewed');await page.locator('.act-visit-card').waitFor();
+ const realCount=await page.locator('.act-visit-card').count(),realPanel=await page.locator('#act-analytics-panel').innerHTML();
+ await page.locator('#act-demo-album').click();await page.getByRole('heading',{name:'Démonstration fictive'}).waitFor();
+ assert((await page.locator('#act-session-detail').textContent()).includes('Photo 2/5 ouverte'));
+ assert((await page.locator('#act-session-detail').textContent()).includes('Album apparu à l’écran : GoëloRides #15'));
+ assert.equal(await page.locator('.act-visit-card').count(),realCount);assert.equal(await page.locator('#act-analytics-panel').innerHTML(),realPanel);
+ assert.equal((await page.evaluate(()=>window.adminCalls)).filter(name=>name==='activity_event_log').length,0);
+ await page.screenshot({path:'/tmp/admin-album-demo-mobile.png',fullPage:true});
+ await page.getByRole('button',{name:'Fermer le détail'}).click();assert(await page.locator('#act-session-detail').isHidden());assert.equal(await page.locator('#act-demo-album').getAttribute('aria-expanded'),'false');
+
  await page.getByRole('link',{name:'← Retour à Activité'}).click();await page.locator('.activity-hub-grid').waitFor();assert.deepEqual(await page.evaluate(()=>window.adminCalls),[]);
  await page.locator('.activity-hub-grid').getByRole('link',{name:/Fonctionnalités/}).click();await page.getByRole('heading',{name:'Ce qui est vu et utilisé'}).waitFor();await overflow();
  await page.getByRole('link',{name:'← Retour à Activité'}).click();await page.locator('.activity-hub-grid').getByRole('link',{name:/Retours réseau/}).click();await page.getByRole('heading',{name:'Visites répétées depuis un même réseau'}).waitFor();

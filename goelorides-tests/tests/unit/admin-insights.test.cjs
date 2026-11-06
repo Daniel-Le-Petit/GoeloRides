@@ -1,14 +1,15 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'../../..');
 function setup(rows, options={}) {
- const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:'',textContent:'',hidden:true,dataset:{},setAttribute(){},handlers:{},addEventListener(name,fn){this.handlers[name]=fn},focus(){this.focused=true},closest(){return null}});return elements.get(id)};
- const c={console,document:{getElementById:el,querySelectorAll:()=>[],addEventListener(){}},setInterval:()=>1,clearInterval(){},setTimeout,clearTimeout,GOELO_ROLE:'admin',GOELO_USER:{id:'daniel-id'},GOELO_DISPLAY_NAME:'Daniel',addEventListener(){}};c.window=c;
+ const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:'',textContent:'',hidden:true,dataset:{},attrs:{},setAttribute(name,value){this.attrs[name]=value},scrollIntoView(){this.scrolled=true},handlers:{},addEventListener(name,fn){this.handlers[name]=fn},focus(){this.focused=true},closest(){return null}});return elements.get(id)};
+ const documentHandlers={};
+ const c={console,document:{getElementById:el,querySelectorAll:()=>[],addEventListener(name,fn){documentHandlers[name]=fn}},setInterval:()=>1,clearInterval(){},setTimeout,clearTimeout,GOELO_ROLE:'admin',GOELO_USER:{id:'daniel-id'},GOELO_DISPLAY_NAME:'Daniel',addEventListener(){}};c.window=c;
  c.goeloGetSb=()=>({rpc:async()=>options.networkError?{error:{message:'denied'}}:{data:options.networks||[]}});vm.createContext(c);
  for(const file of ['goelo-journey-insights','goelo-activity','goelo-network-insights'])vm.runInContext(fs.readFileSync(path.join(root,'js',file+'.js'),'utf8'),c);
  c.GoeloActivity.fetchAnalyticsEvents=async()=>({stats:{},events:c.GoeloActivity.formatEvents(rows)});
  c.GoeloJourneyInsights.collect=options.denied?async()=>{throw Error('denied')}:async()=>({rows,partial:!!options.partial});
  const source=fs.readFileSync(path.join(root,'js/goelo-admin-activity.js'),'utf8').replace('window.GoeloAdminActivity = { init: init, refresh: loadActivity };','window.GoeloAdminActivity = { init: init, refresh: loadActivity, tab: setActiveTab, bind: bindControls };');vm.runInContext(source,c);
- return {c,el};
+ return {c,el,documentHandlers};
 }
 function event(sid,name,extra={}) {return {id:Math.random().toString(),event_type:'RIDE_INFO_OPENED',visitor_session_id:sid,actor_pseudo:name,created_at:new Date().toISOString(),metadata:{analytics_version:1,analytics_action:'page',page:'home',...extra}};}
 test('synthèse par défaut, masquage du parcours admin entier et des robots ; pas de faux abandon',async()=>{
@@ -66,4 +67,22 @@ test('rapprochement réseau : seules les clés retournées par la RPC privée so
  const html=a.el('act-analytics-panel').innerHTML;assert.match(html,/Réseau AAAAAAAA/);assert.match(html,/2 visites observées/);assert(!html.includes('BBBBBBBB'));assert.match(html,/ne prouvent pas pourquoi/);
  const b=setup(rows,{networkError:true});await b.c.GoeloAdminActivity.refresh();b.c.GoeloAdminActivity.tab('networks');
  assert(!b.el('act-analytics-panel').innerHTML.includes('Réseau BBBBBBBB'));assert.match(b.el('act-analytics-panel').innerHTML,/indisponible/);
+});
+
+test('exemple album fictif : vrais libellés, statistiques intactes, persistance au rafraîchissement et fermeture',async()=>{
+ const a=setup([event('real','Camille')]);await a.c.GoeloAdminActivity.refresh();a.c.GoeloAdminActivity.tab('journeys');a.c.GoeloAdminActivity.bind();
+ const before=a.el('act-analytics-panel').innerHTML;
+ a.el('act-demo-album').handlers.click();
+ const demo=a.el('act-session-detail').innerHTML;
+ assert.match(demo,/Démonstration fictive/);assert.match(demo,/Photo 2\/5 ouverte/);
+ assert.match(demo,/Album apparu à l’écran : GoëloRides #15/);assert.match(demo,/pas inclus dans les statistiques ni dans les exports/);
+ assert.equal(a.el('act-analytics-panel').innerHTML,before);assert.equal(a.el('act-demo-album').attrs['aria-expanded'],'true');
+ await a.c.GoeloAdminActivity.refresh();assert.match(a.el('act-session-detail').innerHTML,/Démonstration fictive/);assert.equal(a.el('act-analytics-panel').innerHTML,before);
+ a.documentHandlers.click({target:{closest:selector=>selector==='[data-act-close-detail]'?{}:null}});
+ assert.equal(a.el('act-session-detail').hidden,true);assert.equal(a.el('act-demo-album').attrs['aria-expanded'],'false');assert.equal(a.el('act-demo-album').focused,true);
+ assert.equal(a.el('act-analytics-panel').innerHTML,before);
+});
+test('le bouton de démonstration exige une session admin',()=>{
+ const a=setup([]);a.c.GOELO_ROLE='user';a.c.GoeloAdminActivity.bind();a.el('act-demo-album').handlers.click();
+ assert.equal(a.el('act-session-detail').innerHTML,'');assert.equal(a.el('act-analytics-panel').innerHTML,'');
 });
