@@ -51,3 +51,15 @@ test('collecte paginée sur une borne stable, limite explicite et erreurs sans f
  count=0;sb.from=()=>{const q={select(){return q},gte(){return q},lte(){return q},order(){return q},async range(){return {data:Array(500).fill({id:++count})}}};return q};assert.equal((await I.collect(sb)).partial,true);
  sb.from=()=>{throw Error('forbidden')};await assert.rejects(I.collect(sb),/forbidden/);
 });
+
+test('détail album lisible et comptes de visites inchangés malgré plusieurs albums et photos',()=>{
+ const c=app(),meta={album_id:'a1',album_title:'GoëloRides #15',photo_count:5};
+ const visible=ev('exposed','album',0,'album',meta),opened=ev('used','album',1,'album',{...meta,album_action:'album_opened',outcome:'opened'}),photo=ev('used','album',2,'album',{...meta,album_action:'photo_opened',photo_index:2,outcome:'opened'});
+ assert.equal(c.GoeloActivity.detailTimelineLabel(visible),'Album apparu à l’écran : GoëloRides #15');
+ assert.equal(c.GoeloActivity.formatEvent(opened).label,'Album ouvert : GoëloRides #15');
+ assert.equal(c.GoeloActivity.detailTimelineLabel(photo),'Photo 2/5 ouverte : GoëloRides #15');
+ const rows=[visible,opened,photo,ev('exposed','album',3,'album',{...meta,album_id:'a2'})];
+ const summary=c.GoeloJourneyInsights.summarize(rows,c.GoeloActivity).features.find(f=>f.key==='album');
+ assert.equal(summary.eligible,1);assert.equal(summary.seen,1);assert.equal(summary.used,1);
+ assert.equal(c.GoeloActivity.registrationProgress({items:rows}).viewed,false);
+});

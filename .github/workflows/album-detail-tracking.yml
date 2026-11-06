@@ -1,0 +1,32 @@
+name: Détail des albums consultés
+on:
+  pull_request:
+    paths:
+      - 'js/ride-gallery.js'
+      - 'js/goelo-feature-tracking.js'
+      - 'js/goelo-journey-insights.js'
+      - 'dans-la-roue.html'
+      - 'goelorides-tests/tests/unit/feature-tracking.test.cjs'
+      - 'goelorides-tests/tests/unit/journey-insights.test.cjs'
+      - 'goelorides-tests/tests/integration/album-detail-tracking-browser.cjs'
+      - '.github/workflows/album-detail-tracking.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test goelorides-tests/tests/unit/feature-tracking.test.cjs goelorides-tests/tests/unit/journey-insights.test.cjs goelorides-tests/tests/unit/admin-insights.test.cjs goelorides-tests/tests/unit/activity-registration.test.cjs
+      - run: npm ci --prefix goelorides-tests
+      - run: node goelorides-tests/node_modules/playwright/cli.js install --with-deps chromium
+      - run: node goelorides-tests/tests/integration/album-detail-tracking-browser.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: album-detail-tracking
+          path: /tmp/album-detail-tracking.png
