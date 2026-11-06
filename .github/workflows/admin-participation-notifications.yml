@@ -93,4 +93,4 @@ jobs:
           SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
           ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
           ONESIGNAL_APP_ID: ${{ vars.ONESIGNAL_APP_ID }}
-        run: node scripts/admin-participation-push.cjs
+        run: node scripts/admin-participation-push.cjs --require-configured

@@ -152,3 +152,8 @@ jour du profil ou une réapplication de la migration ne renvoie pas cette alerte
 Les anciens comptes ne sont pas repris. Une panne du mécanisme d’alerte ne bloque
 pas la création du compte. Le test PostgreSQL couvre l’événement et son envoi avec
 un fournisseur OneSignal simulé, sans accès au service réel.
+
+Le job d’envoi utilise `--require-configured` : une clé absente ou refusée produit
+un échec du workflow, plutôt qu’un résultat vert sans service d’envoi configuré.
+La présence d’une clé et un job réussi sans message en attente ne prouvent pas la
+réception d’un push ; celle-ci se vérifie sur un appareil abonné lors d’un événement réel.

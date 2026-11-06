@@ -66,6 +66,9 @@ function databaseSql(statement) {
   } catch(error) { throw Error(error.code==='ENOENT'?'postgres_client_missing':error.status===2?'database_connection_failed':'database_operation_failed'); }
 }
 if(require.main===module)dispatch({sql:databaseSql,apiKey:process.env.ONESIGNAL_REST_API_KEY,appId:process.env.ONESIGNAL_APP_ID||APP_ID})
- .then(result=>console.log(result.configured?'Push administrateur : '+result.sent+' envoi(s) accepté(s), '+result.failed+' échec(s).':'Push administrateur non configuré : vérifier ONESIGNAL_REST_API_KEY dans les secrets GitHub. Les alertes du Dashboard restent disponibles.'))
+ .then(result=>{
+   console.log(result.configured?'Push administrateur : '+result.sent+' envoi(s) accepté(s), '+result.failed+' échec(s).':'Push administrateur non configuré : vérifier ONESIGNAL_REST_API_KEY dans les secrets GitHub. Les alertes du Dashboard restent disponibles.');
+   if(process.argv.includes('--require-configured')&&!result.configured)process.exitCode=1;
+ })
  .catch(error=>{const known=['database_not_configured','postgres_client_missing','database_connection_failed','database_operation_failed','invalid_app_id','invalid_queued_message'];console.error('Traitement des alertes interrompu ('+(known.includes(error.message)?error.message:'unconfirmed')+'). Vérifier la configuration serveur ; aucun secret n’est affiché.');process.exitCode=1;});
 module.exports={payload,dispatch};

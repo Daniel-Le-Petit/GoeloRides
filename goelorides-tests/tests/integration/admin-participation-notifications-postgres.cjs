@@ -62,6 +62,8 @@ const asyncSql=s=>new Promise((resolve,reject)=>execFile('psql',['-X','-qAt','-v
  }
  assert.equal(remaining.unread_count,0);
  const worker=execFileSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs')],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
+ const strictWorker=require('node:child_process').spawnSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs'),'--require-configured'],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
+ assert.equal(strictWorker.status,1);assert.match(strictWorker.stdout,/Push administrateur non configuré/);
  assert.match(worker,/Push administrateur non configuré/);assert.equal(sql('SELECT problem FROM admin_participation_push_status WHERE singleton'),'missing_key');
  // Recipient extension: apply twice and keep all existing outbox history.
  sql("ALTER TABLE routes ADD COLUMN assigned_team_rider_id uuid; CREATE TABLE guest_pseudo_registrations(route_id text REFERENCES routes(id),token_hash text,guest_id uuid REFERENCES guest_participants(id) ON DELETE SET NULL,PRIMARY KEY(route_id,token_hash));");

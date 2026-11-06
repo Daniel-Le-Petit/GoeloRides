@@ -42,3 +42,10 @@ test('création de compte : alerte réservée aux administrateurs sans envoi de 
  assert.equal(body.data.type,'cyclist_account_created');
  for(const recipient_kind of ['participant','guest','leader'])assert.throws(()=>payload({...account,recipient_kind}),/invalid_recipient/);
 });
+
+
+test('la CI exige une configuration serveur valide',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const workflow=fs.readFileSync(path.resolve(__dirname,'../../../.github/workflows/admin-participation-notifications.yml'),'utf8');
+ assert(workflow.includes('node scripts/admin-participation-push.cjs --require-configured'));
+});
