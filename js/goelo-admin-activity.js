@@ -13,6 +13,7 @@
   var _dedicatedView = null;
   var ACTIVITY_PAGES = {"overview":"admin-activite-vue.html","journeys":"admin-activite-parcours.html","features":"admin-activite-fonctionnalites.html","networks":"admin-activite-reseaux.html","members":"admin-activite-utilisateurs.html","tools":"admin-activite-outils.html"};
   var _selectedSessionId = null;
+  var _albumDemoOpen = false;
   var _hideOwn = true;
   var _hideBots = true;
   var _days = 30;
@@ -208,6 +209,26 @@
       (unlinked ? '<p class="act-observation-note act-observation-note--warning">' + unlinked + ' confirmation' + (unlinked > 1 ? 's d’inscription ne sont pas reliées' : ' d’inscription n’est pas reliée') + ' à un parcours. ' + (unlinked > 1 ? 'Leur origine reste inconnue.' : 'Son origine reste inconnue.') + ' Ces traces peuvent concerner des inscriptions déjà visibles dans les compteurs ; ne les additionne pas.</p><button type="button" class="act-visit-detail-btn" data-act-show-signups>Voir les inscriptions des membres</button>' : '');
   }
 
+  function albumDemoSession() {
+    var base = Date.parse('2026-11-06T10:00:00Z');
+    var album16 = { album_id: 'demo-16', album_title: 'GoëloRides #16 — Démonstration', photo_count: 5 };
+    var steps = [
+      [0, { analytics_action: 'page' }],
+      [15, Object.assign({ analytics_action: 'exposed', feature: 'album' }, album16)],
+      [30, Object.assign({ analytics_action: 'used', feature: 'album', outcome: 'opened', album_action: 'album_opened' }, album16)],
+      [35, Object.assign({ analytics_action: 'used', feature: 'album', outcome: 'opened', album_action: 'photo_opened', photo_index: 1 }, album16)],
+      [55, Object.assign({ analytics_action: 'used', feature: 'album', outcome: 'opened', album_action: 'photo_opened', photo_index: 2 }, album16)],
+      [85, { analytics_action: 'exposed', feature: 'album', album_id: 'demo-15', album_title: 'GoëloRides #15 — Démonstration', photo_count: 4 }],
+      [115, { analytics_action: 'exposed', feature: 'album', album_id: 'demo-14', album_title: 'GoëloRides #14 — Démonstration', photo_count: 6 }]
+    ];
+    var rows = steps.map(function (step, i) {
+      return { id: 'demo-album-' + i, event_type: 'RIDE_INFO_OPENED', actor_pseudo: 'Visiteur fictif',
+        created_at: new Date(base + step[0] * 1000).toISOString(),
+        metadata: Object.assign({ analytics_version: 1, page: 'album', visitor_session_id: 'demo-album-local' }, step[1]) };
+    });
+    return { fictional: true, visitor_id: 'demo-album-local', visitor_session_id: 'demo-album-local', items: window.GoeloActivity.formatEvents(rows) };
+  }
+
   function renderSessionDetail(session) {
     var box = _$('act-session-detail');
     if (!box || !session || !window.GoeloActivity) return;
@@ -217,17 +238,18 @@
     box.hidden = false;
     box.setAttribute('tabindex', '-1');
     box.innerHTML = '<div class="act-session-detail__head"><div>' +
-      '<h3 class="act-session-detail__title">Détail du parcours</h3>' +
+      '<h3 class="act-session-detail__title">' + (session.fictional ? 'Démonstration fictive' : 'Détail du parcours') + '</h3>' +
       '<p class="act-session-detail__sub">' + esc(GA.sessionUserLabel(session)) + ' · ' + esc(fmtDateTime(session.items[0].created_at)) + '</p></div>' +
       '<button type="button" class="act-session-detail__close" data-act-close-detail aria-label="Fermer le détail">✕</button></div>' +
-      '<p class="act-session-detail__summary">' + esc(progress.description) + '</p>' +
+      (session.fictional ? '<p class="act-demo-notice">Ces actions et horaires sont fictifs. Ils ne sont pas inclus dans les statistiques ni dans les exports.</p>' : '') +
+      '<p class="act-session-detail__summary">' + esc(session.fictional ? 'Scénario : trois albums apparaissent à l’écran ; un album est ouvert et deux de ses cinq photos sont consultées. Cela ne signifie pas que toutes les photos de la galerie ont été vues.' : progress.description) + '</p>' +
       '<ol class="act-session-detail__timeline">' + timeline.map(function (event) {
         var title = String(event.route_title || '').trim();
         return '<li class="act-session-detail__item"><span class="act-session-detail__time">' + esc(fmtTime(event.created_at)) + '</span>' +
           '<span class="act-session-detail__event">' + esc(GA.detailTimelineLabel(event)) +
           (title && !/c_[0-9a-f]+/i.test(title) ? '<small>' + esc(title) + '</small>' : '') + '</span></li>';
       }).join('') + '</ol>' +
-      '<details class="act-technical"><summary>Données techniques</summary><p>Identifiant navigateur : ' + esc(session.visitor_id || session.visitor_session_id) + '</p>' +
+      '<details class="act-technical"><summary>Données techniques</summary><p>' + (session.fictional ? 'Identifiant fictif : ' : 'Identifiant navigateur : ') + esc(session.visitor_id || session.visitor_session_id) + '</p>' +
       '<ul>' + session.items.map(function (event) { return '<li>' + esc(fmtTime(event.created_at)) + ' · ' + esc(event.event_type) + '</li>'; }).join('') + '</ul></details>';
   }
 
@@ -273,7 +295,10 @@
       }).join('') + '</div>' +
       (!shown.length ? '<p class="gtr-empty">Aucun parcours ne correspond à ce filtre dans les données chargées.</p>' : '') +
       '<nav class="act-visit-pagination" aria-label="Pagination des parcours"><button type="button" data-act-page="-1"' + (_journeyPage === 0 ? ' disabled' : '') + '>Précédent</button><span>' + filtered.length + ' parcours · page ' + (_journeyPage + 1) + '/' + pageCount + '</span><button type="button" data-act-page="1"' + (_journeyPage + 1 >= pageCount ? ' disabled' : '') + '>Suivant</button></nav>';
-    if (_selectedSessionId) renderSessionDetail(sessionById(_selectedSessionId));
+    var demoButton = _$('act-demo-album');
+    if (demoButton) { demoButton.setAttribute('aria-expanded', String(_albumDemoOpen)); demoButton.textContent = _albumDemoOpen ? 'Masquer l’exemple fictif' : 'Voir un exemple fictif'; }
+    if (_albumDemoOpen) renderSessionDetail(albumDemoSession());
+    else if (_selectedSessionId) renderSessionDetail(sessionById(_selectedSessionId));
     else { var detail = _$('act-session-detail'); if (detail) detail.hidden = true; }
   }
 
@@ -534,6 +559,13 @@
   }
 
   function bindControls() {
+    var demo = _$('act-demo-album');
+    if (demo) demo.addEventListener('click', function () {
+      if (!canExportActivity()) return;
+      _albumDemoOpen = !_albumDemoOpen; _selectedSessionId = null;
+      renderJourneys();
+      if (_albumDemoOpen) { var detail = _$('act-session-detail'); if (detail) { detail.focus({ preventScroll: true }); detail.scrollIntoView({ block: 'start' }); } }
+    });
     var exportButton = _$('act-export-btn');
     if (exportButton) exportButton.addEventListener('click', exportActivity);
     var exportLink = _$('act-export-download');
@@ -622,6 +654,7 @@
         }
         var row = e.target.closest("[data-act-session]");
         if (!row) return;
+        _albumDemoOpen = false;
         var sessionId = row.getAttribute("data-act-session");
         _selectedSessionId = _selectedSessionId === sessionId ? null : sessionId;
         renderJourneys();
@@ -635,11 +668,13 @@
 
     document.addEventListener("click", function (e) {
       if (e.target.closest("[data-act-close-detail]")) {
+        var wasDemo = _albumDemoOpen; _albumDemoOpen = false;
         var closedSessionId = _selectedSessionId;
         _selectedSessionId = null;
         var detail = _$("act-session-detail");
         if (detail) detail.hidden = true;
         renderJourneys();
+        if (wasDemo) { var demoButton = _$('act-demo-album'); if (demoButton) demoButton.focus(); }
         document.querySelectorAll('[data-act-session]').forEach(function (button) {
           if (button.getAttribute('data-act-session') === closedSessionId) button.focus();
         });
@@ -765,7 +800,7 @@
     bindControls();
     window.addEventListener('goelo:role-ready', function () {
       if (canExportActivity()) { loadActivity(); return; }
-      _allEvents = []; _visibleEvents = []; _sessions = [];
+      _allEvents = []; _visibleEvents = []; _sessions = []; _albumDemoOpen = false;
       var panel = _$('act-analytics-panel'); if (panel) panel.textContent = 'Accès administrateur requis.';
       var detail = _$('act-session-detail'); if (detail) { detail.hidden = true; detail.innerHTML = ''; }
     });

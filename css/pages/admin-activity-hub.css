@@ -15,3 +15,7 @@
 .activity-tools-section p{color:#bcbcbc;font-size:.85rem;line-height:1.6}
 .activity-tools-section button{margin-top:12px}
 @media(max-width:600px){.activity-hub-grid{grid-template-columns:1fr;gap:10px}.activity-hub-card{min-height:150px;padding:18px}.activity-page-filters{align-items:stretch;flex-direction:column}.activity-page-filters .act-period-filter{justify-content:space-between}.activity-page-filters select{max-width:100%}}
+
+.act-demo-access{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 18px}
+.act-demo-access .act-observation-note{margin:0}
+.act-demo-notice{margin:12px 0;padding:12px 14px;border-left:3px solid #C8F135;border-radius:0 8px 8px 0;background:#25291b;color:#F0F0F0;font-size:.85rem;line-height:1.6}
