@@ -21,7 +21,7 @@ const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',publi
   const file=path.resolve(root,'.'+decodeURIComponent(u.pathname));if(!file.startsWith(root+path.sep)||!fs.existsSync(file))return route.fulfill({status:404,body:''});
   return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.html')?'text/html':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'application/octet-stream'});
  });
- await page.goto('http://home.test/preview.html');await page.locator('#gr-home-album').waitFor({state:'visible'});assert.equal(await page.locator('[data-home-album-photo]').count(),3);assert.equal(await page.locator('[data-home-album-rides]').getAttribute('href'),'sorties.html');
+ await page.goto('http://home.test/preview.html');await page.locator('#gr-home-album').waitFor({state:'visible'});assert.equal(await page.locator('[data-home-album-photo]').count(),3);assert.equal(await page.locator('[data-home-album-rides]').count(),0);assert.equal(await page.locator('.gr-home-album__actions a').count(),1);assert.equal(await page.locator('[data-home-album-gallery]').getAttribute('href'),'dans-la-roue.html');
 
  // Assert computed colors with every real home stylesheet and legacy inline rule loaded.
  const palette=await page.evaluate(()=>{
@@ -29,13 +29,11 @@ const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',publi
    return {
      panel:color('#gr-home-album','backgroundColor'),
      caption:color('.gr-home-album__caption','color'),
-     primary:color('[data-home-album-rides]','color'),
-     primaryBg:color('[data-home-album-rides]','backgroundColor'),
      secondary:color('[data-home-album-gallery]','color'),
      secondaryBg:color('[data-home-album-gallery]','backgroundColor')
    };
  });
- assert.deepEqual(palette,{panel:'rgb(26, 26, 26)',caption:'rgb(240, 240, 240)',primary:'rgb(13, 13, 13)',primaryBg:'rgb(200, 241, 53)',secondary:'rgb(200, 241, 53)',secondaryBg:'rgb(26, 26, 26)'});
+ assert.deepEqual(palette,{panel:'rgb(26, 26, 26)',caption:'rgb(240, 240, 240)',secondary:'rgb(200, 241, 53)',secondaryBg:'rgb(26, 26, 26)'});
  for(const width of [320,390,1100]){
   await page.setViewportSize({width,height:844});await page.locator('#gr-home-album').scrollIntoViewIfNeeded();
   await page.waitForFunction(()=>Array.from(document.querySelectorAll('#gr-home-album img')).every(img=>img.complete&&img.naturalWidth>0));
@@ -49,5 +47,5 @@ const albums=[{id:'one',title:'Sortie des falaises',ride_date:'2099-04-13',publi
  await page.setViewportSize({width:390,height:844});await page.locator('#gr-home-album').scrollIntoViewIfNeeded();await page.waitForFunction(()=>Array.from(document.querySelectorAll('#gr-home-album img')).every(img=>img.complete&&img.naturalWidth>0));await page.locator('#gr-home-album').screenshot({path:'/tmp/home-album-mobile.png'});
  await page.locator('[data-home-album-photo]').nth(1).click();await page.waitForURL('**/dans-la-roue.html#album-two');await page.locator('#album-two').waitFor();assert(await page.evaluate(()=>window.scrollY>0));await page.locator('#album-two .cover').click();assert(await page.locator('#photo-viewer').isVisible());await page.locator('#photo-close').click();assert(await page.locator('#photo-viewer').isHidden());
  for(const m of ['empty','error','broken']){mode=m;await page.goto('http://home.test/preview.html');await page.waitForFunction(()=>window.GoeloHomeAlbum);await page.evaluate(()=>window.GoeloHomeAlbum.load());if(m==='broken')await page.evaluate(()=>document.getElementById('gr-home-album').scrollIntoView({block:'start'}));await page.locator('#gr-home-album').waitFor({state:'hidden'});}
- assert.deepEqual(errors,[]);await browser.close();console.log('PASS : aperçus publiés, liens vers les albums, visionneuse conservée, CTA sorties, mobile/desktop et repli silencieux.');
+ assert.deepEqual(errors,[]);await browser.close();console.log('PASS : aperçus publiés, liens vers les albums, visionneuse conservée, bouton album unique, mobile/desktop et repli silencieux.');
 })().catch(e=>{console.error(e);process.exit(1)});
