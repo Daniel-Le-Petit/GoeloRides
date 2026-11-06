@@ -62,7 +62,8 @@ const asyncSql=s=>new Promise((resolve,reject)=>execFile('psql',['-X','-qAt','-v
  }
  assert.equal(remaining.unread_count,0);
  const worker=execFileSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs')],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
- const strictWorker=require('node:child_process').spawnSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs'),'--require-configured'],{encoding:'utf8',env:{...process.env,ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
+ const strictWorker=require('node:child_process').spawnSync(process.execPath,[path.join(root,'scripts/admin-participation-push.cjs'),'--require-configured'],{encoding:'utf8',env:{...process.env,GITHUB_ACTIONS:'true',ONESIGNAL_REST_API_KEY:'',SUPABASE_DATABASE_URL:'postgresql://postgres:local_test_only@'+process.env.PGHOST+':'+(process.env.PGPORT||'5432')+'/goelo_notify_test'}});
+ assert.match(strictWorker.stderr,/::error::ONESIGNAL_REST_API_KEY is missing/);
  assert.equal(strictWorker.status,1);assert.match(strictWorker.stdout,/Push administrateur non configuré/);
  assert.match(worker,/Push administrateur non configuré/);assert.equal(sql('SELECT problem FROM admin_participation_push_status WHERE singleton'),'missing_key');
  // Recipient extension: apply twice and keep all existing outbox history.
