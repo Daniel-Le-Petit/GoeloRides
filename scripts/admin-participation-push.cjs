@@ -6,14 +6,17 @@ const APP_ID = '254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a';
 function payload(item, appId = APP_ID) {
   if (!UUID.test(item.delivery_id) || !UUID.test(item.subscription_id) || !UUID.test(appId)) throw Error('invalid_delivery');
   const n = item.notification;
-  if (!n || !['joined','left'].includes(n.action) || !n.route_id) throw Error('invalid_notification');
+  if (!n || !['joined','left','account_created'].includes(n.action) || !n.route_id) throw Error('invalid_notification');
+  const accountCreated = n.action === 'account_created';
+  if (accountCreated && item.recipient_kind !== 'admin') throw Error('invalid_recipient');
+  const confirmation = n.action === 'joined' && ['participant','guest'].includes(item.recipient_kind);
   const verb = n.action === 'joined' ? 'participe à' : 's’est désinscrit·e de';
   const count = Number.isInteger(n.participant_count) && n.participant_count >= 0 ? n.participant_count : 0;
-  const message = String(n.participant_name || 'Un cycliste').slice(0,100) + ' ' + verb + ' « ' + String(n.route_title || 'la sortie').slice(0,150) + ' » — ' + count + ' participant' + (count===1?'':'s') + '.';
+  const message = accountCreated ? String(n.participant_name || 'Un cycliste').slice(0,100) + ' vient de créer son compte GoëloRides.' : confirmation ? 'Ton inscription à « ' + String(n.route_title || 'la sortie').slice(0,150) + ' » est confirmée.' : String(n.participant_name || 'Un cycliste').slice(0,100) + ' ' + verb + ' « ' + String(n.route_title || 'la sortie').slice(0,150) + ' » — ' + count + ' participant' + (count===1?'':'s') + '.';
   return { app_id:appId, include_subscription_ids:[item.subscription_id], target_channel:'push',
-    headings:{fr:n.action==='joined'?'Nouvelle participation':'Désinscription',en:n.action==='joined'?'Nouvelle participation':'Désinscription'},
-    contents:{fr:message,en:message}, url:'https://goelorides.onrender.com/parcours.html?id='+encodeURIComponent(n.route_id),
-    idempotency_key:item.delivery_id, data:{type:'admin_participation',notification_id:n.id} };
+    headings:{fr:accountCreated?'Nouveau compte cycliste':confirmation?'Inscription confirmée':n.action==='joined'?'Nouvelle participation':'Désinscription',en:accountCreated?'Nouveau compte cycliste':confirmation?'Inscription confirmée':n.action==='joined'?'Nouvelle participation':'Désinscription'},
+    contents:{fr:message,en:message}, url:accountCreated?'https://goelorides.onrender.com/admin-cyclistes.html':'https://goelorides.onrender.com/parcours.html?id='+encodeURIComponent(n.route_id),
+    idempotency_key:item.delivery_id, data:{type:accountCreated?'cyclist_account_created':confirmation?'participation_confirmed':'admin_participation',notification_id:n.id} };
 }
 async function dispatch({ sql, fetchImpl = fetch, apiKey, appId = APP_ID }) {
   if (!apiKey) {
@@ -29,8 +32,8 @@ async function dispatch({ sql, fetchImpl = fetch, apiKey, appId = APP_ID }) {
     for(const item of items) {
       let body;
       try { body=payload(item,appId); } catch(_) { throw Error('invalid_queued_message'); }
-      // Recontrôle juste avant l'envoi : compte toujours admin, abonnement actif, notification non lue.
-      const permitted=sql(`SELECT EXISTS(SELECT 1 FROM public.admin_participation_deliveries d JOIN public.admin_participation_devices v ON v.subscription_id=d.subscription_id AND v.user_id=d.user_id JOIN public.profiles p ON p.id=d.user_id WHERE d.id=${quote(item.delivery_id)}::uuid AND d.status='processing' AND v.enabled AND p.role='admin' AND NOT EXISTS(SELECT 1 FROM public.admin_participation_reads r WHERE r.user_id=d.user_id AND r.notification_id=d.notification_id));`);
+      // Same server-side authorization used when claiming, including current assignment.
+      const permitted=sql(`SELECT EXISTS(SELECT 1 FROM public.admin_participation_deliveries d WHERE d.id=${quote(item.delivery_id)}::uuid AND d.status='processing' AND public._participation_delivery_allowed(d.id));`);
       if(permitted!=='t') { sql(`UPDATE public.admin_participation_deliveries SET status='skipped',last_error='recipient_inactive_or_read' WHERE id=${quote(item.delivery_id)}::uuid AND status='processing';`);continue; }
       let error='',permanent=false;
       try {

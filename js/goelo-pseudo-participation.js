@@ -114,6 +114,10 @@
         if (!result.joined || !result.pseudo) throw new Error('server_error');
         finishAttempt(attempt, result);
         showState(result, true); notify();
+        // Push is optional and must never turn a successful registration into an error.
+        if (global.goeloBindGuestParticipationPush) {
+          Promise.resolve(global.goeloBindGuestParticipationPush(current.id, tokenRecord(current.id).token)).catch(function () {});
+        }
       } catch (error) {
         finishAttempt(attempt, 'error');
         field('[data-pseudo-message]').textContent = errorText(error);

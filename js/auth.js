@@ -1053,6 +1053,27 @@ window.goeloGetSb = function () {
       }
     }
 
+    await runStep("désactiver les alertes privées de cet appareil", async function () {
+      if (window.goeloDisableParticipationPush) {
+        await window.goeloDisableParticipationPush();
+      } else {
+        // Other pages need not load the SDK to revoke this browser's saved binding.
+        var subscriptionId = null;
+        try { subscriptionId = localStorage.getItem('goelo-participation-push-subscription'); } catch (_) {}
+        var pushSb = window.goeloGetSb();
+        if (pushSb && subscriptionId) {
+          var pushTimer;
+          try {
+            var revoked = await Promise.race([
+              pushSb.rpc('participation_device_set', { p_subscription_id: subscriptionId, p_enabled: false }),
+              new Promise(function (_, reject) { pushTimer = setTimeout(function () { reject(new Error('push_revoke_timeout')); }, 10000); })
+            ]);
+            if (!revoked || revoked.error || !revoked.data || revoked.data.ok !== true) throw new Error('push_revoke_unconfirmed');
+          } finally { clearTimeout(pushTimer); }
+        }
+      }
+    });
+
     await runStep("signOut Supabase", async function () {
       var sb = window.goeloGetSb();
       if (sb) await sb.auth.signOut();

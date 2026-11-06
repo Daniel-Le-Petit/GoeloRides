@@ -49,7 +49,7 @@
   <div class="page">
 
     <a class="admin-page-return" href="admin.html">← Retour au Dashboard</a>
-    <div class="page-header"><h1 class="page-title">Alertes de participation</h1><p class="page-sub">Notifications, inscriptions et désinscriptions confirmées.</p></div>
+    <div class="page-header"><h1 class="page-title">Alertes de participation</h1><p class="page-sub">Nouveaux comptes cyclistes, inscriptions et désinscriptions confirmées.</p></div>
     <section id="admin-participation-panel" data-apn-page="true" class="apn-panel" hidden aria-labelledby="admin-participation-title">
       <h2 id="admin-participation-title">Réglages et dernières alertes</h2>
       <p class="apn-hint">Les alertes non lues sont présentées en premier. Uniquement les changements confirmés depuis l’activation du suivi. Les ajouts et retraits d’invités par un administrateur sont inclus.</p>
@@ -73,15 +73,15 @@
   3. auth.js           → window.goeloGetSb, window.GOELO_ROLE, goelo:role-ready
   4. admin-page.js
 -->
-<script src="js/goelo-config.js"></script>
+<script src="js/goelo-config.js?v=20261106-participation-push"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/goelo-auth-state.js"></script>
-<script src="js/auth.js"></script>
+<script src="js/auth.js?v=20261106-participation-push"></script>
 <script src="js/goelo-profile.js"></script>
 
 <script>window.GOELO_ONESIGNAL_APP_ID = "254cc8a4-2d9d-4bc9-9e82-2f91b3bd437a";</script>
-<script src="goelo-onesignal.js?v=16" defer></script>
-<script src="js/admin-participation-notifications.js?v=20261103-pages" defer></script>
+<script src="goelo-onesignal.js?v=20261106-participation-push" defer></script>
+<script src="js/admin-participation-notifications.js?v=20261106-participation-push" defer></script>
 <script src="js/admin-page.js?v=20261103" defer></script>
 </body>
 </html>
