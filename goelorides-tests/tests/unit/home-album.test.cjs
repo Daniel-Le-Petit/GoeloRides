@@ -30,5 +30,5 @@ test('section masquée sans photos, en cas de panne et si toutes les images sont
  const a=app([{id:'one',published:true,photos:[photo(1)]}]);await a.c.GoeloHomeAlbum.load();a.grid.children[0].children[0].events.error();assert.equal(a.grid.childElementCount,0);assert.equal(a.section.hidden,true);
 });
 test('le bloc vient après les sorties et propose un accès direct à celles-ci',()=>{
- const html=fs.readFileSync(path.join(root,'index.html'),'utf8');assert(html.indexOf('id="gr-upcoming-rides"')<html.indexOf('id="gr-home-album"'));assert(html.indexOf('id="gr-home-album"')<html.indexOf('<aside class="gr-hero-poll"'));assert.match(html,/<a href="sorties.html" data-home-album-rides>Rejoindre/);
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');assert(html.indexOf('id="gr-upcoming-rides"')<html.indexOf('id="gr-home-album"'));assert(html.indexOf('id="gr-home-album"')<html.indexOf('<aside class="gr-hero-poll"'));assert.match(html,/<a href="sorties.html" data-home-album-rides>Les sorties/);
 });
